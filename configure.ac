@@ -33,10 +33,6 @@ LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall -O0 -pg"
 
 # Check for libraries:  (objdump -R/-T libncurses...)
 AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([No math library found!])], [])
-# -lnsl
-#LIBS+="-lnsl"
-
-
 
 ####################################
 # cfitsio

@@ -9,7 +9,15 @@
 /////////////////////////////////////////////////////////////////
 
 
-typedef fitsfile simputfile;
+typedef struct {
+  /** Pointer to the FITS file. */
+  fitsfile* fptr;
+  
+  /** Column number of the essential columns. */
+  int csrc_id, csrc_name, cra, cdec, cflux, ce_min, ce_max;
+  int cspectrum, clightcur, cimage;
+
+} simput_srcctlg_file;
 
 
 /////////////////////////////////////////////////////////////////
