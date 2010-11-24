@@ -1,0 +1,85 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.61)
+AC_INIT([simput], [0.01], [christian.schmid@sternwarte.uni-erlangen.de])
+AC_CONFIG_SRCDIR([libsimput/simput.c])
+# The following line tells 'configure' to create a header file 'config.h'
+# that is filled with definitions from this script.
+# The 'config.h' contains for example the name of the package and can be
+# included in the programm sources.
+AC_CONFIG_HEADER([config.h])
+AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+
+
+# Check for programs:
+AC_PROG_CC     # Search for a C-Compiler and store it in the Variable 'CC'.
+
+AC_DISABLE_SHARED
+LT_INIT #([disable-shared]) #([shared]) 
+AC_PROG_LIBTOOL #deprecated
+AM_PROG_LIBTOOL
+#AC_DISABLE_SHARED
+#AC_DISABLE_STATIC
+
+# Compiler and Linker Flags:
+# "-g -W -Wall -O0" for the compiler for debugging
+# "-g" to create debugging information (seems to be used automatically by autotools)
+# "-Werror" for the compiler to treat warnings as errors
+# "-pg" for the compiler and linker to include information for gprof (Profiler)
+# "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
+CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -O0 -pg"
+LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall -O0 -pg"
+
+# Check for libraries:  (objdump -R/-T libncurses...)
+AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([No math library found!])], [])
+# -lnsl
+#LIBS+="-lnsl"
+
+
+
+####################################
+# cfitsio
+AC_SEARCH_LIBS(ffopen, 
+	[cfitsio_3.24 cfitsio_3.22 cfitsio_3.181 cfitsio_3.12 cfitsio_3.07 cfitsio_3.04 cfitsio], 
+	[], [AC_MSG_ERROR([No supported version of cfitsio library found!])], [])
+#lib_cfitsio="no"
+#AC_MSG_CHECKING([for versioned libcfitsio in \$HEADAS])
+#my_cfitsio=`ls "${HEADAS}"/lib/libcfitsio*.so 2> /dev/null`
+#if ! test -z "$my_cfitsio"
+#then
+#   my_cfitsio=`basename "$my_cfitsio"`
+#   my_cfitsio=`expr "$my_cfitsio" : 'lib\(cfitsio_.*\)\.so'`
+#fi
+#if ! test -z "$my_cfitsio"
+#then
+#   AC_MSG_RESULT([yes ($my_cfitsio)])
+#else
+#   AC_MSG_RESULT([no])
+#fi
+#AC_SEARCH_LIBS(ffopen, cfitsio $my_cfitsio, [],
+#          [AC_MSG_ERROR([No cfitsio library found!])], [])
+##AC_SEARCH_LIBS(ffopen, cfitsio $my_cfitsio,
+##          [lib_cfitsio=-l$ac_lib],
+##          [AC_MSG_ERROR([No cfitsio library found!])],
+##          [-lm])
+#AC_SUBST(lib_cfitsio)
+#################################### 
+
+# Check for header files:
+AC_HEADER_STDC
+AC_CHECK_HEADERS([limit.h math.h malloc.h stdio.h stdlib.h stdarg.h string.h])
+#AC_CHECK_HEADERS([headas.h headas_error.h]) 
+# -> problem: not accepted by preprocessor (but by compiler)!
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+
+# Checks for library functions.
+
+# Create the following Makefiles (including subdirectories).
+# A Makefile that is not listed here will not be created by 'automake'!
+AC_CONFIG_FILES([Makefile
+		libsimput/Makefile])
+AC_OUTPUT
+
