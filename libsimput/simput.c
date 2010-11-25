@@ -12,15 +12,16 @@
 
 
 #define N_SRC_CAT_COLUMNS (10)
+#define N_SPEC_COLUMNS    (3)
 
 #define SIMPUT_ERROR(msg) fprintf(stderr, "Error in %s: %s!\n", __func__, msg)
 #define CHECK_STATUS(a) if (EXIT_SUCCESS!=a) return(a)
 #define CHECK_NULL(a,status,msg) if (NULL==a) { SIMPUT_ERROR(msg); status=EXIT_FAILURE; return(status); }
 
 
-/** Open a SIMPUT FITS file. Open either an existing SIMPUT file or
-    create a new and empty one and open it. The file access mode can
-    be either READWRITE or READONLY. */
+/** Open a SIMPUT source catalog FITS file. Open either an existing
+    SIMPUT file or create a new and empty one and open it. The file
+    access mode can be either READWRITE or READONLY. */
 int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
 			const char* const filename,
 			const int mode,
@@ -104,11 +105,11 @@ int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
   ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "IMAGE", &(*srcctlg)->cimage, status);
   CHECK_STATUS(ret);
 
-  return(EXIT_SUCCESS);
+  return(*status);
 }
 
 
-/** Close an open SIMPUT FITS file. */
+/** Close an open SIMPUT source catalog FITS file. */
 int simput_close_srcctlg(simput_srcctlg_file** const srcctlg,
 			 int* const status) 
 {
@@ -120,7 +121,7 @@ int simput_close_srcctlg(simput_srcctlg_file** const srcctlg,
   free(*srcctlg);
   *srcctlg=NULL;
 
-  return(EXIT_SUCCESS);
+  return(*status);
 }
 
 
@@ -185,6 +186,79 @@ int simput_add_src(simput_srcctlg_file* const srcctlg,
 		       nrows, 1, 1, image, status);
   CHECK_STATUS(ret);
 
-  return(EXIT_SUCCESS);
+  return(*status);
 }
 
+
+
+
+/** Store a flux density spectrum in the given file. If the file
+    already exists, append a new table. */
+int simput_store_spectrum(const char* const filename,
+			  const long nbins,
+			  float* const e_min,
+			  float* const e_max,
+			  float* const flux,
+			  float phase,
+			  int* const status)
+{
+  fitsfile* fptr=NULL;
+
+  // Check if the file already exists.
+  int exists;
+  int ret = fits_file_exists(filename, &exists, status);
+  CHECK_STATUS(ret);
+
+  // If no, create a new file.
+  if (1!=exists) { 
+    // Create and open a new empty FITS file.
+    ret = fits_create_file(&fptr, filename, status);
+    CHECK_STATUS(ret);
+  } else {
+    // The file does already exist, so just open it.
+    ret = fits_open_file(&fptr, filename, READWRITE, status);
+    CHECK_STATUS(ret);
+  }
+  // END of check, whether the file already exists or not.
+
+  // Create a new table for the spectrum.
+  char *ttype[] = { "E_MIN", "E_MAX", "FLUX" };
+  char *tform[] = { "E", "E", "E" };
+  char *tunit[] = { "keV", "keV", "erg/s/cm^2/keV" };
+  ret = fits_create_tbl(fptr, BINARY_TBL, 0, N_SPEC_COLUMNS, 
+			ttype, tform, tunit, "SPECTRUM", status);
+  CHECK_STATUS(ret);
+
+  // Insert header keywords.
+  ret = fits_update_key(fptr, TFLOAT, "PHASE", &phase, 
+			"phase for which the spectrum is valid", status);
+  CHECK_STATUS(ret);
+
+  // Determine the column numbers of the essential columns.
+  int ce_min, ce_max, cflux;
+  ret = fits_get_colnum(fptr, CASEINSEN, "E_MIN", &ce_min, status);
+  CHECK_STATUS(ret);
+  ret = fits_get_colnum(fptr, CASEINSEN, "E_MAX", &ce_max, status);
+  CHECK_STATUS(ret);
+  ret = fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+  CHECK_STATUS(ret);
+
+  // Store the spectrum in the table.
+  ret = fits_insert_rows(fptr, 1, nbins, status);
+  CHECK_STATUS(ret);
+  ret = fits_write_col(fptr, TFLOAT, ce_min, 
+		       1, 1, nbins, e_min, status);
+  CHECK_STATUS(ret);
+  ret = fits_write_col(fptr, TFLOAT, ce_max, 
+		       1, 1, nbins, e_max, status);
+  CHECK_STATUS(ret);
+  ret = fits_write_col(fptr, TFLOAT, cflux, 
+		       1, 1, nbins, flux, status);
+  CHECK_STATUS(ret);
+
+  // Close the file.
+  ret = fits_close_file(fptr, status);
+  CHECK_STATUS(ret);
+
+  return(*status);
+}
