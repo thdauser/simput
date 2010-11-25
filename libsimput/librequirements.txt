@@ -1,20 +1,21 @@
-- open simput source catalog
-  |-> create simput source catalog file if not exists
-  close source catalog
+x open simput source catalog (create simput source catalog file if not exists)
+x close source catalog
 
-- simput_add_source(ID, RA, DEC, NAME, FLUX, EMIN, EMAX)
-  simput_create_spectrum(filename, emin[array], emax[array], flux[array])
-  simput_create_lightcurve(filename, time[], flux[][, pol_dir[], pol_frac[]])
-  simput_add_spectrum(ID, filename [, phase])
+x simput_add_source(ID, RA, DEC, NAME, FLUX, EMIN, EMAX)
+x simput_store_spectrum(filename, emin[array], emax[array], flux[array])
+x simput_store_lightcur(filename, time[], flux[][, pol_dir[], pol_frac[]])
+  simput_add_spectrum(ID, filename [, phase]) -> add an existing spectrum to a composite FITS file
   simput_add_pha(ID, filename [, phase])
   simput_add_lightcurve(ID, filename) 
   simput_add_image(ID, filename [, phase])
-  simput_link_spectrum(ID, filename [, phase])
+  simput_link_spectrum(ID, filename [, phase]) -> link an existing spectrum to a particular source
   simput_link_lc(ID, filename)
   simput_link_image(ID, filename [, phase])
 
 - simput_check_consistency(filename of source list)
 
+
+???
 - simput_get_nsources() ??
   simput_get_basic_source_data(ID?? / line number)
   simput_get_lightcurve(ID)

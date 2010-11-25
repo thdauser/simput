@@ -11,8 +11,9 @@
 #include "simput.h"
 
 
-#define N_SRC_CAT_COLUMNS (10)
-#define N_SPEC_COLUMNS    (3)
+#define N_SRC_CAT_COLUMNS  (10)
+#define N_SPEC_COLUMNS     (3)
+#define N_LIGHTCUR_COLUMNS (5)
 
 #define SIMPUT_ERROR(msg) fprintf(stderr, "Error in %s: %s!\n", __func__, msg)
 #define CHECK_STATUS(a) if (EXIT_SUCCESS!=a) return(a)
@@ -255,6 +256,126 @@ int simput_store_spectrum(const char* const filename,
   ret = fits_write_col(fptr, TFLOAT, cflux, 
 		       1, 1, nbins, flux, status);
   CHECK_STATUS(ret);
+
+  // Close the file.
+  ret = fits_close_file(fptr, status);
+  CHECK_STATUS(ret);
+
+  return(*status);
+}
+
+
+
+/** Store a flux density spectrum in the given file. If the file
+    already exists, append a new table. */
+int simput_store_lightcur(const char* const filename,
+			  const long nbins,
+			  double* const time,
+			  float* const phase,
+			  float* const flux,
+			  float* const pol_frac,
+			  float* const pol_dir,
+			  float e_min,
+			  float e_max,
+			  int* const status)
+{
+  fitsfile* fptr=NULL;
+
+  // Check if the file already exists.
+  int exists;
+  int ret = fits_file_exists(filename, &exists, status);
+  CHECK_STATUS(ret);
+
+  // If no, create a new file.
+  if (1!=exists) { 
+    // Create and open a new empty FITS file.
+    ret = fits_create_file(&fptr, filename, status);
+    CHECK_STATUS(ret);
+  } else {
+    // The file does already exist, so just open it.
+    ret = fits_open_file(&fptr, filename, READWRITE, status);
+    CHECK_STATUS(ret);
+  }
+  // END of check, whether the file already exists or not.
+
+  // Create a new table for the spectrum.
+  char *ttype[N_LIGHTCUR_COLUMNS];
+  char *tform[N_LIGHTCUR_COLUMNS];
+  char *tunit[N_LIGHTCUR_COLUMNS];
+  int ncolumns=0;
+  if (NULL!=time) {
+    ttype[ncolumns] = "TIME";
+    tform[ncolumns] = "D";
+    tunit[ncolumns] = "s";
+    ncolumns++;
+  }
+  if (NULL!=phase) {
+    ttype[ncolumns] = "PHASE";
+    tform[ncolumns] = "E";
+    tunit[ncolumns] = "";
+    ncolumns++;
+  }
+  ttype[ncolumns] = "FLUX";
+  tform[ncolumns] = "E";
+  tunit[ncolumns] = "erg/s/cm^2";
+  ncolumns++;
+  if (NULL!=pol_frac) {
+    ttype[ncolumns] = "POL_FRAC";
+    tform[ncolumns] = "E";
+    tunit[ncolumns] = "";
+    ncolumns++;
+  }
+  if (NULL!=phase) {
+    ttype[ncolumns] = "POL_DIR";
+    tform[ncolumns] = "E";
+    tunit[ncolumns] = "radians";
+    ncolumns++;
+  }
+   ret = fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns, 
+			ttype, tform, tunit, "LIGHTCUR", status);
+  CHECK_STATUS(ret);
+
+  // Insert header keywords.
+  ret = fits_update_key(fptr, TFLOAT, "E_MIN", &e_min, 
+			"lower value of the reference energy band", status);
+  CHECK_STATUS(ret);
+  ret = fits_update_key(fptr, TFLOAT, "E_MAX", &e_max, 
+			"upper value of the reference energy band", status);
+  CHECK_STATUS(ret);
+
+  // Determine the column numbers of the essential columns and store 
+  // the light curve in the table.
+  ret = fits_insert_rows(fptr, 1, nbins, status);
+  CHECK_STATUS(ret);
+  int column;
+  if (NULL!=time) {
+    ret = fits_get_colnum(fptr, CASEINSEN, "TIME", &column, status);
+    CHECK_STATUS(ret);
+    ret = fits_write_col(fptr, TDOUBLE, column, 1, 1, nbins, time, status);
+    CHECK_STATUS(ret);
+  }
+  if (NULL!=phase) {
+    ret = fits_get_colnum(fptr, CASEINSEN, "PHASE", &column, status);
+    CHECK_STATUS(ret);
+    ret = fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, phase, status);
+    CHECK_STATUS(ret);
+  }
+  ret = fits_get_colnum(fptr, CASEINSEN, "FLUX", &column, status);
+  CHECK_STATUS(ret);
+  ret = fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, flux, status);
+  CHECK_STATUS(ret);
+  if (NULL!=pol_frac) {
+    ret = fits_get_colnum(fptr, CASEINSEN, "POL_FRAC", &column, status);
+    CHECK_STATUS(ret);
+    ret = fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, pol_frac, status);
+    CHECK_STATUS(ret);
+  }
+  if (NULL!=pol_dir) {
+    ret = fits_get_colnum(fptr, CASEINSEN, "POL_DIR", &column, status);
+    CHECK_STATUS(ret);
+    ret = fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, pol_dir, status);
+    CHECK_STATUS(ret);
+  }
 
   // Close the file.
   ret = fits_close_file(fptr, status);
