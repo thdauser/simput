@@ -20,9 +20,7 @@
 #define CHECK_NULL(a,status,msg) if (NULL==a) { SIMPUT_ERROR(msg); status=EXIT_FAILURE; return(status); }
 
 
-/** Open a SIMPUT source catalog FITS file. Open either an existing
-    SIMPUT file or create a new and empty one and open it. The file
-    access mode can be either READWRITE or READONLY. */
+
 int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
 			const char* const filename,
 			const int mode,
@@ -38,13 +36,13 @@ int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
   int ret;
 
   // Check if the requested file already exists.
-  int exists;
-  ret = fits_file_exists(filename, &exists, status);
+  int file_exists=0, srcctlg_exists=0;
+  ret = fits_file_exists(filename, &file_exists, status);
   CHECK_STATUS(ret);
 
   // If it doesn't exist, create a new empty file containing
   // the basic table structure (source catalog table).
-  if (1!=exists) { 
+  if (1!=file_exists) { 
     // Maybe have to change the 1 in the comparison above.
     // There might also be other possible values.
 
@@ -52,19 +50,9 @@ int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
     ret = fits_create_file(&(*srcctlg)->fptr, filename, status);
     CHECK_STATUS(ret);
 
-    // Create header keywords.
-
-    // Create the table structure for the source catalog.
-    char *ttype[] = 
-      { "SRC_ID", "SRC_NAME", "RA", "DEC", "FLUX", "E_MIN", "E_MAX",
-	"SPECTRUM", "LIGHTCUR", "IMAGE" };
-    char *tform[] = 
-      { "J", "80A", "E", "E", "E", "E", "E", "21A", "21A", "21A" };
-    char *tunit[] = 
-      { "", "", "deg", "deg", "erg/s/cm^2", "keV", "keV", "", "", "" };
-    ret = fits_create_tbl((*srcctlg)->fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, 
-			  ttype, tform, tunit, "SRC_CAT", status);
-    CHECK_STATUS(ret);
+    // So far the file does not contain a source catalog table.
+    // Therefore it has to be created afterwards.
+    srcctlg_exists = 0;
 
   } else {
     // The file does already exist.
@@ -72,17 +60,43 @@ int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
     // Try to open the file via CFITSIO with the requested mode.
     ret = fits_open_file(&(*srcctlg)->fptr, filename, mode, status);
     CHECK_STATUS(ret);
-    
+
+    // Check if the file already contains a source catalog table.
+    // Try to move the internal HDU pointer of the fitsfile data structure
+    // to the right extension containing the source catalog.
+    fits_write_errmark();
+    if (BAD_HDU_NUM == fits_movnam_hdu((*srcctlg)->fptr, BINARY_TBL, "SRC_CAT", 0, status)) {
+      srcctlg_exists = 0;
+    } else {
+      srcctlg_exists = 1;
+    }
+    fits_clear_errmark();
+
     // Note: we do not want to apply a full consistency check here
     // because we also want to be able to access a file, which is
     // not complete yet.
   }
   // END of check if file exists or not.
 
-  // Move the internal HDU pointer of the fitsfile data structure
-  // to the right extension containing the source catalog.
-  ret = fits_movnam_hdu((*srcctlg)->fptr, BINARY_TBL, "SRC_CAT", 0, status);
-  CHECK_STATUS(ret);
+  if (0==srcctlg_exists) {
+    // Create the table structure for the source catalog.
+    char *ttype[] = 
+      { "SRC_ID", "SRC_NAME", "RA", "DEC", "FLUX", "E_MIN", "E_MAX",
+	"SPECTRUM", "LIGHTCUR", "IMAGE" };
+    char *tform[] = 
+      { "J", "20A", "E", "E", "E", "E", "E", "21A", "21A", "21A" };
+    char *tunit[] = 
+      { "", "", "deg", "deg", "erg/s/cm^2", "keV", "keV", "", "", "" };
+    ret = fits_create_tbl((*srcctlg)->fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, 
+			  ttype, tform, tunit, "SRC_CAT", status);
+    CHECK_STATUS(ret);
+
+    // Insert header keywords.
+    // ...
+
+  }
+  // END of check whether the file contains a source catalog table.
+
 
   // Determine the column numbers of the essential columns.
   ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "SRC_ID", &(*srcctlg)->csrc_id, status);
@@ -110,7 +124,7 @@ int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
 }
 
 
-/** Close an open SIMPUT source catalog FITS file. */
+
 int simput_close_srcctlg(simput_srcctlg_file** const srcctlg,
 			 int* const status) 
 {
@@ -126,7 +140,7 @@ int simput_close_srcctlg(simput_srcctlg_file** const srcctlg,
 }
 
 
-/** Add a new line with source data to a source catalog. */
+
 int simput_add_src(simput_srcctlg_file* const srcctlg,
 		   long src_id,
 		   char* const src_name,
@@ -146,6 +160,8 @@ int simput_add_src(simput_srcctlg_file* const srcctlg,
   CHECK_NULL(srcctlg, *status, "simput_srcctlg_file not initialized");
   CHECK_NULL(srcctlg->fptr, *status, "no open FITS file");
 
+  // TODO Check if a source of this ID is already contained in the catalog.
+
   // Determine the current number of lines in the source catalog.
   long nrows;
   ret = fits_get_num_rows(srcctlg->fptr, &nrows, status);
@@ -159,8 +175,9 @@ int simput_add_src(simput_srcctlg_file* const srcctlg,
   ret = fits_write_col(srcctlg->fptr, TLONG, srcctlg->csrc_id, 
 		       nrows, 1, 1, &src_id, status);
   CHECK_STATUS(ret);
+  printf("----> %s <----\n", src_name);
   ret = fits_write_col(srcctlg->fptr, TSTRING, srcctlg->csrc_name, 
-		       nrows, 1, 1, src_name, status);
+  		       nrows, 1, 1, &src_name, status);
   CHECK_STATUS(ret);
   ret = fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->cra, 
 		       nrows, 1, 1, &ra, status);
@@ -178,13 +195,13 @@ int simput_add_src(simput_srcctlg_file* const srcctlg,
 		       nrows, 1, 1, &e_max, status);
   CHECK_STATUS(ret);
   ret = fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum, 
-		       nrows, 1, 1, spectrum, status);
+		       nrows, 1, 1, &spectrum, status);
   CHECK_STATUS(ret);
   ret = fits_write_col(srcctlg->fptr, TSTRING, srcctlg->clightcur, 
-		       nrows, 1, 1, lightcur, status);
+		       nrows, 1, 1, &lightcur, status);
   CHECK_STATUS(ret);
   ret = fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cimage, 
-		       nrows, 1, 1, image, status);
+		       nrows, 1, 1, &image, status);
   CHECK_STATUS(ret);
 
   return(*status);
@@ -193,14 +210,13 @@ int simput_add_src(simput_srcctlg_file* const srcctlg,
 
 
 
-/** Store a flux density spectrum in the given file. If the file
-    already exists, append a new table. */
 int simput_store_spectrum(const char* const filename,
 			  const long nbins,
 			  float* const e_min,
 			  float* const e_max,
 			  float* const flux,
 			  float phase,
+			  int* hdunum,
 			  int* const status)
 {
   fitsfile* fptr=NULL;
@@ -245,7 +261,7 @@ int simput_store_spectrum(const char* const filename,
   CHECK_STATUS(ret);
 
   // Store the spectrum in the table.
-  ret = fits_insert_rows(fptr, 1, nbins, status);
+  ret = fits_insert_rows(fptr, 0, nbins, status);
   CHECK_STATUS(ret);
   ret = fits_write_col(fptr, TFLOAT, ce_min, 
 		       1, 1, nbins, e_min, status);
@@ -257,6 +273,9 @@ int simput_store_spectrum(const char* const filename,
 		       1, 1, nbins, flux, status);
   CHECK_STATUS(ret);
 
+  // Store the HDU number of the new extension.
+  *hdunum = fits_get_hdu_num(fptr, hdunum);
+
   // Close the file.
   ret = fits_close_file(fptr, status);
   CHECK_STATUS(ret);
@@ -266,8 +285,6 @@ int simput_store_spectrum(const char* const filename,
 
 
 
-/** Store a flux density spectrum in the given file. If the file
-    already exists, append a new table. */
 int simput_store_lightcur(const char* const filename,
 			  const long nbins,
 			  double* const time,
@@ -277,6 +294,7 @@ int simput_store_lightcur(const char* const filename,
 			  float* const pol_dir,
 			  float e_min,
 			  float e_max,
+			  int* hdunum,
 			  int* const status)
 {
   fitsfile* fptr=NULL;
@@ -345,7 +363,7 @@ int simput_store_lightcur(const char* const filename,
 
   // Determine the column numbers of the essential columns and store 
   // the light curve in the table.
-  ret = fits_insert_rows(fptr, 1, nbins, status);
+  ret = fits_insert_rows(fptr, 0, nbins, status);
   CHECK_STATUS(ret);
   int column;
   if (NULL!=time) {
@@ -376,6 +394,9 @@ int simput_store_lightcur(const char* const filename,
     ret = fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, pol_dir, status);
     CHECK_STATUS(ret);
   }
+
+  // Store the HDU number of the new extension.
+  *hdunum = fits_get_hdu_num(fptr, hdunum);
 
   // Close the file.
   ret = fits_close_file(fptr, status);

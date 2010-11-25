@@ -14,6 +14,7 @@ doc
 pull.err
 pull.log
 pull_n_push.sh
+sample
 
 # Autotool stuff:
 aclocal.m4
