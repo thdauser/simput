@@ -1,5 +1,5 @@
-x open simput source catalog (create simput source catalog file if not exists)
-x close source catalog
+-x- open simput source catalog (create simput source catalog file if not exists)
+-x- close source catalog
 
 x simput_add_source(ID, RA, DEC, NAME, FLUX, EMIN, EMAX)
 x simput_store_spectrum(filename, emin[array], emax[array], flux[array])

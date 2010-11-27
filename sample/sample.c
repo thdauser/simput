@@ -14,16 +14,9 @@ int main()
 
     // Create a source catalog with a single source linked to the
     // spectrum and the light curve.
-    simput_srcctlg_file* srcctlg;
-    simput_open_srcctlg(&srcctlg, filename, READWRITE, &status);
-    CHECK_STATUS(status);
-
-    simput_add_src(srcctlg, 1, "myPOINTSOURCE",
+    simput_add_src(filename, 1, "myPOINTSOURCE",
     		   0., 0., 1.e-10, 1., 10.,
     		   "", "", "", &status);
-    CHECK_STATUS(status);
-
-    simput_close_srcctlg(&srcctlg, &status);
     CHECK_STATUS(status);
 
     // Create a spectrum and add it to the file.

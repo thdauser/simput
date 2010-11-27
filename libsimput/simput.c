@@ -21,64 +21,47 @@
 
 
 
-int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
-			const char* const filename,
-			const int mode,
-			int* const status)
+int simput_add_src(const char* const filename,
+		   long src_id,
+		   char* src_name,
+		   float ra,
+		   float dec,
+		   float flux,
+		   float e_min,
+		   float e_max,
+		   char* spectrum,
+		   char* lightcur,
+		   char* image,
+		   int* const status) 
 {
-  *srcctlg = (simput_srcctlg_file*)malloc(sizeof(simput_srcctlg_file));
-  CHECK_NULL(*srcctlg, *status, "memory allocation failed");
+  fitsfile* fptr=NULL;
 
-  // Initialize pointer with NULL.
-  (*srcctlg)->fptr = NULL;
-
-  // Return value of CFITSIO routines.
-  int ret;
-
-  // Check if the requested file already exists.
-  int file_exists=0, srcctlg_exists=0;
-  ret = fits_file_exists(filename, &file_exists, status);
+  // Check if the file already exists.
+  int exists;
+  int ret = fits_file_exists(filename, &exists, status);
   CHECK_STATUS(ret);
 
-  // If it doesn't exist, create a new empty file containing
-  // the basic table structure (source catalog table).
-  if (1!=file_exists) { 
-    // Maybe have to change the 1 in the comparison above.
-    // There might also be other possible values.
-
+  // If no, create a new file.
+  if (1!=exists) { 
     // Create and open a new empty FITS file.
-    ret = fits_create_file(&(*srcctlg)->fptr, filename, status);
+    ret = fits_create_file(&fptr, filename, status);
     CHECK_STATUS(ret);
-
-    // So far the file does not contain a source catalog table.
-    // Therefore it has to be created afterwards.
-    srcctlg_exists = 0;
-
   } else {
-    // The file does already exist.
-
-    // Try to open the file via CFITSIO with the requested mode.
-    ret = fits_open_file(&(*srcctlg)->fptr, filename, mode, status);
+    // The file does already exist, so just open it.
+    ret = fits_open_file(&fptr, filename, READWRITE, status);
     CHECK_STATUS(ret);
-
-    // Check if the file already contains a source catalog table.
-    // Try to move the internal HDU pointer of the fitsfile data structure
-    // to the right extension containing the source catalog.
-    fits_write_errmark();
-    if (BAD_HDU_NUM == fits_movnam_hdu((*srcctlg)->fptr, BINARY_TBL, "SRC_CAT", 0, status)) {
-      srcctlg_exists = 0;
-    } else {
-      srcctlg_exists = 1;
-    }
-    fits_clear_errmark();
-
-    // Note: we do not want to apply a full consistency check here
-    // because we also want to be able to access a file, which is
-    // not complete yet.
   }
-  // END of check if file exists or not.
+  // END of check, whether the file already exists or not.
 
-  if (0==srcctlg_exists) {
+  // Check if a source catalog extension exists.
+  // Try to move the internal HDU pointer of the fitsfile data structure
+  // to the right extension containing the source catalog.
+  fits_write_errmark();
+  // We have to use another status variable here.
+  int temp_status=EXIT_SUCCESS;
+  fits_movnam_hdu(fptr, BINARY_TBL, "SRC_CAT", 0, &temp_status);
+  fits_clear_errmark();
+  if (BAD_HDU_NUM == temp_status) {
     // Create the table structure for the source catalog.
     char *ttype[] = 
       { "SRC_ID", "SRC_NAME", "RA", "DEC", "FLUX", "E_MIN", "E_MAX",
@@ -87,7 +70,7 @@ int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
       { "J", "20A", "E", "E", "E", "E", "E", "21A", "21A", "21A" };
     char *tunit[] = 
       { "", "", "deg", "deg", "erg/s/cm^2", "keV", "keV", "", "", "" };
-    ret = fits_create_tbl((*srcctlg)->fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, 
+    ret = fits_create_tbl(fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, 
 			  ttype, tform, tunit, "SRC_CAT", status);
     CHECK_STATUS(ret);
 
@@ -95,118 +78,73 @@ int simput_open_srcctlg(simput_srcctlg_file** const srcctlg,
     // ...
 
   }
-  // END of check whether the file contains a source catalog table.
 
+  // Note: we do not want to apply a full consistency check here
+  // because we also want to be able to access a file, which is
+  // not complete yet.
 
-  // Determine the column numbers of the essential columns.
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "SRC_ID", &(*srcctlg)->csrc_id, status);
+  // Determine the column numbers.
+  int csrc_id, csrc_name, cra, cdec, cflux, ce_min, ce_max;
+  int cspectrum, clightcur, cimage;
+  ret = fits_get_colnum(fptr, CASEINSEN, "SRC_ID", &csrc_id, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "SRC_NAME", &(*srcctlg)->csrc_name, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "SRC_NAME", &csrc_name, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "RA", &(*srcctlg)->cra, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "RA", &cra, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "DEC", &(*srcctlg)->cdec, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "DEC", &cdec, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "FLUX", &(*srcctlg)->cflux, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "E_MIN", &(*srcctlg)->ce_min, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "E_MIN", &ce_min, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "E_MAX", &(*srcctlg)->ce_max, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "E_MAX", &ce_max, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "SPECTRUM", &(*srcctlg)->cspectrum, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "SPECTRUM", &cspectrum, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "LIGHTCUR", &(*srcctlg)->clightcur, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "LIGHTCUR", &clightcur, status);
   CHECK_STATUS(ret);
-  ret = fits_get_colnum((*srcctlg)->fptr, CASEINSEN, "IMAGE", &(*srcctlg)->cimage, status);
+  ret = fits_get_colnum(fptr, CASEINSEN, "IMAGE", &cimage, status);
   CHECK_STATUS(ret);
 
-  return(*status);
-}
-
-
-
-int simput_close_srcctlg(simput_srcctlg_file** const srcctlg,
-			 int* const status) 
-{
-  if (NULL!=*srcctlg) {
-    int ret = fits_close_file((*srcctlg)->fptr, status);
-    CHECK_STATUS(ret);
-  }
-
-  free(*srcctlg);
-  *srcctlg=NULL;
-
-  return(*status);
-}
-
-
-
-int simput_add_src(simput_srcctlg_file* const srcctlg,
-		   long src_id,
-		   char* const src_name,
-		   float ra,
-		   float dec,
-		   float flux,
-		   float e_min,
-		   float e_max,
-		   char* const spectrum,
-		   char* const lightcur,
-		   char* const image,
-		   int* const status) 
-{
-  int ret;
-
-  // Check if the simputfile pointer points to valid data.
-  CHECK_NULL(srcctlg, *status, "simput_srcctlg_file not initialized");
-  CHECK_NULL(srcctlg->fptr, *status, "no open FITS file");
-
+  // Store the data:
   // TODO Check if a source of this ID is already contained in the catalog.
 
   // Determine the current number of lines in the source catalog.
   long nrows;
-  ret = fits_get_num_rows(srcctlg->fptr, &nrows, status);
+  ret = fits_get_num_rows(fptr, &nrows, status);
   CHECK_STATUS(ret);
 
-  // Add a new line at the end of the catalog.
-  ret = fits_insert_rows(srcctlg->fptr, nrows++, 1, status);
+  // Insert the source data at the end of the table.
+  nrows++;
+  ret = fits_write_col(fptr, TLONG, csrc_id, nrows, 1, 1, &src_id, status);
   CHECK_STATUS(ret);
-
-  // Insert the source data to the table.
-  ret = fits_write_col(srcctlg->fptr, TLONG, srcctlg->csrc_id, 
-		       nrows, 1, 1, &src_id, status);
-  CHECK_STATUS(ret);
-  printf("----> %s <----\n", src_name);
-  ret = fits_write_col(srcctlg->fptr, TSTRING, srcctlg->csrc_name, 
+  ret = fits_write_col(fptr, TSTRING, csrc_name, 
   		       nrows, 1, 1, &src_name, status);
   CHECK_STATUS(ret);
-  ret = fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->cra, 
-		       nrows, 1, 1, &ra, status);
+  ret = fits_write_col(fptr, TFLOAT, cra, nrows, 1, 1, &ra, status);
   CHECK_STATUS(ret);
-  ret = fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->cdec, 
-		       nrows, 1, 1, &dec, status);
+  ret = fits_write_col(fptr, TFLOAT, cdec, nrows, 1, 1, &dec, status);
   CHECK_STATUS(ret);
-  ret = fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->cflux, 
-		       nrows, 1, 1, &flux, status);
+  ret = fits_write_col(fptr, TFLOAT, cflux, nrows, 1, 1, &flux, status);
   CHECK_STATUS(ret);
-  ret = fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->ce_min, 
-		       nrows, 1, 1, &e_min, status);
+  ret = fits_write_col(fptr, TFLOAT, ce_min, nrows, 1, 1, &e_min, status);
   CHECK_STATUS(ret);
-  ret = fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->ce_max, 
-		       nrows, 1, 1, &e_max, status);
+  ret = fits_write_col(fptr, TFLOAT, ce_max, nrows, 1, 1, &e_max, status);
   CHECK_STATUS(ret);
-  ret = fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum, 
-		       nrows, 1, 1, &spectrum, status);
+  ret = fits_write_col(fptr, TSTRING, cspectrum, nrows, 1, 1, &spectrum, status);
   CHECK_STATUS(ret);
-  ret = fits_write_col(srcctlg->fptr, TSTRING, srcctlg->clightcur, 
-		       nrows, 1, 1, &lightcur, status);
+  ret = fits_write_col(fptr, TSTRING, clightcur, nrows, 1, 1, &lightcur, status);
   CHECK_STATUS(ret);
-  ret = fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cimage, 
-		       nrows, 1, 1, &image, status);
+  ret = fits_write_col(fptr, TSTRING, cimage, nrows, 1, 1, &image, status);
+  CHECK_STATUS(ret);
+
+  // Close the file.
+  ret = fits_close_file(fptr, status);
   CHECK_STATUS(ret);
 
   return(*status);
 }
-
 
 
 
@@ -261,8 +199,6 @@ int simput_store_spectrum(const char* const filename,
   CHECK_STATUS(ret);
 
   // Store the spectrum in the table.
-  ret = fits_insert_rows(fptr, 0, nbins, status);
-  CHECK_STATUS(ret);
   ret = fits_write_col(fptr, TFLOAT, ce_min, 
 		       1, 1, nbins, e_min, status);
   CHECK_STATUS(ret);
@@ -363,8 +299,6 @@ int simput_store_lightcur(const char* const filename,
 
   // Determine the column numbers of the essential columns and store 
   // the light curve in the table.
-  ret = fits_insert_rows(fptr, 0, nbins, status);
-  CHECK_STATUS(ret);
   int column;
   if (NULL!=time) {
     ret = fits_get_colnum(fptr, CASEINSEN, "TIME", &column, status);
