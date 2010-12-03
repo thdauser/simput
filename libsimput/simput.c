@@ -434,77 +434,104 @@ static void simput_ext_id(char* const id, const char* const filename,
 }
 
 static SIMPUT_SrcCtlg* simput_open_srctbl(const char* const filename,
-		int* const status) {
-	SIMPUT_SrcCtlg* srcctlg = (SIMPUT_SrcCtlg*) malloc(sizeof(SIMPUT_SrcCtlg));
-	CHECK_NULL(srcctlg,*status,"memory allocation for data structure failed",srcctlg);
-
-	// Check if the file already exists.
-	int exists;
-	int ret = fits_file_exists(filename, &exists, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-
-	// If no, create a new file.
-	if (1 != exists) {
-		// Create and open a new empty FITS file.
-		ret = fits_create_file(&srcctlg->fptr, filename, status);
-		CHECK_STATUS_RET(ret,srcctlg);
-	} else {
-		// The file does already exist, so just open it.
-		ret = fits_open_file(&srcctlg->fptr, filename, READWRITE, status);
-		CHECK_STATUS_RET(ret,srcctlg);
-	}
-	// END of check, whether the file already exists or not.
-
-	// Check if a source catalog extension exists.
-	// Try to move the internal HDU pointer of the fitsfile data structure
-	// to the right extension containing the source catalog.
-	fits_write_errmark();
-	int temp_status = EXIT_SUCCESS; // We have to use another status variable here.
-	fits_movnam_hdu(srcctlg->fptr, BINARY_TBL, "SRC_CAT", 0, &temp_status);
-	fits_clear_errmark();
-
-	if (BAD_HDU_NUM == temp_status) {
-		// Create the table structure for the source catalog.
-		char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "FLUX", "E_MIN",
-				"E_MAX", "SPECTRUM", "LIGHTCUR", "IMAGE" };
-		char *tform[] = { "J", "20A", "E", "E", "E", "E", "E", "21A", "21A",
-				"21A" };
-		char *tunit[] = { "", "", "deg", "deg", "erg/s/cm^2", "keV", "keV", "",
-				"", "" };
-		ret = fits_create_tbl(srcctlg->fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, ttype,
-				tform, tunit, "SRC_CAT", status);
-		CHECK_STATUS_RET(ret,srcctlg);
-
-		// Insert header keywords.
-		// ...
-
-	}
-
-	// Note: we do not want to apply a full consistency check here
-	// because we also want to be able to access a file, which is
-	// not complete yet.
-
-	// Determine the column numbers.
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "SRC_ID", &srcctlg->csrc_id, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "SRC_NAME", &srcctlg->csrc_name, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "RA", &srcctlg->cra, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "DEC", &srcctlg->cdec, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "FLUX", &srcctlg->cflux, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "E_MIN", &srcctlg->ce_min, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "E_MAX", &srcctlg->ce_max, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "SPECTRUM", &srcctlg->cspectrum, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "LIGHTCUR", &srcctlg->clightcur, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-	ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "IMAGE", &srcctlg->cimage, status);
-	CHECK_STATUS_RET(ret,srcctlg);
-
-	return(srcctlg);
+					  int* const status) {
+  SIMPUT_SrcCtlg* srcctlg = (SIMPUT_SrcCtlg*) malloc(sizeof(SIMPUT_SrcCtlg));
+  CHECK_NULL(srcctlg,*status,"memory allocation for data structure failed",srcctlg);
+  
+  // Check if the file already exists.
+  int exists;
+  int ret = fits_file_exists(filename, &exists, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  
+  // If no, create a new file.
+  if (1 != exists) {
+    // Create and open a new empty FITS file.
+    ret = fits_create_file(&srcctlg->fptr, filename, status);
+    CHECK_STATUS_RET(ret,srcctlg);
+  } else {
+    // The file does already exist, so just open it.
+    ret = fits_open_file(&srcctlg->fptr, filename, READWRITE, status);
+    CHECK_STATUS_RET(ret,srcctlg);
+  }
+  // END of check, whether the file already exists or not.
+  
+  // Check if a source catalog extension exists.
+  // Try to move the internal HDU pointer of the fitsfile data structure
+  // to the right extension containing the source catalog.
+  fits_write_errmark();
+  int temp_status = EXIT_SUCCESS; // We have to use another status variable here.
+  fits_movnam_hdu(srcctlg->fptr, BINARY_TBL, "SRC_CAT", 0, &temp_status);
+  fits_clear_errmark();
+  
+  if (BAD_HDU_NUM == temp_status) {
+    // Create the table structure for the source catalog.
+    char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "FLUX", "E_MIN",
+		      "E_MAX", "SPECTRUM", "LIGHTCUR", "IMAGE" };
+    char *tform[] = { "J", "20A", "E", "E", "E", "E", "E", "21A", "21A",
+		      "21A" };
+    char *tunit[] = { "", "", "deg", "deg", "erg/s/cm^2", "keV", "keV", "",
+		      "", "" };
+    ret = fits_create_tbl(srcctlg->fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, ttype,
+			  tform, tunit, "SRC_CAT", status);
+    CHECK_STATUS_RET(ret,srcctlg);
+    
+    // Insert header keywords.
+    // ...
+    
+  }
+  
+  // Note: we do not want to apply a full consistency check here
+  // because we also want to be able to access a file, which is
+  // not complete yet.
+  
+  // Determine the column numbers.
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "SRC_ID", &srcctlg->csrc_id, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "SRC_NAME", &srcctlg->csrc_name, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "RA", &srcctlg->cra, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "DEC", &srcctlg->cdec, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "FLUX", &srcctlg->cflux, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "E_MIN", &srcctlg->ce_min, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "E_MAX", &srcctlg->ce_max, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "SPECTRUM", &srcctlg->cspectrum, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "LIGHTCUR", &srcctlg->clightcur, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  ret = fits_get_colnum(srcctlg->fptr, CASEINSEN, "IMAGE", &srcctlg->cimage, status);
+  CHECK_STATUS_RET(ret,srcctlg);
+  
+  return(srcctlg);
 }
+
+
+
+int simput_add_spectrum(const char* const srcctlg_filename,
+			const long src_id,
+			const char* const spec_filename,
+			int* const status)
+{
+  // Open the source catalog.
+
+  // Check if the spec_filename already points to the appropriate HDU.
+  // If not, modify the spec_filename.
+
+  // Find the row number of the desired source.
+
+  // Check if the source in the catalog already has a spectrum.
+  //   - If yes, check if it is a real spectrum or a grouping table.
+  //     - If it is a real spectrum create a grouping table and add the
+  //       previous filename to the grouping table.
+  //     - Add the new spectrum to the grouping table.
+  //   - If no, insert the new spectrum.
+
+  // Close the source catalog.
+
+  return(*status);
+}
+
