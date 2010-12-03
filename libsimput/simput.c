@@ -34,6 +34,16 @@
   }
 
 
+
+/////////////////////////////////////////////////////////////////
+// Function Declarations.
+/////////////////////////////////////////////////////////////////
+
+static long simput_get_src_line(fitsfile* const fptr,
+				const long src_id,
+				int* const status);
+
+
 /////////////////////////////////////////////////////////////////
 // Function Definitions.
 /////////////////////////////////////////////////////////////////
@@ -125,7 +135,18 @@ int simput_add_src(const char* const filename,
   CHECK_STATUS(ret);
 
   // Store the data:
-  // TODO Check if a source of this ID is already contained in the catalog.
+
+  // Check if a source of this ID is already contained in the catalog.
+  long row = simput_get_src_line(fptr, src_id, status);
+  CHECK_STATUS(ret);
+
+  // If the source is already contained in the catalog, create an 
+  // error message.
+  if (row>0) {
+    // ERRMSG
+    *status=EXIT_FAILURE;
+    CHECK_STATUS(*status);
+  }
 
   // Determine the current number of lines in the source catalog.
   long nrows;
@@ -161,6 +182,35 @@ int simput_add_src(const char* const filename,
   CHECK_STATUS(ret);
 
   return(*status);
+}
+
+
+
+static long simput_get_src_line(fitsfile* const fptr,
+				const long src_id,
+				int* const status)
+{
+  // Determine the column of the source ID.
+  int csrc_id;
+  int ret = fits_get_colnum(fptr, CASEINSEN, "SRC_ID", &csrc_id, status);
+  CHECK_STATUS(ret);
+  
+  // Determine the number of lines in the source catalog.
+  long nrows;
+  ret = fits_get_num_rows(fptr, &nrows, status);
+  CHECK_STATUS(ret);
+
+  long row, id, nulval=0;
+  int anynul=0;
+  for (row=1; row<=nrows; row++) {
+    ret = fits_read_col(fptr, TLONG, csrc_id, row, 1, 1, &nulval, 
+			&id, &anynul, status);
+    CHECK_STATUS(ret);
+
+    if (src_id==id) return(row);
+  }
+
+  return(0);
 }
 
 
