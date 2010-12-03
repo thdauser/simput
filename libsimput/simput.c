@@ -15,11 +15,28 @@
 #define N_SPEC_COLUMNS     (3)
 #define N_LIGHTCUR_COLUMNS (5)
 
-#define SIMPUT_ERROR(msg) fprintf(stderr, "Error in %s: %s!\n", __func__, msg)
-#define CHECK_STATUS(a) if (EXIT_SUCCESS!=a) return(a)
-#define CHECK_NULL(a,status,msg) if (NULL==a) { SIMPUT_ERROR(msg); status=EXIT_FAILURE; return(status); }
+
+/////////////////////////////////////////////////////////////////
+// Makros.
+/////////////////////////////////////////////////////////////////
+
+#define SIMPUT_ERROR(msg) \
+  fprintf(stderr, "Error in %s: %s!\n", __func__, msg)
+
+#define CHECK_STATUS(a) \
+  if (EXIT_SUCCESS!=a) return(a)
+
+#define CHECK_NULL(a,status,msg) \
+  if (NULL==a) { \
+    SIMPUT_ERROR(msg); \
+    status=EXIT_FAILURE; \
+    return(status);\
+  }
 
 
+/////////////////////////////////////////////////////////////////
+// Function Definitions.
+/////////////////////////////////////////////////////////////////
 
 int simput_add_src(const char* const filename,
 		   long src_id,
