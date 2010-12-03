@@ -23,10 +23,10 @@ int main()
     float e_min[] = { 0., 2., 5. };
     float e_max[] = { 2., 5., 10. };
     float flux_spec[]  = { 10., 5., 2. };
-    int hdunum_spec;
-    simput_store_spectrum(filename, 3,
+    int extver_spec;
+    simput_store_spectrum(filename, "SPECTRUM", 3,
 			  e_min, e_max, flux_spec,
-			  0., &hdunum_spec, &status);
+			  0., &extver_spec, &status);
     CHECK_STATUS(status);
 
     // Create a lightcurve and add it to the file.

@@ -34,12 +34,13 @@ int simput_add_src(const char* const filename,
 /** Store a flux density spectrum in the given file. If the file
     already exists, append a new table. */
 int simput_store_spectrum(const char* const filename,
+			  char* const extname,
 			  const long nbins,
 			  float* const e_min,
 			  float* const e_max,
 			  float* const flux,
 			  float phase,
-			  int* hdunum,
+			  int* extver,
 			  int* const status);
 
 /** Store a flux density spectrum in the given file. If the file
