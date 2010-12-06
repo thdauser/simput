@@ -57,5 +57,11 @@ int simput_store_lightcur(const char* const filename,
 			  int* hdunum,
 			  int* const status);
 
+/** Insert a reference to a spectrum into a specific source
+    description in the given source catalog. */
+int simput_add_spectrum(const char* const srcctlg_filename,
+			const long src_id,
+			const char* const spec_filename,
+			int* const status);
 
 #endif /* SIMPUT_H */

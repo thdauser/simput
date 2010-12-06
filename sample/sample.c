@@ -3,6 +3,8 @@
 
 #include "simput.h"
 
+#define MAXMSG (1024)
+
 #define CHECK_STATUS(a) if (EXIT_SUCCESS!=a) break
 
 int main()
@@ -27,6 +29,10 @@ int main()
     simput_store_spectrum(filename, "SPECTRUM", 3,
 			  e_min, e_max, flux_spec,
 			  0., &extver_spec, &status);
+    CHECK_STATUS(status);
+    char spec_filename[MAXMSG];
+    sprintf(spec_filename, "%s[%s, %d]", filename, "SPECTRUM", extver_spec);
+    simput_add_spectrum(filename, 1, spec_filename, &status);
     CHECK_STATUS(status);
 
     // Create a lightcurve and add it to the file.
