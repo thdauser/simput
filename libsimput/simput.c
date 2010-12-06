@@ -530,6 +530,8 @@ int simput_add_spectrum(const char* const srcctlg_filename,
 			int* const status)
 {
   SIMPUT_SrcCtlg* srcctlg=NULL;
+  fitsfile* gfptr=NULL;
+  fitsfile* mfptr=NULL;
   char* spectrum[1]={NULL};
   char* spec_ref[1]={NULL};
 
@@ -576,7 +578,7 @@ int simput_add_spectrum(const char* const srcctlg_filename,
     CHECK_STATUS_BREAK(*status);
 
     // Check if the spectrum column is empty.
-    if (strlen(spectrum[0])>0) {
+    if (0==strlen(spectrum[0])) {
       // Insert the reference to the new spectrum.
       fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum, 
 		     linenum, 1, 1, spec_ref, status);
@@ -584,10 +586,19 @@ int simput_add_spectrum(const char* const srcctlg_filename,
 
     } else {
       // Check if it is a real spectrum or a grouping table.
-      if (0==simput_is_grouping_table(spectrum[0], status)) {
+      int is_grouping = simput_is_grouping_table(spectrum[0], status);
+      CHECK_STATUS_BREAK(*status);
+      if (0==is_grouping) {
 	// It is a real spectrum => create a grouping table and add the
 	// previous reference to the new grouping table.
-	// TODO
+	fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
+	CHECK_STATUS_BREAK(*status);	
+	fits_create_group(gfptr, "SPECTRA", GT_ID_ALL_URI, status);
+	CHECK_STATUS_BREAK(*status);	
+	fits_open_file(&mfptr, spectrum[0], READWRITE, status);
+	CHECK_STATUS_BREAK(*status);
+	fits_add_group_member(gfptr, mfptr, 0, status);
+	CHECK_STATUS_BREAK(*status);	
       }
 
       // Add the new spectrum to the grouping table.
@@ -600,7 +611,9 @@ int simput_add_spectrum(const char* const srcctlg_filename,
   if (NULL!=spectrum[0]) free(spectrum[0]);
   if (NULL!=spec_ref[0]) free(spec_ref[0]);
 
-  // Close the source catalog.
+  // Close the FITS files.
+  if (NULL!=mfptr) fits_close_file(mfptr, status);
+  if (NULL!=gfptr) fits_close_file(gfptr, status);
   simput_destroy_srcctlg(&srcctlg, status);
   CHECK_STATUS(*status);
 

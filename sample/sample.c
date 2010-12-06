@@ -21,19 +21,35 @@ int main()
     		   "", "", "", &status);
     CHECK_STATUS(status);
 
+
     // Create a spectrum and add it to the file.
-    float e_min[] = { 0., 2., 5. };
-    float e_max[] = { 2., 5., 10. };
-    float flux_spec[]  = { 10., 5., 2. };
-    int extver_spec;
+    float spec1_e_min[] = { 0., 2., 5. };
+    float spec1_e_max[] = { 2., 5., 10. };
+    float spec1_flux[]  = { 10., 5., 2. };
+    int spec1_extver;
     simput_store_spectrum(filename, "SPECTRUM", 3,
-			  e_min, e_max, flux_spec,
-			  0., &extver_spec, &status);
+			  spec1_e_min, spec1_e_max, spec1_flux,
+			  0., &spec1_extver, &status);
     CHECK_STATUS(status);
-    char spec_filename[MAXMSG];
-    sprintf(spec_filename, "%s[%s, %d]", filename, "SPECTRUM", extver_spec);
-    simput_add_spectrum(filename, 1, spec_filename, &status);
+    // Create a 2nd spectrum and add it to the file.
+    float spec2_e_min[] = { 0., 3., 6. };
+    float spec2_e_max[] = { 3., 6., 10. };
+    float spec2_flux[]  = { 1., 4., 3. };
+    int spec2_extver;
+    simput_store_spectrum(filename, "SPECTRUM", 3,
+			  spec2_e_min, spec2_e_max, spec2_flux,
+			  0., &spec2_extver, &status);
     CHECK_STATUS(status);
+    // Assign the 2 spectra to the source.
+    char spec1_filename[MAXMSG];
+    sprintf(spec1_filename, "%s[%s, %d]", filename, "SPECTRUM", spec1_extver);
+    simput_add_spectrum(filename, 1, spec1_filename, &status);
+    CHECK_STATUS(status);
+    char spec2_filename[MAXMSG];
+    sprintf(spec2_filename, "%s[%s, %d]", filename, "SPECTRUM", spec2_extver);
+    simput_add_spectrum(filename, 1, spec2_filename, &status);
+    CHECK_STATUS(status);
+
 
     // Create a lightcurve and add it to the file.
     double time[] = { 0., 1., 2., 3., 4. };
