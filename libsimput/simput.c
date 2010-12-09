@@ -538,6 +538,7 @@ int simput_add_spectrum(const char* const srcctlg_filename,
   fitsfile* mfptr=NULL;
   char* spectrum[1]={NULL};
   char* spec_ref[1]={NULL};
+  char* grouping_ref[1]={NULL};
 
   // Error handling loop.
   do {
@@ -593,15 +594,16 @@ int simput_add_spectrum(const char* const srcctlg_filename,
 
     } else {
       
-      // Open the file containing the source catalog.
-      fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
-      CHECK_STATUS_BREAK(*status);
-
       // Check if it is a real spectrum or a grouping table.
       int is_grouping = simput_is_grouping_table(spectrum[0], status);
       CHECK_STATUS_BREAK(*status);
       if (0==is_grouping) {
 	// It is a real spectrum => create a grouping table.
+
+	// Open the file containing the source catalog.
+	fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
+	CHECK_STATUS_BREAK(*status);
+
 	fits_create_group(gfptr, "SPECTRA", GT_ID_ALL_URI, status);
 	CHECK_STATUS_BREAK(*status);	
 	fits_open_file(&mfptr, spectrum[0], READONLY, status);
@@ -614,12 +616,31 @@ int simput_add_spectrum(const char* const srcctlg_filename,
 
 	// Redirect the reference in the spectrum column of the source 
 	// catalog to the new grouping table.
-	// TODO
+	// Determine the EXTVER of the grouping table.
+	int extver=0;
+	char comment[MAXMSG];
+	fits_read_key(gfptr, TINT, "EXTVER", &extver, comment, status);
+	CHECK_STATUS_BREAK(*status);
+	// Store the reference to the grouping table.
+	grouping_ref[0]=(char*)malloc(MAXMSG*sizeof(char));
+	if (NULL==grouping_ref[0]) {
+	  // ERRMSG
+	  *status=EXIT_FAILURE;
+	  break;
+	}
+	simput_ext_id(grouping_ref[0], srcctlg_filename,
+		      "GROUPING", extver);
+	fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum, linenum, 
+		       1, 1, grouping_ref, status);
+	CHECK_STATUS_BREAK(*status);
+
       } else {
 	// The grouping table already exists => move the
 	// FITS file pointer to it.
-	// TODO Unique identification of the grouping table??
-	
+	// Open the file containing the grouping table.
+	fits_open_file(&gfptr, spectrum[0], READWRITE, status);
+	CHECK_STATUS_BREAK(*status);
+
       }
 
       // Add the new spectrum to the grouping table.
@@ -642,6 +663,7 @@ int simput_add_spectrum(const char* const srcctlg_filename,
 
   if (NULL!=spectrum[0]) free(spectrum[0]);
   if (NULL!=spec_ref[0]) free(spec_ref[0]);
+  if (NULL!=grouping_ref[0]) free(grouping_ref[0]);
 
   // Close the FITS files.
   if (NULL!=mfptr) fits_close_file(mfptr, status);
