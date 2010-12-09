@@ -95,6 +95,10 @@ static long simput_get_src_linenum(SIMPUT_SrcCtlg* const srcctlg,
 				   const long src_id,
 				   int* const status);
 
+/** Remove whitespace signs at the beginning and at the end of a
+    string. */
+static void simput_strtrim(char* const str);
+
 /////////////////////////////////////////////////////////////////
 // Function Definitions.
 /////////////////////////////////////////////////////////////////
@@ -577,6 +581,9 @@ int simput_add_spectrum(const char* const srcctlg_filename,
 		  status);
     CHECK_STATUS_BREAK(*status);
 
+    // Remove blank signs from string.
+    simput_strtrim(spectrum[0]);
+
     // Check if the spectrum column is empty.
     if (0==strlen(spectrum[0])) {
       // Insert the reference to the new spectrum.
@@ -585,24 +592,49 @@ int simput_add_spectrum(const char* const srcctlg_filename,
       CHECK_STATUS_BREAK(*status);
 
     } else {
+      
+      // Open the file containing the source catalog.
+      fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
+      CHECK_STATUS_BREAK(*status);
+
       // Check if it is a real spectrum or a grouping table.
       int is_grouping = simput_is_grouping_table(spectrum[0], status);
       CHECK_STATUS_BREAK(*status);
       if (0==is_grouping) {
-	// It is a real spectrum => create a grouping table and add the
-	// previous reference to the new grouping table.
-	fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
-	CHECK_STATUS_BREAK(*status);	
+	// It is a real spectrum => create a grouping table.
 	fits_create_group(gfptr, "SPECTRA", GT_ID_ALL_URI, status);
 	CHECK_STATUS_BREAK(*status);	
-	fits_open_file(&mfptr, spectrum[0], READWRITE, status);
+	fits_open_file(&mfptr, spectrum[0], READONLY, status);
 	CHECK_STATUS_BREAK(*status);
 	fits_add_group_member(gfptr, mfptr, 0, status);
-	CHECK_STATUS_BREAK(*status);	
+	CHECK_STATUS_BREAK(*status);
+	fits_close_file(mfptr, status);
+	CHECK_STATUS_BREAK(*status);
+	mfptr=NULL;
+
+	// Redirect the reference in the spectrum column of the source 
+	// catalog to the new grouping table.
+	// TODO
+      } else {
+	// The grouping table already exists => move the
+	// FITS file pointer to it.
+	// TODO Unique identification of the grouping table??
+	
       }
 
       // Add the new spectrum to the grouping table.
-      // TODO
+      fits_open_file(&mfptr, spec_ref[0], READONLY, status);
+      CHECK_STATUS_BREAK(*status);
+      fits_add_group_member(gfptr, mfptr, 0, status);
+      CHECK_STATUS_BREAK(*status);
+      fits_close_file(mfptr, status);
+      CHECK_STATUS_BREAK(*status);
+      mfptr=NULL;
+
+      // Close the FITS file with the source catalog.
+      fits_close_file(gfptr, status);
+      CHECK_STATUS_BREAK(*status);
+      gfptr=NULL;
     }
     // END of check whether spectrum column is empty.
 
@@ -718,4 +750,29 @@ static int simput_is_grouping_table(const char* const filename,
 
   return(is_grouping);
 }
+
+
+
+static void simput_strtrim(char* const str)
+{
+  char* start=str;
+  while ((strlen(start)>0)&&(start[0]==' ')) {
+    start++;
+  }
+
+  int len = strlen(start);
+  while ((len>0)&&(start[len-1]==' ')) {
+    len--;
+  }
+
+  assert(len>=0);
+  
+  char buffer[MAXMSG];
+  // Copy len+1 characters to the buffer (the "+1" ensures that
+  // that the string termination sign is also copied.
+  strncpy(buffer, start, len+1);
+  strcpy(str, buffer);
+}
+
+
 
