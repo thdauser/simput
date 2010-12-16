@@ -103,6 +103,10 @@ static void simput_strtrim(char* const str);
     extension. */
 static int simput_check_if_spectrum(const char* const filename);
 
+/** Check if the HDU referred to by filename is a light curve
+    extension. */
+static int simput_check_if_lightcur(const char* const filename);
+
 /////////////////////////////////////////////////////////////////
 // Function Definitions.
 /////////////////////////////////////////////////////////////////
@@ -340,6 +344,7 @@ void simput_store_spectrum(const char* const filename,
 
 
 void simput_store_lightcur(const char* const filename, 
+			   char* const extname,
 			   const long nbins,
 			   double* const time, 
 			   float* const phase, 
@@ -348,7 +353,7 @@ void simput_store_lightcur(const char* const filename,
 			   float* const pol_dir, 
 			   float e_min, 
 			   float e_max,
-			   int* hdunum, 
+			   int* extver, 
 			   int* const status) 
 {
   fitsfile* fptr = NULL;
@@ -370,7 +375,30 @@ void simput_store_lightcur(const char* const filename,
   }
   // END of check, whether the file already exists or not.
 
-  // Create a new table for the spectrum.
+  // Check if a particular name is specified for the new extension.
+  char extname2[MAXMSG];
+  if (NULL == extname) {
+    // If no explicit exname is given, use the default value "LIGHTCUR".
+    strcpy(extname2, "LIGHTCUR");
+  } else {
+    strcpy(extname2, extname);
+  }
+  
+  // Check if the FITS file already contains an extension with
+  // the same EXTNAME. Find a new unique EXTVER for the new
+  // extension.
+  *extver=0;
+  fits_write_errmark();
+  int temp_status;
+  do {
+    temp_status = EXIT_SUCCESS; // We have to use another status variable here.
+    (*extver)++;
+    fits_movnam_hdu(fptr, BINARY_TBL, extname2, *extver, &temp_status);
+  } while (BAD_HDU_NUM != temp_status);
+  fits_clear_errmark();
+
+  // Create a new table for the light curve with a unique
+  // EXTNAME and EXTVER combination..
   char *ttype[N_LIGHTCUR_COLUMNS];
   char *tform[N_LIGHTCUR_COLUMNS];
   char *tunit[N_LIGHTCUR_COLUMNS];
@@ -404,9 +432,12 @@ void simput_store_lightcur(const char* const filename,
     ncolumns++;
   }
   fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns, ttype, tform, tunit,
-		  "LIGHTCUR", status);
+		  extname2, status);
   CHECK_STATUS_VOID(*status);
-  
+  fits_update_key(fptr, TINT, "EXTVER", extver, "extension identifier",
+		  status);
+  CHECK_STATUS_VOID(*status);
+
   // Insert header keywords.
   fits_update_key(fptr, TFLOAT, "E_MIN", &e_min,
 		  "lower value of the reference energy band", status);
@@ -449,9 +480,6 @@ void simput_store_lightcur(const char* const filename,
     CHECK_STATUS_VOID(*status);
   }
   
-  // Store the HDU number of the new extension.
-  *hdunum = fits_get_hdu_num(fptr, hdunum);
-	
   // Close the file.
   fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
@@ -849,4 +877,144 @@ static int simput_check_if_spectrum(const char* const filename)
     return(0);
   }
 }
+
+
+
+void simput_add_lightcur(const char* const srcctlg_filename,
+			 const long src_id,
+			 const char* const lc_filename,
+			 int* const status)
+{
+  SIMPUT_SrcCtlg* srcctlg=NULL;
+  fitsfile* mfptr=NULL;
+  char* table_entry[1]={NULL};
+  char* reference_string[1]={NULL};
+
+  // Error handling loop.
+  do {
+    // Open the source catalog.
+    srcctlg=simput_open_existing_srcctlg(srcctlg_filename, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Check if lc_filename already points to the appropriate HDU.
+    // If not, determine an appropriate reference to the light curve.
+
+    // Reference to the light curve FITS extension.
+    reference_string[0]=(char*)malloc(MAXMSG*sizeof(char));
+    if (NULL==reference_string[0]) {
+      // ERRMSG
+      *status=EXIT_FAILURE;
+      break;
+    }
+    fits_open_file(&mfptr, lc_filename, READONLY, status);
+    CHECK_STATUS_BREAK(*status);
+    // Check if mfptr points to a light curve extension.
+    if (1==simput_check_if_lightcur(lc_filename)) {
+      // If yes, we can use the input filename directly as a 
+      // reference string.
+      strcpy(reference_string[0], lc_filename);
+    } else {
+      // If no, try to move to the second HDU after the primary
+      // extension, and check whether this is a light curve.
+      int hdutype;
+      fits_movabs_hdu(mfptr, 2, &hdutype, status);
+      CHECK_STATUS_BREAK(*status);
+      // Check if this is now a light curve.
+      if (1==simput_check_if_lightcur(lc_filename)) {
+	// Determine the EXTNAME and EXTVER keywords.
+	char extname[MAXMSG];
+	char comment[MAXMSG];
+	int extver;
+	fits_read_key(mfptr, TSTRING, "EXTNAME", extname, comment, status);
+	CHECK_STATUS_BREAK(*status);
+	fits_read_key(mfptr, TINT, "EXTVER", &extver, comment, status);
+	CHECK_STATUS_BREAK(*status);
+	simput_ext_id(reference_string[0], lc_filename,
+		      extname, extver);
+      } else {
+	// No valid light curve found!
+	// ERRMSG
+	*status=EXIT_FAILURE;
+	break;
+      }
+    }
+    // End of check if lc_filename points to a light curve HDU.
+    fits_close_file(mfptr, status);
+    CHECK_STATUS_BREAK(*status);
+    mfptr=NULL;
+
+
+    // Find the row number of the desired source in the source catalog.
+    long linenum = simput_get_src_linenum(srcctlg, src_id, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Read the content of the LIGHTCUR column.
+    table_entry[0]=(char*)malloc(MAXMSG*sizeof(char));
+    if (NULL==table_entry[0]) {
+      // ERRMSG
+      *status=EXIT_FAILURE;
+      break;
+    }
+    int anynul=0;
+    fits_read_col(srcctlg->fptr, TSTRING, srcctlg->clightcur,
+		  linenum, 1, 1, "", table_entry, &anynul,
+		  status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Remove blank signs from string.
+    simput_strtrim(table_entry[0]);
+
+    // Insert the reference to the new light curve.
+    fits_write_col(srcctlg->fptr, TSTRING, srcctlg->clightcur, 
+		   linenum, 1, 1, reference_string, status);
+    CHECK_STATUS_BREAK(*status);
+    
+    // NOTE: If the LIGHTCUR colum already contains a reference to a 
+    // light curve, the old value is overwritten, since unlike the 
+    // SPECTRUM or IMAGE columns the LIGHTCUR column may not
+    // reference to a grouping table and cannot contain several
+    // light curves for the same source.
+
+
+  } while(0); // End of Error handling loop.
+
+  if (NULL!=table_entry[0]) free(table_entry[0]);
+  if (NULL!=reference_string[0]) free(reference_string[0]);
+
+  // Close the FITS files.
+  if (NULL!=mfptr) fits_close_file(mfptr, status);
+  simput_destroy_srcctlg(&srcctlg, status);
+  CHECK_STATUS_VOID(*status);
+}
+
+
+
+static int simput_check_if_lightcur(const char* const filename)
+{
+  // Check if this is a binary table.
+  int status = EXIT_SUCCESS;
+  fitsfile* fptr=NULL;
+  char xtension[MAXMSG]={""};
+
+  fits_write_errmark();
+
+  do { // Beginning of error handling loop.
+    fits_open_file(&fptr, filename, READONLY, &status);
+    CHECK_STATUS_BREAK(status);
+
+    char comment[MAXMSG];
+    fits_read_key(fptr, TSTRING, "XTENSION", xtension, comment, &status);
+
+  } while (0); // END of error handling loop.
+
+  if (NULL!=fptr) fits_close_file(fptr, &status);
+  fits_clear_errmark();
+
+  if ((EXIT_SUCCESS==status) && (0==strcmp("BINTABLE", xtension))) {
+    return(1);
+  } else {
+    return(0);
+  }
+}
+
 

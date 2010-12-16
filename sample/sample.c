@@ -52,7 +52,7 @@ int main()
 			  spec3_e_min, spec3_e_max, spec3_flux,
 			  0., &spec3_extver, &status);
     CHECK_STATUS(status);
-    // Assign the 2 spectra to the source.
+    // Assign the 3 spectra to the source.
     char spec_filename[MAXMSG];
     sprintf(spec_filename, "%s[%s, %d]", filename, "SPECTRUM", spec1_extver);
     simput_add_spectrum(filename, 1, spec_filename, &status);
@@ -68,11 +68,16 @@ int main()
     // Create a lightcurve and add it to the file.
     double time[] = { 0., 1., 2., 3., 4. };
     float flux_lc[] = { 0.8, 0.7, 1.0, 1.2, 1.0 };
-    int hdunum_lc;
-    simput_store_lightcur(filename, 5,
+    int lc_extver;
+    simput_store_lightcur(filename, "LIGHTCUR", 5,
 			  time, NULL, flux_lc, NULL, NULL,
 			  1., 10.,
-			  &hdunum_lc, &status);
+			  &lc_extver, &status);
+    CHECK_STATUS(status);
+    // Assign the light curve to the source.
+    char lc_filename[MAXMSG];
+    sprintf(lc_filename, "%s[%s, %d]", filename, "LIGHTCUR", lc_extver);
+    simput_add_lightcur(filename, 1, lc_filename, &status);
     CHECK_STATUS(status);
 
   } while(0); // END of error handling loop.
