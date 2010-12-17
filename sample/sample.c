@@ -13,12 +13,14 @@ int main()
 
   do { // Error handling loop.
 
-    // Create a source catalog with a single source linked to the
-    // spectrum and the light curve.
+    // Create a source catalog with 2 sources.
     const char filename[] = "simput.fits";
     remove(filename);
     simput_add_src(filename, 1, "myPOINTSOURCE",
     		   0., 0., 1.e-10, 1., 10.,
+    		   "", "", "", &status);
+    simput_add_src(filename, 2, "2ndPOINTSOURCE",
+    		   1., 1.5, 2.5e-9, 1.5, 9.5,
     		   "", "", "", &status);
     CHECK_STATUS(status);
 
@@ -52,7 +54,7 @@ int main()
 			  spec3_e_min, spec3_e_max, spec3_flux,
 			  0., &spec3_extver, &status);
     CHECK_STATUS(status);
-    // Assign the 3 spectra to the source.
+    // Assign the 3 spectra to the 1st source.
     char spec_filename[MAXMSG];
     sprintf(spec_filename, "%s[%s, %d]", filename, "SPECTRUM", spec1_extver);
     simput_add_spectrum(filename, 1, spec_filename, &status);
@@ -62,6 +64,10 @@ int main()
     CHECK_STATUS(status);
     sprintf(spec_filename, "%s[%s, %d]", spec3_filename, "SPECTRUM", spec3_extver);
     simput_add_spectrum(filename, 1, spec_filename, &status);
+    CHECK_STATUS(status);
+    // Assign the 3rd spectrum also to the 2nd source.
+    sprintf(spec_filename, "%s[%s, %d]", spec3_filename, "SPECTRUM", spec3_extver);
+    simput_add_spectrum(filename, 2, spec_filename, &status);
     CHECK_STATUS(status);
 
 
@@ -73,17 +79,17 @@ int main()
 			  time, NULL, flux_lc, NULL, NULL,
 			  1., 10., &lc_extver, &status);
     CHECK_STATUS(status);
-    // Assign the light curve to the source.
+    // Assign the light curve to the 1st source.
     char lc_filename[MAXMSG];
     sprintf(lc_filename, "%s[%s, %d]", filename, "LIGHTCUR", lc_extver);
     simput_add_lightcur(filename, 1, lc_filename, &status);
     CHECK_STATUS(status);
 
     
-    // Assign source images to the source.
-    simput_add_image(filename, 1, "image1.fits", &status);
+    // Assign source images to the 2nd source.
+    simput_add_image(filename, 2, "image1.fits", &status);
     CHECK_STATUS(status);
-    simput_add_image(filename, 1, "image2.fits", &status);
+    simput_add_image(filename, 2, "image2.fits", &status);
     CHECK_STATUS(status);
 
     // TODO Create a second source.
