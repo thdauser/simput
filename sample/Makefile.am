@@ -6,7 +6,7 @@ AM_CFLAGS += -Wall
 
 # The following line lists the programs that should be created and stored
 # in the 'bin' directory.
-bin_PROGRAMS = sample
+noinst_PROGRAMS = sample
 
 sample_SOURCES = sample.c
 sample_LDADD  = @top_builddir@/libsimput/libsimput.la

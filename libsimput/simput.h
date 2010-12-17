@@ -59,7 +59,7 @@ void simput_store_lightcur(const char* const filename,
 			   int* const status);
 
 /** Insert a reference to a spectrum into a specific source
-    description line in the given source catalog. If the source
+    description line in the source catalog. If the source
     specification already contains a spectrum, combine the references
     to all the individual spectra in a grouping table. */
 void simput_add_spectrum(const char* const srcctlg_filename,
@@ -68,10 +68,17 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 			 int* const status);
 
 /** Insert a reference to a light curve into a specific source
-    description line in the given source catalog. */
+    description line in the source catalog. */
 void simput_add_lightcur(const char* const srcctlg_filename,
 			 const long src_id,
 			 const char* const lc_filename,
 			 int* const status);
+
+/** Insert a reference to a source image into a specific source
+    description line in the source catalog. */
+void simput_add_image(const char* const srcctlg_filename,
+		      const long src_id,
+		      const char* const img_filename,
+		      int* const status);
 
 #endif /* SIMPUT_H */

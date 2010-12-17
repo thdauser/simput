@@ -71,14 +71,22 @@ int main()
     int lc_extver;
     simput_store_lightcur(filename, "LIGHTCUR", 5,
 			  time, NULL, flux_lc, NULL, NULL,
-			  1., 10.,
-			  &lc_extver, &status);
+			  1., 10., &lc_extver, &status);
     CHECK_STATUS(status);
     // Assign the light curve to the source.
     char lc_filename[MAXMSG];
     sprintf(lc_filename, "%s[%s, %d]", filename, "LIGHTCUR", lc_extver);
     simput_add_lightcur(filename, 1, lc_filename, &status);
     CHECK_STATUS(status);
+
+    
+    // Assign source images to the source.
+    simput_add_image(filename, 1, "image1.fits", &status);
+    CHECK_STATUS(status);
+    simput_add_image(filename, 1, "image2.fits", &status);
+    CHECK_STATUS(status);
+
+    // TODO Create a second source.
 
   } while(0); // END of error handling loop.
 

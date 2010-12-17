@@ -101,11 +101,22 @@ static void simput_strtrim(char* const str);
 
 /** Check if the HDU referred to by filename is a spectrum
     extension. */
-static int simput_check_if_spectrum(const char* const filename);
+static int simput_check_if_spectrum(const char* const filename,
+				    int* const status);
 
 /** Check if the HDU referred to by filename is a light curve
     extension. */
-static int simput_check_if_lightcur(const char* const filename);
+static int simput_check_if_lightcur(const char* const filename,
+				    int* const status);
+
+/** Check if the HDU referred to by filename is an image extension. */
+static int simput_check_if_image(const char* const filename,
+				 int* const status);
+
+/** Check if the HDU referred to by filename is a binary table
+    extension. */
+static int simput_check_if_btbl(const char* const filename,
+				int* const status);
 
 /////////////////////////////////////////////////////////////////
 // Function Definitions.
@@ -584,7 +595,9 @@ void simput_add_spectrum(const char* const srcctlg_filename,
     fits_open_file(&mfptr, spec_filename, READONLY, status);
     CHECK_STATUS_BREAK(*status);
     // Check if mfptr points to a spectrum extension.
-    if (1==simput_check_if_spectrum(spec_filename)) {
+    int is_spectrum = simput_check_if_spectrum(spec_filename, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==is_spectrum) {
       // If yes, we can use the input filename directly as a 
       // reference string.
       strcpy(reference_string[0], spec_filename);
@@ -595,7 +608,9 @@ void simput_add_spectrum(const char* const srcctlg_filename,
       fits_movabs_hdu(mfptr, 2, &hdutype, status);
       CHECK_STATUS_BREAK(*status);
       // Check if this is now a spectrum.
-      if (1==simput_check_if_spectrum(spec_filename)) {
+      is_spectrum = simput_check_if_spectrum(spec_filename, status);
+      CHECK_STATUS_BREAK(*status);
+      if (1==is_spectrum) {
 	// Determine the EXTNAME and EXTVER keywords.
 	char extname[MAXMSG];
 	char comment[MAXMSG];
@@ -648,11 +663,11 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 
     } else {
       
-      // Check if it is a real spectrum or a grouping table.
+      // Check if it is really a spectrum or a grouping table.
       int is_grouping = simput_is_grouping_table(table_entry[0], status);
       CHECK_STATUS_BREAK(*status);
       if (0==is_grouping) {
-	// It is a real spectrum => create a grouping table.
+	// It is already a spectrum => create a grouping table.
 
 	// Open the file containing the source catalog.
 	fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
@@ -694,7 +709,6 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 	// Open the file containing the grouping table.
 	fits_open_file(&gfptr, table_entry[0], READWRITE, status);
 	CHECK_STATUS_BREAK(*status);
-
       }
 
       // Add the new spectrum to the grouping table.
@@ -850,32 +864,11 @@ static void simput_strtrim(char* const str)
 
 
 
-static int simput_check_if_spectrum(const char* const filename)
+static int simput_check_if_spectrum(const char* const filename,
+				    int* const status)
 {
   // Check if this is a binary table.
-  int status = EXIT_SUCCESS;
-  fitsfile* fptr=NULL;
-  char xtension[MAXMSG]={""};
-
-  fits_write_errmark();
-
-  do { // Beginning of error handling loop.
-    fits_open_file(&fptr, filename, READONLY, &status);
-    CHECK_STATUS_BREAK(status);
-
-    char comment[MAXMSG];
-    fits_read_key(fptr, TSTRING, "XTENSION", xtension, comment, &status);
-
-  } while (0); // END of error handling loop.
-
-  if (NULL!=fptr) fits_close_file(fptr, &status);
-  fits_clear_errmark();
-
-  if ((EXIT_SUCCESS==status) && (0==strcmp("BINTABLE", xtension))) {
-    return(1);
-  } else {
-    return(0);
-  }
+  return(simput_check_if_btbl(filename, status));
 }
 
 
@@ -909,7 +902,9 @@ void simput_add_lightcur(const char* const srcctlg_filename,
     fits_open_file(&mfptr, lc_filename, READONLY, status);
     CHECK_STATUS_BREAK(*status);
     // Check if mfptr points to a light curve extension.
-    if (1==simput_check_if_lightcur(lc_filename)) {
+    int is_lc = simput_check_if_lightcur(lc_filename, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==is_lc) {
       // If yes, we can use the input filename directly as a 
       // reference string.
       strcpy(reference_string[0], lc_filename);
@@ -920,7 +915,9 @@ void simput_add_lightcur(const char* const srcctlg_filename,
       fits_movabs_hdu(mfptr, 2, &hdutype, status);
       CHECK_STATUS_BREAK(*status);
       // Check if this is now a light curve.
-      if (1==simput_check_if_lightcur(lc_filename)) {
+      is_lc = simput_check_if_lightcur(lc_filename, status);
+      CHECK_STATUS_BREAK(*status);
+      if (1==is_lc) {
 	// Determine the EXTNAME and EXTVER keywords.
 	char extname[MAXMSG];
 	char comment[MAXMSG];
@@ -989,32 +986,223 @@ void simput_add_lightcur(const char* const srcctlg_filename,
 
 
 
-static int simput_check_if_lightcur(const char* const filename)
+static int simput_check_if_lightcur(const char* const filename,
+				    int* const status)
 {
   // Check if this is a binary table.
-  int status = EXIT_SUCCESS;
-  fitsfile* fptr=NULL;
-  char xtension[MAXMSG]={""};
+  return(simput_check_if_btbl(filename, status));
+}
 
-  fits_write_errmark();
+
+
+void simput_add_image(const char* const srcctlg_filename,
+		      const long src_id,
+		      const char* const img_filename,
+		      int* const status)
+{
+  SIMPUT_SrcCtlg* srcctlg=NULL;
+  fitsfile* gfptr=NULL;
+  fitsfile* mfptr=NULL;
+  char* table_entry[1]={NULL};
+  char* reference_string[1]={NULL};
+  char* grouping_ref[1]={NULL};
+
+  // Error handling loop.
+  do {
+    // Open the source catalog.
+    srcctlg=simput_open_existing_srcctlg(srcctlg_filename, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Check if img_filename already points to the appropriate HDU.
+    // If not, determine an appropriate reference to the source image.
+
+    // Reference to the image FITS extension.
+    reference_string[0]=(char*)malloc(MAXMSG*sizeof(char));
+    if (NULL==reference_string[0]) {
+      // ERRMSG
+      *status=EXIT_FAILURE;
+      break;
+    }
+    fits_open_file(&mfptr, img_filename, READONLY, status);
+    CHECK_STATUS_BREAK(*status);
+    // Check if mfptr points to an image extension.
+    int is_img = simput_check_if_image(img_filename, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==is_img) {
+      // If yes, we can use the input filename directly as a 
+      // reference string.
+      strcpy(reference_string[0], img_filename);
+    } else {
+      // No valid source image found!
+      // ERRMSG
+      *status=EXIT_FAILURE;
+      break;
+    }
+    // End of check if img_filename points to an image HDU.
+    fits_close_file(mfptr, status);
+    CHECK_STATUS_BREAK(*status);
+    mfptr=NULL;
+
+
+    // Find the row number of the desired source in the source catalog.
+    long linenum = simput_get_src_linenum(srcctlg, src_id, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Read the content of the IMAGE column.
+    table_entry[0]=(char*)malloc(MAXMSG*sizeof(char));
+    if (NULL==table_entry[0]) {
+      // ERRMSG
+      *status=EXIT_FAILURE;
+      break;
+    }
+    int anynul=0;
+    fits_read_col(srcctlg->fptr, TSTRING, srcctlg->cimage,
+		  linenum, 1, 1, "", table_entry, &anynul,
+		  status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Remove blank signs from string.
+    simput_strtrim(table_entry[0]);
+
+    // Check if the IMAGE column is empty.
+    if (0==strlen(table_entry[0])) {
+      // Insert the reference to the new source image.
+      fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cimage, 
+		     linenum, 1, 1, reference_string, status);
+      CHECK_STATUS_BREAK(*status);
+
+    } else {
+      
+      // Check if it is really a source image or a grouping table.
+      int is_grouping = simput_is_grouping_table(table_entry[0], status);
+      CHECK_STATUS_BREAK(*status);
+      if (0==is_grouping) {
+	// It is already a source image => create a grouping table.
+
+	// Open the file containing the source catalog.
+	fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
+	CHECK_STATUS_BREAK(*status);
+
+	fits_create_group(gfptr, "IMAGES", GT_ID_ALL_URI, status);
+	CHECK_STATUS_BREAK(*status);	
+	fits_open_file(&mfptr, table_entry[0], READONLY, status);
+	CHECK_STATUS_BREAK(*status);
+	fits_add_group_member(gfptr, mfptr, 0, status);
+	CHECK_STATUS_BREAK(*status);
+	fits_close_file(mfptr, status);
+	CHECK_STATUS_BREAK(*status);
+	mfptr=NULL;
+
+	// Redirect the reference in the IMAGE column of the source 
+	// catalog to the new grouping table.
+	// Determine the EXTVER of the grouping table.
+	int extver=0;
+	char comment[MAXMSG];
+	fits_read_key(gfptr, TINT, "EXTVER", &extver, comment, status);
+	CHECK_STATUS_BREAK(*status);
+	// Store the reference to the grouping table in the source catalog.
+	grouping_ref[0]=(char*)malloc(MAXMSG*sizeof(char));
+	if (NULL==grouping_ref[0]) {
+	  // ERRMSG
+	  *status=EXIT_FAILURE;
+	  break;
+	}
+	simput_ext_id(grouping_ref[0], srcctlg_filename,
+		      "GROUPING", extver);
+	fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cimage, linenum, 
+		       1, 1, grouping_ref, status);
+	CHECK_STATUS_BREAK(*status);
+
+      } else {
+	// The grouping table already exists => move the
+	// FITS file pointer to it.
+	// Open the file containing the grouping table.
+	fits_open_file(&gfptr, table_entry[0], READWRITE, status);
+	CHECK_STATUS_BREAK(*status);
+      }
+
+      // Add the new source image to the grouping table.
+      fits_open_file(&mfptr, reference_string[0], READONLY, status);
+      CHECK_STATUS_BREAK(*status);
+      fits_add_group_member(gfptr, mfptr, 0, status);
+      CHECK_STATUS_BREAK(*status);
+      fits_close_file(mfptr, status);
+      CHECK_STATUS_BREAK(*status);
+      mfptr=NULL;
+
+      // Close the FITS file with the grouping table.
+      fits_close_file(gfptr, status);
+      CHECK_STATUS_BREAK(*status);
+      gfptr=NULL;
+    }
+    // END of check whether IMAGE column is empty.
+
+  } while(0); // End of Error handling loop.
+
+  if (NULL!=table_entry[0]) free(table_entry[0]);
+  if (NULL!=reference_string[0]) free(reference_string[0]);
+  if (NULL!=grouping_ref[0]) free(grouping_ref[0]);
+
+  // Close the FITS files.
+  if (NULL!=mfptr) fits_close_file(mfptr, status);
+  if (NULL!=gfptr) fits_close_file(gfptr, status);
+  simput_destroy_srcctlg(&srcctlg, status);
+  CHECK_STATUS_VOID(*status);
+}
+
+
+
+static int simput_check_if_image(const char* const filename,
+				 int* const status)
+{
+  // Check if this is a FITS image.
+  fitsfile* fptr=NULL;
+  int hdutype;
 
   do { // Beginning of error handling loop.
-    fits_open_file(&fptr, filename, READONLY, &status);
-    CHECK_STATUS_BREAK(status);
 
-    char comment[MAXMSG];
-    fits_read_key(fptr, TSTRING, "XTENSION", xtension, comment, &status);
+    fits_open_file(&fptr, filename, READONLY, status);
+    CHECK_STATUS_BREAK(*status);
+    
+    fits_get_hdu_type(fptr, &hdutype, status);
+    CHECK_STATUS_BREAK(*status);
 
   } while (0); // END of error handling loop.
 
-  if (NULL!=fptr) fits_close_file(fptr, &status);
-  fits_clear_errmark();
+  if (NULL!=fptr) fits_close_file(fptr, status);
 
-  if ((EXIT_SUCCESS==status) && (0==strcmp("BINTABLE", xtension))) {
+  if (IMAGE_HDU==hdutype) {
     return(1);
   } else {
     return(0);
   }
 }
 
+
+
+static int simput_check_if_btbl(const char* const filename,
+				int* const status)
+{
+  // Check if this is a FITS image.
+  fitsfile* fptr=NULL;
+  int hdutype;
+
+  do { // Beginning of error handling loop.
+
+    fits_open_file(&fptr, filename, READONLY, status);
+    CHECK_STATUS_BREAK(*status);
+    
+    fits_get_hdu_type(fptr, &hdutype, status);
+    CHECK_STATUS_BREAK(*status);
+
+  } while (0); // END of error handling loop.
+
+  if (NULL!=fptr) fits_close_file(fptr, status);
+
+  if (BINARY_TBL==hdutype) {
+    return(1);
+  } else {
+    return(0);
+  }
+}
 
