@@ -720,6 +720,10 @@ void simput_add_spectrum(const char* const srcctlg_filename,
       CHECK_STATUS_BREAK(*status);
       mfptr=NULL;
 
+      // TODO RM
+      //fits_open_member(gfptr, 1, &mfptr, status);
+      //CHECK_STATUS_BREAK(*status);
+      
       // Close the FITS file with the source catalog.
       fits_close_file(gfptr, status);
       CHECK_STATUS_BREAK(*status);
