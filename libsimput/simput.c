@@ -208,9 +208,10 @@ void simput_add_src(const char* const filename,
   // If the source is already contained in the catalog, create an
   // error message.
   if (row > 0) {
-    // ERRMSG
     *status = EXIT_FAILURE;
-    CHECK_STATUS_VOID(*status);
+    SIMPUT_ERROR("source is already contained in the catalog "
+		 "(ID must be unique)");
+    return;
   }
 
   // Determine the current number of lines in the source catalog.
@@ -539,8 +540,10 @@ static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
   
   if (1 != exists) {
     // If no, break with an error message.
-    // ERRMSG
     *status=EXIT_FAILURE;
+    char message[MAXMSG];
+    sprintf(message, "the specified file '%s' does not exist", filename);
+    SIMPUT_ERROR(message);
     return(srcctlg);
   }
   
@@ -562,13 +565,18 @@ static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
   if (BAD_HDU_NUM == temp_status) {
     // The FITS file does not contain a source catalog.
     // Therefore break with an error message.
-    // ERRMSG
     *status=EXIT_FAILURE;
+    char message[MAXMSG];
+    sprintf(message, 
+	    "the specified file '%s' does not contain a source catalog",
+	    filename);
+    SIMPUT_ERROR(message);
     return(srcctlg);
   }
   
   // Determine the column numbers.
   simput_get_srcctlg_colnums(srcctlg, status);
+  CHECK_STATUS_RET(*status, srcctlg);
 
   return(srcctlg);
 }
@@ -630,8 +638,12 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 		      extname, extver);
       } else {
 	// No valid spectrum found!
-	// ERRMSG
 	*status=EXIT_FAILURE;
+	char message[MAXMSG];
+	sprintf(message, 
+		"the specified file '%s' does not contain a source spectrum",
+		spec_filename);
+	SIMPUT_ERROR(message);
 	break;
       }
     }
@@ -934,8 +946,12 @@ void simput_add_lightcur(const char* const srcctlg_filename,
 		      extname, extver);
       } else {
 	// No valid light curve found!
-	// ERRMSG
 	*status=EXIT_FAILURE;
+	char message[MAXMSG];
+	sprintf(message, 
+		"the specified file '%s' does not contain a light curve",
+		lc_filename);
+	SIMPUT_ERROR(message);
 	break;
       }
     }
@@ -1031,8 +1047,12 @@ void simput_add_image(const char* const srcctlg_filename,
       strcpy(reference_string[0], img_filename);
     } else {
       // No valid source image found!
-      // ERRMSG
       *status=EXIT_FAILURE;
+      char message[MAXMSG];
+      sprintf(message, 
+	      "the specified file '%s' does not contain a source image",
+	      img_filename);
+      SIMPUT_ERROR(message);
       break;
     }
     // End of check if img_filename points to an image HDU.
