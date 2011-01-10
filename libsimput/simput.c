@@ -46,14 +46,25 @@ typedef struct {
 #define CHECK_STATUS_BREAK(a) \
   if (EXIT_SUCCESS!=a) break;
 
-#define CHECK_STATUS(a) \
-  CHECK_STATUS_RET(a,a)
-
-#define CHECK_NULL(a,status,msg,ret) \
+#define CHECK_NULL_RET(a,status,msg,ret) \
   if (NULL==a) { \
     SIMPUT_ERROR(msg); \
     status=EXIT_FAILURE; \
     return(ret);\
+  }
+
+#define CHECK_NULL_VOID(a,status,msg) \
+  if (NULL==a) { \
+    SIMPUT_ERROR(msg); \
+    status=EXIT_FAILURE; \
+    return;\
+  }
+
+#define CHECK_NULL_BREAK(a,status,msg) \
+  if (NULL==a) { \
+    SIMPUT_ERROR(msg); \
+    status=EXIT_FAILURE; \
+    break;\
   }
 
 /////////////////////////////////////////////////////////////////
@@ -197,9 +208,10 @@ void simput_add_src(const char* const filename,
   // If the source is already contained in the catalog, create an
   // error message.
   if (row > 0) {
-    // ERRMSG
     *status = EXIT_FAILURE;
-    CHECK_STATUS_VOID(*status);
+    SIMPUT_ERROR("source is already contained in the catalog "
+		 "(ID must be unique)");
+    return;
   }
 
   // Determine the current number of lines in the source catalog.
@@ -524,12 +536,14 @@ static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
   // Check if the file already exists.
   int exists;
   fits_file_exists(filename, &exists, status);
-  CHECK_STATUS_RET(*status,srcctlg);
+  CHECK_STATUS_RET(*status, srcctlg);
   
   if (1 != exists) {
     // If no, break with an error message.
-    // ERRMSG
     *status=EXIT_FAILURE;
+    char message[MAXMSG];
+    sprintf(message, "the specified file '%s' does not exist", filename);
+    SIMPUT_ERROR(message);
     return(srcctlg);
   }
   
@@ -537,7 +551,7 @@ static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
   srcctlg = simput_get_srcctlg(status);
   CHECK_STATUS_RET(*status, srcctlg);
   fits_open_file(&srcctlg->fptr, filename, READWRITE, status);
-  CHECK_STATUS_RET(*status,srcctlg);
+  CHECK_STATUS_RET(*status, srcctlg);
   
   // Check if a source catalog extension exists.
   // Try to move the internal HDU pointer of the fitsfile data structure
@@ -551,13 +565,18 @@ static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
   if (BAD_HDU_NUM == temp_status) {
     // The FITS file does not contain a source catalog.
     // Therefore break with an error message.
-    // ERRMSG
     *status=EXIT_FAILURE;
+    char message[MAXMSG];
+    sprintf(message, 
+	    "the specified file '%s' does not contain a source catalog",
+	    filename);
+    SIMPUT_ERROR(message);
     return(srcctlg);
   }
   
   // Determine the column numbers.
   simput_get_srcctlg_colnums(srcctlg, status);
+  CHECK_STATUS_RET(*status, srcctlg);
 
   return(srcctlg);
 }
@@ -587,11 +606,7 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 
     // Reference to the spectrum FITS extension.
     reference_string[0]=(char*)malloc(MAXMSG*sizeof(char));
-    if (NULL==reference_string[0]) {
-      // ERRMSG
-      *status=EXIT_FAILURE;
-      break;
-    }
+    CHECK_NULL_BREAK(reference_string[0], *status, "memory allocation failed");
     fits_open_file(&mfptr, spec_filename, READONLY, status);
     CHECK_STATUS_BREAK(*status);
     // Check if mfptr points to a spectrum extension.
@@ -623,8 +638,12 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 		      extname, extver);
       } else {
 	// No valid spectrum found!
-	// ERRMSG
 	*status=EXIT_FAILURE;
+	char message[MAXMSG];
+	sprintf(message, 
+		"the specified file '%s' does not contain a source spectrum",
+		spec_filename);
+	SIMPUT_ERROR(message);
 	break;
       }
     }
@@ -640,11 +659,7 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 
     // Read the content of the spectrum column.
     table_entry[0]=(char*)malloc(MAXMSG*sizeof(char));
-    if (NULL==table_entry[0]) {
-      // ERRMSG
-      *status=EXIT_FAILURE;
-      break;
-    }
+    CHECK_NULL_BREAK(table_entry[0], *status, "memory allocation failed");
     int anynul=0;
     fits_read_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum,
 		  linenum, 1, 1, "", table_entry, &anynul,
@@ -692,11 +707,7 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 	CHECK_STATUS_BREAK(*status);
 	// Store the reference to the grouping table.
 	grouping_ref[0]=(char*)malloc(MAXMSG*sizeof(char));
-	if (NULL==grouping_ref[0]) {
-	  // ERRMSG
-	  *status=EXIT_FAILURE;
-	  break;
-	}
+	CHECK_NULL_BREAK(grouping_ref[0], *status, "memory allocation failed");
 	simput_ext_id(grouping_ref[0], srcctlg_filename,
 		      "GROUPING", extver);
 	fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum, linenum, 
@@ -721,11 +732,11 @@ void simput_add_spectrum(const char* const srcctlg_filename,
       mfptr=NULL;
 
       // TODO RM
-      //fits_open_member(gfptr, 2, &mfptr, status);
+      fits_open_member(gfptr, 1, &mfptr, status);
       CHECK_STATUS_BREAK(*status);
       int extver=0;
       char comment[MAXMSG];
-      //fits_read_key(mfptr, TINT, "EXTVER", &extver, comment, status);
+      fits_read_key(mfptr, TINT, "EXTVER", &extver, comment, status);
       CHECK_STATUS_BREAK(*status);
       printf("--> EXVER: %d\n", extver);
       
@@ -754,8 +765,8 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 static SIMPUT_SrcCtlg* simput_get_srcctlg(int* const status)
 {
   SIMPUT_SrcCtlg* srcctlg = (SIMPUT_SrcCtlg*)malloc(sizeof(SIMPUT_SrcCtlg));
-  CHECK_NULL(srcctlg, *status, "memory allocation for SIMPUT_SrcCtlg failed",
-	     srcctlg);
+  CHECK_NULL_RET(srcctlg, *status, "memory allocation for SIMPUT_SrcCtlg failed",
+		 srcctlg);
 
   // Initialize pointers with NULL.
   srcctlg->fptr=NULL;
@@ -903,11 +914,7 @@ void simput_add_lightcur(const char* const srcctlg_filename,
 
     // Reference to the light curve FITS extension.
     reference_string[0]=(char*)malloc(MAXMSG*sizeof(char));
-    if (NULL==reference_string[0]) {
-      // ERRMSG
-      *status=EXIT_FAILURE;
-      break;
-    }
+    CHECK_NULL_VOID(reference_string[0], *status, "memory allocation failed");
     fits_open_file(&mfptr, lc_filename, READONLY, status);
     CHECK_STATUS_BREAK(*status);
     // Check if mfptr points to a light curve extension.
@@ -939,8 +946,12 @@ void simput_add_lightcur(const char* const srcctlg_filename,
 		      extname, extver);
       } else {
 	// No valid light curve found!
-	// ERRMSG
 	*status=EXIT_FAILURE;
+	char message[MAXMSG];
+	sprintf(message, 
+		"the specified file '%s' does not contain a light curve",
+		lc_filename);
+	SIMPUT_ERROR(message);
 	break;
       }
     }
@@ -956,11 +967,7 @@ void simput_add_lightcur(const char* const srcctlg_filename,
 
     // Read the content of the LIGHTCUR column.
     table_entry[0]=(char*)malloc(MAXMSG*sizeof(char));
-    if (NULL==table_entry[0]) {
-      // ERRMSG
-      *status=EXIT_FAILURE;
-      break;
-    }
+    CHECK_NULL_BREAK(table_entry[0], *status, "memory allocation failed");
     int anynul=0;
     fits_read_col(srcctlg->fptr, TSTRING, srcctlg->clightcur,
 		  linenum, 1, 1, "", table_entry, &anynul,
@@ -1027,11 +1034,8 @@ void simput_add_image(const char* const srcctlg_filename,
 
     // Reference to the image FITS extension.
     reference_string[0]=(char*)malloc(MAXMSG*sizeof(char));
-    if (NULL==reference_string[0]) {
-      // ERRMSG
-      *status=EXIT_FAILURE;
-      break;
-    }
+    CHECK_NULL_VOID(reference_string[0], *status, 
+		    "memory allocation failed");
     fits_open_file(&mfptr, img_filename, READONLY, status);
     CHECK_STATUS_BREAK(*status);
     // Check if mfptr points to an image extension.
@@ -1043,8 +1047,12 @@ void simput_add_image(const char* const srcctlg_filename,
       strcpy(reference_string[0], img_filename);
     } else {
       // No valid source image found!
-      // ERRMSG
       *status=EXIT_FAILURE;
+      char message[MAXMSG];
+      sprintf(message, 
+	      "the specified file '%s' does not contain a source image",
+	      img_filename);
+      SIMPUT_ERROR(message);
       break;
     }
     // End of check if img_filename points to an image HDU.
@@ -1059,11 +1067,8 @@ void simput_add_image(const char* const srcctlg_filename,
 
     // Read the content of the IMAGE column.
     table_entry[0]=(char*)malloc(MAXMSG*sizeof(char));
-    if (NULL==table_entry[0]) {
-      // ERRMSG
-      *status=EXIT_FAILURE;
-      break;
-    }
+    CHECK_NULL_BREAK(table_entry[0], *status, 
+		    "memory allocation failed");
     int anynul=0;
     fits_read_col(srcctlg->fptr, TSTRING, srcctlg->cimage,
 		  linenum, 1, 1, "", table_entry, &anynul,
@@ -1111,11 +1116,8 @@ void simput_add_image(const char* const srcctlg_filename,
 	CHECK_STATUS_BREAK(*status);
 	// Store the reference to the grouping table in the source catalog.
 	grouping_ref[0]=(char*)malloc(MAXMSG*sizeof(char));
-	if (NULL==grouping_ref[0]) {
-	  // ERRMSG
-	  *status=EXIT_FAILURE;
-	  break;
-	}
+	CHECK_NULL_BREAK(grouping_ref[0], *status, 
+			 "memory allocation failed");
 	simput_ext_id(grouping_ref[0], srcctlg_filename,
 		      "GROUPING", extver);
 	fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cimage, linenum, 
