@@ -187,7 +187,14 @@ void simput_add_src(const char* const filename,
     CHECK_STATUS_VOID(*status);
     
     // Insert header keywords.
-    // ...
+    fits_update_key(srcctlg->fptr, TSTRING, "HDUCLASS", "OGIP", "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(srcctlg->fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(srcctlg->fptr, TSTRING, "HDUCLAS2", "SRC_CAT", "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(srcctlg->fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    CHECK_STATUS_VOID(*status);
     
   }
   
@@ -338,6 +345,17 @@ void simput_store_spectrum(const char* const filename,
   CHECK_STATUS_VOID(*status);
   
   // Insert header keywords.
+  fits_update_key(fptr, TSTRING, "HDUCLASS", "OGIP", "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TSTRING, "HDUCLAS2", "SPECTRUM", "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+  CHECK_STATUS_VOID(*status);
+
+  // TODO: Possibility to specify either TIME or PHASE.
+
   fits_update_key(fptr, TFLOAT, "PHASE", &phase,
 		  "phase for which the spectrum is valid", status);
   CHECK_STATUS_VOID(*status);
@@ -462,6 +480,35 @@ void simput_store_lightcur(const char* const filename,
   CHECK_STATUS_VOID(*status);
 
   // Insert header keywords.
+  fits_update_key(fptr, TSTRING, "HDUCLASS", "OGIP", "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TSTRING, "HDUCLAS2", "LIGHTCUR", "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+  CHECK_STATUS_VOID(*status);
+
+  double zero_buffer = 0.;
+  fits_update_key(fptr, TDOUBLE, "MJDREF", &zero_buffer, "", status);
+  CHECK_STATUS_VOID(*status);
+  double tstart=0.;
+  double tstop=0.;
+  if (NULL!=time) {
+    tstart = time[0];
+    tstop  = time[nbins-1];
+  }
+  fits_update_key(fptr, TDOUBLE, "TSTART", &tstart, "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TDOUBLE, "TSTOP", &tstop, "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TDOUBLE, "TIMEZERO", &zero_buffer, "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TSTRING, "TIMESYS", "MJD", "", status);
+  CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TSTRING, "CLOCKCOR", "YES", "", status);
+  CHECK_STATUS_VOID(*status);
+
   fits_update_key(fptr, TFLOAT, "E_MIN", &e_min,
 		  "lower value of the reference energy band", status);
   CHECK_STATUS_VOID(*status);
@@ -732,11 +779,11 @@ void simput_add_spectrum(const char* const srcctlg_filename,
       mfptr=NULL;
 
       // TODO RM
-      fits_open_member(gfptr, 1, &mfptr, status);
+      //      fits_open_member(gfptr, 1, &mfptr, status);
       CHECK_STATUS_BREAK(*status);
       int extver=0;
       char comment[MAXMSG];
-      fits_read_key(mfptr, TINT, "EXTVER", &extver, comment, status);
+      //      fits_read_key(mfptr, TINT, "EXTVER", &extver, comment, status);
       CHECK_STATUS_BREAK(*status);
       printf("--> EXVER: %d\n", extver);
       
