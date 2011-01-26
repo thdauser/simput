@@ -60,12 +60,6 @@ void simput_add_src(/** Name of the FITS file containing the source
 			the spectra. */
 		    char* spectrum,
 		    /** Extended filename of the FITS file extension
-			containing the light curve of the X-ray
-			source. If this field is empty, the X-ray
-			source is assumed to have a constant
-			brightness. */
-		    char* lightcur,
-		    /** Extended filename of the FITS file extension
 			containing an image of the X-ray source. A
 			source can be described by several images. In
 			that case this field must contain a reference
@@ -73,6 +67,12 @@ void simput_add_src(/** Name of the FITS file containing the source
 			spectra. If this field is empty, the X-ray
 			source is assumed to be point-like. */
 		    char* image,
+		    /** Extended filename of the FITS file extension
+			containing the light curve of the X-ray
+			source. If this field is empty, the X-ray
+			source is assumed to have a constant
+			brightness. */
+		    char* lightcur,
 		    /** Error status. */
 		    int* const status);
 

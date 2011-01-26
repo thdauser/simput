@@ -26,7 +26,7 @@ typedef struct {
   
   /** Column numbers. */
   int csrc_id, csrc_name, cra, cdec, cflux, ce_min, ce_max;
-  int cspectrum, clightcur, cimage;
+  int cspectrum, cimage, clightcur;
 
 } SIMPUT_SrcCtlg;
 
@@ -142,8 +142,8 @@ void simput_add_src(const char* const filename,
 		    float e_min, 
 		    float e_max,
 		    char* spectrum, 
-		    char* lightcur, 
 		    char* image, 
+		    char* lightcur, 
 		    int* const status) 
 {
   SIMPUT_SrcCtlg* srcctlg = simput_get_srcctlg(status);
@@ -177,7 +177,7 @@ void simput_add_src(const char* const filename,
   if (BAD_HDU_NUM == temp_status) {
     // Create the table structure for the source catalog.
     char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "FLUX", "E_MIN",
-		      "E_MAX", "SPECTRUM", "LIGHTCUR", "IMAGE" };
+		      "E_MAX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
     char *tform[] = { "J", "1PA", "E", "E", "E", "E", "E", "1PA", "1PA",
 		      "1PA" };
     char *tunit[] = { "", "", "deg", "deg", "erg/s/cm^2", "keV", "keV", "",
