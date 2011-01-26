@@ -178,8 +178,8 @@ void simput_add_src(const char* const filename,
     // Create the table structure for the source catalog.
     char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "FLUX", "E_MIN",
 		      "E_MAX", "SPECTRUM", "LIGHTCUR", "IMAGE" };
-    char *tform[] = { "J", "20A", "E", "E", "E", "E", "E", "80A", "80A",
-		      "80A" };
+    char *tform[] = { "J", "1PA", "E", "E", "E", "E", "E", "1PA", "1PA",
+		      "1PA" };
     char *tunit[] = { "", "", "deg", "deg", "erg/s/cm^2", "keV", "keV", "",
 		      "", "" };
     fits_create_tbl(srcctlg->fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, ttype,
