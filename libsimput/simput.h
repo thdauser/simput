@@ -5,11 +5,12 @@
 
 /*
   simput.h
-  version 0.0.1
-  2011/01/12     initiall release            Christian Schmid
-*/
 
-/*
+  Version  Date       Author                
+  --------------------------------------------------------------------------- 
+  0.0.1  2011/02/02   Christian Schmid      initial 
+  --------------------------------------------------------------------------- 
+
    This is the header file of the simput library. The library provides
    basic routines to create a SIMPUT source catalog file according to
    the standard defined in ???.
