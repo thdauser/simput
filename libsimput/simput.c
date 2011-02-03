@@ -777,15 +777,6 @@ void simput_add_spectrum(const char* const srcctlg_filename,
       fits_close_file(mfptr, status);
       CHECK_STATUS_BREAK(*status);
       mfptr=NULL;
-
-      // TODO RM
-      //      fits_open_member(gfptr, 1, &mfptr, status);
-      CHECK_STATUS_BREAK(*status);
-      int extver=0;
-      char comment[MAXMSG];
-      //      fits_read_key(mfptr, TINT, "EXTVER", &extver, comment, status);
-      CHECK_STATUS_BREAK(*status);
-      printf("--> EXVER: %d\n", extver);
       
       // Close the FITS file with the source catalog.
       fits_close_file(gfptr, status);

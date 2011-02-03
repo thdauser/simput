@@ -92,8 +92,6 @@ int main()
     simput_add_image(filename, 2, "image2.fits", &status);
     CHECK_STATUS(status);
 
-    // TODO Create a second source.
-
   } while(0); // END of error handling loop.
 
   fits_report_error(stderr, status);
