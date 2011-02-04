@@ -30,18 +30,20 @@ int main()
     float spec1_e_max[] = { 2., 5., 10. };
     float spec1_flux[]  = { 10., 5., 2. };
     int spec1_extver;
-    simput_store_spectrum(filename, "SPECTRUM", 3,
-			  spec1_e_min, spec1_e_max, spec1_flux,
-			  0., &spec1_extver, &status);
+    simput_write_spectrum(filename, "SPECTRUM", &spec1_extver, 
+			  NULL, NULL, NULL,
+			  3, spec1_e_min, spec1_e_max, spec1_flux,
+			  &status);
     CHECK_STATUS(status);
     // Create a 2nd spectrum and add it to the source catalog file.
     float spec2_e_min[] = { 0., 3., 6. };
     float spec2_e_max[] = { 3., 6., 10. };
     float spec2_flux[]  = { 1., 4., 3. };
     int spec2_extver;
-    simput_store_spectrum(filename, "SPECTRUM", 3,
-			  spec2_e_min, spec2_e_max, spec2_flux,
-			  0., &spec2_extver, &status);
+    simput_write_spectrum(filename, "SPECTRUM", &spec2_extver, 
+			  NULL, NULL, NULL, 
+			  3, spec2_e_min, spec2_e_max, spec2_flux,
+			  &status);
     CHECK_STATUS(status);
     // Create a 3rd spectrum and add it to a separate file.
     float spec3_e_min[] = { 0., 1.5, 6.5 };
@@ -50,9 +52,10 @@ int main()
     const char spec3_filename[] = "spectrum.fits";
     remove(spec3_filename);
     int spec3_extver=0;
-    simput_store_spectrum(spec3_filename, "SPECTRUM", 3,
-			  spec3_e_min, spec3_e_max, spec3_flux,
-			  0., &spec3_extver, &status);
+    simput_write_spectrum(spec3_filename, "SPECTRUM", &spec3_extver, 
+			  NULL, NULL, NULL,
+			  3, spec3_e_min, spec3_e_max, spec3_flux,
+			  &status);
     CHECK_STATUS(status);
     // Assign the 3 spectra to the 1st source.
     char spec_filename[MAXMSG];
@@ -75,9 +78,19 @@ int main()
     double time[] = { 0., 1., 2., 3., 4. };
     float flux_lc[] = { 0.8, 0.7, 1.0, 1.2, 1.0 };
     int lc_extver;
-    simput_store_lightcur(filename, "LIGHTCUR", 5,
-			  time, NULL, flux_lc, NULL, NULL,
-			  1., 10., &lc_extver, &status);
+    struct simput_timing lc_timing = {
+      .mjdref = 0.,
+      .tstart = 0.,
+      .tstop  = 0.,
+      .timezero = 0.,
+      .timesys  = "MJD",
+      .timeunit = "d",
+      .clockcor = "yes"
+    };
+    simput_write_lightcur(filename, "LIGHTCUR", &lc_extver, 
+			  &lc_timing, 1., 10., 2.5e-12, NULL, NULL,
+			  5, time, NULL, flux_lc,  
+			  &status);
     CHECK_STATUS(status);
     // Assign the light curve to the 1st source.
     char lc_filename[MAXMSG];

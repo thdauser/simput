@@ -10,7 +10,6 @@
 
 #include "simput.h"
 
-#define MAXMSG (1024)
 
 #define N_SRC_CAT_COLUMNS  (10)
 #define N_SPEC_COLUMNS     (3)
@@ -180,7 +179,7 @@ void simput_add_src(const char* const filename,
 		      "E_MAX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
     char *tform[] = { "J", "1PA", "E", "E", "E", "E", "E", "1PA", "1PA",
 		      "1PA" };
-    char *tunit[] = { "", "", "deg", "deg", "erg/s/cm^2", "keV", "keV", "",
+    char *tunit[] = { "", "", "deg", "deg", "erg /s /cm**2", "keV", "keV", "",
 		      "", "" };
     fits_create_tbl(srcctlg->fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, ttype,
 		    tform, tunit, "SRC_CAT", status);
@@ -194,6 +193,11 @@ void simput_add_src(const char* const filename,
     fits_update_key(srcctlg->fptr, TSTRING, "HDUCLAS2", "SRC_CAT", "", status);
     CHECK_STATUS_VOID(*status);
     fits_update_key(srcctlg->fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(srcctlg->fptr, TSTRING, "RADECSYS", "FK5", "", status);
+    CHECK_STATUS_VOID(*status);
+    float equinox = 2000.0;
+    fits_update_key(srcctlg->fptr, TFLOAT, "EQUINOX", &equinox, "", status);
     CHECK_STATUS_VOID(*status);
     
   }
@@ -281,14 +285,62 @@ static long simput_get_src_linenum(SIMPUT_SrcCtlg* const srcctlg,
   return (0);
 }
 
-void simput_store_spectrum(const char* const filename, 
+
+
+static void simput_write_timing_keywords(fitsfile* fptr,
+					 struct simput_timing* const timing,
+					 int* const status)
+{
+  if (NULL!=timing) {
+    fits_update_key(fptr, TDOUBLE, "MJDREF", &timing->mjdref, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TDOUBLE, "TSTART", &timing->tstart, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TDOUBLE, "TSTOP", &timing->tstop, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TDOUBLE, "TIMEZERO", &timing->timezero, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TSTRING, "TIMESYS", timing->timesys, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TSTRING, "TIMEUNIT", timing->timeunit, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TSTRING, "CLOCKCOR", timing->clockcor, "", status);
+    CHECK_STATUS_VOID(*status);
+  }
+}
+
+
+
+static void simput_write_polarization_keywords(fitsfile* fptr,
+					       struct simput_polarization* const polarization,
+					       int* const status)
+{
+  if (NULL!=polarization) {
+    fits_update_key(fptr, TDOUBLE, "STOKES1", &polarization->stokes1, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TDOUBLE, "STOKES2", &polarization->stokes2, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TDOUBLE, "STOKES3", &polarization->stokes3, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TSTRING, "RADECSYS", &polarization->radecsys, "", status);
+    CHECK_STATUS_VOID(*status);
+    fits_update_key(fptr, TSTRING, "EQUINOX", &polarization->equinox, "", status);
+    CHECK_STATUS_VOID(*status);    
+  }
+}
+
+
+
+void simput_write_spectrum(const char* const filename, 
 			   char* const extname,
+			   int* extver, 
+			   struct simput_timing* const timing,
+			   float* phase, 
+			   struct simput_polarization* const polarization,
 			   const long nbins, 
 			   float* const e_min, 
 			   float* const e_max,
 			   float* const flux, 
-			   float phase, 
-			   int* extver, 
 			   int* const status) 
 {
   fitsfile* fptr = NULL;
@@ -311,7 +363,7 @@ void simput_store_spectrum(const char* const filename,
   // END of check, whether the file already exists or not.
   
   // Check if a particular name is specified for the new extension.
-  char extname2[MAXMSG];
+  char extname2[SIMPUT_MAXMSG];
   if (NULL == extname) {
     // If no explicit exname is given, use the default value "SPECTRUM".
     strcpy(extname2, "SPECTRUM");
@@ -332,11 +384,11 @@ void simput_store_spectrum(const char* const filename,
   } while (BAD_HDU_NUM != temp_status);
   fits_clear_errmark();
   
-  // Create a new table for the spectrum with a unique
-  // EXTNAME and EXTVER combination.
+  // --- Create a new table for the spectrum with a unique
+  //     EXTNAME and EXTVER combination.                    ---
   char *ttype[] = { "E_MIN", "E_MAX", "FLUX" };
   char *tform[] = { "E", "E", "E" };
-  char *tunit[] = { "keV", "keV", "erg/s/cm^2/keV" };
+  char *tunit[] = { "keV", "keV", "photon /s /cm**2 /keV" };
   fits_create_tbl(fptr, BINARY_TBL, 0, N_SPEC_COLUMNS, ttype, tform,
 		  tunit, extname2, status);
   CHECK_STATUS_VOID(*status);
@@ -354,12 +406,24 @@ void simput_store_spectrum(const char* const filename,
   fits_update_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
   CHECK_STATUS_VOID(*status);
 
-  // TODO: Possibility to specify either TIME or PHASE.
+  // Timing header keywords.
+  simput_write_timing_keywords(fptr, timing, status);
+  CHECK_STATUS_VOID(*status);
 
-  fits_update_key(fptr, TFLOAT, "PHASE", &phase,
-		  "phase for which the spectrum is valid", status);
+  // Phase header keyword.
+  if (NULL!=phase) {
+    fits_update_key(fptr, TFLOAT, "PHASE", phase,
+		    "phase the spectrum is valid for", status);
+    CHECK_STATUS_VOID(*status);
+  }
+
+  // Polarziation header keywords.
+  simput_write_polarization_keywords(fptr, polarization, status);
   CHECK_STATUS_VOID(*status);
   
+  // --- End of creating a new table with header keywords. ---
+
+
   // Determine the column numbers of the essential columns.
   int ce_min, ce_max, cflux;
   fits_get_colnum(fptr, CASEINSEN, "E_MIN", &ce_min, status);
@@ -384,17 +448,19 @@ void simput_store_spectrum(const char* const filename,
 
 
 
-void simput_store_lightcur(const char* const filename, 
+void simput_write_lightcur(const char* const filename, 
 			   char* const extname,
+			   int* extver, 
+			   struct simput_timing* const timing,
+			   float e_min, 
+			   float e_max,
+			   float ref_flux,
+			   double* phase0,
+			   double* period,
 			   const long nbins,
 			   double* const time, 
 			   float* const phase, 
 			   float* const flux,
-			   float* const pol_frac, 
-			   float* const pol_dir, 
-			   float e_min, 
-			   float e_max,
-			   int* extver, 
 			   int* const status) 
 {
   fitsfile* fptr = NULL;
@@ -417,7 +483,7 @@ void simput_store_lightcur(const char* const filename,
   // END of check, whether the file already exists or not.
 
   // Check if a particular name is specified for the new extension.
-  char extname2[MAXMSG];
+  char extname2[SIMPUT_MAXMSG];
   if (NULL == extname) {
     // If no explicit exname is given, use the default value "LIGHTCUR".
     strcpy(extname2, "LIGHTCUR");
@@ -438,8 +504,8 @@ void simput_store_lightcur(const char* const filename,
   } while (BAD_HDU_NUM != temp_status);
   fits_clear_errmark();
 
-  // Create a new table for the light curve with a unique
-  // EXTNAME and EXTVER combination..
+  // --- Create a new table for the light curve with a unique
+  //     EXTNAME and EXTVER combination.                      ---
   char *ttype[N_LIGHTCUR_COLUMNS];
   char *tform[N_LIGHTCUR_COLUMNS];
   char *tunit[N_LIGHTCUR_COLUMNS];
@@ -458,20 +524,8 @@ void simput_store_lightcur(const char* const filename,
   }
   ttype[ncolumns] = "FLUX";
   tform[ncolumns] = "E";
-  tunit[ncolumns] = "erg/s/cm^2";
+  tunit[ncolumns] = "erg /s /cm**2";
   ncolumns++;
-  if (NULL != pol_frac) {
-    ttype[ncolumns] = "POL_FRAC";
-    tform[ncolumns] = "E";
-    tunit[ncolumns] = "";
-    ncolumns++;
-  }
-  if (NULL != phase) {
-    ttype[ncolumns] = "POL_DIR";
-    tform[ncolumns] = "E";
-    tunit[ncolumns] = "radians";
-    ncolumns++;
-  }
   fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns, ttype, tform, tunit,
 		  extname2, status);
   CHECK_STATUS_VOID(*status);
@@ -489,66 +543,82 @@ void simput_store_lightcur(const char* const filename,
   fits_update_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
   CHECK_STATUS_VOID(*status);
 
-  double zero_buffer = 0.;
-  fits_update_key(fptr, TDOUBLE, "MJDREF", &zero_buffer, "", status);
-  CHECK_STATUS_VOID(*status);
-  double tstart=0.;
-  double tstop=0.;
-  if (NULL!=time) {
-    tstart = time[0];
-    tstop  = time[nbins-1];
-  }
-  fits_update_key(fptr, TDOUBLE, "TSTART", &tstart, "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TDOUBLE, "TSTOP", &tstop, "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TDOUBLE, "TIMEZERO", &zero_buffer, "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TSTRING, "TIMESYS", "MJD", "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TSTRING, "CLOCKCOR", "YES", "", status);
+  // Time definition header keywords (required).
+  CHECK_NULL_VOID(timing, *status,
+		  "missing time definition for light curve");
+  simput_write_timing_keywords(fptr, timing, status);
   CHECK_STATUS_VOID(*status);
 
+  // Reference flux definition.
   fits_update_key(fptr, TFLOAT, "E_MIN", &e_min,
 		  "lower value of the reference energy band", status);
   CHECK_STATUS_VOID(*status);
   fits_update_key(fptr, TFLOAT, "E_MAX", &e_max,
 		  "upper value of the reference energy band", status);
   CHECK_STATUS_VOID(*status);
+  fits_update_key(fptr, TFLOAT, "FLUX", &ref_flux,
+		  "reference flux in [erg /s /cm**2]", status);
+  CHECK_STATUS_VOID(*status);
+
+  // Distinguish between periodic and non-periodic light curves.
+  if (NULL==phase) {
+    // Non-periodic light curve.
+    int periodic = 0;
+    fits_update_key(fptr, TINT, "PERIODIC", &periodic, 
+		    "non-periodic light curve", status);
+    CHECK_STATUS_VOID(*status);
+
+  } else {
+    // Periodic light curve.
+    int periodic = 1;
+    fits_update_key(fptr, TINT, "PERIODIC", &periodic, 
+		    "periodic light curve", status);
+    CHECK_STATUS_VOID(*status);
+
+
+    CHECK_NULL_VOID(phase0, *status,
+		    "missing PHASE0 definition for periodic light curve");
+    fits_update_key(fptr, TDOUBLE, "PHASE0", &phase0, 
+		    "phase of oscillation at TIMEZERO", status);
+    CHECK_STATUS_VOID(*status);
+
+    CHECK_NULL_VOID(period, *status,
+		    "missing PERIOD definition for periodic light curve");
+    fits_update_key(fptr, TDOUBLE, "PERIOD", &period, 
+		    "duration of one oscillation period", status);
+    CHECK_STATUS_VOID(*status);
+  }
+
+  // --- End of creating a new table with header keywords.
+  
+
+  // TODO Store either TIME or PHASE.
+
   
   // Determine the column numbers of the essential columns and store
   // the light curve in the table.
   int column;
-  if (NULL != time) {
+  if (NULL!=time) {
     fits_get_colnum(fptr, CASEINSEN, "TIME", &column, status);
     CHECK_STATUS_VOID(*status);
     fits_write_col(fptr, TDOUBLE, column, 1, 1, nbins, time, status);
     CHECK_STATUS_VOID(*status);
-  }
-  if (NULL != phase) {
-    fits_get_colnum(fptr, CASEINSEN, "PHASE", &column, status);
-    CHECK_STATUS_VOID(*status);
-    fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, phase, status);
-    CHECK_STATUS_VOID(*status);
+  } else {  
+    if (NULL!=phase) {
+      fits_get_colnum(fptr, CASEINSEN, "PHASE", &column, status);
+      CHECK_STATUS_VOID(*status);
+      fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, phase, status);
+      CHECK_STATUS_VOID(*status);
+    } else {
+      *status = EXIT_FAILURE;
+      SIMPUT_ERROR("neither TIME nor PHASE column are defined");
+      return;
+    }
   }
   fits_get_colnum(fptr, CASEINSEN, "FLUX", &column, status);
   CHECK_STATUS_VOID(*status);
   fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, flux, status);
   CHECK_STATUS_VOID(*status);
-  if (NULL != pol_frac) {
-    fits_get_colnum(fptr, CASEINSEN, "POL_FRAC", &column, status);
-    CHECK_STATUS_VOID(*status);
-    fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, pol_frac,
-		   status);
-    CHECK_STATUS_VOID(*status);
-  }
-  if (NULL != pol_dir) {
-    fits_get_colnum(fptr, CASEINSEN, "POL_DIR", &column, status);
-    CHECK_STATUS_VOID(*status);
-    fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, pol_dir,
-		   status);
-    CHECK_STATUS_VOID(*status);
-  }
   
   // Close the file.
   fits_close_file(fptr, status);
@@ -560,17 +630,9 @@ void simput_store_lightcur(const char* const filename,
 static void simput_ext_id(char* const id, 
 			  const char* const filename,
 			  const char* const extname, 
-			  const int extver) {
+			  const int extver) 
+{
   sprintf(id, "%s[%s,%d]", filename, extname, extver);
-  
-  /*
-    strcpy(id, filename);
-    strcat(id, "[");
-    strcat(id, extname);
-    strcat(id, ",");
-    strcat(id, sprintf("%d", extver));
-    strcat(id, "]");
-  */
 }
 
 
@@ -588,7 +650,7 @@ static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
   if (1 != exists) {
     // If no, break with an error message.
     *status=EXIT_FAILURE;
-    char message[MAXMSG];
+    char message[SIMPUT_MAXMSG];
     sprintf(message, "the specified file '%s' does not exist", filename);
     SIMPUT_ERROR(message);
     return(srcctlg);
@@ -613,7 +675,7 @@ static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
     // The FITS file does not contain a source catalog.
     // Therefore break with an error message.
     *status=EXIT_FAILURE;
-    char message[MAXMSG];
+    char message[SIMPUT_MAXMSG];
     sprintf(message, 
 	    "the specified file '%s' does not contain a source catalog",
 	    filename);
@@ -652,7 +714,7 @@ void simput_add_spectrum(const char* const srcctlg_filename,
     // If not, determine an appropriate reference to the spectrum.
 
     // Reference to the spectrum FITS extension.
-    reference_string[0]=(char*)malloc(MAXMSG*sizeof(char));
+    reference_string[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
     CHECK_NULL_BREAK(reference_string[0], *status, "memory allocation failed");
     fits_open_file(&mfptr, spec_filename, READONLY, status);
     CHECK_STATUS_BREAK(*status);
@@ -674,8 +736,8 @@ void simput_add_spectrum(const char* const srcctlg_filename,
       CHECK_STATUS_BREAK(*status);
       if (1==is_spectrum) {
 	// Determine the EXTNAME and EXTVER keywords.
-	char extname[MAXMSG];
-	char comment[MAXMSG];
+	char extname[SIMPUT_MAXMSG];
+	char comment[SIMPUT_MAXMSG];
 	int extver;
 	fits_read_key(mfptr, TSTRING, "EXTNAME", extname, comment, status);
 	CHECK_STATUS_BREAK(*status);
@@ -686,7 +748,7 @@ void simput_add_spectrum(const char* const srcctlg_filename,
       } else {
 	// No valid spectrum found!
 	*status=EXIT_FAILURE;
-	char message[MAXMSG];
+	char message[SIMPUT_MAXMSG];
 	sprintf(message, 
 		"the specified file '%s' does not contain a source spectrum",
 		spec_filename);
@@ -705,7 +767,7 @@ void simput_add_spectrum(const char* const srcctlg_filename,
     CHECK_STATUS_BREAK(*status);
 
     // Read the content of the spectrum column.
-    table_entry[0]=(char*)malloc(MAXMSG*sizeof(char));
+    table_entry[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
     CHECK_NULL_BREAK(table_entry[0], *status, "memory allocation failed");
     int anynul=0;
     fits_read_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum,
@@ -749,11 +811,11 @@ void simput_add_spectrum(const char* const srcctlg_filename,
 	// catalog to the new grouping table.
 	// Determine the EXTVER of the grouping table.
 	int extver=0;
-	char comment[MAXMSG];
+	char comment[SIMPUT_MAXMSG];
 	fits_read_key(gfptr, TINT, "EXTVER", &extver, comment, status);
 	CHECK_STATUS_BREAK(*status);
 	// Store the reference to the grouping table.
-	grouping_ref[0]=(char*)malloc(MAXMSG*sizeof(char));
+	grouping_ref[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
 	CHECK_NULL_BREAK(grouping_ref[0], *status, "memory allocation failed");
 	simput_ext_id(grouping_ref[0], srcctlg_filename,
 		      "GROUPING", extver);
@@ -880,8 +942,8 @@ static int simput_is_grouping_table(const char* const filename,
     CHECK_STATUS_BREAK(*status);
 
     // Determine the extension name.
-    char extname[MAXMSG];
-    char comment[MAXMSG];
+    char extname[SIMPUT_MAXMSG];
+    char comment[SIMPUT_MAXMSG];
     fits_read_key(fptr, TSTRING, "EXTNAME", extname, comment, status);
     CHECK_STATUS_BREAK(*status);
     if (0==strcmp(extname, "GROUPING")) {
@@ -913,7 +975,7 @@ static void simput_strtrim(char* const str)
 
   assert(len>=0);
   
-  char buffer[MAXMSG];
+  char buffer[SIMPUT_MAXMSG];
   // Copy len+1 characters to the buffer (the "+1" ensures that
   // that the string termination sign is also copied.
   strncpy(buffer, start, len+1);
@@ -951,7 +1013,7 @@ void simput_add_lightcur(const char* const srcctlg_filename,
     // If not, determine an appropriate reference to the light curve.
 
     // Reference to the light curve FITS extension.
-    reference_string[0]=(char*)malloc(MAXMSG*sizeof(char));
+    reference_string[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
     CHECK_NULL_VOID(reference_string[0], *status, "memory allocation failed");
     fits_open_file(&mfptr, lc_filename, READONLY, status);
     CHECK_STATUS_BREAK(*status);
@@ -973,8 +1035,8 @@ void simput_add_lightcur(const char* const srcctlg_filename,
       CHECK_STATUS_BREAK(*status);
       if (1==is_lc) {
 	// Determine the EXTNAME and EXTVER keywords.
-	char extname[MAXMSG];
-	char comment[MAXMSG];
+	char extname[SIMPUT_MAXMSG];
+	char comment[SIMPUT_MAXMSG];
 	int extver;
 	fits_read_key(mfptr, TSTRING, "EXTNAME", extname, comment, status);
 	CHECK_STATUS_BREAK(*status);
@@ -985,7 +1047,7 @@ void simput_add_lightcur(const char* const srcctlg_filename,
       } else {
 	// No valid light curve found!
 	*status=EXIT_FAILURE;
-	char message[MAXMSG];
+	char message[SIMPUT_MAXMSG];
 	sprintf(message, 
 		"the specified file '%s' does not contain a light curve",
 		lc_filename);
@@ -1004,7 +1066,7 @@ void simput_add_lightcur(const char* const srcctlg_filename,
     CHECK_STATUS_BREAK(*status);
 
     // Read the content of the LIGHTCUR column.
-    table_entry[0]=(char*)malloc(MAXMSG*sizeof(char));
+    table_entry[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
     CHECK_NULL_BREAK(table_entry[0], *status, "memory allocation failed");
     int anynul=0;
     fits_read_col(srcctlg->fptr, TSTRING, srcctlg->clightcur,
@@ -1071,7 +1133,7 @@ void simput_add_image(const char* const srcctlg_filename,
     // If not, determine an appropriate reference to the source image.
 
     // Reference to the image FITS extension.
-    reference_string[0]=(char*)malloc(MAXMSG*sizeof(char));
+    reference_string[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
     CHECK_NULL_VOID(reference_string[0], *status, 
 		    "memory allocation failed");
     fits_open_file(&mfptr, img_filename, READONLY, status);
@@ -1086,7 +1148,7 @@ void simput_add_image(const char* const srcctlg_filename,
     } else {
       // No valid source image found!
       *status=EXIT_FAILURE;
-      char message[MAXMSG];
+      char message[SIMPUT_MAXMSG];
       sprintf(message, 
 	      "the specified file '%s' does not contain a source image",
 	      img_filename);
@@ -1104,7 +1166,7 @@ void simput_add_image(const char* const srcctlg_filename,
     CHECK_STATUS_BREAK(*status);
 
     // Read the content of the IMAGE column.
-    table_entry[0]=(char*)malloc(MAXMSG*sizeof(char));
+    table_entry[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
     CHECK_NULL_BREAK(table_entry[0], *status, 
 		    "memory allocation failed");
     int anynul=0;
@@ -1149,11 +1211,11 @@ void simput_add_image(const char* const srcctlg_filename,
 	// catalog to the new grouping table.
 	// Determine the EXTVER of the grouping table.
 	int extver=0;
-	char comment[MAXMSG];
+	char comment[SIMPUT_MAXMSG];
 	fits_read_key(gfptr, TINT, "EXTVER", &extver, comment, status);
 	CHECK_STATUS_BREAK(*status);
 	// Store the reference to the grouping table in the source catalog.
-	grouping_ref[0]=(char*)malloc(MAXMSG*sizeof(char));
+	grouping_ref[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
 	CHECK_NULL_BREAK(grouping_ref[0], *status, 
 			 "memory allocation failed");
 	simput_ext_id(grouping_ref[0], srcctlg_filename,
