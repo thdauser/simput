@@ -592,9 +592,6 @@ void simput_write_lightcur(const char* const filename,
   // --- End of creating a new table with header keywords.
   
 
-  // TODO Store either TIME or PHASE.
-
-  
   // Determine the column numbers of the essential columns and store
   // the light curve in the table.
   int column;

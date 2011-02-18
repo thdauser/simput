@@ -1,0 +1,31 @@
+The installation of this package is based on the GNU autotools.
+
+If you checked out the sources directly from the repository you first
+have to create a configure script from the existing 'configure.ac'.
+For this purpose go into the main directory of the package (where
+there is this file) and run the 'autoreconf' command belonging to the
+GNU autotools.  (If you extraced the code from the .tar.gz archive,
+you can skip the following step and continue with the next paragraph.)
+
+ cd simput/
+ autoreconf --install
+
+This basically generates the 'configure' script (and some
+'Makefile.in's). In the next step you have to run the 'configure'
+script to produce 'Makefile's for the compilation and installation of
+the software.  At this point you also have to specify the installation
+directory. The default setting on most platforms is '/usr/local',
+i.e. the binaries will be installed to '/usr/local/bin', the libraries
+to '/usr/local/lib' etc. This setting can be changed using the
+'--prefix' option of the 'configure' script.  So for a local
+installation, e.g. type:
+
+ ./configure --prefix=$HOME
+
+Now the 'Makefile's to compile and install the software should be available.
+To continue type:
+
+ make
+ make install
+
+If everything worked properly you can now use the software.
