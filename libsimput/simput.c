@@ -10,15 +10,18 @@
 
 #include "simput.h"
 
-
+// Obsolete:
 #define N_SRC_CAT_COLUMNS  (10)
 #define N_SPEC_COLUMNS     (3)
 #define N_LIGHTCUR_COLUMNS (5)
+
 
 /////////////////////////////////////////////////////////////////
 // Structures.
 /////////////////////////////////////////////////////////////////
 
+
+// Obsolete:
 typedef struct {
 
   fitsfile* fptr;
@@ -29,9 +32,15 @@ typedef struct {
 
 } SIMPUT_SrcCtlg;
 
+
 /////////////////////////////////////////////////////////////////
 // Macros.
 /////////////////////////////////////////////////////////////////
+
+
+/** Common string length. */
+#define SIMPUT_MAXSTR (1024)
+
 
 #define SIMPUT_ERROR(msg) \
   fprintf(stderr, "Error in %s: %s!\n", __func__, msg)
@@ -66,10 +75,13 @@ typedef struct {
     break;\
   }
 
+
 /////////////////////////////////////////////////////////////////
 // Function Declarations.
 /////////////////////////////////////////////////////////////////
 
+
+// Obsolete:
 /** Check if the table specified by the filename reference, is a
     grouping table. If yes, the return value is 1. If no, the return
     value is 0. */
@@ -128,10 +140,208 @@ static int simput_check_if_image(const char* const filename,
 static int simput_check_if_btbl(const char* const filename,
 				int* const status);
 
+
 /////////////////////////////////////////////////////////////////
 // Function Definitions.
 /////////////////////////////////////////////////////////////////
 
+
+SimputSourceEntry* getSimputSourceEntry(int* const status)
+{
+  SimputSourceEntry* entry=(SimputSourceEntry*)malloc(sizeof(SimputSourceEntry));
+  CHECK_NULL_RET(entry, *status, 
+		 "memory allocation for SimputSourceEntry failed", entry);
+
+  // Initialize elements.
+  entry->src_id  =0;
+  entry->src_name=NULL;
+  entry->ra      =0.;
+  entry->dec     =0.;
+  entry->imgrota =0.;
+  entry->imgscal =1.;
+  entry->e_min   =0.;
+  entry->e_max   =0.;
+  entry->flux    =0.;
+  entry->spectrum=NULL;
+  entry->image   =NULL;
+  entry->lightcur=NULL;
+  
+  return(entry);
+}
+
+
+SimputSourceEntry* getSimputSourceEntryV(const unsigned int src_id, 
+					 const char* const src_name,
+					 const double ra,
+					 const double dec,
+					 const float imgrota,
+					 const float imgscal,
+					 const float e_min,
+					 const float e_max,
+					 const float flux,
+					 const char* const spectrum,
+					 const char* const image,
+					 const char* const lightcur,
+					 int* const status)
+{
+  SimputSourceEntry* entry=getSimputSourceEntry(status);
+  CHECK_STATUS_RET(*status, entry);
+
+  // Initialize with the given values.
+  entry->src_id = src_id;
+
+  entry->src_name=(char*)malloc((strlen(src_name)+1)*sizeof(char));
+  CHECK_NULL_RET(entry->src_name, *status,
+		 "memory allocation for source name failed", entry);
+  strcpy(entry->src_name, src_name);
+
+  entry->ra      = ra;
+  entry->dec     = dec;
+  entry->imgrota = imgrota;
+  entry->imgscal = imgscal;
+  entry->e_min   = e_min;
+  entry->e_max   = e_max;
+  entry->flux    = flux;
+
+  entry->spectrum=(char*)malloc((strlen(spectrum)+1)*sizeof(char));
+  CHECK_NULL_RET(entry->spectrum, *status,
+		 "memory allocation for source name failed", entry);
+  strcpy(entry->spectrum, spectrum);
+
+  entry->image  =(char*)malloc((strlen(image)+1)*sizeof(char));
+  CHECK_NULL_RET(entry->image, *status,
+		 "memory allocation for source name failed", entry);
+  strcpy(entry->image, image);
+
+  entry->lightcur=(char*)malloc((strlen(lightcur)+1)*sizeof(char));
+  CHECK_NULL_RET(entry->lightcur, *status,
+		 "memory allocation for source name failed", entry);
+  strcpy(entry->lightcur, lightcur);
+  
+
+  return(entry);
+}
+
+
+void freeSimputSourceEntry(SimputSourceEntry** const entry)
+{
+  if (NULL!=*entry) {
+    if (NULL!=(*entry)->src_name) {
+      free((*entry)->src_name);
+    }
+    if (NULL!=(*entry)->spectrum) {
+      free((*entry)->spectrum);
+    }
+    if (NULL!=(*entry)->image) {
+      free((*entry)->spectrum);
+    }
+    if (NULL!=(*entry)->lightcur) {
+      free((*entry)->spectrum);
+    }
+    free(*entry);
+    *entry=NULL;
+  }
+}
+
+
+SimputSourceCatalog* getSimputSourceCatalog(int* const status)
+{
+  SimputSourceCatalog* catalog=(SimputSourceCatalog*)malloc(sizeof(SimputSourceCatalog));
+  CHECK_NULL_RET(catalog, *status, 
+		 "memory allocation for SimputSourceCatalog failed", catalog);
+
+  // Initialize elements.
+  catalog->nentries=0;
+  catalog->entries =NULL;
+
+  return(catalog);
+}
+
+
+void freeSimputSourceCatalog(SimputSourceCatalog** const catalog)
+{
+  if (NULL!=*catalog) {
+    if ((*catalog)->nentries>0) {
+      unsigned int ii;
+      for (ii=0; ii<(*catalog)->nentries; ii++) {
+	freeSimputSourceEntry(&((*catalog)->entries[ii]));
+      }
+      free((*catalog)->entries);
+    }
+    free(*catalog);
+    *catalog=NULL;
+  }
+}
+
+
+SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
+					     int* const status)
+{
+  SimputSourceCatalog* catalog = getSimputSourceCatalog(status);
+  CHECK_STATUS_RET(*status, catalog);
+
+  // TODO
+
+  // TODO Take care of the units.
+
+  return(catalog);
+}
+
+
+void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
+			     const char* const filename,
+			     int* const status)
+{
+  fitsfile* fptr=NULL;
+
+  // Check if the file already exists.
+  int exists;
+  fits_file_exists(filename, &exists, status);
+  CHECK_STATUS_VOID(*status);
+  
+  // If yes, return with an error message. 
+  // TODO really do this??
+  if (1==exists) {
+    *status=EXIT_FAILURE;
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "file '%s' already exists", filename);
+    SIMPUT_ERROR(msg);
+    return;
+  }
+
+  // Create and open a new empty FITS file.
+  fits_create_file(&fptr, filename, status);
+  CHECK_STATUS_VOID(*status);
+
+  // Error handling loop.
+  do {
+
+    // Create a binary table.
+    char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
+		      "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
+    char *tform[] = { "J", "1PA", "D", "D", "E", "E", 
+		      "E", "E", "E", "1PA", "1PA", "1PA" };
+    char *tunit[] = { "", "", "deg", "deg", "deg", "",  
+		      "keV", "keV", "erg /s /cm**2", "", "", "" };
+    // TODO Provide option to use different units?
+    fits_create_tbl(fptr, BINARY_TBL, 0, 12, ttype, tform, tunit, "SRC_CAT", status);
+    CHECK_STATUS_VOID(*status);
+
+    // TODO Write the necessary header keywords.
+
+    // TODO Write the data.
+
+
+  } while(0); // END of error handling loop.
+
+  // Close the file.
+  fits_close_file(fptr, status);
+  CHECK_STATUS_VOID(*status);
+
+}
+
+
+// Obsolete:
 void simput_add_src(const char* const filename, 
 		    long src_id, 
 		    char* src_name,
