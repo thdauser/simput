@@ -10,27 +10,11 @@
 
 #include "simput.h"
 
-// Obsolete:
-#define N_SRC_CAT_COLUMNS  (10)
-#define N_SPEC_COLUMNS     (3)
-#define N_LIGHTCUR_COLUMNS (5)
-
 
 /////////////////////////////////////////////////////////////////
 // Structures.
 /////////////////////////////////////////////////////////////////
 
-
-// Obsolete:
-typedef struct {
-
-  fitsfile* fptr;
-  
-  /** Column numbers. */
-  int csrc_id, csrc_name, cra, cdec, cflux, ce_min, ce_max;
-  int cspectrum, cimage, clightcur;
-
-} SIMPUT_SrcCtlg;
 
 
 /////////////////////////////////////////////////////////////////
@@ -81,64 +65,33 @@ typedef struct {
 /////////////////////////////////////////////////////////////////
 
 
-// Obsolete:
-/** Check if the table specified by the filename reference, is a
-    grouping table. If yes, the return value is 1. If no, the return
-    value is 0. */
-static int simput_is_grouping_table(const char* const filename, 
-				    int* const status);
-
-/** Create an extension identifier string that can be used to uniquely
-    identify a particular FITS extension like, e.g., a binary table
-    containing a source spectrum. */
-static void simput_ext_id(char* const id, const char* const filename,
-			  const char* const extname, const int extver);
-
-/** Constructor for the SIMPUT_SrcCtlg data structure. */
-static SIMPUT_SrcCtlg* simput_get_srcctlg(int* const status);
-
-/** Destructro for the SIMPUT_SrcCtlg data structure. */
-static void simput_destroy_srcctlg(SIMPUT_SrcCtlg** const srcctlg,
-				   int* const status);
-
-/** Open an existing FITS file with a source catalog extension. */
-static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
-						    int* const status);
-
-/** Determine the column numbers in the source catalog. */
-static void simput_get_srcctlg_colnums(SIMPUT_SrcCtlg* const srcctlg,
-				       int* const status);
-
-/** Determine the line number of a particular source in a source
-    catalog. The source is identified by its source ID. If no source
-    with this ID is contained in the catalog, the return value is
-    zero. */
-static long simput_get_src_linenum(SIMPUT_SrcCtlg* const srcctlg, 
-				   const long src_id,
-				   int* const status);
-
-/** Remove whitespace signs at the beginning and at the end of a
-    string. */
-static void simput_strtrim(char* const str);
-
-/** Check if the HDU referred to by filename is a spectrum
-    extension. */
-static int simput_check_if_spectrum(const char* const filename,
-				    int* const status);
-
-/** Check if the HDU referred to by filename is a light curve
-    extension. */
-static int simput_check_if_lightcur(const char* const filename,
-				    int* const status);
-
-/** Check if the HDU referred to by filename is an image extension. */
-static int simput_check_if_image(const char* const filename,
-				 int* const status);
-
 /** Check if the HDU referred to by filename is a binary table
     extension. */
-static int simput_check_if_btbl(const char* const filename,
-				int* const status);
+static int check_if_btbl(const char* const filename, int* const status);
+
+/** Read the TUNITn keyword from the header of the current FITS HDU,
+    where n denotes the specfied column. */
+static void read_unit(fitsfile* const fptr, const int column, 
+		      char* unit, int* const status);
+
+/** Convert a string into lower case letters. The string has to be
+    terminated by a '\0' mark. */
+static void strtolower(char* const string);
+
+/** Determine the factor required to convert the specified unit into
+    [rad]. If the conversion is not possible or implemented, the
+    function return value is 0. */
+static float unit_conversion_rad(const char* const unit);
+
+/** Determine the factor required to convert the specified unit into
+    [keV]. If the conversion is not possible or implemented, the
+    function return value is 0. */
+static float unit_conversion_keV(const char* const unit);
+
+/** Determine the factor required to convert the specified unit into
+    [erg/s/cm**2]. If the conversion is not possible or implemented,
+    the function return value is 0. */
+static float unit_conversion_ergpspcm2(const char* const unit);
 
 
 /////////////////////////////////////////////////////////////////
@@ -170,7 +123,7 @@ SimputSourceEntry* getSimputSourceEntry(int* const status)
 }
 
 
-SimputSourceEntry* getSimputSourceEntryV(const unsigned int src_id, 
+SimputSourceEntry* getSimputSourceEntryV(const int src_id, 
 					 const char* const src_name,
 					 const double ra,
 					 const double dec,
@@ -233,10 +186,10 @@ void freeSimputSourceEntry(SimputSourceEntry** const entry)
       free((*entry)->spectrum);
     }
     if (NULL!=(*entry)->image) {
-      free((*entry)->spectrum);
+      free((*entry)->image);
     }
     if (NULL!=(*entry)->lightcur) {
-      free((*entry)->spectrum);
+      free((*entry)->lightcur);
     }
     free(*entry);
     *entry=NULL;
@@ -262,9 +215,11 @@ void freeSimputSourceCatalog(SimputSourceCatalog** const catalog)
 {
   if (NULL!=*catalog) {
     if ((*catalog)->nentries>0) {
-      unsigned int ii;
+      int ii;
       for (ii=0; ii<(*catalog)->nentries; ii++) {
-	freeSimputSourceEntry(&((*catalog)->entries[ii]));
+	if (NULL!=(*catalog)->entries[ii]) {
+	  freeSimputSourceEntry(&((*catalog)->entries[ii]));
+	}
       }
       free((*catalog)->entries);
     }
@@ -280,9 +235,207 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
   SimputSourceCatalog* catalog = getSimputSourceCatalog(status);
   CHECK_STATUS_RET(*status, catalog);
 
-  // TODO
+  // Open the specified FITS file.
+  fitsfile* fptr=NULL;
+  fits_open_file(&fptr, filename, READONLY, status);
+  CHECK_STATUS_RET(*status, catalog);
 
-  // TODO Take care of the units.
+  // Move to the right extension.
+  fits_movnam_hdu(fptr, BINARY_TBL, "SRC_CAT", 0, status);
+  CHECK_STATUS_RET(*status, catalog);
+
+  do { // Error handling loop.
+    // Get the column names.
+    int csrc_id=0, csrc_name=0, cra=0, cdec=0, cimgrota=0, cimgscal=0,
+      ce_min=0, ce_max=0, cflux=0, cspectrum=0, cimage=0, clightcur=0;
+    // Required columns:
+    fits_get_colnum(fptr, CASEINSEN, "SRC_ID", &csrc_id, status);
+    fits_get_colnum(fptr, CASEINSEN, "RA", &cra, status);
+    fits_get_colnum(fptr, CASEINSEN, "DEC", &cdec, status);
+    fits_get_colnum(fptr, CASEINSEN, "E_MIN", &ce_min, status);
+    fits_get_colnum(fptr, CASEINSEN, "E_MAX", &ce_max, status);
+    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+    fits_get_colnum(fptr, CASEINSEN, "SPECTRUM", &cspectrum, status);
+    fits_get_colnum(fptr, CASEINSEN, "IMAGE", &cimage, status);
+    fits_get_colnum(fptr, CASEINSEN, "LIGHTCUR", &clightcur, status);
+    CHECK_STATUS_BREAK(*status);
+    // Optional columns:
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_get_colnum(fptr, CASEINSEN, "SRC_NAME", &csrc_name, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_get_colnum(fptr, CASEINSEN, "IMGROTA", &cimgrota, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_get_colnum(fptr, CASEINSEN, "IMGSCAL", &cimgscal, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_clear_errmark();
+
+    // Take care of the units. Determine conversion factors.
+    char ura[SIMPUT_MAXSTR];
+    read_unit(fptr, cra, ura, status);
+    CHECK_STATUS_BREAK(*status);
+    float fra = unit_conversion_rad(ura);
+    if (0.==fra) {
+      SIMPUT_ERROR("unknown units in RA column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char udec[SIMPUT_MAXSTR];
+    read_unit(fptr, cdec, udec, status);
+    CHECK_STATUS_BREAK(*status);
+    float fdec = unit_conversion_rad(udec);
+    if (0.==fdec) {
+      SIMPUT_ERROR("unknown units in DEC column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    float fimgrota=0;
+    if (cimgrota>0) {
+      char uimgrota[SIMPUT_MAXSTR];
+      read_unit(fptr, cimgrota, uimgrota, status);
+      CHECK_STATUS_BREAK(*status);
+      fimgrota = unit_conversion_rad(uimgrota);
+      if (0.==fimgrota) {
+	SIMPUT_ERROR("unknown units in IMGROTA column");
+	*status=EXIT_FAILURE;
+	break;
+      }
+    }
+
+    char ue_min[SIMPUT_MAXSTR];
+    read_unit(fptr, ce_min, ue_min, status);
+    CHECK_STATUS_BREAK(*status);
+    float fe_min = unit_conversion_keV(ue_min);
+    if (0.==fe_min) {
+      SIMPUT_ERROR("unknown units in E_MIN column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char ue_max[SIMPUT_MAXSTR];
+    read_unit(fptr, ce_max, ue_max, status);
+    CHECK_STATUS_BREAK(*status);
+    float fe_max = unit_conversion_keV(ue_max);
+    if (0.==fe_max) {
+      SIMPUT_ERROR("unknown units in E_MAX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char uflux[SIMPUT_MAXSTR];
+    read_unit(fptr, cflux, uflux, status);
+    CHECK_STATUS_BREAK(*status);
+    float fflux = unit_conversion_ergpspcm2(uflux);
+    if (0.==fflux) {
+      SIMPUT_ERROR("unknown units in FLUX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    // END of determine unit conversion factors.
+
+    // Determine the number of required entries.
+    long nrows;
+    fits_get_num_rows(fptr, &nrows, status);
+    CHECK_STATUS_BREAK(*status);
+    catalog->entries  = (SimputSourceEntry**)malloc(nrows*sizeof(SimputSourceEntry*));
+    CHECK_NULL_BREAK(catalog->entries, *status, 
+		     "memory allocation for catalog entries failed");
+    catalog->nentries = (int)nrows;
+
+    // Allocate memory for string buffers.
+    char* src_name[1]={NULL};
+    char* spectrum[1]={NULL};
+    char* image[1]   ={NULL};
+    char* lightcur[1]={NULL};
+    src_name[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(src_name[0], *status, 
+		     "memory allocation for string buffer failed");
+    spectrum[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(spectrum[0], *status, 
+		     "memory allocation for string buffer failed");
+    image[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(image[0], *status, 
+		     "memory allocation for string buffer failed");
+    lightcur[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(lightcur[0], *status, 
+		     "memory allocation for string buffer failed");
+
+    // Loop over all rows in the table.
+    long ii;
+    for (ii=0; ii<nrows; ii++) {
+      int src_id=0;
+      double ra=0., dec=0.;
+      float imgrota=0., imgscal=1.;
+      float e_min=0., e_max=0., flux=0.;
+      
+      // Read the data from the table.
+      int anynul=0;
+      fits_read_col(fptr, TUINT, csrc_id, ii+1, 1, 1, 
+		    &src_id, &src_id, &anynul, status);
+
+      if (csrc_name>0) {
+	fits_read_col_str(fptr, csrc_name, ii+1, 1, 1, 
+			  "", src_name, &anynul, status);
+      } else {
+	strcpy(src_name[0], "");
+      }
+
+      fits_read_col(fptr, TDOUBLE, cra, ii+1, 1, 1, &ra, &ra, &anynul, status);
+      ra *= fra; // Convert to [rad].
+      fits_read_col(fptr, TDOUBLE, cdec, ii+1, 1, 1, &dec, &dec, &anynul, status);
+      dec *= fdec; // Convert to [rad].
+
+      if (cimgrota>0) {
+	fits_read_col(fptr, TFLOAT, cimgrota, ii+1, 1, 1, 
+		      &imgrota, &imgrota, &anynul, status);
+	imgrota *= fimgrota; // Convert to [rad].
+      }
+      if (cimgscal>0) {
+	fits_read_col(fptr, TFLOAT, cimgscal, ii+1, 1, 1, 
+		      &imgscal, &imgscal, &anynul, status);
+      }
+      
+      fits_read_col(fptr, TFLOAT, ce_min, ii+1, 1, 1, &e_min, &e_min, &anynul, status);
+      e_min *= fe_min; // Convert to [keV].
+      fits_read_col(fptr, TFLOAT, ce_max, ii+1, 1, 1, &e_max, &e_max, &anynul, status);
+      e_max *= fe_max; // Convert to [keV].
+      fits_read_col(fptr, TFLOAT, cflux, ii+1, 1, 1, &flux, &flux, &anynul, status);
+      flux  *= fflux; // Convert to [erg/s/cm**2].
+
+      fits_read_col(fptr, TSTRING, cspectrum, ii+1, 1, 1, 
+		    "", spectrum, &anynul, status);
+      fits_read_col(fptr, TSTRING, cimage, ii+1, 1, 1, 
+		    "", image, &anynul, status);
+      fits_read_col(fptr, TSTRING, clightcur, ii+1, 1, 1, 
+		    "", lightcur, &anynul, status);
+
+      CHECK_STATUS_BREAK(*status);
+
+      // Add a new entry to the catalog.
+      catalog->entries[ii] = 
+	getSimputSourceEntryV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
+			      e_min, e_max, flux, spectrum[0], image[0],
+			      lightcur[0], status);
+
+      CHECK_STATUS_BREAK(*status);
+
+    }
+    // END of loop over all rows in the table.
+
+    // Release allocated memory.
+    if (NULL!=src_name[0]) free(src_name[0]);
+    if (NULL!=spectrum[0]) free(spectrum[0]);
+    if (NULL!=image[0])    free(image[0]);
+    if (NULL!=lightcur[0]) free(lightcur[0]);
+
+    CHECK_STATUS_BREAK(*status);
+
+  } while(0); // END of error handling loop.
+  
+  // Close the file.
+  fits_close_file(fptr, status);
 
   return(catalog);
 }
@@ -293,1213 +446,117 @@ void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
 			     int* const status)
 {
   fitsfile* fptr=NULL;
-
-  // Check if the file already exists.
-  int exists;
-  fits_file_exists(filename, &exists, status);
-  CHECK_STATUS_VOID(*status);
   
-  // If yes, return with an error message. 
-  // TODO really do this??
-  if (1==exists) {
-    *status=EXIT_FAILURE;
-    char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "file '%s' already exists", filename);
-    SIMPUT_ERROR(msg);
-    return;
-  }
+  do { // Error handling loop.
 
-  // Create and open a new empty FITS file.
-  fits_create_file(&fptr, filename, status);
-  CHECK_STATUS_VOID(*status);
+    // Check if the file already exists.
+    int exists;
+    fits_file_exists(filename, &exists, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==exists) {
+      // The file already exists.
+      // Open the file and check, whether it contains a source catalog.
+      fits_open_file(&fptr, filename, READWRITE, status);
+      CHECK_STATUS_BREAK(*status);
+      
+      int status2=EXIT_SUCCESS;
+      fits_write_errmark();
+      fits_movnam_hdu(fptr, BINARY_TBL, "SRC_CAT", 0, &status2);
+      if (BAD_HDU_NUM!=status2) {
+	// The file alreay contains a source catalog.
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "the file '%s' already contains a source catalog", filename);
+	SIMPUT_ERROR(msg);
+	*status=EXIT_FAILURE;
+	break;
+      }
+      fits_clear_errmark();
 
-  // Error handling loop.
-  do {
+    } else {
+      // The does not exist yet.
+      // Create and open a new empty FITS file.
+      fits_create_file(&fptr, filename, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+
 
     // Create a binary table.
+    const int csrc_id   = 1;
+    const int csrc_name = 2;
+    const int cra       = 3;
+    const int cdec      = 4;
+    const int cimgrota  = 5;
+    const int cimgscal  = 6;
+    const int ce_min    = 7;
+    const int ce_max    = 8;
+    const int cflux     = 9;
+    const int cspectrum = 10;
+    const int cimage    = 11;
+    const int clightcur = 12;
     char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
 		      "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
-    char *tform[] = { "J", "1PA", "D", "D", "E", "E", 
+    char *tform[] = { "I", "1PA", "D", "D", "E", "E", 
 		      "E", "E", "E", "1PA", "1PA", "1PA" };
     char *tunit[] = { "", "", "deg", "deg", "deg", "",  
-		      "keV", "keV", "erg /s /cm**2", "", "", "" };
-    // TODO Provide option to use different units?
+		      "keV", "keV", "erg/s/cm**2", "", "", "" };
+    // Provide option to use different units?
     fits_create_tbl(fptr, BINARY_TBL, 0, 12, ttype, tform, tunit, "SRC_CAT", status);
-    CHECK_STATUS_VOID(*status);
+    CHECK_STATUS_BREAK(*status);
 
-    // TODO Write the necessary header keywords.
+    // Write the necessary header keywords.
+    fits_write_key(fptr, TSTRING, "HDUCLASS", "OGIP", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS2", "SRC_CAT", "", status);
+    fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    fits_write_key(fptr, TSTRING, "RADESYS", "FK5", "", status);
+    float equinox=2000.0;
+    fits_update_key(fptr, TFLOAT, "EQUINOX", &equinox, "", status);
+    CHECK_STATUS_BREAK(*status);
 
-    // TODO Write the data.
-
+    // Write the data.
+    fits_insert_rows(fptr, 0, catalog->nentries, status);
+    CHECK_STATUS_BREAK(*status);
+    int ii;
+    for (ii=0; ii<catalog->nentries; ii++) {
+      fits_write_col(fptr, TUINT, csrc_id, ii+1, 1, 1, 
+		     &catalog->entries[ii]->src_id, status);
+      fits_write_col(fptr, TSTRING, csrc_name, ii+1, 1, 1, 
+		     &catalog->entries[ii]->src_name, status);
+      double ra = catalog->entries[ii]->ra*180./M_PI;
+      fits_write_col(fptr, TDOUBLE, cra, ii+1, 1, 1, &ra, status);
+      double dec = catalog->entries[ii]->dec*180./M_PI;
+      fits_write_col(fptr, TDOUBLE, cdec, ii+1, 1, 1, &dec, status);
+      float imgrota = catalog->entries[ii]->imgrota*180./M_PI;
+      fits_write_col(fptr, TFLOAT, cimgrota, ii+1, 1, 1, &imgrota, status);
+      fits_write_col(fptr, TFLOAT, cimgscal, ii+1, 1, 1, 
+		     &catalog->entries[ii]->imgscal, status);
+      fits_write_col(fptr, TFLOAT, ce_min, ii+1, 1, 1, 
+		     &catalog->entries[ii]->e_min, status);
+      fits_write_col(fptr, TFLOAT, ce_max, ii+1, 1, 1, 
+		     &catalog->entries[ii]->e_max, status);
+      fits_write_col(fptr, TFLOAT, cflux, ii+1, 1, 1, 
+		     &catalog->entries[ii]->flux, status);
+      fits_write_col(fptr, TSTRING, cspectrum, ii+1, 1, 1, 
+		     &catalog->entries[ii]->spectrum, status);
+      fits_write_col(fptr, TSTRING, cimage, ii+1, 1, 1, 
+		     &catalog->entries[ii]->image, status);
+      fits_write_col(fptr, TSTRING, clightcur, ii+1, 1, 1, 
+		     &catalog->entries[ii]->lightcur, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+    CHECK_STATUS_BREAK(*status);
+    // END of loop over all entries in the catalog.
 
   } while(0); // END of error handling loop.
 
   // Close the file.
   fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
-
 }
 
 
-// Obsolete:
-void simput_add_src(const char* const filename, 
-		    long src_id, 
-		    char* src_name,
-		    float ra, 
-		    float dec, 
-		    float flux, 
-		    float e_min, 
-		    float e_max,
-		    char* spectrum, 
-		    char* image, 
-		    char* lightcur, 
-		    int* const status) 
-{
-  SIMPUT_SrcCtlg* srcctlg = simput_get_srcctlg(status);
-  CHECK_STATUS_VOID(*status);
-  
-  // Check if the file already exists.
-  int exists;
-  fits_file_exists(filename, &exists, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // If no, create a new file.
-  if (1 != exists) {
-    // Create and open a new empty FITS file.
-    fits_create_file(&srcctlg->fptr, filename, status);
-    CHECK_STATUS_VOID(*status);
-  } else {
-    // The file does already exist, so just open it.
-    fits_open_file(&srcctlg->fptr, filename, READWRITE, status);
-    CHECK_STATUS_VOID(*status);
-  }
-  // END of check, whether the file already exists or not.
-  
-  // Check if a source catalog extension exists.
-  // Try to move the internal HDU pointer of the fitsfile data structure
-  // to the right extension containing the source catalog.
-  fits_write_errmark();
-  int temp_status = EXIT_SUCCESS; // We have to use another status variable here.
-  fits_movnam_hdu(srcctlg->fptr, BINARY_TBL, "SRC_CAT", 0, &temp_status);
-  fits_clear_errmark();
-
-  if (BAD_HDU_NUM == temp_status) {
-    // Create the table structure for the source catalog.
-    char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "FLUX", "E_MIN",
-		      "E_MAX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
-    char *tform[] = { "J", "1PA", "E", "E", "E", "E", "E", "1PA", "1PA",
-		      "1PA" };
-    char *tunit[] = { "", "", "deg", "deg", "erg /s /cm**2", "keV", "keV", "",
-		      "", "" };
-    fits_create_tbl(srcctlg->fptr, BINARY_TBL, 0, N_SRC_CAT_COLUMNS, ttype,
-		    tform, tunit, "SRC_CAT", status);
-    CHECK_STATUS_VOID(*status);
-    
-    // Insert header keywords.
-    fits_update_key(srcctlg->fptr, TSTRING, "HDUCLASS", "OGIP", "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(srcctlg->fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(srcctlg->fptr, TSTRING, "HDUCLAS2", "SRC_CAT", "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(srcctlg->fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(srcctlg->fptr, TSTRING, "RADECSYS", "FK5", "", status);
-    CHECK_STATUS_VOID(*status);
-    float equinox = 2000.0;
-    fits_update_key(srcctlg->fptr, TFLOAT, "EQUINOX", &equinox, "", status);
-    CHECK_STATUS_VOID(*status);
-    
-  }
-  
-  // Note: we do not want to apply a full consistency check here
-  // because we also want to be able to access a file, which is
-  // not complete yet.
-  
-  // Determine the column numbers.
-  simput_get_srcctlg_colnums(srcctlg, status);
-  CHECK_STATUS_VOID(*status);
-
-  // Store the data:
-  
-  // Check if a source of this ID is already contained in the catalog.
-  long row = simput_get_src_linenum(srcctlg, src_id, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // If the source is already contained in the catalog, create an
-  // error message.
-  if (row > 0) {
-    *status = EXIT_FAILURE;
-    SIMPUT_ERROR("source is already contained in the catalog "
-		 "(ID must be unique)");
-    return;
-  }
-
-  // Determine the current number of lines in the source catalog.
-  long nrows;
-  fits_get_num_rows(srcctlg->fptr, &nrows, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // Insert the source data at the end of the table.
-  nrows++;
-  fits_write_col(srcctlg->fptr, TLONG, srcctlg->csrc_id, nrows, 1, 1, &src_id, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TSTRING, srcctlg->csrc_name, nrows, 1, 1, &src_name,
-		 status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->cra, nrows, 1, 1, &ra, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->cdec, nrows, 1, 1, &dec, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->cflux, nrows, 1, 1, &flux, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->ce_min, nrows, 1, 1, &e_min, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TFLOAT, srcctlg->ce_max, nrows, 1, 1, &e_max, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum, nrows, 1, 1, &spectrum,
-		 status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TSTRING, srcctlg->clightcur, nrows, 1, 1, &lightcur,
-		 status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cimage, nrows, 1, 1, &image, status);
-  CHECK_STATUS_VOID(*status);
-	
-  // Close the file.
-  simput_destroy_srcctlg(&srcctlg, status);
-  CHECK_STATUS_VOID(*status);
-}
-
-
-
-static long simput_get_src_linenum(SIMPUT_SrcCtlg* const srcctlg, 
-				   const long src_id,
-				   int* const status) 
-{
-  // Determine the number of lines in the source catalog.
-  long nrows;
-  fits_get_num_rows(srcctlg->fptr, &nrows, status);
-  CHECK_STATUS_RET(*status, 0);
-  
-  long row, id, nulval = 0;
-  int anynul = 0;
-  for (row = 1; row <= nrows; row++) {
-    fits_read_col(srcctlg->fptr, TLONG, srcctlg->csrc_id, row, 1, 1, &nulval, &id,
-		  &anynul, status);
-    CHECK_STATUS_RET(*status, 0);
-    
-    if (src_id == id) return (row);
-  }
-  
-  return (0);
-}
-
-
-
-static void simput_write_timing_keywords(fitsfile* fptr,
-					 struct simput_timing* const timing,
-					 int* const status)
-{
-  if (NULL!=timing) {
-    fits_update_key(fptr, TDOUBLE, "MJDREF", &timing->mjdref, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TDOUBLE, "TSTART", &timing->tstart, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TDOUBLE, "TSTOP", &timing->tstop, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TDOUBLE, "TIMEZERO", &timing->timezero, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TSTRING, "TIMESYS", timing->timesys, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TSTRING, "TIMEUNIT", timing->timeunit, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TSTRING, "CLOCKCOR", timing->clockcor, "", status);
-    CHECK_STATUS_VOID(*status);
-  }
-}
-
-
-
-static void simput_write_polarization_keywords(fitsfile* fptr,
-					       struct simput_polarization* const polarization,
-					       int* const status)
-{
-  if (NULL!=polarization) {
-    fits_update_key(fptr, TDOUBLE, "STOKES1", &polarization->stokes1, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TDOUBLE, "STOKES2", &polarization->stokes2, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TDOUBLE, "STOKES3", &polarization->stokes3, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TSTRING, "RADECSYS", &polarization->radecsys, "", status);
-    CHECK_STATUS_VOID(*status);
-    fits_update_key(fptr, TSTRING, "EQUINOX", &polarization->equinox, "", status);
-    CHECK_STATUS_VOID(*status);    
-  }
-}
-
-
-
-void simput_write_spectrum(const char* const filename, 
-			   char* const extname,
-			   int* extver, 
-			   struct simput_timing* const timing,
-			   float* phase, 
-			   struct simput_polarization* const polarization,
-			   const long nbins, 
-			   float* const e_min, 
-			   float* const e_max,
-			   float* const flux, 
-			   int* const status) 
-{
-  fitsfile* fptr = NULL;
-  
-  // Check if the file already exists.
-  int exists;
-  fits_file_exists(filename, &exists, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // If no, create a new file.
-  if (1 != exists) {
-    // Create and open a new empty FITS file.
-    fits_create_file(&fptr, filename, status);
-    CHECK_STATUS_VOID(*status);
-  } else {
-    // The file does already exist, so just open it.
-    fits_open_file(&fptr, filename, READWRITE, status);
-    CHECK_STATUS_VOID(*status);
-  }
-  // END of check, whether the file already exists or not.
-  
-  // Check if a particular name is specified for the new extension.
-  char extname2[SIMPUT_MAXMSG];
-  if (NULL == extname) {
-    // If no explicit exname is given, use the default value "SPECTRUM".
-    strcpy(extname2, "SPECTRUM");
-  } else {
-    strcpy(extname2, extname);
-  }
-  
-  // Check if the FITS file already contains an extension with
-  // the same EXTNAME. Find a new unique EXTVER for the new
-  // extension.
-  *extver=0;
-  fits_write_errmark();
-  int temp_status;
-  do {
-    temp_status = EXIT_SUCCESS; // We have to use another status variable here.
-    (*extver)++;
-    fits_movnam_hdu(fptr, BINARY_TBL, extname2, *extver, &temp_status);
-  } while (BAD_HDU_NUM != temp_status);
-  fits_clear_errmark();
-  
-  // --- Create a new table for the spectrum with a unique
-  //     EXTNAME and EXTVER combination.                    ---
-  char *ttype[] = { "E_MIN", "E_MAX", "FLUX" };
-  char *tform[] = { "E", "E", "E" };
-  char *tunit[] = { "keV", "keV", "photon /s /cm**2 /keV" };
-  fits_create_tbl(fptr, BINARY_TBL, 0, N_SPEC_COLUMNS, ttype, tform,
-		  tunit, extname2, status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TINT, "EXTVER", extver, "extension identifier",
-		  status);
-  CHECK_STATUS_VOID(*status);
-  
-  // Insert header keywords.
-  fits_update_key(fptr, TSTRING, "HDUCLASS", "OGIP", "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TSTRING, "HDUCLAS2", "SPECTRUM", "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
-  CHECK_STATUS_VOID(*status);
-
-  // Timing header keywords.
-  simput_write_timing_keywords(fptr, timing, status);
-  CHECK_STATUS_VOID(*status);
-
-  // Phase header keyword.
-  if (NULL!=phase) {
-    fits_update_key(fptr, TFLOAT, "PHASE", phase,
-		    "phase the spectrum is valid for", status);
-    CHECK_STATUS_VOID(*status);
-  }
-
-  // Polarziation header keywords.
-  simput_write_polarization_keywords(fptr, polarization, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // --- End of creating a new table with header keywords. ---
-
-
-  // Determine the column numbers of the essential columns.
-  int ce_min, ce_max, cflux;
-  fits_get_colnum(fptr, CASEINSEN, "E_MIN", &ce_min, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(fptr, CASEINSEN, "E_MAX", &ce_max, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // Store the spectrum in the table.
-  fits_write_col(fptr, TFLOAT, ce_min, 1, 1, nbins, e_min, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(fptr, TFLOAT, ce_max, 1, 1, nbins, e_max, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(fptr, TFLOAT, cflux, 1, 1, nbins, flux, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // Close the file.
-  fits_close_file(fptr, status);
-  CHECK_STATUS_VOID(*status);
-}
-
-
-
-void simput_write_lightcur(const char* const filename, 
-			   char* const extname,
-			   int* extver, 
-			   struct simput_timing* const timing,
-			   float e_min, 
-			   float e_max,
-			   float ref_flux,
-			   double* phase0,
-			   double* period,
-			   const long nbins,
-			   double* const time, 
-			   float* const phase, 
-			   float* const flux,
-			   int* const status) 
-{
-  fitsfile* fptr = NULL;
-  
-  // Check if the file already exists.
-  int exists;
-  fits_file_exists(filename, &exists, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // If no, create a new file.
-  if (1 != exists) {
-    // Create and open a new empty FITS file.
-    fits_create_file(&fptr, filename, status);
-    CHECK_STATUS_VOID(*status);
-  } else {
-    // The file does already exist, so just open it.
-    fits_open_file(&fptr, filename, READWRITE, status);
-    CHECK_STATUS_VOID(*status);
-  }
-  // END of check, whether the file already exists or not.
-
-  // Check if a particular name is specified for the new extension.
-  char extname2[SIMPUT_MAXMSG];
-  if (NULL == extname) {
-    // If no explicit exname is given, use the default value "LIGHTCUR".
-    strcpy(extname2, "LIGHTCUR");
-  } else {
-    strcpy(extname2, extname);
-  }
-  
-  // Check if the FITS file already contains an extension with
-  // the same EXTNAME. Find a new unique EXTVER for the new
-  // extension.
-  *extver=0;
-  fits_write_errmark();
-  int temp_status;
-  do {
-    temp_status = EXIT_SUCCESS; // We have to use another status variable here.
-    (*extver)++;
-    fits_movnam_hdu(fptr, BINARY_TBL, extname2, *extver, &temp_status);
-  } while (BAD_HDU_NUM != temp_status);
-  fits_clear_errmark();
-
-  // --- Create a new table for the light curve with a unique
-  //     EXTNAME and EXTVER combination.                      ---
-  char *ttype[N_LIGHTCUR_COLUMNS];
-  char *tform[N_LIGHTCUR_COLUMNS];
-  char *tunit[N_LIGHTCUR_COLUMNS];
-  int ncolumns = 0;
-  if (NULL != time) {
-    ttype[ncolumns] = "TIME";
-    tform[ncolumns] = "D";
-    tunit[ncolumns] = "s";
-    ncolumns++;
-  }
-  if (NULL != phase) {
-    ttype[ncolumns] = "PHASE";
-    tform[ncolumns] = "E";
-    tunit[ncolumns] = "";
-    ncolumns++;
-  }
-  ttype[ncolumns] = "FLUX";
-  tform[ncolumns] = "E";
-  tunit[ncolumns] = "erg /s /cm**2";
-  ncolumns++;
-  fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns, ttype, tform, tunit,
-		  extname2, status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TINT, "EXTVER", extver, "extension identifier",
-		  status);
-  CHECK_STATUS_VOID(*status);
-
-  // Insert header keywords.
-  fits_update_key(fptr, TSTRING, "HDUCLASS", "OGIP", "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TSTRING, "HDUCLAS2", "LIGHTCUR", "", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
-  CHECK_STATUS_VOID(*status);
-
-  // Time definition header keywords (required).
-  CHECK_NULL_VOID(timing, *status,
-		  "missing time definition for light curve");
-  simput_write_timing_keywords(fptr, timing, status);
-  CHECK_STATUS_VOID(*status);
-
-  // Reference flux definition.
-  fits_update_key(fptr, TFLOAT, "E_MIN", &e_min,
-		  "lower value of the reference energy band", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TFLOAT, "E_MAX", &e_max,
-		  "upper value of the reference energy band", status);
-  CHECK_STATUS_VOID(*status);
-  fits_update_key(fptr, TFLOAT, "FLUX", &ref_flux,
-		  "reference flux in [erg /s /cm**2]", status);
-  CHECK_STATUS_VOID(*status);
-
-  // Distinguish between periodic and non-periodic light curves.
-  if (NULL==phase) {
-    // Non-periodic light curve.
-    int periodic = 0;
-    fits_update_key(fptr, TINT, "PERIODIC", &periodic, 
-		    "non-periodic light curve", status);
-    CHECK_STATUS_VOID(*status);
-
-  } else {
-    // Periodic light curve.
-    int periodic = 1;
-    fits_update_key(fptr, TINT, "PERIODIC", &periodic, 
-		    "periodic light curve", status);
-    CHECK_STATUS_VOID(*status);
-
-
-    CHECK_NULL_VOID(phase0, *status,
-		    "missing PHASE0 definition for periodic light curve");
-    fits_update_key(fptr, TDOUBLE, "PHASE0", &phase0, 
-		    "phase of oscillation at TIMEZERO", status);
-    CHECK_STATUS_VOID(*status);
-
-    CHECK_NULL_VOID(period, *status,
-		    "missing PERIOD definition for periodic light curve");
-    fits_update_key(fptr, TDOUBLE, "PERIOD", &period, 
-		    "duration of one oscillation period", status);
-    CHECK_STATUS_VOID(*status);
-  }
-
-  // --- End of creating a new table with header keywords.
-  
-
-  // Determine the column numbers of the essential columns and store
-  // the light curve in the table.
-  int column;
-  if (NULL!=time) {
-    fits_get_colnum(fptr, CASEINSEN, "TIME", &column, status);
-    CHECK_STATUS_VOID(*status);
-    fits_write_col(fptr, TDOUBLE, column, 1, 1, nbins, time, status);
-    CHECK_STATUS_VOID(*status);
-  } else {  
-    if (NULL!=phase) {
-      fits_get_colnum(fptr, CASEINSEN, "PHASE", &column, status);
-      CHECK_STATUS_VOID(*status);
-      fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, phase, status);
-      CHECK_STATUS_VOID(*status);
-    } else {
-      *status = EXIT_FAILURE;
-      SIMPUT_ERROR("neither TIME nor PHASE column are defined");
-      return;
-    }
-  }
-  fits_get_colnum(fptr, CASEINSEN, "FLUX", &column, status);
-  CHECK_STATUS_VOID(*status);
-  fits_write_col(fptr, TFLOAT, column, 1, 1, nbins, flux, status);
-  CHECK_STATUS_VOID(*status);
-  
-  // Close the file.
-  fits_close_file(fptr, status);
-  CHECK_STATUS_VOID(*status);
-}
-
-
-
-static void simput_ext_id(char* const id, 
-			  const char* const filename,
-			  const char* const extname, 
-			  const int extver) 
-{
-  sprintf(id, "%s[%s,%d]", filename, extname, extver);
-}
-
-
-
-static SIMPUT_SrcCtlg* simput_open_existing_srcctlg(const char* const filename,
-						    int* const status) 
-{
-  SIMPUT_SrcCtlg* srcctlg=NULL;
-
-  // Check if the file already exists.
-  int exists;
-  fits_file_exists(filename, &exists, status);
-  CHECK_STATUS_RET(*status, srcctlg);
-  
-  if (1 != exists) {
-    // If no, break with an error message.
-    *status=EXIT_FAILURE;
-    char message[SIMPUT_MAXMSG];
-    sprintf(message, "the specified file '%s' does not exist", filename);
-    SIMPUT_ERROR(message);
-    return(srcctlg);
-  }
-  
-  // The file does exist, so we can open it.
-  srcctlg = simput_get_srcctlg(status);
-  CHECK_STATUS_RET(*status, srcctlg);
-  fits_open_file(&srcctlg->fptr, filename, READWRITE, status);
-  CHECK_STATUS_RET(*status, srcctlg);
-  
-  // Check if a source catalog extension exists.
-  // Try to move the internal HDU pointer of the fitsfile data structure
-  // to the right extension containing the source catalog.
-  fits_write_errmark();
-  int temp_status = EXIT_SUCCESS; // We have to use another status variable here.
-  fits_movnam_hdu(srcctlg->fptr, BINARY_TBL, "SRC_CAT", 0, &temp_status);
-  fits_clear_errmark();
-  fits_clear_errmark();
-  
-  if (BAD_HDU_NUM == temp_status) {
-    // The FITS file does not contain a source catalog.
-    // Therefore break with an error message.
-    *status=EXIT_FAILURE;
-    char message[SIMPUT_MAXMSG];
-    sprintf(message, 
-	    "the specified file '%s' does not contain a source catalog",
-	    filename);
-    SIMPUT_ERROR(message);
-    return(srcctlg);
-  }
-  
-  // Determine the column numbers.
-  simput_get_srcctlg_colnums(srcctlg, status);
-  CHECK_STATUS_RET(*status, srcctlg);
-
-  return(srcctlg);
-}
-
-
-
-void simput_add_spectrum(const char* const srcctlg_filename,
-			 const long src_id,
-			 const char* const spec_filename,
+static int check_if_btbl(const char* const filename,
 			 int* const status)
-{
-  SIMPUT_SrcCtlg* srcctlg=NULL;
-  fitsfile* gfptr=NULL;
-  fitsfile* mfptr=NULL;
-  char* table_entry[1]={NULL};
-  char* reference_string[1]={NULL};
-  char* grouping_ref[1]={NULL};
-
-  // Error handling loop.
-  do {
-    // Open the source catalog.
-    srcctlg=simput_open_existing_srcctlg(srcctlg_filename, status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Check if spec_filename already points to the appropriate HDU.
-    // If not, determine an appropriate reference to the spectrum.
-
-    // Reference to the spectrum FITS extension.
-    reference_string[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
-    CHECK_NULL_BREAK(reference_string[0], *status, "memory allocation failed");
-    fits_open_file(&mfptr, spec_filename, READONLY, status);
-    CHECK_STATUS_BREAK(*status);
-    // Check if mfptr points to a spectrum extension.
-    int is_spectrum = simput_check_if_spectrum(spec_filename, status);
-    CHECK_STATUS_BREAK(*status);
-    if (1==is_spectrum) {
-      // If yes, we can use the input filename directly as a 
-      // reference string.
-      strcpy(reference_string[0], spec_filename);
-    } else {
-      // If no, try to move to the second HDU after the primary
-      // extension, and check whether this is a spectrum.
-      int hdutype;
-      fits_movabs_hdu(mfptr, 2, &hdutype, status);
-      CHECK_STATUS_BREAK(*status);
-      // Check if this is now a spectrum.
-      is_spectrum = simput_check_if_spectrum(spec_filename, status);
-      CHECK_STATUS_BREAK(*status);
-      if (1==is_spectrum) {
-	// Determine the EXTNAME and EXTVER keywords.
-	char extname[SIMPUT_MAXMSG];
-	char comment[SIMPUT_MAXMSG];
-	int extver;
-	fits_read_key(mfptr, TSTRING, "EXTNAME", extname, comment, status);
-	CHECK_STATUS_BREAK(*status);
-	fits_read_key(mfptr, TINT, "EXTVER", &extver, comment, status);
-	CHECK_STATUS_BREAK(*status);
-	simput_ext_id(reference_string[0], spec_filename,
-		      extname, extver);
-      } else {
-	// No valid spectrum found!
-	*status=EXIT_FAILURE;
-	char message[SIMPUT_MAXMSG];
-	sprintf(message, 
-		"the specified file '%s' does not contain a source spectrum",
-		spec_filename);
-	SIMPUT_ERROR(message);
-	break;
-      }
-    }
-    // End of check if spec_filename points to a spectrum HDU.
-    fits_close_file(mfptr, status);
-    CHECK_STATUS_BREAK(*status);
-    mfptr=NULL;
-
-
-    // Find the row number of the desired source in the source catalog.
-    long linenum = simput_get_src_linenum(srcctlg, src_id, status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Read the content of the spectrum column.
-    table_entry[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
-    CHECK_NULL_BREAK(table_entry[0], *status, "memory allocation failed");
-    int anynul=0;
-    fits_read_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum,
-		  linenum, 1, 1, "", table_entry, &anynul,
-		  status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Remove blank signs from string.
-    simput_strtrim(table_entry[0]);
-
-    // Check if the spectrum column is empty.
-    if (0==strlen(table_entry[0])) {
-      // Insert the reference to the new spectrum.
-      fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum, 
-		     linenum, 1, 1, reference_string, status);
-      CHECK_STATUS_BREAK(*status);
-
-    } else {
-      
-      // Check if it is really a spectrum or a grouping table.
-      int is_grouping = simput_is_grouping_table(table_entry[0], status);
-      CHECK_STATUS_BREAK(*status);
-      if (0==is_grouping) {
-	// It is already a spectrum => create a grouping table.
-
-	// Open the file containing the source catalog.
-	fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
-	CHECK_STATUS_BREAK(*status);
-
-	fits_create_group(gfptr, "SPECTRA", GT_ID_ALL_URI, status);
-	CHECK_STATUS_BREAK(*status);	
-	fits_open_file(&mfptr, table_entry[0], READONLY, status);
-	CHECK_STATUS_BREAK(*status);
-	fits_add_group_member(gfptr, mfptr, 0, status);
-	CHECK_STATUS_BREAK(*status);
-	fits_close_file(mfptr, status);
-	CHECK_STATUS_BREAK(*status);
-	mfptr=NULL;
-
-	// Redirect the reference in the spectrum column of the source 
-	// catalog to the new grouping table.
-	// Determine the EXTVER of the grouping table.
-	int extver=0;
-	char comment[SIMPUT_MAXMSG];
-	fits_read_key(gfptr, TINT, "EXTVER", &extver, comment, status);
-	CHECK_STATUS_BREAK(*status);
-	// Store the reference to the grouping table.
-	grouping_ref[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
-	CHECK_NULL_BREAK(grouping_ref[0], *status, "memory allocation failed");
-	simput_ext_id(grouping_ref[0], srcctlg_filename,
-		      "GROUPING", extver);
-	fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cspectrum, linenum, 
-		       1, 1, grouping_ref, status);
-	CHECK_STATUS_BREAK(*status);
-
-      } else {
-	// The grouping table already exists => move the
-	// FITS file pointer to it.
-	// Open the file containing the grouping table.
-	fits_open_file(&gfptr, table_entry[0], READWRITE, status);
-	CHECK_STATUS_BREAK(*status);
-      }
-
-      // Add the new spectrum to the grouping table.
-      fits_open_file(&mfptr, reference_string[0], READONLY, status);
-      CHECK_STATUS_BREAK(*status);
-      fits_add_group_member(gfptr, mfptr, 0, status);
-      CHECK_STATUS_BREAK(*status);
-      fits_close_file(mfptr, status);
-      CHECK_STATUS_BREAK(*status);
-      mfptr=NULL;
-      
-      // Close the FITS file with the source catalog.
-      fits_close_file(gfptr, status);
-      CHECK_STATUS_BREAK(*status);
-      gfptr=NULL;
-    }
-    // END of check whether spectrum column is empty.
-
-  } while(0); // End of Error handling loop.
-
-  if (NULL!=table_entry[0]) free(table_entry[0]);
-  if (NULL!=reference_string[0]) free(reference_string[0]);
-  if (NULL!=grouping_ref[0]) free(grouping_ref[0]);
-
-  // Close the FITS files.
-  if (NULL!=mfptr) fits_close_file(mfptr, status);
-  if (NULL!=gfptr) fits_close_file(gfptr, status);
-  simput_destroy_srcctlg(&srcctlg, status);
-  CHECK_STATUS_VOID(*status);
-}
-
-
-
-static SIMPUT_SrcCtlg* simput_get_srcctlg(int* const status)
-{
-  SIMPUT_SrcCtlg* srcctlg = (SIMPUT_SrcCtlg*)malloc(sizeof(SIMPUT_SrcCtlg));
-  CHECK_NULL_RET(srcctlg, *status, "memory allocation for SIMPUT_SrcCtlg failed",
-		 srcctlg);
-
-  // Initialize pointers with NULL.
-  srcctlg->fptr=NULL;
-  
-  // Set default initial values.
-  srcctlg->csrc_id  =0;
-  srcctlg->csrc_name=0;
-  srcctlg->cra      =0;
-  srcctlg->cdec     =0;
-  srcctlg->cflux    =0;
-  srcctlg->ce_min   =0;
-  srcctlg->ce_max   =0;
-  srcctlg->cspectrum=0;
-  srcctlg->clightcur=0;
-  srcctlg->cimage   =0;
-
-  return(srcctlg);
-}
-
-
-
-static void simput_destroy_srcctlg(SIMPUT_SrcCtlg** const srcctlg, 
-				   int* const status)
-{
-  if (NULL!=(*srcctlg)) {
-    if (NULL!=(*srcctlg)->fptr) {
-      fits_close_file((*srcctlg)->fptr, status);
-    }
-    free(*srcctlg);
-    *srcctlg=NULL;
-  }
-}
-
-
-
-static void simput_get_srcctlg_colnums(SIMPUT_SrcCtlg* const srcctlg,
-				       int* const status)
-{
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "SRC_ID", &srcctlg->csrc_id, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "SRC_NAME", &srcctlg->csrc_name, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "RA", &srcctlg->cra, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "DEC", &srcctlg->cdec, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "FLUX", &srcctlg->cflux, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "E_MIN", &srcctlg->ce_min, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "E_MAX", &srcctlg->ce_max, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "SPECTRUM", &srcctlg->cspectrum, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "LIGHTCUR", &srcctlg->clightcur, status);
-  CHECK_STATUS_VOID(*status);
-  fits_get_colnum(srcctlg->fptr, CASEINSEN, "IMAGE", &srcctlg->cimage, status);
-  CHECK_STATUS_VOID(*status);
-}
-
-
-
-static int simput_is_grouping_table(const char* const filename, 
-				    int* const status)
-{
-  fitsfile* fptr=NULL;
-  int is_grouping=0;
-
-  // Error handling loop.
-  do {
-    // Open the file.
-    fits_open_file(&fptr, filename, READONLY, status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Determine the extension name.
-    char extname[SIMPUT_MAXMSG];
-    char comment[SIMPUT_MAXMSG];
-    fits_read_key(fptr, TSTRING, "EXTNAME", extname, comment, status);
-    CHECK_STATUS_BREAK(*status);
-    if (0==strcmp(extname, "GROUPING")) {
-      is_grouping=1;
-    } else {
-      is_grouping=0;
-    }
-  } while(0); // END of error handling loop.
-
-  if (NULL!=fptr) fits_close_file(fptr, status);
-  CHECK_STATUS_RET(*status, 0);
-
-  return(is_grouping);
-}
-
-
-
-static void simput_strtrim(char* const str)
-{
-  char* start=str;
-  while ((strlen(start)>0)&&(start[0]==' ')) {
-    start++;
-  }
-
-  int len = strlen(start);
-  while ((len>0)&&(start[len-1]==' ')) {
-    len--;
-  }
-
-  assert(len>=0);
-  
-  char buffer[SIMPUT_MAXMSG];
-  // Copy len+1 characters to the buffer (the "+1" ensures that
-  // that the string termination sign is also copied.
-  strncpy(buffer, start, len+1);
-  strcpy(str, buffer);
-}
-
-
-
-static int simput_check_if_spectrum(const char* const filename,
-				    int* const status)
-{
-  // Check if this is a binary table.
-  return(simput_check_if_btbl(filename, status));
-}
-
-
-
-void simput_add_lightcur(const char* const srcctlg_filename,
-			 const long src_id,
-			 const char* const lc_filename,
-			 int* const status)
-{
-  SIMPUT_SrcCtlg* srcctlg=NULL;
-  fitsfile* mfptr=NULL;
-  char* table_entry[1]={NULL};
-  char* reference_string[1]={NULL};
-
-  // Error handling loop.
-  do {
-    // Open the source catalog.
-    srcctlg=simput_open_existing_srcctlg(srcctlg_filename, status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Check if lc_filename already points to the appropriate HDU.
-    // If not, determine an appropriate reference to the light curve.
-
-    // Reference to the light curve FITS extension.
-    reference_string[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
-    CHECK_NULL_VOID(reference_string[0], *status, "memory allocation failed");
-    fits_open_file(&mfptr, lc_filename, READONLY, status);
-    CHECK_STATUS_BREAK(*status);
-    // Check if mfptr points to a light curve extension.
-    int is_lc = simput_check_if_lightcur(lc_filename, status);
-    CHECK_STATUS_BREAK(*status);
-    if (1==is_lc) {
-      // If yes, we can use the input filename directly as a 
-      // reference string.
-      strcpy(reference_string[0], lc_filename);
-    } else {
-      // If no, try to move to the second HDU after the primary
-      // extension, and check whether this is a light curve.
-      int hdutype;
-      fits_movabs_hdu(mfptr, 2, &hdutype, status);
-      CHECK_STATUS_BREAK(*status);
-      // Check if this is now a light curve.
-      is_lc = simput_check_if_lightcur(lc_filename, status);
-      CHECK_STATUS_BREAK(*status);
-      if (1==is_lc) {
-	// Determine the EXTNAME and EXTVER keywords.
-	char extname[SIMPUT_MAXMSG];
-	char comment[SIMPUT_MAXMSG];
-	int extver;
-	fits_read_key(mfptr, TSTRING, "EXTNAME", extname, comment, status);
-	CHECK_STATUS_BREAK(*status);
-	fits_read_key(mfptr, TINT, "EXTVER", &extver, comment, status);
-	CHECK_STATUS_BREAK(*status);
-	simput_ext_id(reference_string[0], lc_filename,
-		      extname, extver);
-      } else {
-	// No valid light curve found!
-	*status=EXIT_FAILURE;
-	char message[SIMPUT_MAXMSG];
-	sprintf(message, 
-		"the specified file '%s' does not contain a light curve",
-		lc_filename);
-	SIMPUT_ERROR(message);
-	break;
-      }
-    }
-    // End of check if lc_filename points to a light curve HDU.
-    fits_close_file(mfptr, status);
-    CHECK_STATUS_BREAK(*status);
-    mfptr=NULL;
-
-
-    // Find the row number of the desired source in the source catalog.
-    long linenum = simput_get_src_linenum(srcctlg, src_id, status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Read the content of the LIGHTCUR column.
-    table_entry[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
-    CHECK_NULL_BREAK(table_entry[0], *status, "memory allocation failed");
-    int anynul=0;
-    fits_read_col(srcctlg->fptr, TSTRING, srcctlg->clightcur,
-		  linenum, 1, 1, "", table_entry, &anynul,
-		  status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Remove blank signs from string.
-    simput_strtrim(table_entry[0]);
-
-    // Insert the reference to the new light curve.
-    fits_write_col(srcctlg->fptr, TSTRING, srcctlg->clightcur, 
-		   linenum, 1, 1, reference_string, status);
-    CHECK_STATUS_BREAK(*status);
-    
-    // NOTE: If the LIGHTCUR colum already contains a reference to a 
-    // light curve, the old value is overwritten, since unlike the 
-    // SPECTRUM or IMAGE columns the LIGHTCUR column may not
-    // reference to a grouping table and cannot contain several
-    // light curves for the same source.
-
-
-  } while(0); // End of Error handling loop.
-
-  if (NULL!=table_entry[0]) free(table_entry[0]);
-  if (NULL!=reference_string[0]) free(reference_string[0]);
-
-  // Close the FITS files.
-  if (NULL!=mfptr) fits_close_file(mfptr, status);
-  simput_destroy_srcctlg(&srcctlg, status);
-  CHECK_STATUS_VOID(*status);
-}
-
-
-
-static int simput_check_if_lightcur(const char* const filename,
-				    int* const status)
-{
-  // Check if this is a binary table.
-  return(simput_check_if_btbl(filename, status));
-}
-
-
-
-void simput_add_image(const char* const srcctlg_filename,
-		      const long src_id,
-		      const char* const img_filename,
-		      int* const status)
-{
-  SIMPUT_SrcCtlg* srcctlg=NULL;
-  fitsfile* gfptr=NULL;
-  fitsfile* mfptr=NULL;
-  char* table_entry[1]={NULL};
-  char* reference_string[1]={NULL};
-  char* grouping_ref[1]={NULL};
-
-  // Error handling loop.
-  do {
-    // Open the source catalog.
-    srcctlg=simput_open_existing_srcctlg(srcctlg_filename, status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Check if img_filename already points to the appropriate HDU.
-    // If not, determine an appropriate reference to the source image.
-
-    // Reference to the image FITS extension.
-    reference_string[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
-    CHECK_NULL_VOID(reference_string[0], *status, 
-		    "memory allocation failed");
-    fits_open_file(&mfptr, img_filename, READONLY, status);
-    CHECK_STATUS_BREAK(*status);
-    // Check if mfptr points to an image extension.
-    int is_img = simput_check_if_image(img_filename, status);
-    CHECK_STATUS_BREAK(*status);
-    if (1==is_img) {
-      // If yes, we can use the input filename directly as a 
-      // reference string.
-      strcpy(reference_string[0], img_filename);
-    } else {
-      // No valid source image found!
-      *status=EXIT_FAILURE;
-      char message[SIMPUT_MAXMSG];
-      sprintf(message, 
-	      "the specified file '%s' does not contain a source image",
-	      img_filename);
-      SIMPUT_ERROR(message);
-      break;
-    }
-    // End of check if img_filename points to an image HDU.
-    fits_close_file(mfptr, status);
-    CHECK_STATUS_BREAK(*status);
-    mfptr=NULL;
-
-
-    // Find the row number of the desired source in the source catalog.
-    long linenum = simput_get_src_linenum(srcctlg, src_id, status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Read the content of the IMAGE column.
-    table_entry[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
-    CHECK_NULL_BREAK(table_entry[0], *status, 
-		    "memory allocation failed");
-    int anynul=0;
-    fits_read_col(srcctlg->fptr, TSTRING, srcctlg->cimage,
-		  linenum, 1, 1, "", table_entry, &anynul,
-		  status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Remove blank signs from string.
-    simput_strtrim(table_entry[0]);
-
-    // Check if the IMAGE column is empty.
-    if (0==strlen(table_entry[0])) {
-      // Insert the reference to the new source image.
-      fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cimage, 
-		     linenum, 1, 1, reference_string, status);
-      CHECK_STATUS_BREAK(*status);
-
-    } else {
-      
-      // Check if it is really a source image or a grouping table.
-      int is_grouping = simput_is_grouping_table(table_entry[0], status);
-      CHECK_STATUS_BREAK(*status);
-      if (0==is_grouping) {
-	// It is already a source image => create a grouping table.
-
-	// Open the file containing the source catalog.
-	fits_open_file(&gfptr, srcctlg_filename, READWRITE, status);
-	CHECK_STATUS_BREAK(*status);
-
-	fits_create_group(gfptr, "IMAGES", GT_ID_ALL_URI, status);
-	CHECK_STATUS_BREAK(*status);	
-	fits_open_file(&mfptr, table_entry[0], READONLY, status);
-	CHECK_STATUS_BREAK(*status);
-	fits_add_group_member(gfptr, mfptr, 0, status);
-	CHECK_STATUS_BREAK(*status);
-	fits_close_file(mfptr, status);
-	CHECK_STATUS_BREAK(*status);
-	mfptr=NULL;
-
-	// Redirect the reference in the IMAGE column of the source 
-	// catalog to the new grouping table.
-	// Determine the EXTVER of the grouping table.
-	int extver=0;
-	char comment[SIMPUT_MAXMSG];
-	fits_read_key(gfptr, TINT, "EXTVER", &extver, comment, status);
-	CHECK_STATUS_BREAK(*status);
-	// Store the reference to the grouping table in the source catalog.
-	grouping_ref[0]=(char*)malloc(SIMPUT_MAXMSG*sizeof(char));
-	CHECK_NULL_BREAK(grouping_ref[0], *status, 
-			 "memory allocation failed");
-	simput_ext_id(grouping_ref[0], srcctlg_filename,
-		      "GROUPING", extver);
-	fits_write_col(srcctlg->fptr, TSTRING, srcctlg->cimage, linenum, 
-		       1, 1, grouping_ref, status);
-	CHECK_STATUS_BREAK(*status);
-
-      } else {
-	// The grouping table already exists => move the
-	// FITS file pointer to it.
-	// Open the file containing the grouping table.
-	fits_open_file(&gfptr, table_entry[0], READWRITE, status);
-	CHECK_STATUS_BREAK(*status);
-      }
-
-      // Add the new source image to the grouping table.
-      fits_open_file(&mfptr, reference_string[0], READONLY, status);
-      CHECK_STATUS_BREAK(*status);
-      fits_add_group_member(gfptr, mfptr, 0, status);
-      CHECK_STATUS_BREAK(*status);
-      fits_close_file(mfptr, status);
-      CHECK_STATUS_BREAK(*status);
-      mfptr=NULL;
-
-      // Close the FITS file with the grouping table.
-      fits_close_file(gfptr, status);
-      CHECK_STATUS_BREAK(*status);
-      gfptr=NULL;
-    }
-    // END of check whether IMAGE column is empty.
-
-  } while(0); // End of Error handling loop.
-
-  if (NULL!=table_entry[0]) free(table_entry[0]);
-  if (NULL!=reference_string[0]) free(reference_string[0]);
-  if (NULL!=grouping_ref[0]) free(grouping_ref[0]);
-
-  // Close the FITS files.
-  if (NULL!=mfptr) fits_close_file(mfptr, status);
-  if (NULL!=gfptr) fits_close_file(gfptr, status);
-  simput_destroy_srcctlg(&srcctlg, status);
-  CHECK_STATUS_VOID(*status);
-}
-
-
-
-static int simput_check_if_image(const char* const filename,
-				 int* const status)
-{
-  // Check if this is a FITS image.
-  fitsfile* fptr=NULL;
-  int hdutype;
-
-  do { // Beginning of error handling loop.
-
-    fits_open_file(&fptr, filename, READONLY, status);
-    CHECK_STATUS_BREAK(*status);
-    
-    fits_get_hdu_type(fptr, &hdutype, status);
-    CHECK_STATUS_BREAK(*status);
-
-  } while (0); // END of error handling loop.
-
-  if (NULL!=fptr) fits_close_file(fptr, status);
-
-  if (IMAGE_HDU==hdutype) {
-    return(1);
-  } else {
-    return(0);
-  }
-}
-
-
-
-static int simput_check_if_btbl(const char* const filename,
-				int* const status)
 {
   // Check if this is a FITS image.
   fitsfile* fptr=NULL;
@@ -1524,3 +581,63 @@ static int simput_check_if_btbl(const char* const filename,
   }
 }
 
+
+static void read_unit(fitsfile* const fptr, const int column, 
+		      char* unit, int* const status)
+{
+  // Read the header keyword.
+  char keyword[SIMPUT_MAXSTR], comment[SIMPUT_MAXSTR];
+  sprintf(keyword, "TUNIT%d", column);
+  fits_read_key(fptr, TSTRING, keyword, unit, comment, status);
+  CHECK_STATUS_VOID(*status);
+}
+
+
+static void strtolower(char* const string)
+{
+  int ii=0;
+  while (string[ii]!='\0') {
+    string[ii] = tolower(string[ii]);
+    ii++;
+  };
+}
+
+static float unit_conversion_rad(const char* const unit)
+{
+  if (0==strcmp(unit, "rad")) {
+    return(1.);
+  } else if (0==strcmp(unit, "deg")) {
+    return(M_PI/180.);
+  } else if (0==strcmp(unit, "arcmin")) {
+    return(M_PI/180./60.);
+  } else if (0==strcmp(unit, "arcsec")) {
+    return(M_PI/180./3600.);
+  } else {
+    // Unknown units.
+    return(0.);
+  }
+}
+
+
+static float unit_conversion_keV(const char* const unit)
+{
+  if (0==strcmp(unit, "keV")) {
+    return(1.);
+  } else if (0==strcmp(unit, "eV")) {
+    return(0.001);
+  } else {
+    // Unknown units.
+    return(0.);
+  }
+}
+
+
+static float unit_conversion_ergpspcm2(const char* const unit)
+{
+  if (0==strcmp(unit, "erg/s/cm**2")) {
+    return(1.);
+  } else {
+    // Unknown units.
+    return(0.);
+  }
+}

@@ -12,8 +12,7 @@ sample_SOURCES = sample.c
 sample_LDADD  = @top_builddir@/libsimput/libsimput.la
 
 
-
 ########### Sample data ##############
 
-sampledir = $(pkgdatadir)
-dist_sample_DATA = image1.fits image2.fits
+#sampledir = $(pkgdatadir)
+#dist_sample_DATA = image1.fits image2.fits
