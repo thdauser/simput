@@ -2,6 +2,7 @@
 #define SIMPUT_H (1)
 
 #include "fitsio.h"
+#include "heasp.h"
 
 /*
   simput.h
@@ -70,6 +71,15 @@ typedef struct {
   /** Array of the individual entries in the catalog. */
   SimputSourceEntry** entries;
 
+  // TODO
+  /** File name (without path contributions) of the FITS file
+      containing the source catalog. */
+  char* filename;
+
+  // TODO
+  /** Path to the FITS file containing the source catalog. */
+  char* path;
+
 } SimputSourceCatalog;
 
 
@@ -122,6 +132,12 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
 void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
 			     const char* const filename,
 			     int* const status);
+
+
+/** Set the telescope ARF containing the effective area. This
+    information is required to obtain a mission-specific spectrum from
+    the mission-independent format. */
+void simputSetARF(struct ARF* const arf);
 
 
 #endif /* SIMPUT_H */

@@ -12,18 +12,12 @@
 
 
 /////////////////////////////////////////////////////////////////
-// Structures.
-/////////////////////////////////////////////////////////////////
-
-
-
-/////////////////////////////////////////////////////////////////
 // Macros.
 /////////////////////////////////////////////////////////////////
 
 
 /** Common string length. */
-#define SIMPUT_MAXSTR (1024)
+#define SIMPUT_MAXSTR (1025)
 
 
 #define SIMPUT_ERROR(msg) \
@@ -58,6 +52,20 @@
     status=EXIT_FAILURE; \
     break;\
   }
+
+
+/////////////////////////////////////////////////////////////////
+// Structures.
+/////////////////////////////////////////////////////////////////
+
+
+
+/////////////////////////////////////////////////////////////////
+// Static Variables.
+/////////////////////////////////////////////////////////////////
+
+
+static struct ARF* static_arf=NULL;
 
 
 /////////////////////////////////////////////////////////////////
@@ -504,7 +512,7 @@ void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
     CHECK_STATUS_BREAK(*status);
 
     // Write the necessary header keywords.
-    fits_write_key(fptr, TSTRING, "HDUCLASS", "OGIP", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
     fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
     fits_write_key(fptr, TSTRING, "HDUCLAS2", "SRC_CAT", "", status);
     fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
@@ -641,3 +649,12 @@ static float unit_conversion_ergpspcm2(const char* const unit)
     return(0.);
   }
 }
+
+
+
+void simputSetARF(struct ARF* const arf)
+{
+  static_arf = arf;
+}
+
+
