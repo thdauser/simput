@@ -53,6 +53,12 @@
     break;\
   }
 
+/** Macro returning the maximum of 2 values. */
+#define MAX(a, b) ( (a)>(b) ? (a) : (b) )
+
+/** Macro returning the minimum of 2 values. */
+#define MIN(a, b) ( (a)<(b) ? (a) : (b) )
+
 
 /////////////////////////////////////////////////////////////////
 // Structures.
@@ -65,6 +71,7 @@
 /////////////////////////////////////////////////////////////////
 
 
+/** Instrument ARF. */
 static struct ARF* static_arf=NULL;
 
 
@@ -100,6 +107,30 @@ static float unit_conversion_keV(const char* const unit);
     [erg/s/cm**2]. If the conversion is not possible or implemented,
     the function return value is 0. */
 static float unit_conversion_ergpspcm2(const char* const unit);
+
+/** Determine the factor required to convert the specified unit into
+    [ph/s/cm**2/keV]. If the conversion is not possible or
+    implemented, the function return value is 0. */
+static float unit_conversion_phpspcm2pkeV(const char* const unit);
+
+/** Determine a random photon energy according to the specified
+    spectral distribution. */
+static float getSimputRndPhotonEnergy(const SimputSpectralDistribution* const distr,
+				      int* const status);
+
+/** Random number generator returning a random number in the interval
+    [0,1]. */
+static float getSimputRndNumber();
+
+/** Return the requested spectral distribution. Keeps a certain number
+    of spectral distributions in an internal storage. If the requested
+    spectral distribution is not located in the internal storage, the
+    spectrum is loaded from the reference given in the source
+    catalog. */
+static SimputSpectralDistribution* 
+loadSimputSpectralDistribution(const SimputSourceEntry* const src,
+			       const SimputSourceCatalog* const cat,
+			       int* const status);
 
 
 /////////////////////////////////////////////////////////////////
@@ -214,6 +245,8 @@ SimputSourceCatalog* getSimputSourceCatalog(int* const status)
   // Initialize elements.
   catalog->nentries=0;
   catalog->entries =NULL;
+  catalog->filepath=NULL;
+  catalog->filename=NULL;
 
   return(catalog);
 }
@@ -229,7 +262,15 @@ void freeSimputSourceCatalog(SimputSourceCatalog** const catalog)
 	  freeSimputSourceEntry(&((*catalog)->entries[ii]));
 	}
       }
+    }
+    if (NULL!=(*catalog)->entries) {
       free((*catalog)->entries);
+    }
+    if (NULL!=(*catalog)->filepath) {
+      free((*catalog)->filepath);
+    }
+    if (NULL!=(*catalog)->filename) {
+      free((*catalog)->filename);
     }
     free(*catalog);
     *catalog=NULL;
@@ -439,6 +480,43 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
     if (NULL!=lightcur[0]) free(lightcur[0]);
 
     CHECK_STATUS_BREAK(*status);
+
+    // Store the filename and filepath of the FITS file containing
+    // the source catalog.
+    char cfilename[SIMPUT_MAXSTR];
+    char rootname[SIMPUT_MAXSTR];
+    // Make a local copy of the filename variable in order to avoid
+    // compiler warnings due to discarded const qualifier at the 
+    // subsequent function call.
+    strcpy(cfilename, filename);
+    fits_parse_rootname(cfilename, rootname, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Split rootname into the file path and the file name.
+    char* lastslash = strrchr(rootname, '/');
+    if (NULL==lastslash) {
+      catalog->filepath=(char*)malloc(sizeof(char));
+      CHECK_NULL_BREAK(catalog->filepath, *status, 
+		       "memory allocation for filepath failed");
+      catalog->filename=(char*)malloc((strlen(rootname)+1)*sizeof(char));
+      CHECK_NULL_BREAK(catalog->filename, *status, 
+		       "memory allocation for filename failed");
+      strcpy(catalog->filepath, "");
+      strcpy(catalog->filename, rootname);
+    } else {
+      lastslash++;
+      catalog->filename=(char*)malloc((strlen(lastslash)+1)*sizeof(char));
+      CHECK_NULL_BREAK(catalog->filename, *status, 
+		       "memory allocation for filename failed");
+      strcpy(catalog->filename, lastslash);
+      
+      *lastslash='\0';
+      catalog->filepath=(char*)malloc((strlen(rootname)+1)*sizeof(char));
+      CHECK_NULL_BREAK(catalog->filepath, *status, 
+		       "memory allocation for filepath failed");
+      strcpy(catalog->filepath, rootname);
+    }
+    // END of splitting up rootname.
 
   } while(0); // END of error handling loop.
   
@@ -651,10 +729,373 @@ static float unit_conversion_ergpspcm2(const char* const unit)
 }
 
 
+static float unit_conversion_phpspcm2pkeV(const char* const unit)
+{
+  if (0==strcmp(unit, "photons/s/cm**2/keV")) {
+    return(1.);
+  } else {
+    // Unknown units.
+    return(0.);
+  }
+}
+
+
+SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status)
+{
+  SimputMissionIndepSpec* spec=
+    (SimputMissionIndepSpec*)malloc(sizeof(SimputMissionIndepSpec));
+  CHECK_NULL_RET(spec, *status, 
+		 "memory allocation for SimputMissionIndepSpec failed", spec);
+
+  // Initialize elements.
+  spec->nentries=0;
+  spec->energy  =NULL;
+  spec->flux    =NULL;
+
+  return(spec);  
+}
+
+
+void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec)
+{
+  if (NULL!=*spec) {
+    if (NULL!=(*spec)->energy) {
+      free((*spec)->energy);
+    }
+    if (NULL!=(*spec)->flux) {
+      free((*spec)->flux);
+    }
+    free(*spec);
+    *spec=NULL;
+  }
+}
+
+
+SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
+						   int* const status)
+{
+  SimputMissionIndepSpec* spec = getSimputMissionIndepSpec(status);
+  CHECK_STATUS_RET(*status, spec);
+
+  // Open the specified FITS file. The filename must uniquely identify
+  // the spectrum contained in a binary table via the extended filename 
+  // syntax. It must even specify the row, in which the spectrum is
+  // contained. Therefore we do not have to care about the HDU or row
+  // number.
+  fitsfile* fptr=NULL;
+  fits_open_table(&fptr, filename, READONLY, status);
+  CHECK_STATUS_RET(*status, spec);
+
+  do { // Error handling loop.
+    // Get the column names.
+    int cenergy=0, cflux=0;
+    // Required columns:
+    fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
+    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+    CHECK_STATUS_BREAK(*status);
+
+    char uenergy[SIMPUT_MAXSTR];
+    read_unit(fptr, cenergy, uenergy, status);
+    CHECK_STATUS_BREAK(*status);
+    float fenergy = unit_conversion_keV(uenergy);
+    if (0.==fenergy) {
+      SIMPUT_ERROR("unknown units in ENERGY column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char uflux[SIMPUT_MAXSTR];
+    read_unit(fptr, cflux, uflux, status);
+    CHECK_STATUS_BREAK(*status);
+    float fflux = unit_conversion_phpspcm2pkeV(uflux);
+    if (0.==fflux) {
+      SIMPUT_ERROR("unknown units in FLUX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    // END of determine unit conversion factors.
+
+    // Determine the number of entries in the 2 vector columns.
+    int typecode;
+    long nenergy, nflux, width;
+    fits_get_coltype(fptr, cenergy, &typecode, &nenergy, &width, status);
+    fits_get_coltype(fptr, cflux,   &typecode, &nflux,   &width, status);
+    CHECK_STATUS_BREAK(*status);
+    if (nenergy!=nflux) {
+      SIMPUT_ERROR("number of energy and flux entries in spectrum is not equivalent");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    spec->nentries = (int)nenergy;
+    printf("spectrum '%s' contains %d data points\n", 
+	   filename, spec->nentries);
+
+    // Allocate memory for the arrays.
+    spec->energy  = (float*)malloc(spec->nentries*sizeof(float));
+    CHECK_NULL_BREAK(spec->energy, *status, 
+		     "memory allocation for spectrum failed");
+    spec->flux    = (float*)malloc(spec->nentries*sizeof(float));
+    CHECK_NULL_BREAK(spec->flux, *status, 
+		     "memory allocation for spectrum failed");
+
+    // Read the data from the table.
+    int anynul=0;
+    fits_read_col(fptr, TFLOAT, cenergy, 1, 1, spec->nentries, 
+		  0, &spec->energy, &anynul, status);
+    fits_read_col(fptr, TFLOAT, cflux, 1, 1, spec->nentries, 
+		  0, &spec->flux, &anynul, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Multiply with unit scaling factor.
+    long ii;
+    for (ii=0; ii<spec->nentries; ii++) {
+      spec->energy[ii] *= fenergy;
+      spec->flux[ii]   *= fflux;
+    }
+
+  } while(0); // END of error handling loop.
+  
+  // Close the file.
+  fits_close_file(fptr, status);
+
+  return(spec);  
+}
+
+
+/*
+void saveSimputMissionIndepSpec(const SimputMissionIndepSpec* const spec,
+				const char* const filename,
+				int* const status)
+{
+  // TODO
+}
+*/
+
 
 void simputSetARF(struct ARF* const arf)
 {
   static_arf = arf;
+}
+
+
+static SimputSpectralDistribution* 
+loadSimputSpectralDistribution(const SimputSourceEntry* const src,
+			       const SimputSourceCatalog* const cat,
+			       int* const status)
+{
+  const int maxspectra=1;
+  static int nspectra=0;
+  static SimputSpectralDistribution** spectra=NULL;
+
+  // Check, whether the source refers to a spectrum.
+  if (NULL==src->spectrum) {
+    SIMPUT_ERROR("source does not refer to a spectrum");
+    *status=EXIT_FAILURE;
+    return(NULL);
+  }
+
+  // In case there are no spectra available at all, allocate 
+  // memory for the array (storage for spectra).
+  if (NULL==spectra) {
+    spectra = 
+      (SimputSpectralDistribution**)
+      malloc(maxspectra*sizeof(SimputSpectralDistribution*));
+    CHECK_NULL_RET(spectra, *status, 
+		   "memory allocation for spectra failed", NULL);
+  }
+
+  // Search if the required spectrum is available in the storage.
+  int ii;
+  for (ii=0; ii<nspectra; ii++) {
+    // Check if the spectrum is equivalent to the required one.
+    if (0==strcmp(spectra[ii]->fileref, src->spectrum)) {
+      // If yes, determine a random photon energy from the spectral distribution.
+      return(spectra[ii]);
+    }
+  }
+
+  // The required spectrum is not contained in the storage.
+  // Therefore we must load it from the specified location.
+  SimputMissionIndepSpec* indepspec=NULL;
+  do { // Error handling loop.
+
+    // Load the mission-independent spectrum.
+    char filename[SIMPUT_MAXSTR];
+    if ('['==src->spectrum[0]) {
+      strcpy(filename, cat->filepath);
+      strcpy(filename, cat->filename);
+      strcpy(filename, src->spectrum);
+    } else {
+      if ('/'!=src->spectrum[0]) {
+	strcpy(filename, cat->filepath);
+      }
+      strcpy(filename, src->spectrum);
+    }
+    indepspec=loadSimputMissionIndepSpec(filename, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Multiply it by the ARF in order to obtain the spectral distribution.
+    if (nspectra>=maxspectra) {
+      SIMPUT_ERROR("too many spectra in the internal storage");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    nspectra++;
+    spectra[nspectra-1] = convSimputMissionIndepSpecWithARF(indepspec, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Store the file reference to the spectrum for later comparisons.
+    spectra[nspectra-1]->fileref = 
+      (char*)malloc((strlen(src->spectrum)+1)*sizeof(char));
+    CHECK_NULL_BREAK(spectra, *status, 
+		     "memory allocation for file reference failed");
+    strcpy(spectra[nspectra-1]->fileref, src->spectrum);
+    
+  } while(0); // End of error handling loop.
+  
+  freeSimputMissionIndepSpec(&indepspec);
+
+  return(spectra[nspectra-1]);
+}
+
+
+float getSimputPhotonEnergy(const SimputSourceEntry* const src,
+			    const SimputSourceCatalog* const cat,
+			    int* const status)
+{
+  SimputSpectralDistribution* distr=
+    loadSimputSpectralDistribution(src, cat, status);
+  CHECK_STATUS_RET(*status, 0.);
+
+  // Determine a random photon energy from the spectral distribution.
+  return(getSimputRndPhotonEnergy(distr, status));
+}
+
+
+static float getSimputRndPhotonEnergy(const SimputSpectralDistribution* const distr,
+				      int* const status) 
+{
+  int upper=distr->nentries, lower=0, mid;
+  
+  // Get a random number in the interval [0,1].
+  float rnd = getSimputRndNumber();
+  // Multiply with the total photon rate.
+  rnd *= distr->distribution[distr->nentries-1];
+  
+  if ((rnd<0.) || (rnd>1.)) {
+    SIMPUT_ERROR("random number out of range [0,1]");
+    *status=EXIT_FAILURE;
+    return(0.);
+  }
+
+  // Determine the energy of the photon (using binary search).
+  while (upper>lower) {
+    mid = (lower+upper)/2;
+    if (distr->distribution[mid]<rnd) {
+      lower = mid+1;
+    } else {
+      upper = mid;
+    }
+  }
+
+  printf("distr[lower]=%f, rnd=%f\n", distr->distribution[lower], rnd);
+
+  // Return the corresponding energy.
+  if (0==lower) {
+    return(distr->energy[0]*getSimputRndNumber());
+  } else {
+    return(distr->energy[lower-1] + 
+	   (distr->energy[lower]-distr->energy[lower-1])*
+	   getSimputRndNumber());
+  }
+}
+
+
+static float getSimputRndNumber()
+{
+  const int a = 1664525;
+  const int b = 1013904223;
+  static int x = 678549;   // start-value
+
+  // Generate next integer number
+  x = a * x + b;
+
+  // Return value out of [0,1]
+  return((float)fabs((double)x/INT_MIN));
+}
+
+
+SimputSpectralDistribution* getSimputSpectralDistribution(int* const status)
+{
+  SimputSpectralDistribution* distr=
+    (SimputSpectralDistribution*)malloc(sizeof(SimputSpectralDistribution));
+  CHECK_NULL_RET(distr, *status, 
+		 "memory allocation for SimputSpectralDistribution failed", distr);
+
+  // Initialize elements.
+  distr->nentries=0;
+  distr->energy  =NULL;
+  distr->distribution=NULL;
+  distr->fileref =NULL;
+
+  return(distr);
+}
+
+
+SimputSpectralDistribution* 
+convSimputMissionIndepSpecWithARF(const SimputMissionIndepSpec* const indepspec, 
+				  int* const status)
+{
+  SimputSpectralDistribution* distr=getSimputSpectralDistribution(status);
+  CHECK_STATUS_RET(*status, distr);
+  
+  // Allocate memory.
+  distr->energy = (float*)malloc(indepspec->nentries*sizeof(float));
+  CHECK_NULL_RET(distr->energy, *status,
+		 "memory allocation for spectral distribution failed",
+		 distr);
+  distr->distribution = (float*)malloc(indepspec->nentries*sizeof(float));
+  CHECK_NULL_RET(distr->distribution, *status,
+		 "memory allocation for spectral distribution failed",
+		 distr);
+  distr->nentries = indepspec->nentries;
+
+  // Copy the energy bins.
+  int ii;
+  for (ii=0; ii<indepspec->nentries; ii++) {
+    distr->energy[ii] = indepspec->energy[ii];
+  }
+
+  // Multiply each bin by the ARF and the width of the bin.
+  // [photons/s/cm^2/keV] -> [photons/s]
+  // The ARF contribution corresponding to a particular spectral bin 
+  // is obtained by interpolation.
+  float last_energy=0.; // [keV]
+  for (ii=0; ii<indepspec->nentries; ii++) {
+    // Determine the ARF contribution by interpolation.
+    float arf_contribution=0.;
+    long jj;
+    for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
+      if ((static_arf->LowEnergy[jj]<indepspec->energy[ii]) && 
+	  (static_arf->HighEnergy[jj]>last_energy)) {
+	float emin = MAX(static_arf->LowEnergy[jj], last_energy);
+	float emax = MIN(static_arf->HighEnergy[jj], indepspec->energy[ii]);
+	assert(emax>emin);
+	arf_contribution += static_arf->EffArea[jj] * (emax-emin);
+      }
+    }
+
+    distr->distribution[ii]=indepspec->flux[ii]*arf_contribution;
+    last_energy            =indepspec->energy[ii];
+
+    // Create the spectral distribution noramlized to the total 
+    // photon rate [photons/s]. 
+    if (ii>0) {
+      distr->distribution[ii] += distr->distribution[ii-1];
+    }
+  }
+  
+  return(distr);
 }
 
 

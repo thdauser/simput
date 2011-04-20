@@ -36,7 +36,7 @@ void printSimputSourceEntry(SimputSourceEntry* sse) {
 
 int main(int argc, char **argv)
 {
-  const char filename[] = "simput.fits";
+  const char filename[] = "/home/schmid/test/simput/simput.fits";
 
   SimputSourceCatalog* catalog=NULL;
   int status=EXIT_SUCCESS;

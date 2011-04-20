@@ -23,6 +23,7 @@
 /////////////////////////////////////////////////////////////////
 
 
+/** Single Entry in the SimputSourceCatalog. */
 typedef struct {
   /** Unique source ID. */
   int src_id;
@@ -64,6 +65,7 @@ typedef struct {
 } SimputSourceEntry;
 
 
+/** SIMPUT source catalog. */
 typedef struct {
   /** Number of entries in the source catalog. */
   int nentries;
@@ -71,16 +73,47 @@ typedef struct {
   /** Array of the individual entries in the catalog. */
   SimputSourceEntry** entries;
 
-  // TODO
   /** File name (without path contributions) of the FITS file
       containing the source catalog. */
   char* filename;
 
-  // TODO
   /** Path to the FITS file containing the source catalog. */
-  char* path;
+  char* filepath;
 
 } SimputSourceCatalog;
+
+
+/** Mission-independent spectrum. */
+typedef struct {
+  /** Number of entries in the spectrum. */
+  int nentries;
+  
+  /** Energy values [keV]. */
+  float* energy;
+
+  /** Source flux distribution [photons/s/cm**2/keV]. */
+  float* flux;
+
+} SimputMissionIndepSpec;
+
+
+/** Spectral probability distribution. */
+typedef struct {
+  /** Number of entries in the spectrum. */
+  int nentries;
+  
+  /** Energy values [keV]. */
+  float* energy;
+
+  /** Probability distribution normalized to the total photon rate
+      [photons/s]. */
+  float* distribution;
+
+  /** Reference to the location of the spectrum given by the extended
+      filename syntax. */
+  char* fileref;
+
+} SimputSpectralDistribution;
 
 
 /////////////////////////////////////////////////////////////////
@@ -134,10 +167,47 @@ void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
 			     int* const status);
 
 
-/** Set the telescope ARF containing the effective area. This
+
+/** Constructor for the SimputMissionIndepSpec data
+    structure. Allocates memory, initializes elements with their
+    default values and pointers with NULL. */
+SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status);
+
+/** Destructor for the SimputSourceEntry. Calls destructor routines
+    for all contained elements, releases the allocated memory, and
+    finally sets the pointer to NULL. */
+void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec);
+
+/** Load the SimputMissionIndepSpec from the specified file. */
+SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
+						   int* const status);
+
+
+/** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
     the mission-independent format. */
 void simputSetARF(struct ARF* const arf);
+
+
+/** Return a random photon energy according to the distribution
+    defined by the energy spectrum of the particular source. If the
+    spectrum is not stored in memory, its loaded from the location
+    specified in the the catalog. */
+float getSimputPhotonEnergy(const SimputSourceEntry* const src,
+			    const SimputSourceCatalog* const cat,
+			    int* const status);
+
+/** Constructor for the SimputSpectralDistribution data
+    structure. Allocates memory, initializes elements with their
+    default values and pointers with NULL. */
+SimputSpectralDistribution* getSimputSpectralDistribution(int* const status);
+
+/** Convolve the given mission-independent spectrum with the
+    instrument ARF in order to obtain the spectral probability
+    distribution. */
+SimputSpectralDistribution* 
+convSimputMissionIndepSpecWithARF(const SimputMissionIndepSpec* const indepspec, 
+				  int* const status);
 
 
 #endif /* SIMPUT_H */
