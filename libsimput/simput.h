@@ -2,7 +2,12 @@
 #define SIMPUT_H (1)
 
 #include "fitsio.h"
+
+#ifndef HEASP_H
+#define HEASP_H 1
 #include "heasp.h"
+#endif
+
 
 /*
   simput.h
@@ -62,6 +67,12 @@ typedef struct {
   /** Reference to the storage location of the source light curve. */
   char* lightcur;
 
+  /** Pointer to the filename in the source catalog. */
+  char** filename;
+
+  /** Pointer to the filepath in the source catalog. */
+  char** filepath;
+
 } SimputSourceEntry;
 
 
@@ -94,17 +105,6 @@ typedef struct {
   /** Source flux distribution [photons/s/cm**2/keV]. */
   float* flux;
 
-} SimputMissionIndepSpec;
-
-
-/** Spectral probability distribution. */
-typedef struct {
-  /** Number of entries in the spectrum. */
-  int nentries;
-  
-  /** Energy values [keV]. */
-  float* energy;
-
   /** Probability distribution normalized to the total photon rate
       [photons/s]. */
   float* distribution;
@@ -113,7 +113,7 @@ typedef struct {
       filename syntax. */
   char* fileref;
 
-} SimputSpectralDistribution;
+} SimputMissionIndepSpec;
 
 
 /////////////////////////////////////////////////////////////////
@@ -182,32 +182,32 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec);
 SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
 						   int* const status);
 
+/** Convolve the given mission-independent spectrum with the
+    instrument ARF in order to obtain the spectral probability
+    distribution. */
+void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const indepspec, 
+				       int* const status);
+
 
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
     the mission-independent format. */
 void simputSetARF(struct ARF* const arf);
 
+// TODO
+void simputSetRndGen();
 
 /** Return a random photon energy according to the distribution
     defined by the energy spectrum of the particular source. If the
     spectrum is not stored in memory, its loaded from the location
     specified in the the catalog. */
 float getSimputPhotonEnergy(const SimputSourceEntry* const src,
-			    const SimputSourceCatalog* const cat,
 			    int* const status);
 
-/** Constructor for the SimputSpectralDistribution data
-    structure. Allocates memory, initializes elements with their
-    default values and pointers with NULL. */
-SimputSpectralDistribution* getSimputSpectralDistribution(int* const status);
-
-/** Convolve the given mission-independent spectrum with the
-    instrument ARF in order to obtain the spectral probability
-    distribution. */
-SimputSpectralDistribution* 
-convSimputMissionIndepSpecWithARF(const SimputMissionIndepSpec* const indepspec, 
-				  int* const status);
+/** Return the photon rate of a particular source. Specification of
+    instrument ARF required. */
+float getSimputPhotonRate(const SimputSourceEntry* const src,
+			  int* const status);
 
 
 #endif /* SIMPUT_H */
