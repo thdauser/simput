@@ -194,8 +194,10 @@ void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const indepspec,
     the mission-independent format. */
 void simputSetARF(struct ARF* const arf);
 
-// TODO
-void simputSetRndGen();
+/** Set the random number generator, which is used by the simput
+    library routines. The generator should return double valued,
+    uniformly distributed numbers in the interval [0,1). */
+void simputSetRndGen(double(*rndgen)(void));
 
 /** Return a random photon energy according to the distribution
     defined by the energy spectrum of the particular source. If the

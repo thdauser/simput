@@ -74,6 +74,9 @@
 /** Instrument ARF. */
 static struct ARF* static_arf=NULL;
 
+/** Random number generator. */
+static double(*static_rndgen)(void)=NULL;
+
 
 /////////////////////////////////////////////////////////////////
 // Function Declarations.
@@ -112,10 +115,6 @@ static float unit_conversion_ergpspcm2(const char* const unit);
     [ph/s/cm**2/keV]. If the conversion is not possible or
     implemented, the function return value is 0. */
 static float unit_conversion_phpspcm2pkeV(const char* const unit);
-
-/** Random number generator returning a random number in the interval
-    [0,1]. */
-static float getRndNumber();
 
 /** Return the requested spectrum. Keeps a certain number of spectra
     in an internal storage. If the requested spectrum is not located
@@ -901,6 +900,12 @@ void simputSetARF(struct ARF* const arf)
 }
 
 
+void simputSetRndGen(double(*rndgen)(void))
+{
+  static_rndgen=rndgen;
+}
+
+
 static SimputMissionIndepSpec* 
 returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
 			     int* const status)
@@ -994,7 +999,7 @@ static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
   int upper=spec->nentries, lower=0, mid;
   
   // Get a random number in the interval [0,1].
-  float rnd = getRndNumber();
+  float rnd = (float)static_rndgen();
   assert(rnd>=0.);
   assert(rnd<=1.);
 
@@ -1017,30 +1022,14 @@ static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
     }
   }
 
-  printf("spec->distribution[lower]=%f, rnd=%f\n", spec->distribution[lower], rnd);
-
   // Return the corresponding energy.
   if (0==lower) {
-    return(spec->energy[0]*getRndNumber());
+    return(spec->energy[0]*(float)static_rndgen());
   } else {
     return(spec->energy[lower-1] + 
 	   (spec->energy[lower]-spec->energy[lower-1])*
-	   getRndNumber());
+	   (float)static_rndgen());
   }
-}
-
-
-static float getRndNumber()
-{
-  const int a = 1664525;
-  const int b = 1013904223;
-  static int x = 678549;   // start-value
-
-  // Generate next integer number
-  x = a * x + b;
-
-  // Return value out of [0,1]
-  return((float)fabs((double)x/INT_MIN));
 }
 
 
@@ -1152,4 +1141,6 @@ float getSimputPhotonRate(const SimputSourceEntry* const src,
 	 getEbandFlux(src, src->e_min, src->e_max, status) *
 	 spec->distribution[spec->nentries-1]);
 }
+
+
 
