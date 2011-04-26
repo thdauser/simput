@@ -120,6 +120,52 @@ typedef struct {
 } SimputMissionIndepSpec;
 
 
+/** Simput light curve. */
+typedef struct {
+  /** Number of entries in the light curve. */
+  int nentries;
+
+  /** Time values [s]. */
+  double* time;
+
+  /** Phase values (between 0 and 1). */
+  float* phase;
+
+  /** Relative flux values. */
+  float* flux;
+
+  /** Reference to the storage location of the source spectrum at a
+      particular point of time or phase respectively. */
+  char** spectrum;
+
+  /** Reference to the storage location of the source image at a
+      particular point of time or phase respectively. */
+  char** image;
+
+  /** MJD for reference time. */
+  double mjdref;
+
+  /** Zero time. */
+  double timezero;
+
+  /** Phase of periodic oscillation at timezero. */
+  float phase0;
+
+  /** Duration of one oscillation period [s]. */
+  float period;
+  
+  /** Flux scaling factor. */
+  float fluxscal;
+
+  /** Reference to the location of the light curve given by the
+      extended filename syntax. This reference is used to check,
+      whether a light curve is already contained in the internal
+      storage. */
+  char* fileref;
+
+} SimputLC;
+
+
 /////////////////////////////////////////////////////////////////
 // Function Declarations.
 /////////////////////////////////////////////////////////////////
@@ -226,6 +272,17 @@ float getSimputPhotonEnergy(const SimputSourceEntry* const src,
     instrument ARF required. */
 float getSimputPhotonRate(const SimputSourceEntry* const src,
 			  int* const status);
+
+
+/** Constructor for the SimputLC data structure. Allocates memory,
+    initializes elements with their default values and pointers with
+    NULL. */
+SimputLC* getSimputLC(int* const status);
+
+/** Destructor for the SimputLC. Calls destructor routines for all
+    contained elements, releases the allocated memory, and finally
+    sets the pointer to NULL. */
+void freeSimputLC(SimputLC** const lc);
 
 
 #endif /* SIMPUT_H */

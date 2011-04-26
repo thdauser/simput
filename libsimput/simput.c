@@ -1300,4 +1300,66 @@ float getSimputPhotonRate(const SimputSourceEntry* const src,
 }
 
 
+SimputLC* getSimputLC(int* const status)
+{
+  SimputLC* lc=(SimputLC*)malloc(sizeof(SimputLC));
+  CHECK_NULL_RET(lc, *status, 
+		 "memory allocation for SimputLC failed", lc);
+
+  // Initialize elements.
+  lc->nentries=0;
+  lc->time    =NULL;
+  lc->phase   =NULL;
+  lc->flux    =NULL;
+  lc->spectrum=NULL;
+  lc->image   =NULL;
+  lc->mjdref  =0.;
+  lc->timezero=0.;
+  lc->phase0  =0.;
+  lc->period  =0.;
+  lc->fluxscal=0.;
+  lc->fileref =NULL;
+
+  return(lc);
+}
+
+
+void freeSimputLC(SimputLC** const lc)
+{
+  if (NULL!=*lc) {
+    if ((*lc)->nentries>0) {
+      if (NULL!=(*lc)->spectrum) {
+	int ii;
+	for (ii=0; ii<(*lc)->nentries; ii++) {
+	  if (NULL!=(*lc)->spectrum[ii]) {
+	    free((*lc)->spectrum[ii]);
+	  }
+	}
+      }
+      if (NULL!=(*lc)->image) {
+	int ii;
+	for (ii=0; ii<(*lc)->nentries; ii++) {
+	  if (NULL!=(*lc)->image[ii]) {
+	    free((*lc)->image[ii]);
+	  }
+	}
+      }
+    }
+    if (NULL!=(*lc)->time) {
+      free((*lc)->time);
+    }
+    if (NULL!=(*lc)->phase) {
+      free((*lc)->phase);
+    }
+    if (NULL!=(*lc)->flux) {
+      free((*lc)->flux);
+    }
+    if (NULL!=(*lc)->fileref) {
+      free((*lc)->fileref);
+    }
+    free(*lc);
+    *lc=NULL;
+  }
+}
+
 
