@@ -536,7 +536,8 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
   } while(0); // END of error handling loop.
   
   // Close the file.
-  fits_close_file(fptr, status);
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_RET(*status, catalog);
 
   return(catalog);
 }
@@ -651,7 +652,7 @@ void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
   } while(0); // END of error handling loop.
 
   // Close the file.
-  fits_close_file(fptr, status);
+  if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
 }
 
@@ -916,20 +917,138 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
   if (NULL!=name[0]) free(name[0]);
 
   // Close the file.
-  fits_close_file(fptr, status);
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_RET(*status, spec);
 
   return(spec);  
 }
 
 
-/*
-void saveSimputMissionIndepSpec(const SimputMissionIndepSpec* const spec,
+
+void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 				const char* const filename,
+				char* const extname,
+				int extver,
 				int* const status)
 {
-  // TODO
+  fitsfile* fptr=NULL;
+  
+  // String buffer.
+  char* name[1]={NULL}; 
+
+  do { // Error handling loop.
+
+    // Check if the specified file exists.
+    int exists;
+    fits_file_exists(filename, &exists, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==exists) {
+      // If yes, open it.
+      fits_open_file(&fptr, filename, READWRITE, status);
+      CHECK_STATUS_BREAK(*status);
+    } else {
+      // If no, create a new file. 
+      fits_create_file(&fptr, filename, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+    // END of check, whether the specified file exists.
+
+
+    // Try to move to the specified extension.
+    int cenergy=0, cflux=0, cname=0;
+    long nrows=0;
+    int status2=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_movnam_hdu(fptr, BINARY_TBL, extname, extver, &status2);
+    fits_clear_errmark();
+    if (BAD_HDU_NUM==status2) {
+      // If that does not work, create a new binary table.
+      char *ttype[] = { "ENERGY", "FLUX", "NAME" };
+      char *tform[] = { "E", "E", "1PA" };
+      char *tunit[] = { "keV", "photon/s/cm**2/keV", "" };
+      fits_create_tbl(fptr, BINARY_TBL, 0, 3, ttype, tform, tunit, extname, status);
+      CHECK_STATUS_BREAK(*status);
+
+      // Write header keywords.
+      fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
+      fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+      fits_write_key(fptr, TSTRING, "HDUCLAS2", "SPECTRUM", "", status);
+      fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+      fits_write_key(fptr, TINT, "EXTVER", &extver, "", status);
+      CHECK_STATUS_BREAK(*status);
+
+      // The new table contains now data up to now.
+      nrows=0;
+
+    } else {
+      // The extension already exists.
+      // Determine the number of contained rows.
+      fits_get_num_rows(fptr, &nrows, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+    // END of check, whether the specified extension exists.
+
+
+    // Determine the column numbers.
+    fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
+    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+    CHECK_STATUS_BREAK(*status);
+    // Optional name column:
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_get_colnum(fptr, CASEINSEN, "NAME", &cname, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_clear_errmark();
+
+    // If data structure contains a name, check if is unique.
+    if (NULL!=spec->name) {
+      if (strlen(spec->name)>0) {
+	// Check if the NAME column is present.
+	if (0==cname) {
+	  SIMPUT_ERROR("spectrum extension does not contain a NAME column");
+	  *status=EXIT_FAILURE;
+	  break;
+	}
+
+	// Allocate memory for string buffer.
+	name[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+	CHECK_NULL_BREAK(name[0], *status, 
+			 "memory allocation for string buffer failed");
+	long row;
+	for(row=0; row<nrows; row++) {
+	  int anynul=0;
+	  fits_read_col(fptr, TSTRING, cname, row+1, 1, 1, "", name, &anynul, status);
+	  if (0==strcmp(name[0], spec->name)) {
+	    SIMPUT_ERROR("name in spectrum data structure is not unique");
+	    *status=EXIT_FAILURE;
+	    break;
+	  }
+	}
+	CHECK_STATUS_BREAK(*status);
+      }
+    }
+
+    // Create a new row in the table and store the data of the spectrum in it.
+    fits_insert_rows(fptr, nrows++, 1, status);
+    CHECK_STATUS_BREAK(*status);
+    fits_write_col(fptr, TFLOAT, cenergy, nrows, 1, (long)spec->nentries, 
+		   &spec->energy, status);
+    fits_write_col(fptr, TFLOAT, cflux, nrows, 1, (long)spec->nentries, 
+		   &spec->flux, status);
+    if ((cname>0) && (NULL!=spec->name)) {
+      fits_write_col(fptr, TSTRING, cname, nrows, 1, 1, &spec->name, status);
+    }
+    CHECK_STATUS_BREAK(*status);
+
+  } while(0); // END of error handling loop.
+
+  // Release allocated memory.
+  if (NULL!=name[0]) free(name[0]);
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_VOID(*status);
 }
-*/
 
 
 void simputSetARF(struct ARF* const arf)

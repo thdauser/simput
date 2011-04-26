@@ -186,6 +186,18 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec);
 SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
 						   int* const status);
 
+/** Save the mission-independent spectrum in the specified extension
+    of the given FITS file. If the file does not exist yet, a new file
+    is created. If the file exists, but does not contain the specified
+    extension, an appropriate HDU is created. If the extension exists,
+    the unambiguousness of the spectrum name (contained in the data
+    structure) is verified. */
+void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
+				const char* const filename,
+				char* const extname,
+				int extver,
+				int* const status);
+
 /** Convolve the given mission-independent spectrum with the
     instrument ARF in order to obtain the spectral probability
     distribution. */
