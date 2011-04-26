@@ -109,8 +109,12 @@ typedef struct {
       [photons/s]. */
   float* distribution;
 
+  /** Unique case-sensitive designator for an individual spectrum. */
+  char* name;
+
   /** Reference to the location of the spectrum given by the extended
-      filename syntax. */
+      filename syntax. This reference is used to check, whether a
+      spectrum is already contained in the internal storage. */
   char* fileref;
 
 } SimputMissionIndepSpec;

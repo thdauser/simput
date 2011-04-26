@@ -767,6 +767,8 @@ SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status)
   spec->energy  =NULL;
   spec->flux    =NULL;
   spec->distribution=NULL;
+  spec->name    =NULL;
+  spec->fileref =NULL;
 
   return(spec);  
 }
@@ -784,6 +786,9 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec)
     if (NULL!=(*spec)->distribution) {
       free((*spec)->distribution);
     }
+    if (NULL!=(*spec)->name) {
+      free((*spec)->name);
+    }
     if (NULL!=(*spec)->fileref) {
       free((*spec)->fileref);
     }
@@ -796,6 +801,9 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec)
 SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
 						   int* const status)
 {
+  // Allocate memory for string buffers.
+  char* name[1]={NULL};
+
   SimputMissionIndepSpec* spec = getSimputMissionIndepSpec(status);
   CHECK_STATUS_RET(*status, spec);
 
@@ -809,13 +817,21 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
   CHECK_STATUS_RET(*status, spec);
 
   do { // Error handling loop.
+
     // Get the column names.
-    int cenergy=0, cflux=0;
+    int cenergy=0, cflux=0, cname=0;
     // Required columns:
     fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
     fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
     CHECK_STATUS_BREAK(*status);
+    // Optional columnes:
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_get_colnum(fptr, CASEINSEN, "NAME", &cname, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_clear_errmark();
 
+    // Determine the unit conversion factors.
     char uenergy[SIMPUT_MAXSTR];
     read_unit(fptr, cenergy, uenergy, status);
     CHECK_STATUS_BREAK(*status);
@@ -860,12 +876,24 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
     CHECK_NULL_BREAK(spec->flux, *status, 
 		     "memory allocation for spectrum failed");
 
+    // Allocate memory for string buffer.
+    name[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(name[0], *status, 
+		     "memory allocation for string buffer failed");
+
     // Read the data from the table.
     int anynul=0;
     fits_read_col(fptr, TFLOAT, cenergy, 1, 1, spec->nentries, 
 		  0, spec->energy, &anynul, status);
     fits_read_col(fptr, TFLOAT, cflux, 1, 1, spec->nentries, 
 		  0, spec->flux, &anynul, status);
+
+    if (cname>0) {
+      fits_read_col(fptr, TSTRING, cname, 1, 1, 1, "", name, &anynul, status);
+    } else { 
+      strcpy(name[0], "");
+    }
+
     CHECK_STATUS_BREAK(*status);
 
     // Multiply with unit scaling factor.
@@ -875,8 +903,18 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
       spec->flux[ii]   *= fflux;
     }
 
+    // Copy the name (ID) of the spectrum from the string buffer
+    // to the data structure.
+    spec->name = (char*)malloc((strlen(name[0])+1)*sizeof(char));
+    CHECK_NULL_BREAK(spec->name, *status, 
+		     "memory allocation for name string failed");
+    strcpy(spec->name, name[0]);
+
   } while(0); // END of error handling loop.
   
+  // Release allocated memory.
+  if (NULL!=name[0]) free(name[0]);
+
   // Close the file.
   fits_close_file(fptr, status);
 
