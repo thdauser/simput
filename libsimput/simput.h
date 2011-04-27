@@ -31,7 +31,7 @@
 /** Single Entry in the SimputSourceCatalog. */
 typedef struct {
   /** Unique source ID. */
-  int src_id;
+  long src_id;
 
   /** Source name. */
   char* src_name;
@@ -79,7 +79,7 @@ typedef struct {
 /** SIMPUT source catalog. */
 typedef struct {
   /** Number of entries in the source catalog. */
-  int nentries;
+  long nentries;
 
   /** Array of the individual entries in the catalog. */
   SimputSourceEntry** entries;
@@ -97,7 +97,7 @@ typedef struct {
 /** Mission-independent spectrum. */
 typedef struct {
   /** Number of entries in the spectrum. */
-  int nentries;
+  long nentries;
   
   /** Energy values [keV]. */
   float* energy;
@@ -123,7 +123,7 @@ typedef struct {
 /** Simput light curve. */
 typedef struct {
   /** Number of entries in the light curve. */
-  int nentries;
+  long nentries;
 
   /** Time values [s]. */
   double* time;
@@ -178,7 +178,7 @@ SimputSourceEntry* getSimputSourceEntry(int* const status);
 
 /** Constructor for the SimputSourceEntry data structure. Allocates
     memory and initializes elements with the given values. */
-SimputSourceEntry* getSimputSourceEntryV(const int src_id, 
+SimputSourceEntry* getSimputSourceEntryV(const long src_id, 
 					 const char* const src_name,
 					 const double ra,
 					 const double dec,

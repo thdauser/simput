@@ -19,7 +19,7 @@
 
 void printSimputSourceEntry(SimputSourceEntry* sse) {
   printf("Simput Source Entry:\n");
-  printf(" SRC_ID:\t%d\n", sse->src_id);
+  printf(" SRC_ID:\t%ld\n", sse->src_id);
   printf(" SRC_NAME:\t'%s'\n", sse->src_name);
   printf(" RA:\t\t%lf\n", sse->ra);
   printf(" DEC:\t\t%lf\n", sse->dec);
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
       catalog = loadSimputSourceCatalog(filename, &status);
       CHECK_STATUS_BREAK(status);
 
-      printf("catalog with %d entries successfully loaded\n", catalog->nentries);
+      printf("catalog with %ld entries successfully loaded\n", catalog->nentries);
       printSimputSourceEntry(catalog->entries[0]);
       printSimputSourceEntry(catalog->entries[1]);
     } else {

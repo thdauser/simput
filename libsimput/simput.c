@@ -173,7 +173,7 @@ SimputSourceEntry* getSimputSourceEntry(int* const status)
 }
 
 
-SimputSourceEntry* getSimputSourceEntryV(const int src_id, 
+SimputSourceEntry* getSimputSourceEntryV(const long src_id, 
 					 const char* const src_name,
 					 const double ra,
 					 const double dec,
@@ -267,7 +267,7 @@ void freeSimputSourceCatalog(SimputSourceCatalog** const catalog)
 {
   if (NULL!=*catalog) {
     if ((*catalog)->nentries>0) {
-      int ii;
+      long ii;
       for (ii=0; ii<(*catalog)->nentries; ii++) {
 	if (NULL!=(*catalog)->entries[ii]) {
 	  freeSimputSourceEntry(&((*catalog)->entries[ii]));
@@ -462,14 +462,14 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
     // Loop over all rows in the table.
     long ii;
     for (ii=0; ii<nrows; ii++) {
-      int src_id=0;
+      long src_id=0;
       double ra=0., dec=0.;
       float imgrota=0., imgscal=1.;
       float e_min=0., e_max=0., flux=0.;
       
       // Read the data from the table.
       int anynul=0;
-      fits_read_col(fptr, TUINT, csrc_id, ii+1, 1, 1, 
+      fits_read_col(fptr, TLONG, csrc_id, ii+1, 1, 1, 
 		    &src_id, &src_id, &anynul, status);
 
       if (csrc_name>0) {
@@ -597,7 +597,7 @@ void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
     const int clightcur = 12;
     char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
 		      "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
-    char *tform[] = { "I", "1PA", "D", "D", "E", "E", 
+    char *tform[] = { "J", "1PA", "D", "D", "E", "E", 
 		      "E", "E", "E", "1PA", "1PA", "1PA" };
     char *tunit[] = { "", "", "deg", "deg", "deg", "",  
 		      "keV", "keV", "erg/s/cm**2", "", "", "" };
@@ -618,9 +618,9 @@ void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
     // Write the data.
     fits_insert_rows(fptr, 0, catalog->nentries, status);
     CHECK_STATUS_BREAK(*status);
-    int ii;
+    long ii;
     for (ii=0; ii<catalog->nentries; ii++) {
-      fits_write_col(fptr, TUINT, csrc_id, ii+1, 1, 1, 
+      fits_write_col(fptr, TLONG, csrc_id, ii+1, 1, 1, 
 		     &catalog->entries[ii]->src_id, status);
       fits_write_col(fptr, TSTRING, csrc_name, ii+1, 1, 1, 
 		     &catalog->entries[ii]->src_name, status);
@@ -866,7 +866,7 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
       break;
     }
     spec->nentries = (int)nenergy;
-    printf("spectrum '%s' contains %d data points\n", 
+    printf("spectrum '%s' contains %ld data points\n", 
 	   filename, spec->nentries);
 
     // Allocate memory for the arrays.
@@ -1031,9 +1031,9 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
     // Create a new row in the table and store the data of the spectrum in it.
     fits_insert_rows(fptr, nrows++, 1, status);
     CHECK_STATUS_BREAK(*status);
-    fits_write_col(fptr, TFLOAT, cenergy, nrows, 1, (long)spec->nentries, 
+    fits_write_col(fptr, TFLOAT, cenergy, nrows, 1, spec->nentries, 
 		   &spec->energy, status);
-    fits_write_col(fptr, TFLOAT, cflux, nrows, 1, (long)spec->nentries, 
+    fits_write_col(fptr, TFLOAT, cflux, nrows, 1, spec->nentries, 
 		   &spec->flux, status);
     if ((cname>0) && (NULL!=spec->name)) {
       fits_write_col(fptr, TSTRING, cname, nrows, 1, 1, &spec->name, status);
@@ -1206,7 +1206,7 @@ void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec,
   // The ARF contribution corresponding to a particular spectral bin 
   // is obtained by interpolation.
   float last_energy=0.; // [keV]
-  int ii;
+  long ii;
   for (ii=0; ii<spec->nentries; ii++) {
     // Determine the ARF contribution by interpolation.
     float arf_contribution=0.;
@@ -1243,7 +1243,7 @@ static float getEbandFlux(const SimputSourceEntry* const src,
   SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
   CHECK_STATUS_RET(*status, 0.);
 
-  int ii;
+  long ii;
   float flux = 0.;
   float last_energy=0.;
   for (ii=0; ii<spec->nentries; ii++) {
@@ -1270,7 +1270,7 @@ static float getEbandRate(const SimputSourceEntry* const src,
   SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
   CHECK_STATUS_RET(*status, 0.);
 
-  int ii, upper=0;
+  long ii, upper=0;
   
   for (ii=spec->nentries-1; ii>=0; ii--) {
     if ((0==upper) && (spec->energy[ii]<=emax) && (spec->energy[ii]>emin)) {
@@ -1329,7 +1329,7 @@ void freeSimputLC(SimputLC** const lc)
   if (NULL!=*lc) {
     if ((*lc)->nentries>0) {
       if (NULL!=(*lc)->spectrum) {
-	int ii;
+	long ii;
 	for (ii=0; ii<(*lc)->nentries; ii++) {
 	  if (NULL!=(*lc)->spectrum[ii]) {
 	    free((*lc)->spectrum[ii]);
@@ -1337,7 +1337,7 @@ void freeSimputLC(SimputLC** const lc)
 	}
       }
       if (NULL!=(*lc)->image) {
-	int ii;
+	long ii;
 	for (ii=0; ii<(*lc)->nentries; ii++) {
 	  if (NULL!=(*lc)->image[ii]) {
 	    free((*lc)->image[ii]);
