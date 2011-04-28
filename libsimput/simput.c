@@ -116,6 +116,11 @@ static float unit_conversion_ergpspcm2(const char* const unit);
     implemented, the function return value is 0. */
 static float unit_conversion_phpspcm2pkeV(const char* const unit);
 
+/** Determine the factor required to convert the specified unit into
+    [s]. If the conversion is not possible or implemented, the
+    function return value is 0. */
+static float unit_conversion_s(const char* const unit);
+
 /** Return the requested spectrum. Keeps a certain number of spectra
     in an internal storage. If the requested spectrum is not located
     in the internal storage, it is loaded from the reference given in
@@ -756,6 +761,25 @@ static float unit_conversion_phpspcm2pkeV(const char* const unit)
 }
 
 
+static float unit_conversion_s(const char* const unit)
+{
+  if (0==strcmp(unit, "s")) {
+    return(1.);
+  } else if (0==strcmp(unit, "min")) {
+    return(60.);
+  } else if (0==strcmp(unit, "h")) {
+    return(3600.);
+  } else if (0==strcmp(unit, "d")) {
+    return(24.*3600.);
+  } else if (0==strcmp(unit, "yr")) {
+    return(365.25*24.*3600.);
+  } else {
+    // Unknown units.
+    return(0.);
+  }
+}
+
+
 SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status)
 {
   SimputMissionIndepSpec* spec=
@@ -802,7 +826,7 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec)
 SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
 						   int* const status)
 {
-  // Allocate memory for string buffers.
+  // String buffer.
   char* name[1]={NULL};
 
   SimputMissionIndepSpec* spec = getSimputMissionIndepSpec(status);
@@ -1362,4 +1386,189 @@ void freeSimputLC(SimputLC** const lc)
   }
 }
 
+
+SimputLC* loadSimputLC(const char* const filename, int* const status)
+{
+  // String buffers.
+  char* spectrum[1]={NULL};
+  char* image[1]={NULL};
+
+  SimputLC* lc = getSimputLC(status);
+  CHECK_STATUS_RET(*status, lc);
+
+  // Open the specified FITS file. The filename must uniquely identify
+  // the light curve contained in a binary table via the extended filename 
+  // syntax. Therefore we do not have to care about the HDU number.
+  fitsfile* fptr=NULL;
+  fits_open_table(&fptr, filename, READONLY, status);
+  CHECK_STATUS_RET(*status, lc);
+
+  do { // Error handling loop.
+
+    // Get the column names.
+    int ctime=0, cphase=0, cflux=0, cspectrum=0, cimage=0;
+    // Required columns:
+    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+    CHECK_STATUS_BREAK(*status);
+    // Optional columnes:
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_get_colnum(fptr, CASEINSEN, "TIME", &ctime, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_get_colnum(fptr, CASEINSEN, "PHASE", &cphase, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_get_colnum(fptr, CASEINSEN, "SPECTRUM", &cspectrum, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_get_colnum(fptr, CASEINSEN, "IMAGE", &cimage, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_clear_errmark();
+
+    // Check, whether there is either a TIME or a PHASE column (but not both).
+    if ((0==ctime)&&(0==cphase)) {
+      SIMPUT_ERROR("table extension contains neither TIME nor PHASE column");
+      *status=EXIT_FAILURE;
+      return(lc);
+    } else if ((ctime>0)&&(cphase>0)) {
+      SIMPUT_ERROR("table extension contains both TIME and PHASE column");
+      *status=EXIT_FAILURE;
+      return(lc);
+    }
+
+    // Determine the unit conversion factors.
+    float ftime=0.;
+    if (ctime>0) {
+      char utime[SIMPUT_MAXSTR];
+      read_unit(fptr, ctime, utime, status);
+      CHECK_STATUS_BREAK(*status);
+      ftime = unit_conversion_s(utime);
+      if (0.==ftime) {
+	SIMPUT_ERROR("unknown units in TIME column");
+	*status=EXIT_FAILURE;
+	break;
+      }
+    }
+    // END of determine unit conversion factors.
+
+
+    // Read the header keywords.
+    char comment[SIMPUT_MAXSTR];
+    fits_read_key(fptr, TDOUBLE, "MJDREF",   &lc->mjdref,   comment, status);
+    fits_read_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, comment, status);
+    fits_read_key(fptr, TFLOAT,  "PHASE0",   &lc->phase0,   comment, status);
+    fits_read_key(fptr, TFLOAT,  "PERIOD",   &lc->period,   comment, status);
+    fits_read_key(fptr, TFLOAT,  "FLUXSCAL", &lc->fluxscal, comment, status);
+    CHECK_STATUS_BREAK(*status);
+
+
+    // Determine the number of rows in the table.
+    fits_get_num_rows(fptr, &lc->nentries, status);
+    CHECK_STATUS_BREAK(*status);
+    printf("light curve '%s' contains %ld data points\n", 
+	   filename, lc->nentries);
+
+    // Allocate memory for the arrays.
+    if (ctime>0) {
+      lc->time  = (double*)malloc(lc->nentries*sizeof(double));
+      CHECK_NULL_BREAK(lc->time, *status, 
+		       "memory allocation for light curve failed");
+    }
+    if (cphase>0) {
+      lc->phase = (float*)malloc(lc->nentries*sizeof(float));
+      CHECK_NULL_BREAK(lc->phase, *status, 
+		       "memory allocation for light curve failed");
+    }
+    lc->flux    = (float*)malloc(lc->nentries*sizeof(float));
+    CHECK_NULL_BREAK(lc->flux, *status, 
+		     "memory allocation for light curve failed");
+    if (cspectrum>0) {
+      lc->spectrum = (char**)malloc(lc->nentries*sizeof(char*));
+      CHECK_NULL_BREAK(lc->spectrum, *status, 
+		       "memory allocation for light curve failed");
+      // String buffer.
+      spectrum[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+      CHECK_NULL_BREAK(spectrum[0], *status, 
+		       "memory allocation for string buffer failed");
+    }
+    if (cimage>0) {
+      lc->spectrum = (char**)malloc(lc->nentries*sizeof(char*));
+      CHECK_NULL_BREAK(lc->spectrum, *status, 
+		       "memory allocation for light curve failed");
+      // String buffer.
+      image[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+      CHECK_NULL_BREAK(image[0], *status, 
+		       "memory allocation for string buffer failed");
+    }
+
+
+    // Read the data from the table.
+    int anynul=0;
+
+    // TIME
+    if (ctime>0) {
+      fits_read_col(fptr, TDOUBLE, ctime, 1, 1, lc->nentries, 
+		    0, lc->time, &anynul, status);
+      CHECK_STATUS_BREAK(*status);
+      // Multiply with unit scaling factor.
+      long row;
+      for (row=0; row<lc->nentries; row++) {
+	lc->time[row] *= ftime;
+      }
+    }
+
+    // PHASE
+    if (cphase>0) {
+      fits_read_col(fptr, TFLOAT, cphase, 1, 1, lc->nentries, 
+		    0, lc->phase, &anynul, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+
+    // FLUX
+    fits_read_col(fptr, TFLOAT, cflux, 1, 1, lc->nentries, 
+		  0, lc->flux, &anynul, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // SPECTRUM
+    if (cspectrum>0) {
+      long row;
+      for (row=0; row<lc->nentries; row++) {
+	fits_read_col(fptr, TSTRING, cspectrum, row+1, 1, 1, 
+		      "", spectrum, &anynul, status);
+	CHECK_STATUS_BREAK(*status);
+	lc->spectrum[row] = 
+	  (char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
+	CHECK_NULL_BREAK(lc->spectrum[row], *status,
+			 "memory allocation for spectrum string failed");
+	strcpy(lc->spectrum[row], spectrum[0]);
+      }      
+      CHECK_STATUS_BREAK(*status);
+    }
+
+    // IMAGE
+    if (cimage>0) {
+      long row;
+      for (row=0; row<lc->nentries; row++) {
+	fits_read_col(fptr, TSTRING, cimage, row+1, 1, 1, 
+		      "", image, &anynul, status);
+	CHECK_STATUS_BREAK(*status);
+	lc->image[row] = 
+	  (char*)malloc((strlen(image[0])+1)*sizeof(char));
+	CHECK_NULL_BREAK(lc->image[row], *status,
+			 "memory allocation for image string failed");
+	strcpy(lc->image[row], image[0]);
+      }      
+      CHECK_STATUS_BREAK(*status);
+    }
+
+  } while(0); // END of error handling loop.
+  
+  // Release allocated memory.
+  if (NULL!=spectrum[0]) free(spectrum[0]);
+  if (NULL!=image[0])    free(image[0]);
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_RET(*status, lc);
+
+  return(lc);  
+}
 

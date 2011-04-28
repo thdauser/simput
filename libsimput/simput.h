@@ -85,13 +85,14 @@ typedef struct {
   SimputSourceEntry** entries;
 
   /** File name (without path contributions) of the FITS file
-      containing the source catalog. This value is automatically
-      set when a catalog is loaded from or saved to a file. */
+      containing the source catalog. This value is automatically set
+      when a catalog is loaded from or saved to a file. This pointer
+      should not be modified directly. */
   char* filename;
 
   /** Path to the FITS file containing the source catalog. This value
       is automatically set when a catalog is loaded from or saved to a
-      file. */
+      file. This pointer should not be modified directly. */
   char* filepath;
 
 } SimputSourceCatalog;
@@ -286,6 +287,9 @@ SimputLC* getSimputLC(int* const status);
     contained elements, releases the allocated memory, and finally
     sets the pointer to NULL. */
 void freeSimputLC(SimputLC** const lc);
+
+/** Load the SimputLC from the specified file. */
+SimputLC* loadSimputLC(const char* const filename, int* const status);
 
 
 #endif /* SIMPUT_H */
