@@ -85,10 +85,13 @@ typedef struct {
   SimputSourceEntry** entries;
 
   /** File name (without path contributions) of the FITS file
-      containing the source catalog. */
+      containing the source catalog. This value is automatically
+      set when a catalog is loaded from or saved to a file. */
   char* filename;
 
-  /** Path to the FITS file containing the source catalog. */
+  /** Path to the FITS file containing the source catalog. This value
+      is automatically set when a catalog is loaded from or saved to a
+      file. */
   char* filepath;
 
 } SimputSourceCatalog;
