@@ -291,5 +291,12 @@ void freeSimputLC(SimputLC** const lc);
 /** Load the SimputLC from the specified file. */
 SimputLC* loadSimputLC(const char* const filename, int* const status);
 
+/** Save the light curve in the specified extension of the given FITS
+    file. If the file does not exist yet, a new file is created. If
+    the file exists, an appropriate HDU is created.  */
+void saveSimputLC(SimputLC* const lc, const char* const filename,
+		  char* const extname, int extver,
+		  int* const status);
+
 
 #endif /* SIMPUT_H */

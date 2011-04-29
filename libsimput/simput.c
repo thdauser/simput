@@ -1454,9 +1454,15 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     char comment[SIMPUT_MAXSTR];
     fits_read_key(fptr, TDOUBLE, "MJDREF",   &lc->mjdref,   comment, status);
     fits_read_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, comment, status);
-    fits_read_key(fptr, TFLOAT,  "PHASE0",   &lc->phase0,   comment, status);
-    fits_read_key(fptr, TFLOAT,  "PERIOD",   &lc->period,   comment, status);
     fits_read_key(fptr, TFLOAT,  "FLUXSCAL", &lc->fluxscal, comment, status);
+    if (cphase>0) {
+      // Only for periodic light curves.
+      fits_read_key(fptr, TFLOAT,  "PHASE0",   &lc->phase0,   comment, status);
+      fits_read_key(fptr, TFLOAT,  "PERIOD",   &lc->period,   comment, status);
+    } else {
+      lc->phase0 = 0.;
+      lc->period = 0.;
+    }
     CHECK_STATUS_BREAK(*status);
 
 
@@ -1572,3 +1578,216 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
   return(lc);  
 }
 
+
+void saveSimputLC(SimputLC* const lc, const char* const filename,
+		  char* const extname, int extver, int* const status)
+{
+  fitsfile* fptr=NULL;
+  
+  // String buffers.
+  char* spectrum[1]={NULL}; 
+  char* image[1]={NULL}; 
+
+  int ncolumns=0;
+  char **ttype=NULL;
+  char **tform=NULL;
+  char **tunit=NULL;
+
+  do { // Error handling loop.
+
+    // Check if the given light curve either contains a time 
+    // or a phase column, but not both.
+    if ((NULL==lc->time) && (NULL==lc->phase)) {
+      SIMPUT_ERROR("light curve does not contain TIME or PHASE column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    if ((NULL!=lc->time) && (NULL!=lc->phase)) {
+      SIMPUT_ERROR("light curve contains both TIME and PHASE column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    if (NULL==lc->flux) {
+      SIMPUT_ERROR("light curve does not contain FLUX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    // Check if the specified file exists.
+    int exists;
+    fits_file_exists(filename, &exists, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==exists) {
+      // If yes, open it.
+      fits_open_file(&fptr, filename, READWRITE, status);
+      CHECK_STATUS_BREAK(*status);
+      
+      // Try to move to the specified extension.
+      int status2=EXIT_SUCCESS;
+      fits_write_errmark();
+      fits_movnam_hdu(fptr, BINARY_TBL, extname, extver, &status2);
+      fits_clear_errmark();
+      if (BAD_HDU_NUM!=status2) {
+	// If that works, the extension already exists.
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "extension '%s' with EXTVER=%d already exists", 
+		extname, extver);
+	SIMPUT_ERROR(msg);
+	*status=EXIT_FAILURE;
+	break;
+      }
+
+    } else {
+      // If no, create a new file. 
+      fits_create_file(&fptr, filename, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+    // END of check, whether the specified file exists.
+
+    // Create a new binary table.
+    // Determine the number of columns.
+    ncolumns=2;
+    if (NULL!=lc->spectrum) ncolumns++;
+    if (NULL!=lc->image)    ncolumns++;
+    // Allocate memory for the format strings.
+    ttype=(char**)malloc(ncolumns*sizeof(char*));
+    tform=(char**)malloc(ncolumns*sizeof(char*));
+    tunit=(char**)malloc(ncolumns*sizeof(char*));
+    CHECK_NULL_BREAK(ttype, *status, "memory allocation for string buffer failed");
+    CHECK_NULL_BREAK(tform, *status, "memory allocation for string buffer failed");
+    CHECK_NULL_BREAK(tunit, *status, "memory allocation for string buffer failed");
+    int ii;
+    for (ii=0; ii<ncolumns; ii++) {
+      ttype[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+      tform[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+      tunit[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+      CHECK_NULL_BREAK(ttype[ii], *status, 
+		       "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(tform[ii], *status, 
+		       "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(tunit[ii], *status, 
+		       "memory allocation for string buffer failed");
+    }
+    CHECK_STATUS_BREAK(*status);
+
+    // Set up the table format.
+    int ctime=0, cphase=0, cflux=0, cspectrum=0, cimage=0;
+    if (NULL!=lc->time) {
+      ctime=1;
+      strcpy(ttype[0], "TIME");
+      strcpy(tform[0], "D");
+      strcpy(tunit[0], "s");
+    } else {
+      cphase=1;
+      strcpy(ttype[0], "PHASE");
+      strcpy(tform[0], "E");
+      strcpy(tunit[0], "");
+    }
+    cflux=2;
+    strcpy(ttype[1], "FLUX");
+    strcpy(tform[1], "E");
+    strcpy(tunit[1], "");
+    if (NULL!=lc->spectrum) {
+      cspectrum=3;
+      strcpy(ttype[2], "SPECTRUM");
+      strcpy(tform[2], "");
+      strcpy(tunit[2], "1PA");
+    }
+    if (NULL!=lc->image) {
+      cimage=4;
+      strcpy(ttype[3], "IMAGE");
+      strcpy(tform[3], "");
+      strcpy(tunit[3], "1PA");
+    }
+
+    // Create the table.
+    fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns, 
+		    ttype, tform, tunit, extname, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Write header keywords.
+    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS2", "LIGHTCUR", "", status);
+    fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
+    fits_write_key(fptr, TDOUBLE, "MJDREF", &lc->mjdref, "", status);
+    fits_write_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, "", status);
+    fits_write_key(fptr, TFLOAT,  "FLUXSCAL", &lc->fluxscal, "", status);
+    int periodic=0;
+    if (cphase>0) {
+      // Only for periodic light curves.
+      periodic=1;
+      fits_write_key(fptr, TFLOAT,  "PHASE0", &lc->phase0, "", status);
+      fits_write_key(fptr, TFLOAT,  "PERIOD", &lc->period, "", status);
+    }
+    fits_write_key(fptr, TINT,  "PERIODIC", &periodic, "", status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Create new rows in the table and store the data of the spectrum in it.
+    fits_insert_rows(fptr, 0, lc->nentries, status);
+    CHECK_STATUS_BREAK(*status);
+    
+    if (ctime>0) {
+      fits_write_col(fptr, TDOUBLE, ctime, 1, 1, lc->nentries, 
+		     &lc->time, status);
+      CHECK_STATUS_BREAK(*status);
+    } else {
+      fits_write_col(fptr, TFLOAT, cphase, 1, 1, lc->nentries, 
+		     &lc->phase, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+    fits_write_col(fptr, TFLOAT, cflux, 1, 1, lc->nentries, 
+		   &lc->flux, status);
+    CHECK_STATUS_BREAK(*status);
+    if (cspectrum>0) {
+      long row;
+      for (row=0; row<lc->nentries; row++) {
+	fits_write_col(fptr, TSTRING, cspectrum, row+1, 1, 1, 
+		       &lc->spectrum[row], status);
+	CHECK_STATUS_BREAK(*status);
+      }
+      CHECK_STATUS_BREAK(*status);
+    }
+    if (cimage>0) {
+      long row;
+      for (row=0; row<lc->nentries; row++) {
+	fits_write_col(fptr, TSTRING, cimage, row+1, 1, 1, 
+		       &lc->image[row], status);
+	CHECK_STATUS_BREAK(*status);
+      }
+      CHECK_STATUS_BREAK(*status);
+    }
+
+  } while(0); // END of error handling loop.
+
+  // Release allocated memory.
+  if (NULL!=spectrum[0]) free(spectrum[0]);
+  if (NULL!=image[0])    free(image[0]);
+
+  if (NULL!=ttype) {
+    int ii;
+    for (ii=0; ii<ncolumns; ii++) {
+      if (NULL!=ttype[ii]) free(ttype[ii]);
+    }
+    free(ttype);
+  }
+  if (NULL!=tform) {
+    int ii;
+    for (ii=0; ii<ncolumns; ii++) {
+      if (NULL!=tform[ii]) free(tform[ii]);
+    }
+    free(tform);
+  }
+  if (NULL!=tunit) {
+    int ii;
+    for (ii=0; ii<ncolumns; ii++) {
+      if (NULL!=tunit[ii]) free(tunit[ii]);
+    }
+    free(tunit);
+  }
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_VOID(*status);
+}
