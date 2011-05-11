@@ -1192,7 +1192,7 @@ float getSimputPhotonEnergy(const SimputSourceEntry* const src,
 static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
 				      int* const status) 
 {
-  int upper=spec->nentries, lower=0, mid;
+  long upper=spec->nentries-1, lower=0, mid;
   
   // Get a random number in the interval [0,1].
   float rnd = (float)static_rndgen();
@@ -1864,19 +1864,25 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
     // general algorithm proposed by Klein & Roberts has to 
     // be applied.
 
-    // TODO Apply the individual photon rate of the particular source.
+    // Apply the individual photon rate of the particular source.
     float avgrate = getSimputPhotonRate(src, status);
     CHECK_STATUS_RET(*status, 0.);
 
     // Step 1 in the algorithm.
     double u = static_rndgen();
 
-    // Determine the respective index kk of the light curve.
-    // TODO Apply a binary search.
-    long kk;
-    for (kk=0; kk<lc->nentries-3; kk++) {
-      if (lc->time[kk+1] > prevtime) break;
+    // Determine the respective index kk of the light curve (using
+    // binary search).
+    long upper=lc->nentries-2, kk=0, mid;
+    while (upper>kk) {
+      mid = (kk+upper)/2;
+      if (lc->time[mid+1]<prevtime) {
+	kk = mid+1;
+      } else {
+	upper = mid;
+      }
     }
+
 
     while (kk < lc->nentries-2) {
       // Determine the relative time within the kk-th interval, i.e., t=0 lies
