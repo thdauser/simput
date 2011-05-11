@@ -135,8 +135,15 @@ typedef struct {
   /** Phase values (between 0 and 1). */
   float* phase;
 
-  /** Relative flux values. */
+  /** Relative flux values (unitless). */
   float* flux;
+
+  /** Piece-wise linear light curve data points. The value a_k
+      represents the gradient of the light curve between the time t_k
+      and t_{k+1} (slope, [1/s]). The value b_k represents the
+      constant contribution (intercept) at t_k. These values include
+      the FLUXSCAL. */
+  float *a, *b;
 
   /** Reference to the storage location of the source spectrum at a
       particular point of time or phase respectively. */
@@ -265,15 +272,17 @@ void simputSetARF(struct ARF* const arf);
     uniformly distributed numbers in the interval [0,1). */
 void simputSetRndGen(double(*rndgen)(void));
 
-/** Return a random photon energy according to the distribution
+/** Return a randomized photon energy according to the distribution
     defined by the energy spectrum of the particular source. If the
-    spectrum is not stored in memory, its loaded from the location
+    spectrum is not stored in memory, it is loaded from the location
     specified in the the catalog. */
 float getSimputPhotonEnergy(const SimputSourceEntry* const src,
 			    int* const status);
 
-/** Return the photon rate of a particular source. Specification of
-    instrument ARF required. */
+/** Return the photon rate of a particular source. The return value is
+    the nominal photon rate given in the source catalog. It does not
+    contain any light curve or other time-variable
+    contributions. Specification of instrument ARF required. */
 float getSimputPhotonRate(const SimputSourceEntry* const src,
 			  int* const status);
 
@@ -297,6 +306,17 @@ SimputLC* loadSimputLC(const char* const filename, int* const status);
 void saveSimputLC(SimputLC* const lc, const char* const filename,
 		  char* const extname, int extver,
 		  int* const status);
+
+
+/** Return a randomized photon arrival time at the telescope according
+    to the photon rate and possible light curve. As the light curve is
+    time-dependet, a reference time defined by the arrival time of the
+    previous photon has to be specified. If the source refers to a
+    light curve, which is not stored in memory, it is loaded from the
+    location specified in the the catalog. */
+double getSimputPhotonTime(const SimputSourceEntry* const src,
+			   const double prevtime,
+			   int* const status);
 
 
 #endif /* SIMPUT_H */

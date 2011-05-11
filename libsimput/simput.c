@@ -132,7 +132,7 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
 /** Determine a random photon energy according to the specified
     spectral distribution. */
 static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
-				      int* const status);
+				int* const status);
 
 /** Determine the source flux in [erg/s/cm**2] within a certain energy
     band for the particular spectrum. */
@@ -145,6 +145,21 @@ static float getEbandFlux(const SimputSourceEntry* const src,
 static float getEbandRate(const SimputSourceEntry* const src,
 			  const float emin, const float emax,
 			  int* const status);
+
+/** Return a random value on the basis of an exponential distribution
+    with a given average distance. In the simulation this function is
+    used to calculate the temporal differences between individual
+    photons from a source. The photons have Poisson statistics. */
+static double rndexp(const double avgdist);
+
+/** Return the requested light curve. Keeps a certain number of light
+    curves in an internal storage. If the requested light curve is not
+    located in the internal storage, it is loaded from the reference
+    given in the source catalog. If the the source does not refer to a
+    light curve (i.e. it is a source with constant brightness) the
+    function return value is NULL. */
+static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
+				int* const status);
 
 
 /////////////////////////////////////////////////////////////////
@@ -1116,7 +1131,7 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
   for (ii=0; ii<nspectra; ii++) {
     // Check if the spectrum is equivalent to the required one.
     if (0==strcmp(spectra[ii]->fileref, src->spectrum)) {
-      // If yes, determine a random photon energy from the spectral distribution.
+      // If yes, return the spectrum.
       return(spectra[ii]);
     }
   }
@@ -1335,6 +1350,8 @@ SimputLC* getSimputLC(int* const status)
   lc->time    =NULL;
   lc->phase   =NULL;
   lc->flux    =NULL;
+  lc->a       =NULL;
+  lc->b       =NULL;
   lc->spectrum=NULL;
   lc->image   =NULL;
   lc->mjdref  =0.;
@@ -1377,6 +1394,12 @@ void freeSimputLC(SimputLC** const lc)
     }
     if (NULL!=(*lc)->flux) {
       free((*lc)->flux);
+    }
+    if (NULL!=(*lc)->a) {
+      free((*lc)->a);
+    }
+    if (NULL!=(*lc)->b) {
+      free((*lc)->b);
     }
     if (NULL!=(*lc)->fileref) {
       free((*lc)->fileref);
@@ -1486,6 +1509,12 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     lc->flux    = (float*)malloc(lc->nentries*sizeof(float));
     CHECK_NULL_BREAK(lc->flux, *status, 
 		     "memory allocation for light curve failed");
+    lc->a       = (float*)malloc(lc->nentries*sizeof(float));
+    CHECK_NULL_BREAK(lc->a, *status, 
+		     "memory allocation for light curve failed");
+    lc->b       = (float*)malloc(lc->nentries*sizeof(float));
+    CHECK_NULL_BREAK(lc->b, *status, 
+		     "memory allocation for light curve failed");
     if (cspectrum>0) {
       lc->spectrum = (char**)malloc(lc->nentries*sizeof(char*));
       CHECK_NULL_BREAK(lc->spectrum, *status, 
@@ -1564,6 +1593,21 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       }      
       CHECK_STATUS_BREAK(*status);
     }
+    
+    // END of reading the data from the FITS table.
+
+
+    // Determine the auxiliary values for the light curve (including
+    // FLUXSCAL).
+    long ii;
+    for (ii=0; ii<lc->nentries-1; ii++) {
+      lc->a[ii] = (lc->flux[ii+1]-lc->flux[ii])	
+	/(lc->time[ii+1]-lc->time[ii])
+	/lc->fluxscal;
+      lc->b[ii] = lc->flux[ii]/lc->fluxscal; 
+    }
+    lc->a[lc->nentries-1] = 0.;
+    lc->b[lc->nentries-1] = lc->flux[lc->nentries-1]/lc->fluxscal;
 
   } while(0); // END of error handling loop.
   
@@ -1790,4 +1834,164 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
   // Close the file.
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
+}
+
+
+double getSimputPhotonTime(const SimputSourceEntry* const src,
+			   double prevtime,
+			   int* const status)
+{
+  // Determine the light curve.
+  SimputLC* lc=returnSimputLC(src, status);
+  CHECK_STATUS_RET(*status, 0.);
+
+  // Check, whether the source has constant brightness.
+  if (NULL==lc) {
+    // The source has a constant brightness.
+    return(prevtime+rndexp((double)1./getSimputPhotonRate(src, status)));
+  } else {
+    // The source has a time-variable brightness.
+
+    // Check if the reference time is within the interval covered by
+    // the light curve.
+    if ((prevtime<lc->time[0]) || (prevtime>=lc->time[lc->nentries-1])) {
+      SIMPUT_ERROR("reference time outside the interval covered by the light curve");
+      *status=EXIT_FAILURE;
+      return(0.);
+    }
+    
+    // The LinLightCurve contains data points, so the
+    // general algorithm proposed by Klein & Roberts has to 
+    // be applied.
+
+    // TODO Apply the individual photon rate of the particular source.
+    float avgrate = getSimputPhotonRate(src, status);
+    CHECK_STATUS_RET(*status, 0.);
+
+    // Step 1 in the algorithm.
+    double u = static_rndgen();
+
+    // Determine the respective index kk of the light curve.
+    // TODO Apply a binary search.
+    long kk;
+    for (kk=0; kk<lc->nentries-3; kk++) {
+      if (lc->time[kk+1] > prevtime) break;
+    }
+
+    while (kk < lc->nentries-2) {
+      // Determine the relative time within the kk-th interval, i.e., t=0 lies
+      // at the beginning of the kk-th interval.
+      double t         = prevtime-(lc->time[kk]);
+      double stepwidth = lc->time[kk+1]-lc->time[kk];
+
+      // Step 2 in the algorithm.
+      double uk = 1.-exp((-lc->a[kk]/2.*(pow(stepwidth, 2.)-pow(t,2.))
+			  -lc->b[kk]*(stepwidth-t))*avgrate);
+      // Step 3 in the algorithm.
+      if (u <= uk) {
+	if ( fabs(lc->a[kk]*stepwidth) > fabs(lc->b[kk]*1.e-6) ) { 
+	// Instead of checking if a_kk = 0. check, whether its product with the 
+	// interval length is a very small number in comparison to b_kk.
+	// If a_kk * stepwidth is much smaller than b_kk, the rate in the interval
+	// can be assumed to be approximately constant.
+	return(lc->time[kk] + 
+	       (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
+				2.*lc->a[kk]*lc->b[kk]*t -
+				2.*lc->a[kk]*log(1.-u)))*avgrate/lc->a[kk]);
+	} else { // a_kk == 0
+	  return(prevtime-log(1.-u)/(lc->b[kk]*avgrate));
+	}
+
+      } else {
+	// Step 4 (u > u_k).
+	u = (u-uk)/(1-uk);
+	kk++;
+	prevtime = lc->time[kk];
+      }
+    }
+    
+    // The range of the light curve has been exceeded.
+    SIMPUT_ERROR("light curve interval exceeded");
+    *status=EXIT_FAILURE;
+    return(0.);
+  }
+}
+
+
+static double rndexp(const double avgdist)
+{
+  assert(avgdist>0.);
+
+  double rand = static_rndgen();
+  assert(rand>0.);
+
+  return(-log(rand)*avgdist);
+}
+
+
+static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
+				int* const status)
+{
+  const int maxlcs=10;
+  static int nlcs=0;
+  static SimputLC** lcs=NULL;
+
+  // Check, whether the source refers to a light curve.
+  if (NULL==src->lightcur) {
+    return(NULL);
+  }
+
+  // In case there are no light curves available at all, allocate 
+  // memory for the array (storage for light curves).
+  if (NULL==lcs) {
+    lcs = (SimputLC**)malloc(maxlcs*sizeof(SimputLC*));
+    CHECK_NULL_RET(lcs, *status, 
+		   "memory allocation for light curves failed", NULL);
+  }
+
+  // Search if the requested light curve is available in the storage.
+  int ii;
+  for (ii=0; ii<nlcs; ii++) {
+    // Check if the light curve is equivalent to the requested one.
+    if (0==strcmp(lcs[ii]->fileref, src->lightcur)) {
+      // If yes, return the light curve.
+      return(lcs[ii]);
+    }
+  }
+
+  // The requested light curve is not contained in the storage.
+  // Therefore we must load it from the specified location.
+  if (nlcs>=maxlcs) {
+    SIMPUT_ERROR("too many light curves in the internal storage");
+    *status=EXIT_FAILURE;
+    return(NULL);
+  }
+
+  // Load the light curve.
+  char filename[SIMPUT_MAXSTR];
+  if ('['==src->lightcur[0]) {
+    strcpy(filename, *src->filepath);
+    strcat(filename, *src->filename);
+    strcat(filename, src->lightcur);
+  } else {
+    if ('/'!=src->lightcur[0]) {
+      strcpy(filename, *src->filepath);
+    } else {
+      strcpy(filename, "");
+    }
+    strcat(filename, src->lightcur);
+  }
+  lcs[nlcs]=loadSimputLC(filename, status);
+  CHECK_STATUS_RET(*status, lcs[nlcs]);
+  nlcs++;
+
+  // Store the file reference to the light curve for later comparisons.
+  lcs[nlcs-1]->fileref = 
+    (char*)malloc((strlen(src->lightcur)+1)*sizeof(char));
+  CHECK_NULL_RET(lcs[nlcs-1]->fileref, *status, 
+		 "memory allocation for file reference failed", 
+		 lcs[nlcs-1]);
+  strcpy(lcs[nlcs-1]->fileref, src->lightcur);
+   
+  return(lcs[nlcs-1]);
 }
