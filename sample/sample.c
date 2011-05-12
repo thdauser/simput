@@ -39,6 +39,7 @@ int main(int argc, char **argv)
   const char filename[] = "/home/schmid/test/simput/simput.fits";
 
   SimputSourceCatalog* catalog=NULL;
+  SimputImg* img=NULL;
   int status=EXIT_SUCCESS;
 
   do { // Error handling loop.
@@ -56,7 +57,7 @@ int main(int argc, char **argv)
       catalog = getSimputSourceCatalog(&status);
       CHECK_STATUS_BREAK(status);
       catalog->entries = (SimputSourceEntry**)malloc(2*sizeof(SimputSourceEntry*));
-      CHECK_NULL_BREAK(catalog->entries, status, "Error: memory allocation failed!\n");
+      CHECK_NULL_BREAK(catalog->entries, status, "memory allocation failed!\n");
       catalog->entries[0] = 
 	getSimputSourceEntryV(1, "", -1.*M_PI/180., 2.5*M_PI/180., 0., 1., 
 			      1., 10., 5.e-12, "", "", "", &status);
@@ -70,13 +71,36 @@ int main(int argc, char **argv)
       //    remove(filename);
       saveSimputSourceCatalog(catalog, filename, &status);
       CHECK_STATUS_BREAK(status);
+
+      // Create a source image an append it to the file with the source catalog.
+      img = getSimputImg(&status);
+      CHECK_STATUS_BREAK(status);
+      img->dist = (double**)malloc(3*sizeof(double*));
+      CHECK_NULL_BREAK(img->dist, status, "memory allocation failed!\n");
+      long ii;
+      for (ii=0; ii<3; ii++) {
+	img->dist[ii] = (double*)malloc(sizeof(double));
+	CHECK_NULL_BREAK(img->dist[ii], status, "memory allocation failed!\n");
+      }
+      CHECK_STATUS_BREAK(status);
+      img->naxis1   = 3;
+      img->naxis2   = 1;
+      img->dist[0][0] = 0.6;
+      img->dist[1][0] = 1.6;
+      img->dist[2][0] = 2.0;
+      img->fluxscal = 2.0;
+
+      saveSimputImg(img, filename, "IMG1", 0, &status);
+      CHECK_STATUS_BREAK(status);
+
     }
     // END of create a source catalog.
 
   } while(0); // END of error handling loop.
 
+  freeSimputImg(&img);
   freeSimputSourceCatalog(&catalog);
-
+  
   fits_report_error(stderr, status);
   return(status);
 }

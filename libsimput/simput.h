@@ -124,7 +124,7 @@ typedef struct {
 } SimputMissionIndepSpec;
 
 
-/** Simput light curve. */
+/** SIMPUT light curve. */
 typedef struct {
   /** Number of entries in the light curve. */
   long nentries;
@@ -153,10 +153,10 @@ typedef struct {
       particular point of time or phase respectively. */
   char** image;
 
-  /** MJD for reference time. */
+  /** MJD for reference time [d]. */
   double mjdref;
 
-  /** Zero time. */
+  /** Zero time [s]. */
   double timezero;
 
   /** Phase of periodic oscillation at timezero. */
@@ -170,11 +170,31 @@ typedef struct {
 
   /** Reference to the location of the light curve given by the
       extended filename syntax. This reference is used to check,
-      whether a light curve is already contained in the internal
+      whether the light curve is already contained in the internal
       storage. */
   char* fileref;
 
 } SimputLC;
+
+
+/** SIMPUT source image. */
+typedef struct {
+  /** Image dimensions. */
+  long naxis1, naxis2;
+
+  /** Pixel value distribution function. */
+  double** dist;
+
+  /** Flux scaling factor. */
+  float fluxscal;
+
+  /** Reference to the location of the source image given by the
+      extended filename syntax. This reference is used to check,
+      whether the source image is already contained in the internal
+      storage. */
+  char* fileref;
+
+} SimputImg;
 
 
 /////////////////////////////////////////////////////////////////
@@ -302,7 +322,7 @@ SimputLC* loadSimputLC(const char* const filename, int* const status);
 
 /** Save the light curve in the specified extension of the given FITS
     file. If the file does not exist yet, a new file is created. If
-    the file exists, an appropriate HDU is created.  */
+    the file exists, an appropriate HDU is created. */
 void saveSimputLC(SimputLC* const lc, const char* const filename,
 		  char* const extname, int extver,
 		  int* const status);
@@ -317,6 +337,28 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
 double getSimputPhotonTime(const SimputSourceEntry* const src,
 			   const double prevtime,
 			   int* const status);
+
+
+/** Constructor for the SimputImg data structure. Allocates memory,
+    initializes elements with their default values and pointers with
+    NULL. */
+SimputImg* getSimputImg(int* const status);
+
+/** Destructor for the SimputImg. Calls destructor routines for all
+    contained elements, releases the allocated memory, and finally
+    sets the pointer to NULL. */
+void freeSimputImg(SimputImg** const img);
+
+/** Load a SIMPUT source image from the specified file and store it in
+    a SimputImg data structure. */
+SimputImg* loadSimputImg(const char* const filename, int* const status);
+
+/** Save the source image in the specified extension of the given FITS
+    file. If the file does not exist yet, a new file is created. If
+    the file exists, an appropriate HDU is created. */
+void saveSimputImg(SimputImg* const img, const char* const filename,
+		   char* const extname, int extver,
+		   int* const status);
 
 
 #endif /* SIMPUT_H */

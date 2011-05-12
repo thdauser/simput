@@ -977,6 +977,18 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 
   do { // Error handling loop.
 
+    // Check if the EXTNAME has been specified.
+    if (NULL==extname) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    if (0==strlen(extname)) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
     // Check if the specified file exists.
     int exists;
     fits_file_exists(filename, &exists, status);
@@ -1416,6 +1428,7 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
   char* spectrum[1]={NULL};
   char* image[1]={NULL};
 
+  // Get an empty SimputLC data structure.
   SimputLC* lc = getSimputLC(status);
   CHECK_STATUS_RET(*status, lc);
 
@@ -1475,9 +1488,9 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 
     // Read the header keywords.
     char comment[SIMPUT_MAXSTR];
+    // Required keywords.
     fits_read_key(fptr, TDOUBLE, "MJDREF",   &lc->mjdref,   comment, status);
     fits_read_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, comment, status);
-    fits_read_key(fptr, TFLOAT,  "FLUXSCAL", &lc->fluxscal, comment, status);
     if (cphase>0) {
       // Only for periodic light curves.
       fits_read_key(fptr, TFLOAT,  "PHASE0",   &lc->phase0,   comment, status);
@@ -1487,6 +1500,16 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       lc->period = 0.;
     }
     CHECK_STATUS_BREAK(*status);
+    // Optional keywords.
+    opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_read_key(fptr, TFLOAT,  "FLUXSCAL", &lc->fluxscal, comment, &opt_status);
+    if (EXIT_SUCCESS!=opt_status) {
+      // FLUXSCAL is not given in the FITS header. We therefore assume
+      // that it has a value of 1.
+      lc->fluxscal = 1.;
+    }
+    fits_clear_errmark();
 
 
     // Determine the number of rows in the table.
@@ -1653,6 +1676,18 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     }
     if (NULL==lc->flux) {
       SIMPUT_ERROR("light curve does not contain FLUX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    // Check if the EXTNAME has been specified.
+    if (NULL==extname) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    if (0==strlen(extname)) {
+      SIMPUT_ERROR("EXTNAME not specified");
       *status=EXIT_FAILURE;
       break;
     }
@@ -1946,6 +1981,9 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
   if (NULL==src->lightcur) {
     return(NULL);
   }
+  if (0==strlen(src->lightcur)) {
+    return(NULL);
+  }
 
   // In case there are no light curves available at all, allocate 
   // memory for the array (storage for light curves).
@@ -2001,3 +2039,269 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
    
   return(lcs[nlcs-1]);
 }
+
+
+SimputImg* getSimputImg(int* const status)
+{
+  SimputImg* img=(SimputImg*)malloc(sizeof(SimputImg));
+  CHECK_NULL_RET(img, *status, 
+		 "memory allocation for SimputImg failed", img);
+
+  // Initialize elements.
+  img->naxis1  =0;
+  img->naxis2  =0;
+  img->dist    =NULL;
+  img->fluxscal=0.;
+  img->fileref =NULL;
+
+  return(img);
+}
+
+
+void freeSimputImg(SimputImg** const img)
+{
+  if (NULL!=*img) {
+    if (NULL!=(*img)->dist) {
+      if ((*img)->naxis1>0) {
+	long ii;
+	for (ii=0; ii<(*img)->naxis1; ii++) {
+	  if (NULL!=(*img)->dist[ii]) {
+	    free((*img)->dist[ii]);
+	  }
+	}
+      }
+      free((*img)->dist);
+    }
+    if (NULL!=(*img)->fileref) {
+      free((*img)->fileref);
+    }
+    free(*img);
+    *img=NULL;
+  }
+}
+
+
+SimputImg* loadSimputImg(const char* const filename, int* const status)
+{
+  // Image input buffer.
+  double* image1d=NULL;
+
+  // Get an empty SimputImg data structure.
+  SimputImg* img = getSimputImg(status);
+  CHECK_STATUS_RET(*status, img);
+
+  // Open the specified FITS file. The filename must uniquely identify
+  // the light curve contained in a binary table via the extended filename 
+  // syntax. Therefore we do not have to care about the HDU number.
+  fitsfile* fptr=NULL;
+  fits_open_image(&fptr, filename, READONLY, status);
+  CHECK_STATUS_RET(*status, img);
+
+  do { // Error handling loop.
+
+    // Read the WCS header keywords.
+    // TODO
+
+    // Determine the image dimensions.
+    int naxis;
+    fits_get_img_dim(fptr, &naxis, status);
+    CHECK_STATUS_BREAK(*status);
+    if (2!=naxis) {
+      SIMPUT_ERROR("specified FITS HDU does not contain a 2-dimensional image");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    long naxes[2];
+    fits_get_img_size(fptr, naxis, naxes, status);
+    CHECK_STATUS_BREAK(*status);
+    img->naxis1 = naxes[0];
+    img->naxis2 = naxes[1];
+
+    // Allocate memory for the image.
+    img->dist = (double**)malloc(img->naxis1*sizeof(double*));
+    CHECK_NULL_BREAK(img->dist, *status, 
+		     "memory allocation for source image failed");
+    long ii;
+    for (ii=0; ii<img->naxis1; ii++) {
+      img->dist[ii] = (double*)malloc(img->naxis2*sizeof(double));
+      CHECK_NULL_BREAK(img->dist[ii], *status, 
+		       "memory allocation for source image failed");
+    }
+    CHECK_STATUS_BREAK(*status);
+
+    // Allocate memory for the image input buffer.
+    image1d=(double*)malloc(img->naxis1*img->naxis2*sizeof(double));
+    CHECK_NULL_BREAK(image1d, *status, 
+		     "memory allocation for source image buffer failed");
+
+    // Read the image from the file.
+    int anynul;
+    double null_value=0.;
+    long fpixel[2] = {1, 1};   // Lower left corner.
+    //                |--|--> FITS coordinates start at (1,1).
+    long lpixel[2] = {img->naxis1, img->naxis2}; // Upper right corner.
+    long inc[2]    = {1, 1};
+    fits_read_subset(fptr, TDOUBLE, fpixel, lpixel, inc, &null_value, 
+		     image1d, &anynul, status);
+    CHECK_STATUS_BREAK(*status);
+    
+    // Transfer the image from the 1D input buffer to the 2D pixel array in
+    // the data structure and generate a probability distribution function,
+    // i.e., sum up the pixels.
+    double sum=0.;
+    for(ii=0; ii<img->naxis1; ii++) {
+      long jj;
+      for(jj=0; jj<img->naxis2; jj++) {
+	sum += image1d[ii+ img->naxis1*jj];
+	img->dist[ii][jj] = sum;
+      }
+    }
+
+    // Read the optional FLUXSCAL header keyword.
+    char comment[SIMPUT_MAXSTR];
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_read_key(fptr, TFLOAT,  "FLUXSCAL", &img->fluxscal, comment, &opt_status);
+    if (EXIT_SUCCESS!=opt_status) {
+      // FLUXSCAL is not given in the FITS header. Therefore it is 
+      // set to the sum of all pixel values.
+      img->fluxscal = sum;
+    }
+    fits_clear_errmark();
+
+  } while(0); // END of error handling loop.
+
+  // Release memory for buffer.
+  if (NULL!=image1d) free(image1d);
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_RET(*status, img);
+
+  return(img);  
+}
+
+
+void saveSimputImg(SimputImg* const img, 
+		   const char* const filename,
+		   char* const extname, int extver,
+		   int* const status)
+{
+  fitsfile* fptr=NULL;
+  
+  // Image buffer.
+  double* image1d=NULL;
+
+  do { // Error handling loop.
+
+    // Check if the EXTNAME has been specified.
+    if (NULL==extname) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    if (0==strlen(extname)) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    // Check if the specified file exists.
+    int exists;
+    fits_file_exists(filename, &exists, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==exists) {
+      // If yes, open it.
+      fits_open_file(&fptr, filename, READWRITE, status);
+      CHECK_STATUS_BREAK(*status);
+      
+      // Try to move to the specified extension.
+      int status2=EXIT_SUCCESS;
+      fits_write_errmark();
+      fits_movnam_hdu(fptr, IMAGE_HDU, extname, extver, &status2);
+      fits_clear_errmark();
+      if (BAD_HDU_NUM!=status2) {
+	// If that works, the extension already exists.
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "extension '%s' with EXTVER=%d already exists", 
+		extname, extver);
+	SIMPUT_ERROR(msg);
+	*status=EXIT_FAILURE;
+	break;
+      }
+
+    } else {
+      // If no, create a new file. 
+      fits_create_file(&fptr, filename, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+    // END of check, whether the specified file exists.
+
+
+    // Allocate memory for the 1-dimensional image buffer (required for
+    // output to FITS file).
+    image1d = (double*)malloc(img->naxis1*img->naxis2*sizeof(double));
+    CHECK_NULL_BREAK(image1d, *status, 
+		     "memory allocation for source image buffer failed");
+
+    // Store the source image in the 1-dimensional buffer to handle it 
+    // to the FITS routine.
+    long ii;
+    for (ii=0; ii<img->naxis1; ii++) {
+      long jj;
+      for (jj=0; jj<img->naxis2; jj++) {
+	image1d[ii+ img->naxis1*jj] = img->dist[ii][jj];
+      }
+    }
+
+    // The data in the 1-dimensional image buffer still represents the 
+    // probability distribution stored in the image data structure.
+    // However, in the output file we want to store the actual image, 
+    // NOT the distribution function. Therefore we have to inverted the
+    // summing process.
+    double sum=0.;
+    for (ii=0; ii<img->naxis1; ii++) {
+      long jj;
+      for (jj=0; jj<img->naxis2; jj++) {
+	double buffer = image1d[ii+ img->naxis1*jj];
+	image1d[ii+ img->naxis1*jj] -= sum;
+	sum = buffer;
+      }
+    }
+
+
+    // Create a new FITS image.
+    long naxes[2] = {img->naxis1, img->naxis2};
+    fits_create_img(fptr, DOUBLE_IMG, 2, naxes, status);
+    //                                |-> naxis
+    CHECK_STATUS_BREAK(*status);
+    // The image has been appended at the end if the FITS file.
+
+    // Write header keywords.
+    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS2", "IMAGE", "", status);
+    fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    fits_write_key(fptr, TSTRING, "EXTNAME", extname, "", status);
+    fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
+    fits_write_key(fptr, TFLOAT,  "FLUXSCAL", &img->fluxscal, "", status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Store the image in the new extension.
+    long fpixel[2] = {1, 1};  // Lower left corner.
+    //                |--|--> FITS coordinates start at (1,1)
+    // Upper right corner.
+    long lpixel[2] = {img->naxis1, img->naxis2}; 
+    fits_write_subset(fptr, TDOUBLE, fpixel, lpixel, image1d, status);
+    CHECK_STATUS_BREAK(*status);
+
+  } while(0); // END of error handling loop.
+
+  // Release allocated memory.
+  if (NULL!=image1d) free(image1d);
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_VOID(*status);
+}
+
