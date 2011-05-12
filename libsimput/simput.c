@@ -1624,9 +1624,16 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     // FLUXSCAL).
     long ii;
     for (ii=0; ii<lc->nentries-1; ii++) {
+      double dt;
+      if (NULL!=lc->time) {
+	// Non-periodic light curve.
+	dt = lc->time[ii+1]-lc->time[ii];
+      } else {
+	// Periodic light curve.
+	dt = (lc->phase[ii+1]-lc->phase[ii])*lc->period;
+      }
       lc->a[ii] = (lc->flux[ii+1]-lc->flux[ii])	
-	/(lc->time[ii+1]-lc->time[ii])
-	/lc->fluxscal;
+	/dt /lc->fluxscal;
       lc->b[ii] = lc->flux[ii]/lc->fluxscal; 
     }
     lc->a[lc->nentries-1] = 0.;
@@ -1872,6 +1879,66 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
 }
 
 
+/** Determine the time corresponding to a particular light curve bin
+    [s]. The function takes into account, whether the light curve is
+    periodic or not. For peridic light curves the specified number of
+    periods is added to the time value. For non-periodic light curves
+    the nperiod parameter is neglected. The returned value includes
+    the MJDREF and TIMEZERO contributions. */
+static double getLCTime(const SimputLC* const lc, 
+			const long kk, const long nperiods)
+{
+  if (NULL!=lc->time) {
+    // Non-periodic light curve.
+    return(lc->time[kk] + lc->timezero + lc->mjdref*24.*3600.);
+  } else {
+    // Periodic light curve. 
+    return((lc->phase[kk] - lc->phase0 + nperiods)*lc->period
+	   + lc->timezero + lc->mjdref*24.*3600.);    
+  }
+}
+
+
+/** Determine the index of the bin in the light curve that corresponds
+    to the specified time. */
+static long getLCBin(const SimputLC* const lc, const double time, 
+		     long* nperiods, int* const status)
+{
+  // Check if the light curve is periodic or not.
+  if (NULL!=lc->time) {
+    // Non-periodic light curve.
+
+    // Check if the requested time is within the covered interval.
+    if ((time<getLCTime(lc, 0, 0)) || 
+	(time>=getLCTime(lc, lc->nentries-1, 0))) {
+      SIMPUT_ERROR("time outside the interval covered by the light curve");
+      *status=EXIT_FAILURE;
+      return(0);
+    }
+    
+    *nperiods = 0;
+
+  } else {
+    // Periodic light curve.
+    *nperiods = (long)((time-getLCTime(lc, 0, 0))/lc->period);
+  }
+
+  // Determine the respective index kk of the light curve (using
+  // binary search).
+  long lower=0, upper=lc->nentries-2, mid;
+  while (upper>lower) {
+    mid = (lower+upper)/2;
+    if (getLCTime(lc, mid+1, *nperiods) < time) {
+      lower = mid+1;
+    } else {
+      upper = mid;
+    }
+  }
+  
+  return(lower);
+}
+
+
 double getSimputPhotonTime(const SimputSourceEntry* const src,
 			   double prevtime,
 			   int* const status)
@@ -1887,14 +1954,6 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
   } else {
     // The source has a time-variable brightness.
 
-    // Check if the reference time is within the interval covered by
-    // the light curve.
-    if ((prevtime<lc->time[0]) || (prevtime>=lc->time[lc->nentries-1])) {
-      SIMPUT_ERROR("reference time outside the interval covered by the light curve");
-      *status=EXIT_FAILURE;
-      return(0.);
-    }
-    
     // The LinLightCurve contains data points, so the
     // general algorithm proposed by Klein & Roberts has to 
     // be applied.
@@ -1906,24 +1965,18 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
     // Step 1 in the algorithm.
     double u = static_rndgen();
 
-    // Determine the respective index kk of the light curve (using
-    // binary search).
-    long upper=lc->nentries-2, kk=0, mid;
-    while (upper>kk) {
-      mid = (kk+upper)/2;
-      if (lc->time[mid+1]<prevtime) {
-	kk = mid+1;
-      } else {
-	upper = mid;
-      }
-    }
+    // TODO Periodic vs. non-periodic light curves.
 
-
+    // Determine the respective index kk of the light curve.
+    long nperiods=0;
+    long kk=getLCBin(lc, prevtime, &nperiods, status);
+    CHECK_STATUS_RET(*status, 0.);
+    
     while (kk < lc->nentries-2) {
       // Determine the relative time within the kk-th interval, i.e., t=0 lies
       // at the beginning of the kk-th interval.
-      double t         = prevtime-(lc->time[kk]);
-      double stepwidth = lc->time[kk+1]-lc->time[kk];
+      double t         = prevtime-(getLCTime(lc, kk, nperiods));
+      double stepwidth = getLCTime(lc, kk+1, nperiods)-getLCTime(lc, kk, nperiods);
 
       // Step 2 in the algorithm.
       double uk = 1.-exp((-lc->a[kk]/2.*(pow(stepwidth, 2.)-pow(t,2.))
@@ -1931,14 +1984,14 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
       // Step 3 in the algorithm.
       if (u <= uk) {
 	if ( fabs(lc->a[kk]*stepwidth) > fabs(lc->b[kk]*1.e-6) ) { 
-	// Instead of checking if a_kk = 0. check, whether its product with the 
-	// interval length is a very small number in comparison to b_kk.
-	// If a_kk * stepwidth is much smaller than b_kk, the rate in the interval
-	// can be assumed to be approximately constant.
-	return(lc->time[kk] + 
-	       (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
-				2.*lc->a[kk]*lc->b[kk]*t -
-				2.*lc->a[kk]*log(1.-u)))*avgrate/lc->a[kk]);
+	  // Instead of checking if a_kk = 0. check, whether its product with the 
+	  // interval length is a very small number in comparison to b_kk.
+	  // If a_kk * stepwidth is much smaller than b_kk, the rate in the interval
+	  // can be assumed to be approximately constant.
+	  return(getLCTime(lc, kk, nperiods) + 
+		 (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
+				  2.*lc->a[kk]*lc->b[kk]*t -
+				  2.*lc->a[kk]*log(1.-u)))*avgrate/lc->a[kk]);
 	} else { // a_kk == 0
 	  return(prevtime-log(1.-u)/(lc->b[kk]*avgrate));
 	}
@@ -1947,7 +2000,11 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
 	// Step 4 (u > u_k).
 	u = (u-uk)/(1-uk);
 	kk++;
-	prevtime = lc->time[kk];
+	if ((kk>=lc->nentries-2) && (NULL!=lc->phase)) {
+	  kk=0;
+	  nperiods++;
+	}
+	prevtime = getLCTime(lc, kk, nperiods);
       }
     }
     
@@ -2286,6 +2343,9 @@ void saveSimputImg(SimputImg* const img,
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
     fits_write_key(fptr, TFLOAT,  "FLUXSCAL", &img->fluxscal, "", status);
     CHECK_STATUS_BREAK(*status);
+
+    // Write WCS header keywords.
+    // TODO
 
     // Store the image in the new extension.
     long fpixel[2] = {1, 1};  // Lower left corner.
