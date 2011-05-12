@@ -36,7 +36,7 @@ void printSimputSourceEntry(SimputSourceEntry* sse) {
 
 int main(int argc, char **argv)
 {
-  const char filename[] = "/home/schmid/test/simput/simput.fits";
+  const char filename[] = "simput.fits";
 
   SimputSourceCatalog* catalog=NULL;
   SimputImg* img=NULL;
@@ -53,6 +53,9 @@ int main(int argc, char **argv)
       printSimputSourceEntry(catalog->entries[0]);
       printSimputSourceEntry(catalog->entries[1]);
     } else {
+
+      remove(filename);
+
       // Create a source catalog with 2 sources.
       catalog = getSimputSourceCatalog(&status);
       CHECK_STATUS_BREAK(status);
@@ -68,11 +71,11 @@ int main(int argc, char **argv)
       CHECK_STATUS_BREAK(status);
       catalog->nentries = 2;
 
-      //    remove(filename);
       saveSimputSourceCatalog(catalog, filename, &status);
       CHECK_STATUS_BREAK(status);
+      // END of create a source catalog.
 
-      // Create a source image an append it to the file with the source catalog.
+      // Create a source image and append it to the file with the source catalog.
       img = getSimputImg(&status);
       CHECK_STATUS_BREAK(status);
       img->dist = (double**)malloc(3*sizeof(double*));
@@ -92,9 +95,9 @@ int main(int argc, char **argv)
 
       saveSimputImg(img, filename, "IMG1", 0, &status);
       CHECK_STATUS_BREAK(status);
-
+      // END of create a source image.
     }
-    // END of create a source catalog.
+    // END of creating a new file.
 
   } while(0); // END of error handling loop.
 

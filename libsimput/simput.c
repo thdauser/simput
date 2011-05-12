@@ -1128,6 +1128,11 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
     *status=EXIT_FAILURE;
     return(NULL);
   }
+  if ((0==strlen(src->spectrum)) || (0==strcmp(src->spectrum, "NULL"))) {
+    SIMPUT_ERROR("source does not refer to a spectrum");
+    *status=EXIT_FAILURE;
+    return(NULL);
+  }
 
   // In case there are no spectra available at all, allocate 
   // memory for the array (storage for spectra).
@@ -1202,7 +1207,7 @@ float getSimputPhotonEnergy(const SimputSourceEntry* const src,
 
 
 static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
-				      int* const status) 
+				int* const status) 
 {
   long upper=spec->nentries-1, lower=0, mid;
   
@@ -1886,15 +1891,16 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     the nperiod parameter is neglected. The returned value includes
     the MJDREF and TIMEZERO contributions. */
 static double getLCTime(const SimputLC* const lc, 
-			const long kk, const long nperiods)
+			const long kk, 
+			const long long nperiods)
 {
   if (NULL!=lc->time) {
     // Non-periodic light curve.
     return(lc->time[kk] + lc->timezero + lc->mjdref*24.*3600.);
   } else {
     // Periodic light curve. 
-    return((lc->phase[kk] - lc->phase0 + nperiods)*lc->period
-	   + lc->timezero + lc->mjdref*24.*3600.);    
+    return((lc->phase[kk] - lc->phase0 + nperiods)*lc->period +
+	   lc->timezero + lc->mjdref*24.*3600.);    
   }
 }
 
@@ -1902,7 +1908,7 @@ static double getLCTime(const SimputLC* const lc,
 /** Determine the index of the bin in the light curve that corresponds
     to the specified time. */
 static long getLCBin(const SimputLC* const lc, const double time, 
-		     long* nperiods, int* const status)
+		     long long* nperiods, int* const status)
 {
   // Check if the light curve is periodic or not.
   if (NULL!=lc->time) {
@@ -1920,7 +1926,7 @@ static long getLCBin(const SimputLC* const lc, const double time,
 
   } else {
     // Periodic light curve.
-    *nperiods = (long)((time-getLCTime(lc, 0, 0))/lc->period);
+    *nperiods = (long long)((time-getLCTime(lc, 0, 0))/lc->period);
   }
 
   // Determine the respective index kk of the light curve (using
@@ -1965,21 +1971,19 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
     // Step 1 in the algorithm.
     double u = static_rndgen();
 
-    // TODO Periodic vs. non-periodic light curves.
-
     // Determine the respective index kk of the light curve.
-    long nperiods=0;
+    long long nperiods=0;
     long kk=getLCBin(lc, prevtime, &nperiods, status);
     CHECK_STATUS_RET(*status, 0.);
     
-    while (kk < lc->nentries-2) {
+    while (kk < lc->nentries-1) {
       // Determine the relative time within the kk-th interval, i.e., t=0 lies
       // at the beginning of the kk-th interval.
       double t         = prevtime-(getLCTime(lc, kk, nperiods));
       double stepwidth = getLCTime(lc, kk+1, nperiods)-getLCTime(lc, kk, nperiods);
 
       // Step 2 in the algorithm.
-      double uk = 1.-exp((-lc->a[kk]/2.*(pow(stepwidth, 2.)-pow(t,2.))
+      double uk = 1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
 			  -lc->b[kk]*(stepwidth-t))*avgrate);
       // Step 3 in the algorithm.
       if (u <= uk) {
@@ -1988,10 +1992,12 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
 	  // interval length is a very small number in comparison to b_kk.
 	  // If a_kk * stepwidth is much smaller than b_kk, the rate in the interval
 	  // can be assumed to be approximately constant.
-	  return(getLCTime(lc, kk, nperiods) + 
+	  return(getLCTime(lc, kk, nperiods) +
 		 (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
-				  2.*lc->a[kk]*lc->b[kk]*t -
-				  2.*lc->a[kk]*log(1.-u)))*avgrate/lc->a[kk]);
+				  2.*lc->a[kk]*lc->b[kk]*t - 
+				  2.*lc->a[kk]*log(1.-u)/avgrate)
+		  )/lc->a[kk]);
+
 	} else { // a_kk == 0
 	  return(prevtime-log(1.-u)/(lc->b[kk]*avgrate));
 	}
@@ -2000,7 +2006,7 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
 	// Step 4 (u > u_k).
 	u = (u-uk)/(1-uk);
 	kk++;
-	if ((kk>=lc->nentries-2) && (NULL!=lc->phase)) {
+	if ((kk>=lc->nentries-1) && (NULL!=lc->phase)) {
 	  kk=0;
 	  nperiods++;
 	}
@@ -2039,6 +2045,9 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
     return(NULL);
   }
   if (0==strlen(src->lightcur)) {
+    return(NULL);
+  }
+  if (0==strcmp(src->lightcur, "NULL")) {
     return(NULL);
   }
 
