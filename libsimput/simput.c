@@ -162,6 +162,16 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
 				int* const status);
 
 
+/** Return the requested image. Keeps a certain number of images in an
+    internal storage. If the requested image is not located in the
+    internal storage, it is loaded from the reference given in the
+    source catalog. If the the source does not refer to an image
+    (i.e. it is a point-like source) the function return value is
+    NULL. */
+static SimputImg* returnSimputImg(const SimputSourceEntry* const src,
+				  int* const status);
+
+
 /////////////////////////////////////////////////////////////////
 // Function Definitions.
 /////////////////////////////////////////////////////////////////
@@ -2119,6 +2129,7 @@ SimputImg* getSimputImg(int* const status)
   img->dist    =NULL;
   img->fluxscal=0.;
   img->fileref =NULL;
+  img->wcs     =NULL;
 
   return(img);
 }
@@ -2141,6 +2152,9 @@ void freeSimputImg(SimputImg** const img)
     if (NULL!=(*img)->fileref) {
       free((*img)->fileref);
     }
+    if (NULL!=(*img)->wcs) {
+      wcsfree((*img)->wcs);
+    }
     free(*img);
     *img=NULL;
   }
@@ -2151,6 +2165,9 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
 {
   // Image input buffer.
   double* image1d=NULL;
+
+  // String buffer for FITS header.
+  char* headerstr=NULL;
 
   // Get an empty SimputImg data structure.
   SimputImg* img = getSimputImg(status);
@@ -2166,7 +2183,24 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
   do { // Error handling loop.
 
     // Read the WCS header keywords.
-    // TODO
+    // Read the entire header into the string buffer.
+    int nkeys;
+    fits_hdr2str(fptr, 1, NULL, 0, &headerstr, &nkeys, status);
+    CHECK_STATUS_BREAK(*status);
+    // Parse the header string and store the data in the wcsprm data
+    // structure.
+    // TODO Maybe "1" instead of nkeys (nkeyrecs)
+    int nreject, nwcs;
+    if (0!=wcspih(headerstr, nkeys, 0, 3, &nreject, &nwcs, &img->wcs)) {
+      SIMPUT_ERROR("parsing of WCS header failed");
+      *status = EXIT_FAILURE;
+      break;
+    }
+    if (nreject>0) {
+      SIMPUT_ERROR("parsing of WCS header failed");
+      *status = EXIT_FAILURE;
+      break;
+    }
 
     // Determine the image dimensions.
     int naxis;
@@ -2239,6 +2273,7 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
 
   // Release memory for buffer.
   if (NULL!=image1d) free(image1d);
+  if (NULL!=headerstr) free(headerstr);
 
   // Close the file.
   if (NULL!=fptr) fits_close_file(fptr, status);
@@ -2254,9 +2289,10 @@ void saveSimputImg(SimputImg* const img,
 		   int* const status)
 {
   fitsfile* fptr=NULL;
-  
-  // Image buffer.
+
+  // Buffers.
   double* image1d=NULL;
+  char* headerstr=NULL;
 
   do { // Error handling loop.
 
@@ -2354,7 +2390,22 @@ void saveSimputImg(SimputImg* const img,
     CHECK_STATUS_BREAK(*status);
 
     // Write WCS header keywords.
-    // TODO
+    int nkeyrec;
+    if (0!=wcshdo(0, img->wcs, &nkeyrec, &headerstr)) {
+      SIMPUT_ERROR("construction of WCS header failed");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    char* strptr=headerstr;
+    while (strlen(headerstr)>0) {
+      char strbuffer[81];
+      strncpy(strbuffer, strptr, 80);
+      strbuffer[80] = '\0';
+      fits_write_record(fptr, strbuffer, status);
+      CHECK_STATUS_BREAK(*status);
+      strptr += 80;
+    }
+    CHECK_STATUS_BREAK(*status);
 
     // Store the image in the new extension.
     long fpixel[2] = {1, 1};  // Lower left corner.
@@ -2368,9 +2419,154 @@ void saveSimputImg(SimputImg* const img,
 
   // Release allocated memory.
   if (NULL!=image1d) free(image1d);
+  if (NULL!=headerstr) free(headerstr);
 
   // Close the file.
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
+}
+
+
+static SimputImg* returnSimputImg(const SimputSourceEntry* const src,
+				  int* const status)
+{
+  const int maximgs=10;
+  static int nimgs =0;
+  static SimputImg** imgs=NULL;
+
+  // Check, whether the source refers to an image.
+  if (NULL==src->image) {
+    return(NULL);
+  }
+  if (0==strlen(src->image)) {
+    return(NULL);
+  }
+  if (0==strcmp(src->image, "NULL")) {
+    return(NULL);
+  }
+
+  // In case there are no images available at all, allocate 
+  // memory for the array (storage for images).
+  if (NULL==imgs) {
+    imgs = (SimputImg**)malloc(maximgs*sizeof(SimputImg*));
+    CHECK_NULL_RET(imgs, *status, 
+		   "memory allocation for images failed", NULL);
+  }
+
+  // Search if the requested image is available in the storage.
+  int ii;
+  for (ii=0; ii<nimgs; ii++) {
+    // Check if the image is equivalent to the requested one.
+    if (0==strcmp(imgs[ii]->fileref, src->image)) {
+      // If yes, return the image.
+      return(imgs[ii]);
+    }
+  }
+
+  // The requested image is not contained in the storage.
+  // Therefore we must load it from the specified location.
+  if (nimgs>=maximgs) {
+    SIMPUT_ERROR("too many images in the internal storage");
+    *status=EXIT_FAILURE;
+    return(NULL);
+  }
+
+  // Load the image.
+  char filename[SIMPUT_MAXSTR];
+  if ('['==src->image[0]) {
+    strcpy(filename, *src->filepath);
+    strcat(filename, *src->filename);
+    strcat(filename, src->image);
+  } else {
+    if ('/'!=src->image[0]) {
+      strcpy(filename, *src->filepath);
+    } else {
+      strcpy(filename, "");
+    }
+    strcat(filename, src->image);
+  }
+  imgs[nimgs]=loadSimputImg(filename, status);
+  CHECK_STATUS_RET(*status, imgs[nimgs]);
+  nimgs++;
+
+  // Store the file reference to the image for later comparisons.
+  imgs[nimgs-1]->fileref = 
+    (char*)malloc((strlen(src->image)+1)*sizeof(char));
+  CHECK_NULL_RET(imgs[nimgs-1]->fileref, *status, 
+		 "memory allocation for file reference failed", 
+		 imgs[nimgs-1]);
+  strcpy(imgs[nimgs-1]->fileref, src->image);
+   
+  return(imgs[nimgs-1]);
+}
+
+
+void getSimputPhotonCoord(const SimputSourceEntry* const src,
+			  double* const ra, double* const dec,
+			  int* const status)
+{
+  // Determine the image.
+  SimputImg* img=returnSimputImg(src, status);
+  CHECK_STATUS_VOID(*status);
+
+  // Check, whether the source is point-like.
+  if (NULL==img) {
+    // The source is point-like.
+    *ra  = src->ra;
+    *dec = src->dec;
+    return;
+    
+  } else {
+    // The source is spatially extended.
+
+    // Perform a binary search in 2 dimensions.
+    double rnd = static_rndgen() * img->fluxscal;
+
+    // Perform a binary search to obtain the x-coordinate.
+    long high = img->naxis1-1;
+    long xl   = 0;
+    long mid;
+    long ymax = img->naxis2-1;
+    while (high > xl) {
+      mid = (xl+high)/2;
+      if (img->dist[mid][ymax] < rnd) {
+	xl = mid+1;
+      } else {
+	high = mid;
+      }
+    }
+
+    // Search for the y coordinate.
+    high = img->naxis2-1;
+    long yl = 0;
+    while (high > yl) {
+      mid = (yl+high)/2;
+      if (img->dist[xl][mid] < rnd) {
+	yl = mid+1;
+      } else {
+	high = mid;
+      }
+    }
+    // Now xl and yl have pixel positions [long pixel coordinates].
+
+    // Convert the long-valued pixel coordinates to double values,
+    // including a randomization over the pixel.
+    double pixcrd[2] = {
+      (double)xl + static_rndgen(),
+      (double)yl + static_rndgen()
+    };
+    
+    // Transform from pixel coordinates to RA and DEC 
+    // via the  WCS information.
+    double imgcrd[2], world[2];
+    double phi, theta;
+    wcsp2s(img->wcs, 2, 1, pixcrd, imgcrd, &phi, &theta, world,
+           status);
+    CHECK_STATUS_VOID(*status);
+    *ra  = world[0];
+    *dec = world[1];
+
+    return;
+  }
 }
 

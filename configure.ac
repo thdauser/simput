@@ -60,6 +60,11 @@ AC_SEARCH_LIBS(ffopen,
 ##          [AC_MSG_ERROR([No cfitsio library found!])],
 ##          [-lm])
 #AC_SUBST(lib_cfitsio)
+
+#################################### 
+# WCS Library:
+AC_SEARCH_LIBS(wcsbth, [wcs_6.9 wcs-4.4.4 wcs-4.3.3 wcs-4.3], [], \
+		       [AC_MSG_ERROR([No WCS library found!])], [])
 #################################### 
 
 # Check for header files:

@@ -2,6 +2,7 @@
 #define SIMPUT_H (1)
 
 #include "fitsio.h"
+#include <wcslib/wcslib.h>
 
 #ifndef HEASP_H
 #define HEASP_H 1
@@ -187,6 +188,9 @@ typedef struct {
 
   /** Flux scaling factor. */
   float fluxscal;
+
+  /** WCS data used by wcslib. */
+  struct wcsprm* wcs;
 
   /** Reference to the location of the source image given by the
       extended filename syntax. This reference is used to check,
