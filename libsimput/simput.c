@@ -1286,14 +1286,15 @@ void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec,
 
   // Multiply data point of the spectrum with the ARF.
   // [photon/s/cm^2/keV] -> [photon/s/keV]
-  long ii, jj=0;
+  long ii;
   for (ii=0; ii<spec->nentries; ii++) {
     // Initialize with 0. This is important! If spectral bin is outside
     // the range of the ARF, the value has to be 0.
     spec->distribution[ii] = 0.;
 
     // Determine the ARF bin that contains the spectral data point.
-    for ( ; jj<static_arf->NumberEnergyBins; jj++) {
+    long jj;
+    for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
       if ((static_arf->LowEnergy[jj] <=spec->energy[ii]) && 
 	  (static_arf->HighEnergy[jj]> spec->energy[ii])) {
 	spec->distribution[ii] = spec->flux[ii]*static_arf->EffArea[jj];
