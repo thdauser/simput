@@ -1205,6 +1205,26 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
 }
 
 
+static void getSpecEbounds(const SimputMissionIndepSpec* const spec,
+			   const long idx, 
+			   float* emin, float* emax)
+{
+  // Determine the lower boundary.
+  if (idx>0) {
+    *emin = 0.5*(spec->energy[idx]+spec->energy[idx-1]);
+  } else {
+    *emin = spec->energy[idx];
+  }
+
+  // Determine the upper boundary.
+  if (idx<spec->nentries-1) {
+    *emax = 0.5*(spec->energy[idx+1]+spec->energy[idx]);
+  } else {
+    *emax = spec->energy[idx];
+  }
+}
+
+
 float getSimputPhotonEnergy(const SimputSourceEntry* const src,
 			    int* const status)
 {
@@ -1235,7 +1255,8 @@ static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
   // Multiply with the total photon rate.
   rnd *= spec->distribution[spec->nentries-1];
 
-  // Determine the energy of the photon (using binary search).
+  // Determine the corresponding point in the spectral 
+  // distribution (using binary search).
   while (upper>lower) {
     mid = (lower+upper)/2;
     if (spec->distribution[mid]<rnd) {
@@ -1245,14 +1266,10 @@ static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
     }
   }
 
-  // Return the corresponding energy.
-  if (0==lower) {
-    return(spec->energy[0]*(float)static_rndgen());
-  } else {
-    return(spec->energy[lower-1] + 
-	   (spec->energy[lower]-spec->energy[lower-1])*
-	   (float)static_rndgen());
-  }
+  // Return the corresponding photon energy.
+  float binmin, binmax;
+  getSpecEbounds(spec, lower, &binmin, &binmax);
+  return(binmin + static_rndgen()*(binmax-binmin));
 }
 
 
@@ -1267,30 +1284,31 @@ void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec,
   CHECK_NULL_VOID(spec->distribution, *status,
 		 "memory allocation for spectral distribution failed");
 
-  // Multiply each bin by the ARF and the width of the bin.
-  // [photon/s/cm^2/keV] -> [photon/s]
-  // The ARF contribution corresponding to a particular spectral bin 
-  // is obtained by interpolation.
-  float last_energy=0.; // [keV]
-  long ii;
+  // Multiply data point of the spectrum with the ARF.
+  // [photon/s/cm^2/keV] -> [photon/s/keV]
+  long ii, jj=0;
   for (ii=0; ii<spec->nentries; ii++) {
-    // Determine the ARF contribution by interpolation.
-    float arf_contribution=0.;
-    long jj;
-    for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
-      if ((static_arf->LowEnergy[jj]<spec->energy[ii]) && 
-	  (static_arf->HighEnergy[jj]>last_energy)) {
-	float emin = MAX(static_arf->LowEnergy[jj], last_energy);
-	float emax = MIN(static_arf->HighEnergy[jj], spec->energy[ii]);
-	assert(emax>emin);
-	arf_contribution += static_arf->EffArea[jj] * (emax-emin);
+    // Initialize with 0. This is important! If spectral bin is outside
+    // the range of the ARF, the value has to be 0.
+    spec->distribution[ii] = 0.;
+
+    // Determine the ARF bin that contains the spectral data point.
+    for ( ; jj<static_arf->NumberEnergyBins; jj++) {
+      if ((static_arf->LowEnergy[jj] <=spec->energy[ii]) && 
+	  (static_arf->HighEnergy[jj]> spec->energy[ii])) {
+	spec->distribution[ii] = spec->flux[ii]*static_arf->EffArea[jj];
+	break;
       }
     }
 
-    spec->distribution[ii]=spec->flux[ii]*arf_contribution;
-    last_energy           =spec->energy[ii];
+    // Multiply with the energy bin width defined by the neighboring
+    // spectral energies.
+    // [photon/s/keV] -> [photon/s]
+    float emin, emax;
+    getSpecEbounds(spec, ii, &emin, &emax);
+    spec->distribution[ii] *= emax-emin;
 
-    // Create the spectral distribution noramlized to the total 
+    // Create the spectral distribution normalized to the total 
     // photon rate [photon/s]. 
     if (ii>0) {
       spec->distribution[ii] += spec->distribution[ii-1];
@@ -1309,17 +1327,19 @@ static float getEbandFlux(const SimputSourceEntry* const src,
   SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
   CHECK_STATUS_RET(*status, 0.);
 
+  // Return value.
+  float flux=0.;
+
   long ii;
-  float flux = 0.;
-  float last_energy=0.;
   for (ii=0; ii<spec->nentries; ii++) {
-    if ((spec->energy[ii]<emax) && (spec->energy[ii]>emin)) {
-      float min = MAX(last_energy, emin);
-      float max = MIN(spec->energy[ii], emax);
+    float binmin, binmax;
+    getSpecEbounds(spec, ii, &binmin, &binmax);
+    if ((emin<binmax) && (emax>binmin)) {
+      float min = MAX(binmin, emin);
+      float max = MIN(binmax, emax);
       assert(max>min);
       flux += (max-min) * spec->flux[ii] * spec->energy[ii];
     }
-    last_energy=spec->energy[ii];
   }
 
   // Convert units of 'flux' from [keV/s/cm^2] -> [erg/s/cm^2].
@@ -1336,21 +1356,29 @@ static float getEbandRate(const SimputSourceEntry* const src,
   SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
   CHECK_STATUS_RET(*status, 0.);
 
-  long ii, upper=0;
-  
+  // Return value.
+  float rate=0.;
+
+  long ii=0;
   for (ii=spec->nentries-1; ii>=0; ii--) {
-    if ((0==upper) && (spec->energy[ii]<=emax) && (spec->energy[ii]>emin)) {
-      upper=ii;
+    float binmin, binmax;
+    getSpecEbounds(spec, ii, &binmin, &binmax);
+
+    if ((emin<binmax) && (emax>binmin)) {
+      float binrate=spec->distribution[ii];
+      if (ii>0) {
+	binrate -= spec->distribution[ii-1];
+      }
+
+      float min = MAX(binmin, emin);
+      float max = MIN(binmax, emax);
+      assert(max>min);
+
+      rate += binrate * (max-min)/(binmax-binmin);
     }
-    if ((upper>0) && (spec->energy[ii]<emin)) {
-      return(spec->distribution[upper]-spec->distribution[ii+1]);
-    }
-  }
-  if (upper>0) {
-    return(spec->distribution[upper]);
   }
 
-  return(0.);
+  return(rate);
 }
 
 
@@ -1977,6 +2005,7 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
     // Apply the individual photon rate of the particular source.
     float avgrate = getSimputPhotonRate(src, status);
     CHECK_STATUS_RET(*status, 0.);
+    assert(avgrate>0.);
 
     // Step 1 in the algorithm.
     double u = static_rndgen();
