@@ -985,6 +985,10 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
   // String buffer.
   char* name[1]={NULL}; 
 
+  char **ttype=NULL;
+  char **tform=NULL;
+  char **tunit=NULL;
+
   do { // Error handling loop.
 
     // Check if the EXTNAME has been specified.
@@ -1024,9 +1028,41 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
     fits_clear_errmark();
     if (BAD_HDU_NUM==status2) {
       // If that does not work, create a new binary table.
-      char *ttype[] = { "ENERGY", "FLUX", "NAME" };
-      char *tform[] = { "E", "E", "1PA" };
-      char *tunit[] = { "keV", "photon/s/cm**2/keV", "" };
+      // Allocate memory for the format strings.
+      ttype=(char**)malloc(3*sizeof(char*));
+      tform=(char**)malloc(3*sizeof(char*));
+      tunit=(char**)malloc(3*sizeof(char*));
+      CHECK_NULL_BREAK(ttype, *status, "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(tform, *status, "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(tunit, *status, "memory allocation for string buffer failed");
+      int ii;
+      for (ii=0; ii<3; ii++) {
+	ttype[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+	tform[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+	tunit[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+	CHECK_NULL_BREAK(ttype[ii], *status, 
+			 "memory allocation for string buffer failed");
+	CHECK_NULL_BREAK(tform[ii], *status, 
+			 "memory allocation for string buffer failed");
+	CHECK_NULL_BREAK(tunit[ii], *status, 
+			 "memory allocation for string buffer failed");
+      }
+      CHECK_STATUS_BREAK(*status);
+
+      // Set up the table format.
+      strcpy(ttype[0], "ENERGY");
+      sprintf(tform[0], "%ldE", spec->nentries);
+      strcpy(tunit[0], "keV");
+
+      strcpy(ttype[1], "FLUX");
+      sprintf(tform[1], "%ldE", spec->nentries);
+      strcpy(tunit[1], "photon/s/cm**2/keV");
+
+      strcpy(ttype[2], "NAME");
+      strcpy(tform[2], "1PA");
+      strcpy(tunit[2], "");
+
+      // Create the table.
       fits_create_tbl(fptr, BINARY_TBL, 0, 3, ttype, tform, tunit, extname, status);
       CHECK_STATUS_BREAK(*status);
 
@@ -1093,9 +1129,9 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
     fits_insert_rows(fptr, nrows++, 1, status);
     CHECK_STATUS_BREAK(*status);
     fits_write_col(fptr, TFLOAT, cenergy, nrows, 1, spec->nentries, 
-		   &spec->energy, status);
+		   spec->energy, status);
     fits_write_col(fptr, TFLOAT, cflux, nrows, 1, spec->nentries, 
-		   &spec->flux, status);
+		   spec->flux, status);
     if ((cname>0) && (NULL!=spec->name)) {
       fits_write_col(fptr, TSTRING, cname, nrows, 1, 1, &spec->name, status);
     }
@@ -1105,6 +1141,28 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 
   // Release allocated memory.
   if (NULL!=name[0]) free(name[0]);
+
+  if (NULL!=ttype) {
+    int ii;
+    for (ii=0; ii<3; ii++) {
+      if (NULL!=ttype[ii]) free(ttype[ii]);
+    }
+    free(ttype);
+  }
+  if (NULL!=tform) {
+    int ii;
+    for (ii=0; ii<3; ii++) {
+      if (NULL!=tform[ii]) free(tform[ii]);
+    }
+    free(tform);
+  }
+  if (NULL!=tunit) {
+    int ii;
+    for (ii=0; ii<3; ii++) {
+      if (NULL!=tunit[ii]) free(tunit[ii]);
+    }
+    free(tunit);
+  }
 
   // Close the file.
   if (NULL!=fptr) fits_close_file(fptr, status);

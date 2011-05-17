@@ -39,6 +39,7 @@ int main(int argc, char **argv)
   const char filename[] = "simput.fits";
 
   SimputSourceCatalog* catalog=NULL;
+  SimputMissionIndepSpec* spec=NULL;
   SimputImg* img=NULL;
   int status=EXIT_SUCCESS;
 
@@ -75,6 +76,28 @@ int main(int argc, char **argv)
       CHECK_STATUS_BREAK(status);
       // END of create a source catalog.
 
+      // Create a spectrum and append it to the file with the source catalog.
+      spec = getSimputMissionIndepSpec(&status);
+      CHECK_STATUS_BREAK(status);
+
+      spec->nentries=2;
+      spec->energy  = (float*)malloc(2*sizeof(float));
+      CHECK_NULL_BREAK(spec->energy, status, "memory allocation failed!\n");
+      spec->flux    = (float*)malloc(2*sizeof(float));
+      CHECK_NULL_BREAK(spec->flux, status, "memory allocation failed!\n");
+      spec->name    = (char*)malloc(1024*sizeof(char));
+      CHECK_NULL_BREAK(spec->name, status, "memory allocation failed!\n");
+
+      spec->energy[0] = 1.;
+      spec->flux[0]   = 0.8;
+      spec->energy[1] = 2.;
+      spec->flux[1]   = 0.6;
+      strcpy(spec->name, "spec1");
+
+      saveSimputMissionIndepSpec(spec, filename, "SPEC", 1, &status);
+      CHECK_STATUS_BREAK(status);
+      // END of create a spectrum.
+
       // Create a source image and append it to the file with the source catalog.
       img = getSimputImg(&status);
       CHECK_STATUS_BREAK(status);
@@ -93,7 +116,7 @@ int main(int argc, char **argv)
       img->dist[2][0] = 2.0;
       img->fluxscal = 2.0;
 
-      saveSimputImg(img, filename, "IMG1", 0, &status);
+      //      saveSimputImg(img, filename, "IMG1", 0, &status);
       CHECK_STATUS_BREAK(status);
       // END of create a source image.
     }
@@ -102,6 +125,7 @@ int main(int argc, char **argv)
   } while(0); // END of error handling loop.
 
   freeSimputImg(&img);
+  freeSimputMissionIndepSpec(&spec);
   freeSimputSourceCatalog(&catalog);
   
   fits_report_error(stderr, status);
