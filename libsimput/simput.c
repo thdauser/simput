@@ -1051,11 +1051,11 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 
       // Set up the table format.
       strcpy(ttype[0], "ENERGY");
-      sprintf(tform[0], "%ldE", spec->nentries);
+      sprintf(tform[0], "1PE");
       strcpy(tunit[0], "keV");
 
       strcpy(ttype[1], "FLUX");
-      sprintf(tform[1], "%ldE", spec->nentries);
+      sprintf(tform[1], "1PE");
       strcpy(tunit[1], "photon/s/cm**2/keV");
 
       strcpy(ttype[2], "NAME");

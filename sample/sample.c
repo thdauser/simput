@@ -38,8 +38,9 @@ int main(int argc, char **argv)
 {
   const char filename[] = "simput.fits";
 
-  SimputSourceCatalog* catalog=NULL;
-  SimputMissionIndepSpec* spec=NULL;
+  SimputSourceCatalog* catalog =NULL;
+  SimputMissionIndepSpec* spec =NULL;
+  SimputMissionIndepSpec* spec2=NULL;
   SimputImg* img=NULL;
   int status=EXIT_SUCCESS;
 
@@ -98,6 +99,30 @@ int main(int argc, char **argv)
       CHECK_STATUS_BREAK(status);
       // END of create a spectrum.
 
+      // Create a 2nd spectrum and append it to the file with the source catalog.
+      spec2 = getSimputMissionIndepSpec(&status);
+      CHECK_STATUS_BREAK(status);
+
+      spec2->nentries=3;
+      spec2->energy  = (float*)malloc(3*sizeof(float));
+      CHECK_NULL_BREAK(spec2->energy, status, "memory allocation failed!\n");
+      spec2->flux    = (float*)malloc(3*sizeof(float));
+      CHECK_NULL_BREAK(spec2->flux, status, "memory allocation failed!\n");
+      spec2->name    = (char*)malloc(1024*sizeof(char));
+      CHECK_NULL_BREAK(spec2->name, status, "memory allocation failed!\n");
+
+      spec2->energy[0] = 1.5;
+      spec2->flux[0]   = 0.75;
+      spec2->energy[1] = 2.5;
+      spec2->flux[1]   = 0.65;
+      spec2->energy[2] = 3.5;
+      spec2->flux[2]   = 0.55;
+      strcpy(spec2->name, "spec2");
+
+      saveSimputMissionIndepSpec(spec2, filename, "SPEC", 1, &status);
+      CHECK_STATUS_BREAK(status);
+      // END of create a spectrum.
+
       // Create a source image and append it to the file with the source catalog.
       img = getSimputImg(&status);
       CHECK_STATUS_BREAK(status);
@@ -126,6 +151,7 @@ int main(int argc, char **argv)
 
   freeSimputImg(&img);
   freeSimputMissionIndepSpec(&spec);
+  freeSimputMissionIndepSpec(&spec2);
   freeSimputSourceCatalog(&catalog);
   
   fits_report_error(stderr, status);
