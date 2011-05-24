@@ -4,6 +4,10 @@
 #include "fitsio.h"
 #include <wcslib/wcslib.h>
 
+// GSL header files
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_fft_halfcomplex.h>
+
 #ifndef HEASP_H
 #define HEASP_H 1
 #include "heasp.h"
@@ -178,6 +182,26 @@ typedef struct {
 } SimputLC;
 
 
+/** SIMPUT power spectral density (PSD). */
+typedef struct {
+  /** Number of entries in the PSD. */
+  long nentries;
+
+  /** Frequency [Hz]. */
+  float* frequency;
+
+  /** Power spectral density with Miyamoto normalization [Hz^-1]. */
+  float* power;
+
+  /** Reference to the location of the light curve given by the
+      extended filename syntax. This reference is used to check,
+      whether the light curve is already contained in the internal
+      storage. */
+  char* fileref;
+
+} SimputPSD;
+
+
 /** SIMPUT source image. */
 typedef struct {
   /** Image dimensions. */
@@ -330,6 +354,20 @@ SimputLC* loadSimputLC(const char* const filename, int* const status);
 void saveSimputLC(SimputLC* const lc, const char* const filename,
 		  char* const extname, int extver,
 		  int* const status);
+
+
+/** Constructor for the SimputPSD data structure. Allocates memory,
+    initializes elements with their default values and pointers with
+    NULL. */
+SimputPSD* getSimputPSD(int* const status);
+
+/** Destructor for the SimputPSD. Calls destructor routines for all
+    contained elements, releases the allocated memory, and finally
+    sets the pointer to NULL. */
+void freeSimputPSD(SimputPSD** const lc);
+
+/** Load the SimputPSD from the specified file. */
+SimputPSD* loadSimputPSD(const char* const filename, int* const status);
 
 
 /** Return a randomized photon arrival time at the telescope according

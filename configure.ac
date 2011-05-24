@@ -66,6 +66,12 @@ AC_SEARCH_LIBS(ffopen,
 AC_SEARCH_LIBS(wcsbth, [wcs_6.10 wcs_6.9 wcs-4.4.4 wcs-4.3.3 wcs-4.3], [], \
 		       [AC_MSG_ERROR([No WCS library found!])], [])
 #################################### 
+# GSL Libraries:
+AC_SEARCH_LIBS(cblas_sdot, [gslcblas], [], \
+			 [AC_MSG_ERROR([No gslcblas library found!])], [])
+AC_SEARCH_LIBS(gsl_sf_erf_Q, [gsl], [], \
+			 [AC_MSG_ERROR([No gsl library found!])], [])
+#################################### 
 
 # Check for header files:
 AC_HEADER_STDC

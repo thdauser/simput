@@ -59,6 +59,11 @@
 /** Macro returning the minimum of 2 values. */
 #define MIN(a, b) ( (a)<(b) ? (a) : (b) )
 
+/** The following macros are used to the store light curve and the PSD
+    in the right format for the GSL routines. */
+#define REAL(z,i) ((z)[(i)])
+#define IMAG(z,i,n) ((z)[(n)-(i)])
+
 
 /////////////////////////////////////////////////////////////////
 // Structures.
@@ -121,6 +126,11 @@ static float unit_conversion_phpspcm2pkeV(const char* const unit);
     function return value is 0. */
 static float unit_conversion_s(const char* const unit);
 
+/** Determine the factor required to convert the specified unit into
+    [Hz]. If the conversion is not possible or implemented, the
+    function return value is 0. */
+static float unit_conversion_Hz(const char* const unit);
+
 /** Return the requested spectrum. Keeps a certain number of spectra
     in an internal storage. If the requested spectrum is not located
     in the internal storage, it is loaded from the reference given in
@@ -159,6 +169,7 @@ static double rndexp(const double avgdist);
     light curve (i.e. it is a source with constant brightness) the
     function return value is NULL. */
 static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
+				const double time,
 				int* const status);
 
 
@@ -788,7 +799,8 @@ static float unit_conversion_phpspcm2pkeV(const char* const unit)
 
 static float unit_conversion_s(const char* const unit)
 {
-  if (0==strcmp(unit, "s")) {
+  if ((0==strcmp(unit, "s")) ||
+      (0==strcmp(unit, "Hz^-1")) || (0==strcmp(unit, "Hz**-1")) ){
     return(1.);
   } else if (0==strcmp(unit, "min")) {
     return(60.);
@@ -798,6 +810,18 @@ static float unit_conversion_s(const char* const unit)
     return(24.*3600.);
   } else if (0==strcmp(unit, "yr")) {
     return(365.25*24.*3600.);
+  } else {
+    // Unknown units.
+    return(0.);
+  }
+}
+
+
+static float unit_conversion_Hz(const char* const unit)
+{
+  if ((0==strcmp(unit, "Hz")) ||
+      (0==strcmp(unit, "s^-1")) || (0==strcmp(unit, "s**-1")) ){
+    return(1.);
   } else {
     // Unknown units.
     return(0.);
@@ -1490,6 +1514,7 @@ void freeSimputLC(SimputLC** const lc)
 	    free((*lc)->spectrum[ii]);
 	  }
 	}
+	free((*lc)->spectrum);    
       }
       if (NULL!=(*lc)->image) {
 	long ii;
@@ -1498,6 +1523,7 @@ void freeSimputLC(SimputLC** const lc)
 	    free((*lc)->image[ii]);
 	  }
 	}
+	free((*lc)->image);
       }
     }
     if (NULL!=(*lc)->time) {
@@ -1524,24 +1550,205 @@ void freeSimputLC(SimputLC** const lc)
 }
 
 
+static int isSimputLC(const char* const filename, 
+		      int* const status)
+{
+  fitsfile* fptr=NULL;
+  int ret=0; // Return value.
+
+  do { // Beginning of error handling loop.
+
+    // Open the specified FITS file. The filename must uniquely identify
+    // the light curve contained in a binary table via the extended filename 
+    // syntax. Therefore we do not have to care about the HDU number.
+    fits_open_table(&fptr, filename, READONLY, status);
+    CHECK_STATUS_BREAK(*status);
+    
+    // Read the HDUCLAS1 and HDUCLAS2 header keywords.
+    char comment[SIMPUT_MAXSTR];
+    char hduclas1[SIMPUT_MAXSTR];
+    char hduclas2[SIMPUT_MAXSTR];
+    fits_read_key(fptr, TSTRING, "HDUCLAS1", &hduclas1, comment, status);
+    fits_read_key(fptr, TSTRING, "HDUCLAS2", &hduclas2, comment, status);
+    CHECK_STATUS_BREAK(*status);
+
+    if ((0==strcmp(hduclas1, "SIMPUT")) && (0==strcmp(hduclas2, "LIGHTCUR"))) {
+      // This is a SIMPUT light curve.
+      ret = 1;
+    }
+
+  } while (0); // END of error handling loop.
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_RET(*status, ret);
+
+  return(ret);
+}
+
+
+static void gauss_rndgen(double* const x, double* const y)
+{
+  double sqrt_2rho = sqrt(-log(static_rndgen())*2.);
+  double phi = static_rndgen()*2.*M_PI;
+
+  *x = sqrt_2rho * cos(phi);
+  *y = sqrt_2rho * sin(phi);
+}
+
+
+static void setLCAuxValues(SimputLC* const lc, int* const status)
+{
+  // Memory allocation.
+  lc->a       = (float*)malloc(lc->nentries*sizeof(float));
+  CHECK_NULL_VOID(lc->a, *status, 
+		 "memory allocation for light curve failed");
+  lc->b       = (float*)malloc(lc->nentries*sizeof(float));
+  CHECK_NULL_VOID(lc->b, *status, 
+		  "memory allocation for light curve failed");
+
+  // Determine the auxiliary values for the light curve (including
+  // FLUXSCAL).
+  long ii;
+  for (ii=0; ii<lc->nentries-1; ii++) {
+    double dt;
+    if (NULL!=lc->time) {
+      // Non-periodic light curve.
+      dt = lc->time[ii+1]-lc->time[ii];
+    } else {
+      // Periodic light curve.
+      dt = (lc->phase[ii+1]-lc->phase[ii])*lc->period;
+    }
+    lc->a[ii] = (lc->flux[ii+1]-lc->flux[ii])	
+      /dt /lc->fluxscal;
+    lc->b[ii] = lc->flux[ii]/lc->fluxscal; 
+  }
+  lc->a[lc->nentries-1] = 0.;
+  lc->b[lc->nentries-1] = lc->flux[lc->nentries-1]/lc->fluxscal;
+}
+
+
+static SimputLC* loadSimputLCfromPSD(const char* const filename, 
+				     const double t0,
+				     int* const status)
+{
+  SimputPSD* psd=NULL;
+  SimputLC*  lc =NULL;
+  fitsfile* fptr=NULL;
+
+  // Buffer for Fourier transform.
+  double* fcomp =NULL;
+
+  do { // Error handling loop.
+
+    // Load the PSD.
+    psd=loadSimputPSD(filename, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Get an empty SimputLC data structure.
+    lc = getSimputLC(status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Allocate memory.
+    lc->time    = (double*)malloc(psd->nentries*sizeof(double));
+    CHECK_NULL_BREAK(lc->time, *status, 
+		     "memory allocation for light curve failed");
+    lc->flux    =(float*)malloc(psd->nentries*sizeof(float));
+    CHECK_NULL_BREAK(lc->flux, *status, 
+		     "memory allocation for light curve failed");
+    lc->nentries=psd->nentries;
+
+    // Convert the PSD into a light curve.
+    // Set the time bins.
+    lc->timezero = t0;
+    long ii;
+    for (ii=0; ii<psd->nentries; ii++) {
+      lc->time[ii] = ii*1./psd->frequency[psd->nentries-1];
+    }
+
+    // Apply the algorithm introduced by Timmer & Koenig (1995).
+    // Create Fourier components.
+    fcomp = (double*)malloc(lc->nentries*sizeof(double));
+    CHECK_NULL_BREAK(fcomp, *status, "memory allocation for light "
+		     "curve (buffer for Fourier transform) failed");
+    double randr, randi;
+    gauss_rndgen(&randr, &randi);
+    fcomp[0]               = 0.;
+    fcomp[psd->nentries/2] = randi*sqrt(0.5*psd->power[psd->nentries/2-1]);
+    for (ii=0; ii<psd->nentries/2-1; ii++) {
+      gauss_rndgen(&randr, &randi);
+      REAL(fcomp, ii+1) = randr*sqrt(0.5*psd->power[ii]);
+      IMAG(fcomp, ii+1, psd->nentries) = randi*sqrt(0.5*psd->power[ii]);
+    }
+
+    // Perform Fourier (back-)transformation.
+    gsl_fft_halfcomplex_radix2_backward(fcomp, 1, psd->nentries);
+
+    // TODO Normalization.
+
+    // Calculate mean and variance.
+    double mean=0., variance=0.;
+    for (ii=0; ii<lc->nentries; ii++) {
+      mean += fcomp[ii];
+      variance += pow(fcomp[ii], 2.); 
+    }
+    mean = mean/(double)lc->nentries;
+    variance = variance/(double)lc->nentries;
+    variance-= pow(mean, 2.); // var = <x^2>-<x>^2
+
+    // Determine the normalized rates from the FFT.
+    for (ii=0; ii<psd->nentries; ii++) {
+      lc->flux[ii] = (fcomp[ii]-mean) *0.2/sqrt(variance) + 1.0;
+      //lc->flux[ii] = fcomp[ii];
+      // Avoid negative fluxes (no physical meaning):
+      if (lc->flux[ii]<0.) { 
+	lc->flux[ii] = 0.; 
+      }
+    }
+    lc->fluxscal = 1.;
+
+    // Determine the auxiliary light curve parameters.
+    setLCAuxValues(lc, status);
+    CHECK_STATUS_BREAK(*status);
+
+  } while(0); // END of error handling loop.
+
+  // Release allocated memory.
+  if (NULL!=fcomp) free(fcomp);
+  freeSimputPSD(&psd);
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_RET(*status, lc);
+  
+  // TODO RM
+  remove("test.fits");
+  saveSimputLC(lc, "test.fits", "LC", 1, status);
+
+  return(lc);
+}
+
+
 SimputLC* loadSimputLC(const char* const filename, int* const status)
 {
   // String buffers.
   char* spectrum[1]={NULL};
   char* image[1]={NULL};
 
-  // Get an empty SimputLC data structure.
-  SimputLC* lc = getSimputLC(status);
-  CHECK_STATUS_RET(*status, lc);
-
-  // Open the specified FITS file. The filename must uniquely identify
-  // the light curve contained in a binary table via the extended filename 
-  // syntax. Therefore we do not have to care about the HDU number.
+  SimputLC* lc=NULL;
   fitsfile* fptr=NULL;
-  fits_open_table(&fptr, filename, READONLY, status);
-  CHECK_STATUS_RET(*status, lc);
 
   do { // Error handling loop.
+
+    // Open the specified FITS file. The filename must uniquely identify
+    // the light curve contained in a binary table via the extended filename 
+    // syntax. Therefore we do not have to care about the HDU number.
+    fits_open_table(&fptr, filename, READONLY, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Get an empty SimputLC data structure.
+    lc = getSimputLC(status);
+    CHECK_STATUS_BREAK(*status);
 
     // Get the column names.
     int ctime=0, cphase=0, cflux=0, cspectrum=0, cimage=0;
@@ -1634,12 +1841,6 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     lc->flux    = (float*)malloc(lc->nentries*sizeof(float));
     CHECK_NULL_BREAK(lc->flux, *status, 
 		     "memory allocation for light curve failed");
-    lc->a       = (float*)malloc(lc->nentries*sizeof(float));
-    CHECK_NULL_BREAK(lc->a, *status, 
-		     "memory allocation for light curve failed");
-    lc->b       = (float*)malloc(lc->nentries*sizeof(float));
-    CHECK_NULL_BREAK(lc->b, *status, 
-		     "memory allocation for light curve failed");
     if (cspectrum>0) {
       lc->spectrum = (char**)malloc(lc->nentries*sizeof(char*));
       CHECK_NULL_BREAK(lc->spectrum, *status, 
@@ -1718,28 +1919,13 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       }      
       CHECK_STATUS_BREAK(*status);
     }
-    
     // END of reading the data from the FITS table.
 
 
     // Determine the auxiliary values for the light curve (including
     // FLUXSCAL).
-    long ii;
-    for (ii=0; ii<lc->nentries-1; ii++) {
-      double dt;
-      if (NULL!=lc->time) {
-	// Non-periodic light curve.
-	dt = lc->time[ii+1]-lc->time[ii];
-      } else {
-	// Periodic light curve.
-	dt = (lc->phase[ii+1]-lc->phase[ii])*lc->period;
-      }
-      lc->a[ii] = (lc->flux[ii+1]-lc->flux[ii])	
-	/dt /lc->fluxscal;
-      lc->b[ii] = lc->flux[ii]/lc->fluxscal; 
-    }
-    lc->a[lc->nentries-1] = 0.;
-    lc->b[lc->nentries-1] = lc->flux[lc->nentries-1]/lc->fluxscal;
+    setLCAuxValues(lc, status);
+    CHECK_STATUS_BREAK(*status);
 
   } while(0); // END of error handling loop.
   
@@ -1918,15 +2104,15 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     
     if (ctime>0) {
       fits_write_col(fptr, TDOUBLE, ctime, 1, 1, lc->nentries, 
-		     &lc->time, status);
+		     lc->time, status);
       CHECK_STATUS_BREAK(*status);
     } else {
       fits_write_col(fptr, TFLOAT, cphase, 1, 1, lc->nentries, 
-		     &lc->phase, status);
+		     lc->phase, status);
       CHECK_STATUS_BREAK(*status);
     }
     fits_write_col(fptr, TFLOAT, cflux, 1, 1, lc->nentries, 
-		   &lc->flux, status);
+		   lc->flux, status);
     CHECK_STATUS_BREAK(*status);
     if (cspectrum>0) {
       long row;
@@ -2047,7 +2233,7 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
 			   int* const status)
 {
   // Determine the light curve.
-  SimputLC* lc=returnSimputLC(src, status);
+  SimputLC* lc=returnSimputLC(src, prevtime, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Check, whether the source has constant brightness.
@@ -2132,6 +2318,7 @@ static double rndexp(const double avgdist)
 
 
 static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
+				const double time,
 				int* const status)
 {
   const int maxlcs=10;
@@ -2189,8 +2376,20 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
     }
     strcat(filename, src->lightcur);
   }
-  lcs[nlcs]=loadSimputLC(filename, status);
+
+  // Check, whether the reference refers to a light curve or to 
+  // a PSD.
+  int islc = isSimputLC(filename, status);
   CHECK_STATUS_RET(*status, lcs[nlcs]);
+  if (1==islc) {
+    lcs[nlcs]=loadSimputLC(filename, status);
+    CHECK_STATUS_RET(*status, lcs[nlcs]);
+  } else {
+    // TODO Do not check in internal light curve storage, if this is a PSD!
+    // We want to have independent light curves created from the same PSD!
+    lcs[nlcs]=loadSimputLCfromPSD(filename, time, status);
+    CHECK_STATUS_RET(*status, lcs[nlcs]);
+  }
   nlcs++;
 
   // Store the file reference to the light curve for later comparisons.
@@ -2658,3 +2857,120 @@ void getSimputPhotonCoord(const SimputSourceEntry* const src,
   }
 }
 
+
+SimputPSD* getSimputPSD(int* const status)
+{
+  SimputPSD* psd=(SimputPSD*)malloc(sizeof(SimputPSD));
+  CHECK_NULL_RET(psd, *status, 
+		 "memory allocation for SimputPSD failed", psd);
+
+  // Initialize elements.
+  psd->nentries=0;
+  psd->frequency=NULL;
+  psd->power    =NULL;
+  psd->fileref  =NULL;
+
+  return(psd);
+}
+
+
+void freeSimputPSD(SimputPSD** const psd)
+{
+  if (NULL!=*psd) {
+    if (NULL!=(*psd)->frequency) {
+      free((*psd)->frequency);
+    }
+    if (NULL!=(*psd)->power) {
+      free((*psd)->power);
+    }
+    if (NULL!=(*psd)->fileref) {
+      free((*psd)->fileref);
+    }
+    free(*psd);
+    *psd=NULL;
+  }
+}
+
+
+SimputPSD* loadSimputPSD(const char* const filename, int* const status)
+{
+  // Get an empty SimputPSD data structure.
+  SimputPSD* psd = getSimputPSD(status);
+  CHECK_STATUS_RET(*status, psd);
+
+  // Open the specified FITS file. The filename must uniquely identify
+  // the PSD contained in a binary table via the extended filename 
+  // syntax. Therefore we do not have to care about the HDU number.
+  fitsfile* fptr=NULL;
+  fits_open_table(&fptr, filename, READONLY, status);
+  CHECK_STATUS_RET(*status, psd);
+
+  do { // Error handling loop.
+
+    // Get the column names.
+    int cfrequency=0, cpower=0;
+    // Required columns:
+    fits_get_colnum(fptr, CASEINSEN, "FREQUENC", &cfrequency, status);
+    CHECK_STATUS_BREAK(*status);
+    fits_get_colnum(fptr, CASEINSEN, "POWER", &cpower, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Determine the unit conversion factors.
+    float ffrequency=0.;
+    char ufrequency[SIMPUT_MAXSTR];
+    read_unit(fptr, cfrequency, ufrequency, status);
+    CHECK_STATUS_BREAK(*status);
+    ffrequency = unit_conversion_Hz(ufrequency);
+    if (0.==ffrequency) {
+      SIMPUT_ERROR("unknown units in FREQUENC column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    float fpower=0.;
+    char upower[SIMPUT_MAXSTR];
+    read_unit(fptr, cpower, upower, status);
+    CHECK_STATUS_BREAK(*status);
+    fpower = unit_conversion_s(upower);
+    if (0.==fpower) {
+      SIMPUT_ERROR("unknown units in POWER column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    // END of determine unit conversion factors.
+
+
+    // Determine the number of rows in the table.
+    fits_get_num_rows(fptr, &psd->nentries, status);
+    CHECK_STATUS_BREAK(*status);
+    printf("PSD '%s' contains %ld data points\n", 
+	   filename, psd->nentries);
+
+    // Allocate memory for the arrays.
+    psd->frequency= (float*)malloc(psd->nentries*sizeof(float));
+    CHECK_NULL_BREAK(psd->frequency, *status, 
+		     "memory allocation for PSD failed");
+    psd->power    = (float*)malloc(psd->nentries*sizeof(float));
+    CHECK_NULL_BREAK(psd->power, *status, 
+		     "memory allocation for PSD failed");
+
+    // Read the data from the table.
+    int anynul=0;
+    // FREQUENC
+    fits_read_col(fptr, TFLOAT, cfrequency, 1, 1, psd->nentries, 
+		  0, psd->frequency, &anynul, status);
+    CHECK_STATUS_BREAK(*status);
+    // POWER
+    fits_read_col(fptr, TFLOAT, cpower, 1, 1, psd->nentries, 
+		  0, psd->power, &anynul, status);
+    CHECK_STATUS_BREAK(*status);
+    // END of reading the data from the FITS table.
+
+  } while(0); // END of error handling loop.
+  
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_RET(*status, psd);
+
+  return(psd);  
+}
