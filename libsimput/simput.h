@@ -402,5 +402,15 @@ void saveSimputImg(SimputImg* const img, const char* const filename,
 		   char* const extname, int extver,
 		   int* const status);
 
+/** Determine the coordinates (RA and Dec) of a new photon emerging
+    from a particular source. For point-like sources the coordinates
+    are equivalent with the source position. For extended sources a
+    random position is determined according to the flux distribution
+    defined by the source image. The returned coordinate values are
+    given in [rad]. */
+void getSimputPhotonCoord(const SimputSourceEntry* const src,
+			  double* const ra, double* const dec,
+			  int* const status);
+
 
 #endif /* SIMPUT_H */

@@ -2580,11 +2580,11 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     char comment[SIMPUT_MAXSTR];
     int opt_status=EXIT_SUCCESS;
     fits_write_errmark();
-    fits_read_key(fptr, TFLOAT,  "FLUXSCAL", &img->fluxscal, comment, &opt_status);
+    fits_read_key(fptr, TFLOAT, "FLUXSCAL", &img->fluxscal, comment, &opt_status);
     if (EXIT_SUCCESS!=opt_status) {
       // FLUXSCAL is not given in the FITS header. Therefore it is 
-      // set to the sum of all pixel values.
-      img->fluxscal = sum;
+      // set to the default value of 1.
+      img->fluxscal = 1.;
     }
     fits_clear_errmark();
 
@@ -2839,7 +2839,7 @@ void getSimputPhotonCoord(const SimputSourceEntry* const src,
     // The source is spatially extended.
 
     // Perform a binary search in 2 dimensions.
-    double rnd = static_rndgen() * img->fluxscal;
+    double rnd = static_rndgen() * img->dist[img->naxis1-1][img->naxis2-1];
 
     // Perform a binary search to obtain the x-coordinate.
     long high = img->naxis1-1;
@@ -2879,11 +2879,12 @@ void getSimputPhotonCoord(const SimputSourceEntry* const src,
     // via the  WCS information.
     double imgcrd[2], world[2];
     double phi, theta;
-    wcsp2s(img->wcs, 2, 1, pixcrd, imgcrd, &phi, &theta, world,
+//    wcsp2s(img->wcs, 2, 1, pixcrd, imgcrd, &phi, &theta, world,
+    wcsp2s(img->wcs, 1, 2, pixcrd, imgcrd, &phi, &theta, world,
            status);
     CHECK_STATUS_VOID(*status);
-    *ra  = world[0];
-    *dec = world[1];
+    *ra  = world[0]*M_PI/180.;
+    *dec = world[1]*M_PI/180.;
 
     return;
   }
