@@ -1638,6 +1638,7 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
 
   // Buffer for Fourier transform.
   double* fcomp =NULL;
+  float* power  =NULL;
 
   do { // Error handling loop.
 
@@ -1645,67 +1646,96 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     psd=loadSimputPSD(filename, status);
     CHECK_STATUS_BREAK(*status);
 
+    // Check if the number of bins is a power of 2.
+    long nentries=psd->nentries;
+    while (0==nentries % 2) {
+      nentries = nentries/2;
+    }
+    if (1!=nentries) {
+      SIMPUT_ERROR("PSD length is not a power of 2");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
     // Get an empty SimputLC data structure.
     lc = getSimputLC(status);
     CHECK_STATUS_BREAK(*status);
 
     // Allocate memory.
-    lc->time    = (double*)malloc(psd->nentries*sizeof(double));
+    lc->time    = (double*)malloc(2*psd->nentries*sizeof(double));
     CHECK_NULL_BREAK(lc->time, *status, 
 		     "memory allocation for light curve failed");
-    lc->flux    =(float*)malloc(psd->nentries*sizeof(float));
+    lc->flux    = (float*)malloc(2*psd->nentries*sizeof(float));
     CHECK_NULL_BREAK(lc->flux, *status, 
 		     "memory allocation for light curve failed");
-    lc->nentries=psd->nentries;
+    lc->nentries=2*psd->nentries;
 
     // Convert the PSD into a light curve.
     // Set the time bins.
     lc->timezero = t0;
     long ii;
-    for (ii=0; ii<psd->nentries; ii++) {
-      lc->time[ii] = ii*1./psd->frequency[psd->nentries-1];
+    for (ii=0; ii<lc->nentries; ii++) {
+      lc->time[ii] = ii*1./(2.*psd->frequency[psd->nentries-1]);
     }
 
-    // Apply the algorithm introduced by Timmer & Koenig (1995).
+    // Buffer for PSD. Used to rescale in order to get proper RMS.
+    power = (float*)malloc(psd->nentries*sizeof(float));
+    CHECK_NULL_BREAK(power, *status, "memory allocation for light "
+		     "curve (buffer for PSD transform) failed");
+
+    // The PSD is given in Miyamoto normalization. In order to get the RMS
+    // right, we have to multiply each bin with df (delta frequency).
+    power[0] = psd->power[0]*psd->frequency[0];
+    for (ii=1; ii<psd->nentries; ii++) {
+      power[ii] = psd->power[ii]*(psd->frequency[ii]-psd->frequency[ii-1]);
+    }
+
     // Create Fourier components.
     fcomp = (double*)malloc(lc->nentries*sizeof(double));
     CHECK_NULL_BREAK(fcomp, *status, "memory allocation for light "
 		     "curve (buffer for Fourier transform) failed");
+    
+    // Apply the algorithm introduced by Timmer & Koenig (1995).
     double randr, randi;
+    lc->fluxscal=1.; // Set Fluxscal to 1.
     gauss_rndgen(&randr, &randi);
-    fcomp[0]               = 0.;
-    fcomp[psd->nentries/2] = randi*sqrt(0.5*psd->power[psd->nentries/2-1]);
-    for (ii=0; ii<psd->nentries/2-1; ii++) {
+    fcomp[0]             = 1.;
+    fcomp[psd->nentries] = randi*sqrt(0.5*power[psd->nentries-1]);
+    for (ii=1; ii<psd->nentries; ii++) {
       gauss_rndgen(&randr, &randi);
-      REAL(fcomp, ii+1) = randr*sqrt(0.5*psd->power[ii]);
-      IMAG(fcomp, ii+1, psd->nentries) = randi*sqrt(0.5*psd->power[ii]);
+      REAL(fcomp, ii)               = randr*sqrt(0.5*power[ii-1]);
+      IMAG(fcomp, ii, lc->nentries) = randi*sqrt(0.5*power[ii-1]);
     }
 
     // Perform Fourier (back-)transformation.
-    gsl_fft_halfcomplex_radix2_backward(fcomp, 1, psd->nentries);
+    gsl_fft_halfcomplex_radix2_backward(fcomp, 1, lc->nentries);
 
-    // TODO Normalization.
-
-    // Calculate mean and variance.
-    double mean=0., variance=0.;
-    for (ii=0; ii<lc->nentries; ii++) {
-      mean += fcomp[ii];
-      variance += pow(fcomp[ii], 2.); 
+    // Normalization.
+    // Calculate the required rms.
+    float requ_rms=1.;
+    for (ii=0; ii<psd->nentries; ii++) {
+      // It is not absolutely clear to me, why we have to divide by 2 here.
+      // But the results are only right, if we do that.
+      requ_rms += power[ii]/2.;
     }
-    mean = mean/(double)lc->nentries;
-    variance = variance/(double)lc->nentries;
-    variance-= pow(mean, 2.); // var = <x^2>-<x>^2
+    requ_rms = sqrt(requ_rms);
+
+    // Calculate the actual rms.
+    float act_rms=0.;
+    for (ii=0; ii<lc->nentries; ii++) {
+      act_rms += (float)pow(fcomp[ii], 2.);
+    }
+    act_rms = sqrt(act_rms/lc->nentries);
 
     // Determine the normalized rates from the FFT.
-    for (ii=0; ii<psd->nentries; ii++) {
-      lc->flux[ii] = (fcomp[ii]-mean) *0.2/sqrt(variance) + 1.0;
-      //lc->flux[ii] = fcomp[ii];
+    for (ii=0; ii<lc->nentries; ii++) {
+      lc->flux[ii] = (float)fcomp[ii] * requ_rms/act_rms;
+
       // Avoid negative fluxes (no physical meaning):
       if (lc->flux[ii]<0.) { 
 	lc->flux[ii] = 0.; 
       }
     }
-    lc->fluxscal = 1.;
 
     // Determine the auxiliary light curve parameters.
     setLCAuxValues(lc, status);
@@ -1714,6 +1744,7 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
   } while(0); // END of error handling loop.
 
   // Release allocated memory.
+  if (NULL!=power) free(power);
   if (NULL!=fcomp) free(fcomp);
   freeSimputPSD(&psd);
 
@@ -1721,9 +1752,10 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_RET(*status, lc);
   
-  // TODO RM
-  remove("test.fits");
-  saveSimputLC(lc, "test.fits", "LC", 1, status);
+  // TODO For testing we can write the generated light curve to 
+  // an default output file.
+  //remove("lc.fits");
+  //saveSimputLC(lc, "lc.fits", "LC", 1, status);
 
   return(lc);
 }
