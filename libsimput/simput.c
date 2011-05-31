@@ -2820,6 +2820,35 @@ static SimputImg* returnSimputImg(const SimputSourceEntry* const src,
 }
 
 
+static void p2s(const SimputImg* const img,
+		const double px, const double py,
+		double* sx, double* sy,
+		int* const status)
+{
+  double pixcrd[2] = { px, py };
+  double imgcrd[2], world[2];
+  double phi, theta;
+  wcsp2s(img->wcs, 1, 2, pixcrd, imgcrd, &phi, &theta, world,
+	 status);
+  CHECK_STATUS_VOID(*status);
+  *sx = world[0]*M_PI/180.;
+  *sy = world[1]*M_PI/180.;
+}
+
+
+static double RADist(const double ra1, const double ra2) 
+{
+  double distance = ra2-ra1;
+  while (distance > M_PI) {
+    distance -= 2.*M_PI;
+  }
+  while (distance < -M_PI) {
+    distance += 2.*M_PI;
+  }
+  return(distance);
+}
+
+
 void getSimputPhotonCoord(const SimputSourceEntry* const src,
 			  double* const ra, double* const dec,
 			  int* const status)
@@ -2868,23 +2897,16 @@ void getSimputPhotonCoord(const SimputSourceEntry* const src,
     }
     // Now xl and yl have pixel positions [long pixel coordinates].
 
-    // Convert the long-valued pixel coordinates to double values,
-    // including a randomization over the pixel.
-    double pixcrd[2] = {
-      (double)xl + static_rndgen(),
-      (double)yl + static_rndgen()
-    };
     
-    // Transform from pixel coordinates to RA and DEC 
+    // Convert the long-valued pixel coordinates to double values,
+    // including a randomization over the pixel and
+    // transform from pixel coordinates to RA and DEC 
     // via the  WCS information.
-    double imgcrd[2], world[2];
-    double phi, theta;
-//    wcsp2s(img->wcs, 2, 1, pixcrd, imgcrd, &phi, &theta, world,
-    wcsp2s(img->wcs, 1, 2, pixcrd, imgcrd, &phi, &theta, world,
-           status);
+    p2s(img, 
+	(double)xl + 0.5 + static_rndgen(),
+	(double)yl + 0.5 + static_rndgen(),
+	ra, dec, status);
     CHECK_STATUS_VOID(*status);
-    *ra  = world[0]*M_PI/180.;
-    *dec = world[1]*M_PI/180.;
 
     return;
   }
@@ -2898,7 +2920,7 @@ SimputPSD* getSimputPSD(int* const status)
 		 "memory allocation for SimputPSD failed", psd);
 
   // Initialize elements.
-  psd->nentries=0;
+  psd->nentries =0;
   psd->frequency=NULL;
   psd->power    =NULL;
   psd->fileref  =NULL;
@@ -3007,3 +3029,69 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
 
   return(psd);  
 }
+
+
+float getSimputSourceExtension(const SimputSourceEntry* const src,
+			       int* const status)
+{
+  // Get the source image for this particular source.
+  SimputImg* img=returnSimputImg(src, status);
+  CHECK_STATUS_RET(*status, 0.);
+
+  // Check if it is a point-like or an extended source.
+  if (NULL==img) {
+    // Point-like source.
+    return(0.);
+  } else {
+    // Extended source => determine the maximum extension.
+    double maxext=0.;
+
+    // Check lower left corner.
+    double px = 0.5;
+    double py = 0.5;
+    double sx, sy;
+    p2s(img, px, py, &sx, &sy, status);
+    CHECK_STATUS_RET(*status, 0.);
+    sx = RADist(sx, 0.); // TODO Use RA of reference pixel.
+    double ext = sqrt(pow(sx,2.)+pow(sy,2.));
+    if (ext>maxext) {
+      maxext = ext;
+    }
+
+    // Check lower right corner.
+    px = img->naxis1*1. + 0.5;
+    py = 0.5;
+    p2s(img, px, py, &sx, &sy, status);
+    CHECK_STATUS_RET(*status, 0.);
+    sx = RADist(sx, 0.);
+    ext = sqrt(pow(sx,2.)+pow(sy,2.));
+    if (ext>maxext) {
+      maxext = ext;
+    }
+
+    // Check upper left corner.
+    px = 0.5;
+    py = img->naxis2*1. + 0.5;
+    p2s(img, px, py, &sx, &sy, status);
+    CHECK_STATUS_RET(*status, 0.);
+    sx = RADist(sx, 0.);
+    ext = sqrt(pow(sx,2.)+pow(sy,2.));
+    if (ext>maxext) {
+      maxext = ext;
+    }
+
+    // Check upper right corner.
+    px = img->naxis1*1. + 0.5;
+    py = img->naxis2*1. + 0.5;
+    p2s(img, px, py, &sx, &sy, status);
+    CHECK_STATUS_RET(*status, 0.);
+    sx = RADist(sx, 0.);
+    ext = sqrt(pow(sx,2.)+pow(sy,2.));
+    if (ext>maxext) {
+      maxext = ext;
+    }
+    
+    return((float)maxext);
+  }
+}
+

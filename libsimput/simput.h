@@ -412,5 +412,10 @@ void getSimputPhotonCoord(const SimputSourceEntry* const src,
 			  double* const ra, double* const dec,
 			  int* const status);
 
+/** Return the maximum spatial extension of a particular source around
+    its reference point in [rad]. */
+float getSimputSourceExtension(const SimputSourceEntry* const src,
+			       int* const status);
+
 
 #endif /* SIMPUT_H */
