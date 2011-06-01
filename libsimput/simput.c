@@ -2820,7 +2820,7 @@ static SimputImg* returnSimputImg(const SimputSourceEntry* const src,
 }
 
 
-static void p2s(const SimputImg* const img,
+static void p2s(struct wcsprm* const wcs,
 		const double px, const double py,
 		double* sx, double* sy,
 		int* const status)
@@ -2828,8 +2828,7 @@ static void p2s(const SimputImg* const img,
   double pixcrd[2] = { px, py };
   double imgcrd[2], world[2];
   double phi, theta;
-  wcsp2s(img->wcs, 1, 2, pixcrd, imgcrd, &phi, &theta, world,
-	 status);
+  wcsp2s(wcs, 1, 2, pixcrd, imgcrd, &phi, &theta, world, status);
   CHECK_STATUS_VOID(*status);
   *sx = world[0]*M_PI/180.;
   *sy = world[1]*M_PI/180.;
@@ -2853,63 +2852,90 @@ void getSimputPhotonCoord(const SimputSourceEntry* const src,
 			  double* const ra, double* const dec,
 			  int* const status)
 {
-  // Determine the image.
-  SimputImg* img=returnSimputImg(src, status);
-  CHECK_STATUS_VOID(*status);
+  struct wcsprm wcs = { .flag=-1 };
 
-  // Check, whether the source is point-like.
-  if (NULL==img) {
-    // The source is point-like.
-    *ra  = src->ra;
-    *dec = src->dec;
-    return;
-    
-  } else {
-    // The source is spatially extended.
+  do { // Error handling loop.
 
-    // Perform a binary search in 2 dimensions.
-    double rnd = static_rndgen() * img->dist[img->naxis1-1][img->naxis2-1];
+    // Determine the image.
+    SimputImg* img=returnSimputImg(src, status);
+    CHECK_STATUS_BREAK(*status);
 
-    // Perform a binary search to obtain the x-coordinate.
-    long high = img->naxis1-1;
-    long xl   = 0;
-    long mid;
-    long ymax = img->naxis2-1;
-    while (high > xl) {
-      mid = (xl+high)/2;
-      if (img->dist[mid][ymax] < rnd) {
-	xl = mid+1;
-      } else {
-	high = mid;
+    // Check, whether the source is point-like.
+    if (NULL==img) {
+      // The source is point-like.
+      *ra  = src->ra;
+      *dec = src->dec;
+
+    } else {
+      // The source is spatially extended.
+
+      // Perform a binary search in 2 dimensions.
+      double rnd = static_rndgen() * img->dist[img->naxis1-1][img->naxis2-1];
+
+      // Perform a binary search to obtain the x-coordinate.
+      long high = img->naxis1-1;
+      long xl   = 0;
+      long mid;
+      long ymax = img->naxis2-1;
+      while (high > xl) {
+	mid = (xl+high)/2;
+	if (img->dist[mid][ymax] < rnd) {
+	  xl = mid+1;
+	} else {
+	  high = mid;
+	}
       }
-    }
 
-    // Search for the y coordinate.
-    high = img->naxis2-1;
-    long yl = 0;
-    while (high > yl) {
-      mid = (yl+high)/2;
-      if (img->dist[xl][mid] < rnd) {
-	yl = mid+1;
-      } else {
-	high = mid;
+      // Search for the y coordinate.
+      high = img->naxis2-1;
+      long yl = 0;
+      while (high > yl) {
+	mid = (yl+high)/2;
+	if (img->dist[xl][mid] < rnd) {
+	  yl = mid+1;
+	} else {
+	  high = mid;
+	}
       }
+      // Now xl and yl have pixel positions [long pixel coordinates].
+
+      // Create a temporary wcsprm data structure, which can be modified
+      // to fit this particular source. The wcsprm data structure contained 
+      // in the image should not be modified, since it is used for all 
+      // sources including the image.
+      wcscopy(1, img->wcs, &wcs);
+
+      // Change the scale of the image according to the source specific
+      // IMGSCAL property.
+      wcs.cdelt[0] *= 1./src->imgscal;
+      wcs.cdelt[1] *= 1./src->imgscal;
+      wcs.flag = 0;
+
+      // Determine floating point pixel positions shifted by 0.5 in 
+      // order to match the FITS conventions and with a randomization
+      // over the pixels.
+      double xd = (double)xl + 0.5 + static_rndgen();
+      double yd = (double)yl + 0.5 + static_rndgen();
+
+      // Rotate the image (pixel coordinates) by IMGROTA around the 
+      // reference point.
+      double xdrot =  
+	(xd-wcs.crpix[0])*cos(src->imgrota) + 
+	(yd-wcs.crpix[1])*sin(src->imgrota) + wcs.crpix[0];
+      double ydrot = 
+	-(xd-wcs.crpix[0])*sin(src->imgrota) + 
+	 (yd-wcs.crpix[1])*cos(src->imgrota) + wcs.crpix[1];
+      
+      // Convert the long-valued pixel coordinates to double values,
+      // including a randomization over the pixel and transform from 
+      // pixel coordinates to RA and DEC using the  WCS information.
+      p2s(&wcs, xdrot, ydrot, ra, dec, status);
+      CHECK_STATUS_BREAK(*status);
     }
-    // Now xl and yl have pixel positions [long pixel coordinates].
+  } while(0); // END of error handling loop.
 
-    
-    // Convert the long-valued pixel coordinates to double values,
-    // including a randomization over the pixel and
-    // transform from pixel coordinates to RA and DEC 
-    // via the  WCS information.
-    p2s(img, 
-	(double)xl + 0.5 + static_rndgen(),
-	(double)yl + 0.5 + static_rndgen(),
-	ra, dec, status);
-    CHECK_STATUS_VOID(*status);
-
-    return;
-  }
+  // Release memory.
+  wcsfree(&wcs);
 }
 
 
@@ -3034,64 +3060,88 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
 float getSimputSourceExtension(const SimputSourceEntry* const src,
 			       int* const status)
 {
-  // Get the source image for this particular source.
-  SimputImg* img=returnSimputImg(src, status);
-  CHECK_STATUS_RET(*status, 0.);
+  // Return value.
+  float extension;
 
-  // Check if it is a point-like or an extended source.
-  if (NULL==img) {
-    // Point-like source.
-    return(0.);
-  } else {
-    // Extended source => determine the maximum extension.
-    double maxext=0.;
+  struct wcsprm wcs = { .flag=-1 };
 
-    // Check lower left corner.
-    double px = 0.5;
-    double py = 0.5;
-    double sx, sy;
-    p2s(img, px, py, &sx, &sy, status);
-    CHECK_STATUS_RET(*status, 0.);
-    sx = RADist(sx, 0.); // TODO Use RA of reference pixel.
-    double ext = sqrt(pow(sx,2.)+pow(sy,2.));
-    if (ext>maxext) {
+  do { // Error handling loop.
+
+    // Get the source image for this particular source.
+    SimputImg* img=returnSimputImg(src, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Check if it is a point-like or an extended source.
+    if (NULL==img) {
+      // Point-like source.
+      extension=0.;
+      break;
+    } else {
+      // Extended source => determine the maximum extension.
+      double maxext=0.;
+
+      // Copy the wcsprm structure and change the size 
+      // according to IMGSCAL.
+      wcscopy(1, img->wcs, &wcs);
+
+      // Change the scale of the image according to the source specific
+      // IMGSCAL property.
+      wcs.cdelt[0] *= 1./src->imgscal;
+      wcs.cdelt[1] *= 1./src->imgscal;
+      wcs.flag = 0;
+
+      // Check lower left corner.
+      double px = 0.5;
+      double py = 0.5;
+      double sx, sy;
+      p2s(&wcs, px, py, &sx, &sy, status);
+      CHECK_STATUS_BREAK(*status);
+      sx = RADist(sx, 0.); // TODO Use RA of reference pixel.
+      double ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      if (ext>maxext) {
+	maxext = ext;
+      }
+
+      // Check lower right corner.
+      px = img->naxis1*1. + 0.5;
+      py = 0.5;
+      p2s(&wcs, px, py, &sx, &sy, status);
+      CHECK_STATUS_BREAK(*status);
+      sx = RADist(sx, 0.);
+      ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      if (ext>maxext) {
       maxext = ext;
+      }
+      
+      // Check upper left corner.
+      px = 0.5;
+      py = img->naxis2*1. + 0.5;
+      p2s(&wcs, px, py, &sx, &sy, status);
+      CHECK_STATUS_BREAK(*status);
+      sx = RADist(sx, 0.);
+      ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      if (ext>maxext) {
+	maxext = ext;
+      }
+      
+      // Check upper right corner.
+      px = img->naxis1*1. + 0.5;
+      py = img->naxis2*1. + 0.5;
+      p2s(&wcs, px, py, &sx, &sy, status);
+      CHECK_STATUS_BREAK(*status);
+      sx = RADist(sx, 0.);
+      ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      if (ext>maxext) {
+	maxext = ext;
+      }
+      
+      extension = (float)maxext;
     }
+  } while(0); // END of error handling loop.
 
-    // Check lower right corner.
-    px = img->naxis1*1. + 0.5;
-    py = 0.5;
-    p2s(img, px, py, &sx, &sy, status);
-    CHECK_STATUS_RET(*status, 0.);
-    sx = RADist(sx, 0.);
-    ext = sqrt(pow(sx,2.)+pow(sy,2.));
-    if (ext>maxext) {
-      maxext = ext;
-    }
+  // Release memory.
+  wcsfree(&wcs);
 
-    // Check upper left corner.
-    px = 0.5;
-    py = img->naxis2*1. + 0.5;
-    p2s(img, px, py, &sx, &sy, status);
-    CHECK_STATUS_RET(*status, 0.);
-    sx = RADist(sx, 0.);
-    ext = sqrt(pow(sx,2.)+pow(sy,2.));
-    if (ext>maxext) {
-      maxext = ext;
-    }
-
-    // Check upper right corner.
-    px = img->naxis1*1. + 0.5;
-    py = img->naxis2*1. + 0.5;
-    p2s(img, px, py, &sx, &sy, status);
-    CHECK_STATUS_RET(*status, 0.);
-    sx = RADist(sx, 0.);
-    ext = sqrt(pow(sx,2.)+pow(sy,2.));
-    if (ext>maxext) {
-      maxext = ext;
-    }
-    
-    return((float)maxext);
-  }
+  return(extension);
 }
 
