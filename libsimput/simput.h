@@ -33,7 +33,8 @@
 /////////////////////////////////////////////////////////////////
 
 
-/** Single Entry in the SimputSourceCatalog. */
+/** Single Entry in the SimputSourceCatalog. Requires about 128 bytes,
+    depending on the string lengths. */
 typedef struct {
   /** Unique source ID. */
   long src_id;
@@ -377,7 +378,8 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status);
     light curve, which is not stored in memory, it is loaded from the
     location specified in the the catalog. */
 double getSimputPhotonTime(const SimputSourceEntry* const src,
-			   const double prevtime,
+			   double prevtime,
+			   const double mjdref,
 			   int* const status);
 
 

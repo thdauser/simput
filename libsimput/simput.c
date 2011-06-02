@@ -169,7 +169,7 @@ static double rndexp(const double avgdist);
     light curve (i.e. it is a source with constant brightness) the
     function return value is NULL. */
 static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
-				const double time,
+				const double time, const double mjdref,
 				int* const status);
 
 
@@ -1083,7 +1083,7 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
       strcpy(tunit[1], "photon/s/cm**2/keV");
 
       strcpy(ttype[2], "NAME");
-      strcpy(tform[2], "1PA");
+      strcpy(tform[2], "32A");
       strcpy(tunit[2], "");
 
       // Create the table.
@@ -1124,6 +1124,13 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
     // If data structure contains a name, check if is unique.
     if (NULL!=spec->name) {
       if (strlen(spec->name)>0) {
+	// Check if the NAME string is too long.
+	if (strlen(spec->name)>32) {
+	  SIMPUT_ERROR("NAME value of spectrum contains more than 32 characters");
+	  *status=EXIT_FAILURE;
+	  break;
+	}
+
 	// Check if the NAME column is present.
 	if (0==cname) {
 	  SIMPUT_ERROR("spectrum extension does not contain a NAME column");
@@ -1630,6 +1637,7 @@ static void setLCAuxValues(SimputLC* const lc, int* const status)
 
 static SimputLC* loadSimputLCfromPSD(const char* const filename, 
 				     const double t0,
+				     const double mjdref,
 				     int* const status)
 {
   SimputPSD* psd=NULL;
@@ -1660,6 +1668,9 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     // Get an empty SimputLC data structure.
     lc = getSimputLC(status);
     CHECK_STATUS_BREAK(*status);
+
+    // Set the MJDREF.
+    lc->mjdref = mjdref;
 
     // Allocate memory.
     lc->time    = (double*)malloc(2*psd->nentries*sizeof(double));
@@ -2207,22 +2218,24 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     the MJDREF and TIMEZERO contributions. */
 static double getLCTime(const SimputLC* const lc, 
 			const long kk, 
-			const long long nperiods)
+			const long long nperiods,
+			const double mjdref)
 {
   if (NULL!=lc->time) {
     // Non-periodic light curve.
-    return(lc->time[kk] + lc->timezero + lc->mjdref*24.*3600.);
+    return(lc->time[kk] + lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
   } else {
     // Periodic light curve. 
     return((lc->phase[kk] - lc->phase0 + nperiods)*lc->period +
-	   lc->timezero + lc->mjdref*24.*3600.);    
+	   lc->timezero + (lc->mjdref-mjdref)*24.*3600.);    
   }
 }
 
 
 /** Determine the index of the bin in the light curve that corresponds
     to the specified time. */
-static long getLCBin(const SimputLC* const lc, const double time, 
+static long getLCBin(const SimputLC* const lc, 
+		     const double time, const double mjdref,
 		     long long* nperiods, int* const status)
 {
   // Check if the light curve is periodic or not.
@@ -2230,8 +2243,8 @@ static long getLCBin(const SimputLC* const lc, const double time,
     // Non-periodic light curve.
 
     // Check if the requested time is within the covered interval.
-    if ((time<getLCTime(lc, 0, 0)) || 
-	(time>=getLCTime(lc, lc->nentries-1, 0))) {
+    if ((time<getLCTime(lc, 0, 0, mjdref)) || 
+	(time>=getLCTime(lc, lc->nentries-1, 0, mjdref))) {
       SIMPUT_ERROR("time outside the interval covered by the light curve");
       *status=EXIT_FAILURE;
       return(0);
@@ -2241,7 +2254,12 @@ static long getLCBin(const SimputLC* const lc, const double time,
 
   } else {
     // Periodic light curve.
-    *nperiods = (long long)((time-getLCTime(lc, 0, 0))/lc->period);
+    double dt = time-getLCTime(lc, 0, 0, mjdref);
+    if (dt>=0.) {
+      *nperiods = (long long)(dt/lc->period);
+    } else {
+      *nperiods = (long long)(dt/lc->period)-1;
+    }      
   }
 
   // Determine the respective index kk of the light curve (using
@@ -2249,7 +2267,7 @@ static long getLCBin(const SimputLC* const lc, const double time,
   long lower=0, upper=lc->nentries-2, mid;
   while (upper>lower) {
     mid = (lower+upper)/2;
-    if (getLCTime(lc, mid+1, *nperiods) < time) {
+    if (getLCTime(lc, mid+1, *nperiods, mjdref) < time) {
       lower = mid+1;
     } else {
       upper = mid;
@@ -2262,10 +2280,11 @@ static long getLCBin(const SimputLC* const lc, const double time,
 
 double getSimputPhotonTime(const SimputSourceEntry* const src,
 			   double prevtime,
+			   const double mjdref,
 			   int* const status)
 {
   // Determine the light curve.
-  SimputLC* lc=returnSimputLC(src, prevtime, status);
+  SimputLC* lc=returnSimputLC(src, prevtime, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Check, whether the source has constant brightness.
@@ -2289,14 +2308,15 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
 
     // Determine the respective index kk of the light curve.
     long long nperiods=0;
-    long kk=getLCBin(lc, prevtime, &nperiods, status);
+    long kk=getLCBin(lc, prevtime, mjdref, &nperiods, status);
     CHECK_STATUS_RET(*status, 0.);
     
     while (kk < lc->nentries-1) {
       // Determine the relative time within the kk-th interval, i.e., t=0 lies
       // at the beginning of the kk-th interval.
-      double t         = prevtime-(getLCTime(lc, kk, nperiods));
-      double stepwidth = getLCTime(lc, kk+1, nperiods)-getLCTime(lc, kk, nperiods);
+      double t         = prevtime-(getLCTime(lc, kk, nperiods, mjdref));
+      double stepwidth = 
+	getLCTime(lc, kk+1, nperiods, mjdref)-getLCTime(lc, kk, nperiods, mjdref);
 
       // Step 2 in the algorithm.
       double uk = 1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
@@ -2308,7 +2328,7 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
 	  // interval length is a very small number in comparison to b_kk.
 	  // If a_kk * stepwidth is much smaller than b_kk, the rate in the interval
 	  // can be assumed to be approximately constant.
-	  return(getLCTime(lc, kk, nperiods) +
+	  return(getLCTime(lc, kk, nperiods, mjdref) +
 		 (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
 				  2.*lc->a[kk]*lc->b[kk]*t - 
 				  2.*lc->a[kk]*log(1.-u)/avgrate)
@@ -2326,7 +2346,7 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
 	  kk=0;
 	  nperiods++;
 	}
-	prevtime = getLCTime(lc, kk, nperiods);
+	prevtime = getLCTime(lc, kk, nperiods, mjdref);
       }
     }
     
@@ -2350,7 +2370,7 @@ static double rndexp(const double avgdist)
 
 
 static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
-				const double time,
+				const double time, const double mjdref,
 				int* const status)
 {
   const int maxlcs=10;
@@ -2419,7 +2439,7 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
   } else {
     // TODO Do not check in internal light curve storage, if this is a PSD!
     // We want to have independent light curves created from the same PSD!
-    lcs[nlcs]=loadSimputLCfromPSD(filename, time, status);
+    lcs[nlcs]=loadSimputLCfromPSD(filename, time, mjdref, status);
     CHECK_STATUS_RET(*status, lcs[nlcs]);
   }
   nlcs++;
