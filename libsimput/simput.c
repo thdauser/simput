@@ -480,7 +480,7 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
     catalog->entries  = (SimputSourceEntry**)malloc(nrows*sizeof(SimputSourceEntry*));
     CHECK_NULL_BREAK(catalog->entries, *status, 
 		     "memory allocation for catalog entries failed");
-    catalog->nentries = (int)nrows;
+    catalog->nentries = nrows;
 
     // Allocate memory for string buffers.
     char* src_name[1]={NULL};
@@ -933,12 +933,24 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
     fits_get_coltype(fptr, cenergy, &typecode, &nenergy, &width, status);
     fits_get_coltype(fptr, cflux,   &typecode, &nflux,   &width, status);
     CHECK_STATUS_BREAK(*status);
+
+    // If the columns are of variable-length data type, the returned repeat
+    // value is 1. In that case we have to use another routine to get the
+    // number of elements in a particular row.
+    if (1==nenergy) {
+      long offset;
+      fits_read_descript(fptr, cenergy, 1, &nenergy, &offset, status);
+      fits_read_descript(fptr, cflux  , 1, &nflux  , &offset, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+
+    // The number of energy bins and of flux entries must be identical.
     if (nenergy!=nflux) {
       SIMPUT_ERROR("number of energy and flux entries in spectrum is not equivalent");
       *status=EXIT_FAILURE;
       break;
     }
-    spec->nentries = (int)nenergy;
+    spec->nentries = nenergy;
     printf("spectrum '%s' contains %ld data points\n", 
 	   filename, spec->nentries);
 
@@ -1217,19 +1229,17 @@ static SimputMissionIndepSpec*
 returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
 			     int* const status)
 {
-  const int maxspectra=10;
-  static int nspectra=0;
+  const int maxspectra=10; // Maximum number of spectra in storage.
+  static int nspectra=0;   // Current number of spectra in storage.
+  static int cspectrum=0;  // Index of next position in storage that will be used.
+
   static SimputMissionIndepSpec** spectra=NULL;
 
   // Check, whether the source refers to a spectrum.
   if (NULL==src->spectrum) {
-    SIMPUT_ERROR("source does not refer to a spectrum");
-    *status=EXIT_FAILURE;
     return(NULL);
   }
   if ((0==strlen(src->spectrum)) || (0==strcmp(src->spectrum, "NULL"))) {
-    SIMPUT_ERROR("source does not refer to a spectrum");
-    *status=EXIT_FAILURE;
     return(NULL);
   }
 
@@ -1254,10 +1264,19 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
 
   // The required spectrum is not contained in the storage.
   // Therefore we must load it from the specified location.
-  if (nspectra>=maxspectra) {
-    SIMPUT_ERROR("too many spectra in the internal storage");
-    *status=EXIT_FAILURE;
-    return(NULL);
+
+  // Check if there is still space left in the spectral storage buffer.
+  if (nspectra<maxspectra) {
+    cspectrum=nspectra;
+    nspectra++;
+  } else {
+    cspectrum++;
+    if (cspectrum>=maxspectra) {
+      cspectrum=0;
+    }
+    // Release the spectrum that is currently stored at this place in the
+    // storage buffer.
+    freeSimputMissionIndepSpec(&spectra[cspectrum]);
   }
 
   // Load the mission-independent spectrum.
@@ -1274,23 +1293,22 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
     }
     strcat(filename, src->spectrum);
   }
-  spectra[nspectra]=loadSimputMissionIndepSpec(filename, status);
-  CHECK_STATUS_RET(*status, spectra[nspectra]);
-  nspectra++;
+  spectra[cspectrum]=loadSimputMissionIndepSpec(filename, status);
+  CHECK_STATUS_RET(*status, spectra[cspectrum]);
 
   // Store the file reference to the spectrum for later comparisons.
-  spectra[nspectra-1]->fileref = 
+  spectra[cspectrum]->fileref = 
     (char*)malloc((strlen(src->spectrum)+1)*sizeof(char));
-  CHECK_NULL_RET(spectra[nspectra-1]->fileref, *status, 
+  CHECK_NULL_RET(spectra[cspectrum]->fileref, *status, 
 		 "memory allocation for file reference failed", 
-		 spectra[nspectra-1]);
-  strcpy(spectra[nspectra-1]->fileref, src->spectrum);
+		 spectra[cspectrum]);
+  strcpy(spectra[cspectrum]->fileref, src->spectrum);
 
   // Multiply it by the ARF in order to obtain the spectral distribution.
-  convSimputMissionIndepSpecWithARF(spectra[nspectra-1], status);
-  CHECK_STATUS_RET(*status, spectra[nspectra-1]);
+  convSimputMissionIndepSpecWithARF(spectra[cspectrum], status);
+  CHECK_STATUS_RET(*status, spectra[cspectrum]);
    
-  return(spectra[nspectra-1]);
+  return(spectra[cspectrum]);
 }
 
 
@@ -1314,11 +1332,107 @@ static void getSpecEbounds(const SimputMissionIndepSpec* const spec,
 }
 
 
+/** Determine the time corresponding to a particular light curve bin
+    [s]. The function takes into account, whether the light curve is
+    periodic or not. For peridic light curves the specified number of
+    periods is added to the time value. For non-periodic light curves
+    the nperiod parameter is neglected. The returned value includes
+    the MJDREF and TIMEZERO contributions. */
+static double getLCTime(const SimputLC* const lc, 
+			const long kk, 
+			const long long nperiods,
+			const double mjdref)
+{
+  if (NULL!=lc->time) {
+    // Non-periodic light curve.
+    return(lc->time[kk] + lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
+  } else {
+    // Periodic light curve. 
+    return((lc->phase[kk] - lc->phase0 + nperiods)*lc->period +
+	   lc->timezero + (lc->mjdref-mjdref)*24.*3600.);    
+  }
+}
+
+
+/** Determine the index of the bin in the light curve that corresponds
+    to the specified time. */
+static long getLCBin(const SimputLC* const lc, 
+		     const double time, const double mjdref,
+		     long long* nperiods, int* const status)
+{
+  // Check if the light curve is periodic or not.
+  if (NULL!=lc->time) {
+    // Non-periodic light curve.
+
+    // Check if the requested time is within the covered interval.
+    if ((time<getLCTime(lc, 0, 0, mjdref)) || 
+	(time>=getLCTime(lc, lc->nentries-1, 0, mjdref))) {
+      SIMPUT_ERROR("time outside the interval covered by the light curve");
+      *status=EXIT_FAILURE;
+      return(0);
+    }
+    
+    *nperiods = 0;
+
+  } else {
+    // Periodic light curve.
+    double dt = time-getLCTime(lc, 0, 0, mjdref);
+    if (dt>=0.) {
+      *nperiods = (long long)(dt/lc->period);
+    } else {
+      *nperiods = (long long)(dt/lc->period)-1;
+    }      
+  }
+
+  // Determine the respective index kk of the light curve (using
+  // binary search).
+  long lower=0, upper=lc->nentries-2, mid;
+  while (upper>lower) {
+    mid = (lower+upper)/2;
+    if (getLCTime(lc, mid+1, *nperiods, mjdref) < time) {
+      lower = mid+1;
+    } else {
+      upper = mid;
+    }
+  }
+  
+  return(lower);
+}
+
+
 float getSimputPhotonEnergy(const SimputSourceEntry* const src,
+			    const double time,
+			    const double mjdref,
 			    int* const status)
 {
+  // Get the spectrum which is stored in the catalog.
   SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
   CHECK_STATUS_RET(*status, 0.);
+
+  // Try to get the light curve.
+  SimputLC* lc=returnSimputLC(src, time, mjdref, status);
+  CHECK_STATUS_RET(*status, 0.);
+
+  // If the source has a light curve, check, whether it contains a
+  // SPECTRUM column.
+  if (NULL!=lc) {
+    if (NULL!=lc->spectrum) {
+      // Determine the current light curve bin.
+      long long nperiods;
+      long bin=getLCBin(lc, time, mjdref, &nperiods, status);
+      CHECK_STATUS_RET(*status, 0.);
+
+      // Load the spectrum of this light curve bin.
+      // TODO
+    }
+  }
+
+  // Check if any valid spectrum has been found.
+  if (NULL==spec) {
+    SIMPUT_ERROR("source does not refer to a spectrum");
+    *status=EXIT_FAILURE;
+    return(0.);
+  }
 
   // Determine a random photon energy from the spectral distribution.
   return(getRndPhotonEnergy(spec, status));
@@ -2207,74 +2321,6 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
   // Close the file.
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
-}
-
-
-/** Determine the time corresponding to a particular light curve bin
-    [s]. The function takes into account, whether the light curve is
-    periodic or not. For peridic light curves the specified number of
-    periods is added to the time value. For non-periodic light curves
-    the nperiod parameter is neglected. The returned value includes
-    the MJDREF and TIMEZERO contributions. */
-static double getLCTime(const SimputLC* const lc, 
-			const long kk, 
-			const long long nperiods,
-			const double mjdref)
-{
-  if (NULL!=lc->time) {
-    // Non-periodic light curve.
-    return(lc->time[kk] + lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
-  } else {
-    // Periodic light curve. 
-    return((lc->phase[kk] - lc->phase0 + nperiods)*lc->period +
-	   lc->timezero + (lc->mjdref-mjdref)*24.*3600.);    
-  }
-}
-
-
-/** Determine the index of the bin in the light curve that corresponds
-    to the specified time. */
-static long getLCBin(const SimputLC* const lc, 
-		     const double time, const double mjdref,
-		     long long* nperiods, int* const status)
-{
-  // Check if the light curve is periodic or not.
-  if (NULL!=lc->time) {
-    // Non-periodic light curve.
-
-    // Check if the requested time is within the covered interval.
-    if ((time<getLCTime(lc, 0, 0, mjdref)) || 
-	(time>=getLCTime(lc, lc->nentries-1, 0, mjdref))) {
-      SIMPUT_ERROR("time outside the interval covered by the light curve");
-      *status=EXIT_FAILURE;
-      return(0);
-    }
-    
-    *nperiods = 0;
-
-  } else {
-    // Periodic light curve.
-    double dt = time-getLCTime(lc, 0, 0, mjdref);
-    if (dt>=0.) {
-      *nperiods = (long long)(dt/lc->period);
-    } else {
-      *nperiods = (long long)(dt/lc->period)-1;
-    }      
-  }
-
-  // Determine the respective index kk of the light curve (using
-  // binary search).
-  long lower=0, upper=lc->nentries-2, mid;
-  while (upper>lower) {
-    mid = (lower+upper)/2;
-    if (getLCTime(lc, mid+1, *nperiods, mjdref) < time) {
-      lower = mid+1;
-    } else {
-      upper = mid;
-    }
-  }
-  
-  return(lower);
 }
 
 

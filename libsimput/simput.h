@@ -324,8 +324,12 @@ void simputSetRndGen(double(*rndgen)(void));
 /** Return a randomized photon energy according to the distribution
     defined by the energy spectrum of the particular source. If the
     spectrum is not stored in memory, it is loaded from the location
-    specified in the the catalog. */
+    specified in the the catalog. If the source has a time-variable
+    spectrum, which is defined via the light curve extension, the
+    reference time is required. */
 float getSimputPhotonEnergy(const SimputSourceEntry* const src,
+			    const double time,
+			    const double mjdref,
 			    int* const status);
 
 /** Return the photon rate of a particular source. The return value is
