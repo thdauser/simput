@@ -332,11 +332,19 @@ float getSimputPhotonEnergy(const SimputSourceEntry* const src,
 			    const double mjdref,
 			    int* const status);
 
+/** Determine the source flux in [erg/s/cm**2] within a certain energy
+    band for the particular spectrum. */
+float getEbandFlux(const SimputSourceEntry* const src,
+		   const double time, const double mjdref,
+		   const float emin, const float emax,
+		   int* const status);
+
 /** Return the photon rate of a particular source. The return value is
     the nominal photon rate given in the source catalog. It does not
     contain any light curve or other time-variable
     contributions. Specification of instrument ARF required. */
 float getSimputPhotonRate(const SimputSourceEntry* const src,
+			  const double time, const double mjdref,
 			  int* const status);
 
 

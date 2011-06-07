@@ -137,6 +137,7 @@ static float unit_conversion_Hz(const char* const unit);
     the source catalog. */
 static SimputMissionIndepSpec* 
 returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
+			     const double time, const double mjdref,
 			     int* const status);
 
 /** Determine a random photon energy according to the specified
@@ -144,15 +145,10 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
 static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
 				int* const status);
 
-/** Determine the source flux in [erg/s/cm**2] within a certain energy
-    band for the particular spectrum. */
-static float getEbandFlux(const SimputSourceEntry* const src,
-			  const float emin, const float emax,
-			  int* const status);
-
 /** Determine the photon rate in [photon/s] within a certain energy
     band for the particular spectrum. */
 static float getEbandRate(const SimputSourceEntry* const src,
+			  const double time, const double mjdref,
 			  const float emin, const float emax,
 			  int* const status);
 
@@ -1225,113 +1221,6 @@ void simputSetRndGen(double(*rndgen)(void))
 }
 
 
-static SimputMissionIndepSpec* 
-returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
-			     int* const status)
-{
-  const int maxspectra=10; // Maximum number of spectra in storage.
-  static int nspectra=0;   // Current number of spectra in storage.
-  static int cspectrum=0;  // Index of next position in storage that will be used.
-
-  static SimputMissionIndepSpec** spectra=NULL;
-
-  // Check, whether the source refers to a spectrum.
-  if (NULL==src->spectrum) {
-    return(NULL);
-  }
-  if ((0==strlen(src->spectrum)) || (0==strcmp(src->spectrum, "NULL"))) {
-    return(NULL);
-  }
-
-  // In case there are no spectra available at all, allocate 
-  // memory for the array (storage for spectra).
-  if (NULL==spectra) {
-    spectra = 
-      (SimputMissionIndepSpec**)malloc(maxspectra*sizeof(SimputMissionIndepSpec*));
-    CHECK_NULL_RET(spectra, *status, 
-		   "memory allocation for spectra failed", NULL);
-  }
-
-  // Search if the required spectrum is available in the storage.
-  int ii;
-  for (ii=0; ii<nspectra; ii++) {
-    // Check if the spectrum is equivalent to the required one.
-    if (0==strcmp(spectra[ii]->fileref, src->spectrum)) {
-      // If yes, return the spectrum.
-      return(spectra[ii]);
-    }
-  }
-
-  // The required spectrum is not contained in the storage.
-  // Therefore we must load it from the specified location.
-
-  // Check if there is still space left in the spectral storage buffer.
-  if (nspectra<maxspectra) {
-    cspectrum=nspectra;
-    nspectra++;
-  } else {
-    cspectrum++;
-    if (cspectrum>=maxspectra) {
-      cspectrum=0;
-    }
-    // Release the spectrum that is currently stored at this place in the
-    // storage buffer.
-    freeSimputMissionIndepSpec(&spectra[cspectrum]);
-  }
-
-  // Load the mission-independent spectrum.
-  char filename[SIMPUT_MAXSTR];
-  if ('['==src->spectrum[0]) {
-    strcpy(filename, *src->filepath);
-    strcat(filename, *src->filename);
-    strcat(filename, src->spectrum);
-  } else {
-    if ('/'!=src->spectrum[0]) {
-      strcpy(filename, *src->filepath);
-    } else {
-      strcpy(filename, "");
-    }
-    strcat(filename, src->spectrum);
-  }
-  spectra[cspectrum]=loadSimputMissionIndepSpec(filename, status);
-  CHECK_STATUS_RET(*status, spectra[cspectrum]);
-
-  // Store the file reference to the spectrum for later comparisons.
-  spectra[cspectrum]->fileref = 
-    (char*)malloc((strlen(src->spectrum)+1)*sizeof(char));
-  CHECK_NULL_RET(spectra[cspectrum]->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 spectra[cspectrum]);
-  strcpy(spectra[cspectrum]->fileref, src->spectrum);
-
-  // Multiply it by the ARF in order to obtain the spectral distribution.
-  convSimputMissionIndepSpecWithARF(spectra[cspectrum], status);
-  CHECK_STATUS_RET(*status, spectra[cspectrum]);
-   
-  return(spectra[cspectrum]);
-}
-
-
-static void getSpecEbounds(const SimputMissionIndepSpec* const spec,
-			   const long idx, 
-			   float* emin, float* emax)
-{
-  // Determine the lower boundary.
-  if (idx>0) {
-    *emin = 0.5*(spec->energy[idx]+spec->energy[idx-1]);
-  } else {
-    *emin = spec->energy[idx];
-  }
-
-  // Determine the upper boundary.
-  if (idx<spec->nentries-1) {
-    *emax = 0.5*(spec->energy[idx+1]+spec->energy[idx]);
-  } else {
-    *emax = spec->energy[idx];
-  }
-}
-
-
 /** Determine the time corresponding to a particular light curve bin
     [s]. The function takes into account, whether the light curve is
     periodic or not. For peridic light curves the specified number of
@@ -1400,18 +1289,24 @@ static long getLCBin(const SimputLC* const lc,
 }
 
 
-float getSimputPhotonEnergy(const SimputSourceEntry* const src,
-			    const double time,
-			    const double mjdref,
-			    int* const status)
+static SimputMissionIndepSpec* 
+returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
+			     const double time, const double mjdref,
+			     int* const status)
 {
-  // Get the spectrum which is stored in the catalog.
-  SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
-  CHECK_STATUS_RET(*status, 0.);
+  const int maxspectra=100; // Maximum number of spectra in storage.
+  static int nspectra=0;    // Current number of spectra in storage.
+  static int cspectrum=0;   // Index of next position in storage that will be used.
 
-  // Try to get the light curve.
+  static SimputMissionIndepSpec** spectra=NULL;
+
+  // Reference to the requested spectrum.
+  char fileref[SIMPUT_MAXSTR];
+  strcpy(fileref, ""); // Initialize with empty string.
+
+  // Check, whether the source refers to a light curve.
   SimputLC* lc=returnSimputLC(src, time, mjdref, status);
-  CHECK_STATUS_RET(*status, 0.);
+  CHECK_STATUS_RET(*status, NULL);
 
   // If the source has a light curve, check, whether it contains a
   // SPECTRUM column.
@@ -1420,19 +1315,129 @@ float getSimputPhotonEnergy(const SimputSourceEntry* const src,
       // Determine the current light curve bin.
       long long nperiods;
       long bin=getLCBin(lc, time, mjdref, &nperiods, status);
-      CHECK_STATUS_RET(*status, 0.);
+      CHECK_STATUS_RET(*status, NULL);
 
-      // Load the spectrum of this light curve bin.
-      // TODO
+      // Copy the reference to the spectrum.
+      strcpy(fileref, lc->spectrum[bin]);
+    }
+  }
+
+  // If no spectral information has been found in the light curve,
+  // check, whether the source entry in the catalog itself refers 
+  // to a spectrum.
+  if (0==strlen(fileref)) {
+    if (NULL!=src->spectrum) {
+      if ((strlen(src->spectrum)>0) && (0!=strcmp(src->spectrum, "NULL"))) {
+	strcpy(fileref, src->spectrum);
+      }
     }
   }
 
   // Check if any valid spectrum has been found.
-  if (NULL==spec) {
+  if (0==strlen(fileref)) {
     SIMPUT_ERROR("source does not refer to a spectrum");
     *status=EXIT_FAILURE;
-    return(0.);
+    return(NULL);
   }
+
+  // In case there are no spectra available at all, allocate 
+  // memory for the array (storage for spectra).
+  if (NULL==spectra) {
+    spectra = 
+      (SimputMissionIndepSpec**)malloc(maxspectra*sizeof(SimputMissionIndepSpec*));
+    CHECK_NULL_RET(spectra, *status, 
+		   "memory allocation for spectra failed", NULL);
+  }
+
+  // Search if the required spectrum is available in the storage.
+  int ii;
+  for (ii=0; ii<nspectra; ii++) {
+    // Check if the spectrum is equivalent to the required one.
+    if (0==strcmp(spectra[ii]->fileref, fileref)) {
+      // If yes, return the spectrum.
+      return(spectra[ii]);
+    }
+  }
+
+  // The required spectrum is not contained in the storage.
+  // Therefore we must load it from the specified location.
+
+  // Check if there is still space left in the spectral storage buffer.
+  if (nspectra<maxspectra) {
+    cspectrum=nspectra;
+    nspectra++;
+  } else {
+    cspectrum++;
+    if (cspectrum>=maxspectra) {
+      cspectrum=0;
+    }
+    // Release the spectrum that is currently stored at this place in the
+    // storage buffer.
+    freeSimputMissionIndepSpec(&spectra[cspectrum]);
+  }
+
+  // Load the mission-independent spectrum.
+  char filename[SIMPUT_MAXSTR];
+  if ('['==fileref[0]) {
+    strcpy(filename, *src->filepath);
+    strcat(filename, *src->filename);
+    strcat(filename, fileref);
+  } else {
+    if ('/'!=fileref[0]) {
+      strcpy(filename, *src->filepath);
+    } else {
+      strcpy(filename, "");
+    }
+    strcat(filename, fileref);
+  }
+  spectra[cspectrum]=loadSimputMissionIndepSpec(filename, status);
+  CHECK_STATUS_RET(*status, spectra[cspectrum]);
+
+  // Store the file reference to the spectrum for later comparisons.
+  spectra[cspectrum]->fileref = 
+    (char*)malloc((strlen(fileref)+1)*sizeof(char));
+  CHECK_NULL_RET(spectra[cspectrum]->fileref, *status, 
+		 "memory allocation for file reference failed", 
+		 spectra[cspectrum]);
+  strcpy(spectra[cspectrum]->fileref, fileref);
+
+  // Multiply it by the ARF in order to obtain the spectral distribution.
+  convSimputMissionIndepSpecWithARF(spectra[cspectrum], status);
+  CHECK_STATUS_RET(*status, spectra[cspectrum]);
+   
+  return(spectra[cspectrum]);
+}
+
+
+static void getSpecEbounds(const SimputMissionIndepSpec* const spec,
+			   const long idx, 
+			   float* emin, float* emax)
+{
+  // Determine the lower boundary.
+  if (idx>0) {
+    *emin = 0.5*(spec->energy[idx]+spec->energy[idx-1]);
+  } else {
+    *emin = spec->energy[idx];
+  }
+
+  // Determine the upper boundary.
+  if (idx<spec->nentries-1) {
+    *emax = 0.5*(spec->energy[idx+1]+spec->energy[idx]);
+  } else {
+    *emax = spec->energy[idx];
+  }
+}
+
+
+float getSimputPhotonEnergy(const SimputSourceEntry* const src,
+			    const double time,
+			    const double mjdref,
+			    int* const status)
+{
+  // Get the spectrum which is stored in the catalog.
+  SimputMissionIndepSpec* spec=
+    returnSimputMissionIndepSpec(src, time, mjdref, status);
+  CHECK_STATUS_RET(*status, 0.);
 
   // Determine a random photon energy from the spectral distribution.
   return(getRndPhotonEnergy(spec, status));
@@ -1521,14 +1526,16 @@ void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec,
 }
 
 
-static float getEbandFlux(const SimputSourceEntry* const src,
-			  const float emin, const float emax,
-			  int* const status)
+float getEbandFlux(const SimputSourceEntry* const src,
+		   const double time, const double mjdref,
+		   const float emin, const float emax,
+		   int* const status)
 {
   // Conversion factor from [keV] -> [erg].
   const float keV2erg = 1.602e-9;
 
-  SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
+  SimputMissionIndepSpec* spec=
+    returnSimputMissionIndepSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Return value.
@@ -1554,10 +1561,12 @@ static float getEbandFlux(const SimputSourceEntry* const src,
 
 
 static float getEbandRate(const SimputSourceEntry* const src,
+			  const double time, const double mjdref,
 			  const float emin, const float emax,
 			  int* const status)
 {
-  SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
+  SimputMissionIndepSpec* spec=
+    returnSimputMissionIndepSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Return value.
@@ -1587,13 +1596,15 @@ static float getEbandRate(const SimputSourceEntry* const src,
 
 
 float getSimputPhotonRate(const SimputSourceEntry* const src,
+			  const double time, const double mjdref,
 			  int* const status)
 {
-  SimputMissionIndepSpec* spec=returnSimputMissionIndepSpec(src, status);
+  SimputMissionIndepSpec* spec=
+    returnSimputMissionIndepSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   return(src->flux / 
-	 getEbandFlux(src, src->e_min, src->e_max, status) *
+	 getEbandFlux(src, time, mjdref, src->e_min, src->e_max, status) *
 	 spec->distribution[spec->nentries-1]);
 }
 
@@ -2336,7 +2347,8 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
   // Check, whether the source has constant brightness.
   if (NULL==lc) {
     // The source has a constant brightness.
-    return(prevtime+rndexp((double)1./getSimputPhotonRate(src, status)));
+    return(prevtime+
+	   rndexp((double)1./getSimputPhotonRate(src, prevtime, mjdref, status)));
   } else {
     // The source has a time-variable brightness.
 
@@ -2345,7 +2357,7 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
     // be applied.
 
     // Apply the individual photon rate of the particular source.
-    float avgrate = getSimputPhotonRate(src, status);
+    float avgrate = getSimputPhotonRate(src, prevtime, mjdref, status);
     CHECK_STATUS_RET(*status, 0.);
     assert(avgrate>0.);
 
