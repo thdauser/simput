@@ -73,10 +73,10 @@ typedef struct {
   /** Reference to the storage location of the source light curve. */
   char* lightcur;
 
-  /** Pointer to the filename in the source catalog. */
+  /** Pointer to the filename in the source catalog file. */
   char** filename;
 
-  /** Pointer to the filepath in the source catalog. */
+  /** Pointer to the filepath in the source catalog file. */
   char** filepath;
 
 } SimputSourceEntry;
@@ -90,6 +90,23 @@ typedef struct {
   /** Array of the individual entries in the catalog. */
   SimputSourceEntry** entries;
 
+} SimputSourceCatalog;
+
+
+typedef struct {
+  /** Pointer to the catalog extension. */
+  fitsfile* fptr;
+
+  /** Total number of entries in the catalog. */
+  long nentries;
+
+  /** Column numbers. */
+  int csrc_id, csrc_name, cra, cdec, cimgrota, cimgscal,
+    ce_min, ce_max, cflux, cspectrum, cimage, clightcur;
+
+  /** Unit conversion factors. */
+  float fra, fdec, fimgrota, fe_min, fe_max, fflux;
+
   /** File name (without path contributions) of the FITS file
       containing the source catalog. This value is automatically set
       when a catalog is loaded from or saved to a file. This pointer
@@ -101,7 +118,7 @@ typedef struct {
       file. This pointer should not be modified directly. */
   char* filepath;
 
-} SimputSourceCatalog;
+} SimputSourceCatalogFile;
 
 
 /** Mission-independent spectrum. */
@@ -267,8 +284,9 @@ SimputSourceCatalog* getSimputSourceCatalog(int* const status);
     allocated memory, and finally sets the pointer to NULL. */
 void freeSimputSourceCatalog(SimputSourceCatalog** const catalog);
 
-/** Load the SIMPUT source catalog from the specified file. */
-SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
+/** Load the SIMPUT source catalog from the open
+    SimputSourceCatalogFile. */
+SimputSourceCatalog* loadSimputSourceCatalog(SimputSourceCatalogFile* const cf,
 					     int* const status);
 
 /** Store the SimputSourceCatalog in the specified file. */
@@ -276,6 +294,20 @@ void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
 			     const char* const filename,
 			     int* const status);
 
+/** Constructor for the SimputSourceCatalogFile data
+    structure. Allocates memory, initializes elements with their
+    default values and pointers with NULL. */
+SimputSourceCatalogFile* getSimputSourceCatalogFile(int* const status);
+
+/** Destructor for the SimputSourceCatalogFile. Closes the FITS file,
+    releases the allocated memory, and finally sets the pointer to
+    NULL. */
+void freeSimputSourceCatalogFile(SimputSourceCatalogFile** const catalog,
+				 int* const status);
+
+/** Open an existing file with a SIMPUT source catalog. */
+SimputSourceCatalogFile* openSimputSourceCatalogFile(const char* const filename,
+						     int* const status);
 
 
 /** Constructor for the SimputMissionIndepSpec data

@@ -38,6 +38,7 @@ int main(int argc, char **argv)
 {
   const char filename[] = "simput.fits";
 
+  SimputSourceCatalogFile* catalogfile=NULL;
   SimputSourceCatalog* catalog =NULL;
   SimputMissionIndepSpec* spec =NULL;
   SimputMissionIndepSpec* spec2=NULL;
@@ -47,13 +48,17 @@ int main(int argc, char **argv)
   do { // Error handling loop.
 
     if ((argc>1) && (0==strcmp(argv[1],"r"))) {
+
       // Read the source catalog from the file.
-      catalog = loadSimputSourceCatalog(filename, &status);
+      catalogfile=openSimputSourceCatalogFile(filename, &status);
+      CHECK_STATUS_BREAK(status);
+      catalog    =loadSimputSourceCatalog(catalogfile, &status);
       CHECK_STATUS_BREAK(status);
 
       printf("catalog with %ld entries successfully loaded\n", catalog->nentries);
       printSimputSourceEntry(catalog->entries[0]);
       printSimputSourceEntry(catalog->entries[1]);
+
     } else {
 
       remove(filename);
@@ -153,6 +158,7 @@ int main(int argc, char **argv)
   freeSimputMissionIndepSpec(&spec);
   freeSimputMissionIndepSpec(&spec2);
   freeSimputSourceCatalog(&catalog);
+  freeSimputSourceCatalogFile(&catalogfile, &status);
   
   fits_report_error(stderr, status);
   return(status);

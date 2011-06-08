@@ -293,8 +293,6 @@ SimputSourceCatalog* getSimputSourceCatalog(int* const status)
   // Initialize elements.
   catalog->nentries=0;
   catalog->entries =NULL;
-  catalog->filepath=NULL;
-  catalog->filename=NULL;
 
   return(catalog);
 }
@@ -314,169 +312,26 @@ void freeSimputSourceCatalog(SimputSourceCatalog** const catalog)
     if (NULL!=(*catalog)->entries) {
       free((*catalog)->entries);
     }
-    if (NULL!=(*catalog)->filepath) {
-      free((*catalog)->filepath);
-    }
-    if (NULL!=(*catalog)->filename) {
-      free((*catalog)->filename);
-    }
     free(*catalog);
     *catalog=NULL;
   }
 }
 
 
-SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
+SimputSourceCatalog* loadSimputSourceCatalog(SimputSourceCatalogFile* const cf,
 					     int* const status)
 {
-  SimputSourceCatalog* catalog = getSimputSourceCatalog(status);
+  SimputSourceCatalog* catalog=getSimputSourceCatalog(status);
   CHECK_STATUS_RET(*status, catalog);
 
-  // Store the filename and filepath of the FITS file containing
-  // the source catalog.
-  char cfilename[SIMPUT_MAXSTR];
-  char rootname[SIMPUT_MAXSTR];
-  // Make a local copy of the filename variable in order to avoid
-  // compiler warnings due to discarded const qualifier at the 
-  // subsequent function call.
-  strcpy(cfilename, filename);
-  fits_parse_rootname(cfilename, rootname, status);
-  CHECK_STATUS_RET(*status, catalog);
+  do { // Beginning of error handling loop.
 
-  // Split rootname into the file path and the file name.
-  char* lastslash = strrchr(rootname, '/');
-  if (NULL==lastslash) {
-    catalog->filepath=(char*)malloc(sizeof(char));
-    CHECK_NULL_RET(catalog->filepath, *status, 
-		   "memory allocation for filepath failed", catalog);
-    catalog->filename=(char*)malloc((strlen(rootname)+1)*sizeof(char));
-    CHECK_NULL_RET(catalog->filename, *status, 
-		   "memory allocation for filename failed", catalog);
-    strcpy(catalog->filepath, "");
-    strcpy(catalog->filename, rootname);
-  } else {
-    lastslash++;
-    catalog->filename=(char*)malloc((strlen(lastslash)+1)*sizeof(char));
-    CHECK_NULL_RET(catalog->filename, *status, 
-		   "memory allocation for filename failed", catalog);
-    strcpy(catalog->filename, lastslash);
-      
-    *lastslash='\0';
-    catalog->filepath=(char*)malloc((strlen(rootname)+1)*sizeof(char));
-    CHECK_NULL_RET(catalog->filepath, *status, 
-		   "memory allocation for filepath failed", catalog);
-    strcpy(catalog->filepath, rootname);
-  }
-  // END of storing the filename and filepath.
-
-  // Open the specified FITS file.
-  fitsfile* fptr=NULL;
-  fits_open_file(&fptr, filename, READONLY, status);
-  CHECK_STATUS_RET(*status, catalog);
-
-  // Move to the right extension.
-  fits_movnam_hdu(fptr, BINARY_TBL, "SRC_CAT", 0, status);
-  CHECK_STATUS_RET(*status, catalog);
-
-  do { // Error handling loop.
-    // Get the column names.
-    int csrc_id=0, csrc_name=0, cra=0, cdec=0, cimgrota=0, cimgscal=0,
-      ce_min=0, ce_max=0, cflux=0, cspectrum=0, cimage=0, clightcur=0;
-    // Required columns:
-    fits_get_colnum(fptr, CASEINSEN, "SRC_ID", &csrc_id, status);
-    fits_get_colnum(fptr, CASEINSEN, "RA", &cra, status);
-    fits_get_colnum(fptr, CASEINSEN, "DEC", &cdec, status);
-    fits_get_colnum(fptr, CASEINSEN, "E_MIN", &ce_min, status);
-    fits_get_colnum(fptr, CASEINSEN, "E_MAX", &ce_max, status);
-    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
-    fits_get_colnum(fptr, CASEINSEN, "SPECTRUM", &cspectrum, status);
-    fits_get_colnum(fptr, CASEINSEN, "IMAGE", &cimage, status);
-    fits_get_colnum(fptr, CASEINSEN, "LIGHTCUR", &clightcur, status);
-    CHECK_STATUS_BREAK(*status);
-    // Optional columns:
-    int opt_status=EXIT_SUCCESS;
-    fits_write_errmark();
-    fits_get_colnum(fptr, CASEINSEN, "SRC_NAME", &csrc_name, &opt_status);
-    opt_status=EXIT_SUCCESS;
-    fits_get_colnum(fptr, CASEINSEN, "IMGROTA", &cimgrota, &opt_status);
-    opt_status=EXIT_SUCCESS;
-    fits_get_colnum(fptr, CASEINSEN, "IMGSCAL", &cimgscal, &opt_status);
-    opt_status=EXIT_SUCCESS;
-    fits_clear_errmark();
-
-    // Take care of the units. Determine conversion factors.
-    char ura[SIMPUT_MAXSTR];
-    read_unit(fptr, cra, ura, status);
-    CHECK_STATUS_BREAK(*status);
-    float fra = unit_conversion_rad(ura);
-    if (0.==fra) {
-      SIMPUT_ERROR("unknown units in RA column");
-      *status=EXIT_FAILURE;
-      break;
-    }
-
-    char udec[SIMPUT_MAXSTR];
-    read_unit(fptr, cdec, udec, status);
-    CHECK_STATUS_BREAK(*status);
-    float fdec = unit_conversion_rad(udec);
-    if (0.==fdec) {
-      SIMPUT_ERROR("unknown units in DEC column");
-      *status=EXIT_FAILURE;
-      break;
-    }
-
-    float fimgrota=0;
-    if (cimgrota>0) {
-      char uimgrota[SIMPUT_MAXSTR];
-      read_unit(fptr, cimgrota, uimgrota, status);
-      CHECK_STATUS_BREAK(*status);
-      fimgrota = unit_conversion_rad(uimgrota);
-      if (0.==fimgrota) {
-	SIMPUT_ERROR("unknown units in IMGROTA column");
-	*status=EXIT_FAILURE;
-	break;
-      }
-    }
-
-    char ue_min[SIMPUT_MAXSTR];
-    read_unit(fptr, ce_min, ue_min, status);
-    CHECK_STATUS_BREAK(*status);
-    float fe_min = unit_conversion_keV(ue_min);
-    if (0.==fe_min) {
-      SIMPUT_ERROR("unknown units in E_MIN column");
-      *status=EXIT_FAILURE;
-      break;
-    }
-
-    char ue_max[SIMPUT_MAXSTR];
-    read_unit(fptr, ce_max, ue_max, status);
-    CHECK_STATUS_BREAK(*status);
-    float fe_max = unit_conversion_keV(ue_max);
-    if (0.==fe_max) {
-      SIMPUT_ERROR("unknown units in E_MAX column");
-      *status=EXIT_FAILURE;
-      break;
-    }
-
-    char uflux[SIMPUT_MAXSTR];
-    read_unit(fptr, cflux, uflux, status);
-    CHECK_STATUS_BREAK(*status);
-    float fflux = unit_conversion_ergpspcm2(uflux);
-    if (0.==fflux) {
-      SIMPUT_ERROR("unknown units in FLUX column");
-      *status=EXIT_FAILURE;
-      break;
-    }
-    // END of determine unit conversion factors.
-
-    // Determine the number of required entries.
-    long nrows;
-    fits_get_num_rows(fptr, &nrows, status);
-    CHECK_STATUS_BREAK(*status);
-    catalog->entries  = (SimputSourceEntry**)malloc(nrows*sizeof(SimputSourceEntry*));
+    // Allocate memory for the entries.
+    catalog->entries  = 
+      (SimputSourceEntry**)malloc(cf->nentries*sizeof(SimputSourceEntry*));
     CHECK_NULL_BREAK(catalog->entries, *status, 
 		     "memory allocation for catalog entries failed");
-    catalog->nentries = nrows;
+    catalog->nentries = cf->nentries;
 
     // Allocate memory for string buffers.
     char* src_name[1]={NULL};
@@ -496,9 +351,9 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
     CHECK_NULL_BREAK(lightcur[0], *status, 
 		     "memory allocation for string buffer failed");
 
-    // Loop over all rows in the table.
+    // Loop over all rows in the FITS table.
     long ii;
-    for (ii=0; ii<nrows; ii++) {
+    for (ii=0; ii<cf->nentries; ii++) {
       long src_id=0;
       double ra=0., dec=0.;
       float imgrota=0., imgscal=1.;
@@ -506,43 +361,46 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
       
       // Read the data from the table.
       int anynul=0;
-      fits_read_col(fptr, TLONG, csrc_id, ii+1, 1, 1, 
+      fits_read_col(cf->fptr, TLONG, cf->csrc_id, ii+1, 1, 1, 
 		    &src_id, &src_id, &anynul, status);
 
-      if (csrc_name>0) {
-	fits_read_col_str(fptr, csrc_name, ii+1, 1, 1, 
+      if (cf->csrc_name>0) {
+	fits_read_col_str(cf->fptr, cf->csrc_name, ii+1, 1, 1, 
 			  "", src_name, &anynul, status);
       } else {
 	strcpy(src_name[0], "");
       }
 
-      fits_read_col(fptr, TDOUBLE, cra, ii+1, 1, 1, &ra, &ra, &anynul, status);
-      ra *= fra; // Convert to [rad].
-      fits_read_col(fptr, TDOUBLE, cdec, ii+1, 1, 1, &dec, &dec, &anynul, status);
-      dec *= fdec; // Convert to [rad].
+      fits_read_col(cf->fptr, TDOUBLE, cf->cra, ii+1, 1, 1, &ra, &ra, &anynul, status);
+      ra  *= cf->fra;  // Convert to [rad].
+      fits_read_col(cf->fptr, TDOUBLE, cf->cdec, ii+1, 1, 1, &dec, &dec, &anynul, status);
+      dec *= cf->fdec; // Convert to [rad].
 
-      if (cimgrota>0) {
-	fits_read_col(fptr, TFLOAT, cimgrota, ii+1, 1, 1, 
+      if (cf->cimgrota>0) {
+	fits_read_col(cf->fptr, TFLOAT, cf->cimgrota, ii+1, 1, 1, 
 		      &imgrota, &imgrota, &anynul, status);
-	imgrota *= fimgrota; // Convert to [rad].
+	imgrota *= cf->fimgrota; // Convert to [rad].
       }
-      if (cimgscal>0) {
-	fits_read_col(fptr, TFLOAT, cimgscal, ii+1, 1, 1, 
+      if (cf->cimgscal>0) {
+	fits_read_col(cf->fptr, TFLOAT, cf->cimgscal, ii+1, 1, 1, 
 		      &imgscal, &imgscal, &anynul, status);
       }
       
-      fits_read_col(fptr, TFLOAT, ce_min, ii+1, 1, 1, &e_min, &e_min, &anynul, status);
-      e_min *= fe_min; // Convert to [keV].
-      fits_read_col(fptr, TFLOAT, ce_max, ii+1, 1, 1, &e_max, &e_max, &anynul, status);
-      e_max *= fe_max; // Convert to [keV].
-      fits_read_col(fptr, TFLOAT, cflux, ii+1, 1, 1, &flux, &flux, &anynul, status);
-      flux  *= fflux; // Convert to [erg/s/cm**2].
+      fits_read_col(cf->fptr, TFLOAT, cf->ce_min, ii+1, 1, 1, 
+		    &e_min, &e_min, &anynul, status);
+      e_min *= cf->fe_min; // Convert to [keV].
+      fits_read_col(cf->fptr, TFLOAT, cf->ce_max, ii+1, 1, 1, 
+		    &e_max, &e_max, &anynul, status);
+      e_max *= cf->fe_max; // Convert to [keV].
+      fits_read_col(cf->fptr, TFLOAT, cf->cflux, ii+1, 1, 1, 
+		    &flux, &flux, &anynul, status);
+      flux  *= cf->fflux; // Convert to [erg/s/cm**2].
 
-      fits_read_col(fptr, TSTRING, cspectrum, ii+1, 1, 1, 
+      fits_read_col(cf->fptr, TSTRING, cf->cspectrum, ii+1, 1, 1, 
 		    "", spectrum, &anynul, status);
-      fits_read_col(fptr, TSTRING, cimage, ii+1, 1, 1, 
+      fits_read_col(cf->fptr, TSTRING, cf->cimage, ii+1, 1, 1, 
 		    "", image, &anynul, status);
-      fits_read_col(fptr, TSTRING, clightcur, ii+1, 1, 1, 
+      fits_read_col(cf->fptr, TSTRING, cf->clightcur, ii+1, 1, 1, 
 		    "", lightcur, &anynul, status);
 
       CHECK_STATUS_BREAK(*status);
@@ -556,8 +414,9 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
 
       // Set the pointers to the filename and filepath in the catalog
       // data structure.
-      catalog->entries[ii]->filepath = &catalog->filepath;
-      catalog->entries[ii]->filename = &catalog->filename;
+      // TODO Do not do this any more!
+      catalog->entries[ii]->filepath = &cf->filepath;
+      catalog->entries[ii]->filename = &cf->filename;
 
     }
     // END of loop over all rows in the table.
@@ -572,10 +431,6 @@ SimputSourceCatalog* loadSimputSourceCatalog(const char* const filename,
 
   } while(0); // END of error handling loop.
   
-  // Close the file.
-  if (NULL!=fptr) fits_close_file(fptr, status);
-  CHECK_STATUS_RET(*status, catalog);
-
   return(catalog);
 }
 
@@ -691,6 +546,209 @@ void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
   // Close the file.
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
+}
+
+
+SimputSourceCatalogFile* getSimputSourceCatalogFile(int* const status)
+{
+  SimputSourceCatalogFile* cf=
+    (SimputSourceCatalogFile*)malloc(sizeof(SimputSourceCatalogFile));
+  CHECK_NULL_RET(cf, *status, 
+		 "memory allocation for SimputSourceCatalogFile failed", cf);
+
+  // Initialize elements.
+  cf->fptr     =NULL;
+  cf->nentries =0;
+  cf->csrc_id  =0;
+  cf->csrc_name=0;
+  cf->cra      =0;
+  cf->cdec     =0;
+  cf->cimgrota =0;
+  cf->cimgscal =0;
+  cf->ce_min   =0;
+  cf->ce_max   =0;
+  cf->cflux    =0;
+  cf->cspectrum=0;
+  cf->cimage   =0;
+  cf->clightcur=0;
+  cf->fra      =0.;
+  cf->fdec     =0.;
+  cf->fimgrota =0.;
+  cf->fflux    =0.;
+  cf->fe_min   =0.;
+  cf->fe_max   =0.;
+  cf->filepath =NULL;
+  cf->filename =NULL;
+
+  return(cf);
+}
+
+
+void freeSimputSourceCatalogFile(SimputSourceCatalogFile** const cf,
+				 int* const status)
+{
+  if (NULL!=*cf) {
+    if (NULL!=(*cf)->fptr) {
+      fits_close_file((*cf)->fptr, status);
+    }
+    if (NULL!=(*cf)->filepath) {
+      free((*cf)->filepath);
+    }
+    if (NULL!=(*cf)->filename) {
+      free((*cf)->filename);
+    }
+    free(*cf);
+    *cf=NULL;
+  }
+}
+
+
+SimputSourceCatalogFile* openSimputSourceCatalogFile(const char* const filename,
+						     int* const status)
+{
+  SimputSourceCatalogFile* cf = getSimputSourceCatalogFile(status);
+  CHECK_STATUS_RET(*status, cf);
+
+  // Store the filename and filepath of the FITS file containing
+  // the source catalog.
+  char cfilename[SIMPUT_MAXSTR];
+  char rootname[SIMPUT_MAXSTR];
+  // Make a local copy of the filename variable in order to avoid
+  // compiler warnings due to discarded const qualifier at the 
+  // subsequent function call.
+  strcpy(cfilename, filename);
+  fits_parse_rootname(cfilename, rootname, status);
+  CHECK_STATUS_RET(*status, cf);
+
+  // Split rootname into the file path and the file name.
+  char* lastslash = strrchr(rootname, '/');
+  if (NULL==lastslash) {
+    cf->filepath=(char*)malloc(sizeof(char));
+    CHECK_NULL_RET(cf->filepath, *status, 
+		   "memory allocation for filepath failed", cf);
+    cf->filename=(char*)malloc((strlen(rootname)+1)*sizeof(char));
+    CHECK_NULL_RET(cf->filename, *status, 
+		   "memory allocation for filename failed", cf);
+    strcpy(cf->filepath, "");
+    strcpy(cf->filename, rootname);
+  } else {
+    lastslash++;
+    cf->filename=(char*)malloc((strlen(lastslash)+1)*sizeof(char));
+    CHECK_NULL_RET(cf->filename, *status, 
+		   "memory allocation for filename failed", cf);
+    strcpy(cf->filename, lastslash);
+      
+    *lastslash='\0';
+    cf->filepath=(char*)malloc((strlen(rootname)+1)*sizeof(char));
+    CHECK_NULL_RET(cf->filepath, *status, 
+		   "memory allocation for filepath failed", cf);
+    strcpy(cf->filepath, rootname);
+  }
+  // END of storing the filename and filepath.
+
+  // Open the specified FITS file.
+  fits_open_file(&cf->fptr, filename, READONLY, status);
+  CHECK_STATUS_RET(*status, cf);
+
+  // Move to the right extension.
+  fits_movnam_hdu(cf->fptr, BINARY_TBL, "SRC_CAT", 0, status);
+  CHECK_STATUS_RET(*status, cf);
+
+  do { // Error handling loop.
+    // Get the column names.
+    // Required columns:
+    fits_get_colnum(cf->fptr, CASEINSEN, "SRC_ID", &cf->csrc_id, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "RA", &cf->cra, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "DEC", &cf->cdec, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "E_MIN", &cf->ce_min, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "E_MAX", &cf->ce_max, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "FLUX", &cf->cflux, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "SPECTRUM", &cf->cspectrum, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "IMAGE", &cf->cimage, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "LIGHTCUR", &cf->clightcur, status);
+    CHECK_STATUS_BREAK(*status);
+    // Optional columns:
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_get_colnum(cf->fptr, CASEINSEN, "SRC_NAME", &cf->csrc_name, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_get_colnum(cf->fptr, CASEINSEN, "IMGROTA", &cf->cimgrota, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_get_colnum(cf->fptr, CASEINSEN, "IMGSCAL", &cf->cimgscal, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_clear_errmark();
+
+    // Take care of the units. Determine conversion factors.
+    char ura[SIMPUT_MAXSTR];
+    read_unit(cf->fptr, cf->cra, ura, status);
+    CHECK_STATUS_BREAK(*status);
+    cf->fra = unit_conversion_rad(ura);
+    if (0.==cf->fra) {
+      SIMPUT_ERROR("unknown units in RA column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char udec[SIMPUT_MAXSTR];
+    read_unit(cf->fptr, cf->cdec, udec, status);
+    CHECK_STATUS_BREAK(*status);
+    cf->fdec = unit_conversion_rad(udec);
+    if (0.==cf->fdec) {
+      SIMPUT_ERROR("unknown units in DEC column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    if (cf->cimgrota>0) {
+      char uimgrota[SIMPUT_MAXSTR];
+      read_unit(cf->fptr, cf->cimgrota, uimgrota, status);
+      CHECK_STATUS_BREAK(*status);
+      cf->fimgrota = unit_conversion_rad(uimgrota);
+      if (0.==cf->fimgrota) {
+	SIMPUT_ERROR("unknown units in IMGROTA column");
+	*status=EXIT_FAILURE;
+	break;
+      }
+    }
+
+    char ue_min[SIMPUT_MAXSTR];
+    read_unit(cf->fptr, cf->ce_min, ue_min, status);
+    CHECK_STATUS_BREAK(*status);
+    cf->fe_min = unit_conversion_keV(ue_min);
+    if (0.==cf->fe_min) {
+      SIMPUT_ERROR("unknown units in E_MIN column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char ue_max[SIMPUT_MAXSTR];
+    read_unit(cf->fptr, cf->ce_max, ue_max, status);
+    CHECK_STATUS_BREAK(*status);
+    cf->fe_max = unit_conversion_keV(ue_max);
+    if (0.==cf->fe_max) {
+      SIMPUT_ERROR("unknown units in E_MAX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char uflux[SIMPUT_MAXSTR];
+    read_unit(cf->fptr, cf->cflux, uflux, status);
+    CHECK_STATUS_BREAK(*status);
+    cf->fflux = unit_conversion_ergpspcm2(uflux);
+    if (0.==cf->fflux) {
+      SIMPUT_ERROR("unknown units in FLUX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    // END of determine unit conversion factors.
+
+    // Determine the number of entries.
+    fits_get_num_rows(cf->fptr, &cf->nentries, status);
+    CHECK_STATUS_BREAK(*status);
+
+  } while(0); // END of error handling loop.
+
+  return(cf);
 }
 
 
@@ -1294,9 +1352,9 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
 			     const double time, const double mjdref,
 			     int* const status)
 {
-  const int maxspectra=100; // Maximum number of spectra in storage.
-  static int nspectra=0;    // Current number of spectra in storage.
-  static int cspectrum=0;   // Index of next position in storage that will be used.
+  const int maxspectra=2000; // Maximum number of spectra in storage.
+  static int nspectra=0;     // Current number of spectra in storage.
+  static int cspectrum=0;    // Index of next position in storage that will be used.
 
   static SimputMissionIndepSpec** spectra=NULL;
 
@@ -1375,6 +1433,13 @@ returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
     // storage buffer.
     freeSimputMissionIndepSpec(&spectra[cspectrum]);
   }
+
+  // Check if the filename and filepath properties for the
+  // source are properly set.
+  CHECK_NULL_RET(src->filepath, *status,
+		 "filepath of source catalog is not known", NULL);
+  CHECK_NULL_RET(src->filename, *status,
+		 "filename of source catalog is not known", NULL);
 
   // Load the mission-independent spectrum.
   char filename[SIMPUT_MAXSTR];
@@ -2472,6 +2537,13 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
     return(NULL);
   }
 
+  // Check if the filename and filepath properties for the
+  // source are properly set.
+  CHECK_NULL_RET(src->filepath, *status,
+		 "filepath of source catalog is not known", NULL);
+  CHECK_NULL_RET(src->filename, *status,
+		 "filename of source catalog is not known", NULL);
+
   // Load the light curve.
   char filename[SIMPUT_MAXSTR];
   if ('['==src->lightcur[0]) {
@@ -2867,6 +2939,13 @@ static SimputImg* returnSimputImg(const SimputSourceEntry* const src,
     *status=EXIT_FAILURE;
     return(NULL);
   }
+
+  // Check if the filename and filepath properties for the
+  // source are properly set.
+  CHECK_NULL_RET(src->filepath, *status,
+		 "filepath of source catalog is not known", NULL);
+  CHECK_NULL_RET(src->filename, *status,
+		 "filename of source catalog is not known", NULL);
 
   // Load the image.
   char filename[SIMPUT_MAXSTR];
