@@ -1316,7 +1316,13 @@ static long getLCBin(const SimputLC* const lc,
     // Check if the requested time is within the covered interval.
     if ((time<getLCTime(lc, 0, 0, mjdref)) || 
 	(time>=getLCTime(lc, lc->nentries-1, 0, mjdref))) {
-      SIMPUT_ERROR("time outside the interval covered by the light curve");
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "requested time (%lf MJD) is outside the "
+	      "interval covered by the light curve (%lf to %lf MJD)",
+	      time/24./3600. + mjdref,
+	      getLCTime(lc, 0, 0, 0.)/24./3600., 
+	      getLCTime(lc, lc->nentries-1, 0, 0.)/24./3600.);
+      SIMPUT_ERROR(msg);
       *status=EXIT_FAILURE;
       return(0);
     }
@@ -2878,7 +2884,7 @@ void saveSimputImg(SimputImg* const img,
       break;
     }
     char* strptr=headerstr;
-    while (strlen(headerstr)>0) {
+    while (strlen(strptr)>0) {
       char strbuffer[81];
       strncpy(strbuffer, strptr, 80);
       strbuffer[80] = '\0';
