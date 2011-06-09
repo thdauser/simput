@@ -844,6 +844,8 @@ static float unit_conversion_phpspcm2pkeV(const char* const unit)
 {
   if (0==strcmp(unit, "photon/s/cm**2/keV")) {
     return(1.);
+  } else if (0==strcmp(unit, "photons/s/cm**2/keV")) {
+    return(1.);
   } else {
     // Unknown units.
     return(0.);
