@@ -2498,8 +2498,10 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
 				const double time, const double mjdref,
 				int* const status)
 {
-  const int maxlcs=10;
-  static int nlcs=0;
+  const int maxlcs=10; // Maximum number of light curves in storage.
+  static int nlcs=0;   // Current number of light curves in storage.
+  static int clc =0;   // Index of next position in storage that will be used.
+
   static SimputLC** lcs=NULL;
 
   // Check, whether the source refers to a light curve.
@@ -2533,10 +2535,19 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
 
   // The requested light curve is not contained in the storage.
   // Therefore we must load it from the specified location.
-  if (nlcs>=maxlcs) {
-    SIMPUT_ERROR("too many light curves in the internal storage");
-    *status=EXIT_FAILURE;
-    return(NULL);
+
+  // Check if there is still space left in the light curve storage.
+  if (nlcs<maxlcs) {
+    clc = nlcs;
+    nlcs++;
+  } else {
+    clc++;
+    if (clc>=maxlcs) {
+      clc=0;
+    }
+    // Release the light curve that is currently stored at this place
+    // in the cash.
+    freeSimputLC(&lcs[clc]);
   }
 
   // Check if the filename and filepath properties for the
@@ -2566,25 +2577,24 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
   int islc = isSimputLC(filename, status);
   CHECK_STATUS_RET(*status, lcs[nlcs]);
   if (1==islc) {
-    lcs[nlcs]=loadSimputLC(filename, status);
-    CHECK_STATUS_RET(*status, lcs[nlcs]);
+    lcs[clc]=loadSimputLC(filename, status);
+    CHECK_STATUS_RET(*status, lcs[clc]);
   } else {
     // TODO Do not check in internal light curve storage, if this is a PSD!
     // We want to have independent light curves created from the same PSD!
-    lcs[nlcs]=loadSimputLCfromPSD(filename, time, mjdref, status);
-    CHECK_STATUS_RET(*status, lcs[nlcs]);
+    lcs[clc]=loadSimputLCfromPSD(filename, time, mjdref, status);
+    CHECK_STATUS_RET(*status, lcs[clc]);
   }
-  nlcs++;
 
   // Store the file reference to the light curve for later comparisons.
-  lcs[nlcs-1]->fileref = 
+  lcs[clc]->fileref = 
     (char*)malloc((strlen(src->lightcur)+1)*sizeof(char));
-  CHECK_NULL_RET(lcs[nlcs-1]->fileref, *status, 
+  CHECK_NULL_RET(lcs[clc]->fileref, *status, 
 		 "memory allocation for file reference failed", 
-		 lcs[nlcs-1]);
-  strcpy(lcs[nlcs-1]->fileref, src->lightcur);
+		 lcs[clc]);
+  strcpy(lcs[clc]->fileref, src->lightcur);
    
-  return(lcs[nlcs-1]);
+  return(lcs[clc]);
 }
 
 
