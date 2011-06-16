@@ -2482,7 +2482,10 @@ double getSimputPhotonTime(const SimputSourceEntry* const src,
     }
     
     // The range of the light curve has been exceeded.
-    SIMPUT_ERROR("light curve interval exceeded");
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "light curve interval exceeded (end time %lf MJD)",
+	    mjdref + prevtime/24./3600.);
+    SIMPUT_ERROR(msg);
     *status=EXIT_FAILURE;
     return(0.);
   }
