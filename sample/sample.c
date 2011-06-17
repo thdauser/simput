@@ -17,8 +17,8 @@
   }
 
 
-void printSimputSourceEntry(SimputSourceEntry* sse) {
-  printf("Simput Source Entry:\n");
+void printSimputSource(SimputSource* sse) {
+  printf("Simput Source :\n");
   printf(" SRC_ID:\t%ld\n", sse->src_id);
   printf(" SRC_NAME:\t'%s'\n", sse->src_name);
   printf(" RA:\t\t%lf\n", sse->ra);
@@ -38,8 +38,7 @@ int main(int argc, char **argv)
 {
   const char filename[] = "simput.fits";
 
-  SimputSourceCatalogFile* catalogfile=NULL;
-  SimputSourceCatalog* catalog =NULL;
+  SimputCatalog* cat=NULL;
   SimputMissionIndepSpec* spec =NULL;
   SimputMissionIndepSpec* spec2=NULL;
   SimputImg* img=NULL;
@@ -50,35 +49,41 @@ int main(int argc, char **argv)
     if ((argc>1) && (0==strcmp(argv[1],"r"))) {
 
       // Read the source catalog from the file.
-      catalogfile=openSimputSourceCatalogFile(filename, &status);
-      CHECK_STATUS_BREAK(status);
-      catalog    =loadSimputSourceCatalog(catalogfile, &status);
+      cat=openSimputCatalog(filename, READONLY, &status);
       CHECK_STATUS_BREAK(status);
 
-      printf("catalog with %ld entries successfully loaded\n", catalog->nentries);
-      printSimputSourceEntry(catalog->entries[0]);
-      printSimputSourceEntry(catalog->entries[1]);
+      printf("catalog contains %ld entries\n", cat->nentries);
+
+      SimputSource* src = returnSimputSource(cat, 0, &status);
+      CHECK_STATUS_BREAK(status);
+      printSimputSource(src);
+
+      src = returnSimputSource(cat, 1, &status);
+      CHECK_STATUS_BREAK(status);
+      printSimputSource(src);
 
     } else {
 
       remove(filename);
 
       // Create a source catalog with 2 sources.
-      catalog = getSimputSourceCatalog(&status);
+      cat = openSimputCatalog(filename, READWRITE, &status);
       CHECK_STATUS_BREAK(status);
-      catalog->entries = (SimputSourceEntry**)malloc(2*sizeof(SimputSourceEntry*));
-      CHECK_NULL_BREAK(catalog->entries, status, "memory allocation failed!\n");
-      catalog->entries[0] = 
-	getSimputSourceEntryV(1, "", -1.*M_PI/180., 2.5*M_PI/180., 0., 1., 
+
+      SimputSource* src=
+	getSimputSourceV(1, "", -1.*M_PI/180., 2.5*M_PI/180., 0., 1., 
 			      1., 10., 5.e-12, "", "", "", &status);
       CHECK_STATUS_BREAK(status);
-      catalog->entries[1] = 
-	getSimputSourceEntryV(2, "", -1.8*M_PI/180., 2.3*M_PI/180., 30.*M_PI/180., 1.2, 
-			      0.5, 15., 8.e-13, "", "", "", &status);
+      appendSimputSource(cat, src, &status);
       CHECK_STATUS_BREAK(status);
-      catalog->nentries = 2;
 
-      saveSimputSourceCatalog(catalog, filename, &status);
+      src=getSimputSourceV(2, "", -1.8*M_PI/180., 2.3*M_PI/180., 30.*M_PI/180., 1.2, 
+			   0.5, 15., 8.e-13, "", "", "", &status);
+      CHECK_STATUS_BREAK(status);
+      appendSimputSource(cat, src, &status);
+      CHECK_STATUS_BREAK(status);
+
+      freeSimputCatalog(&cat, &status);
       CHECK_STATUS_BREAK(status);
       // END of create a source catalog.
 
@@ -157,8 +162,7 @@ int main(int argc, char **argv)
   freeSimputImg(&img);
   freeSimputMissionIndepSpec(&spec);
   freeSimputMissionIndepSpec(&spec2);
-  freeSimputSourceCatalog(&catalog);
-  freeSimputSourceCatalogFile(&catalogfile, &status);
+  freeSimputCatalog(&cat, &status);
   
   fits_report_error(stderr, status);
   return(status);

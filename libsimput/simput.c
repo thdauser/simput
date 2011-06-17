@@ -131,15 +131,6 @@ static float unit_conversion_s(const char* const unit);
     function return value is 0. */
 static float unit_conversion_Hz(const char* const unit);
 
-/** Return the requested spectrum. Keeps a certain number of spectra
-    in an internal storage. If the requested spectrum is not located
-    in the internal storage, it is loaded from the reference given in
-    the source catalog. */
-static SimputMissionIndepSpec* 
-returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
-			     const double time, const double mjdref,
-			     int* const status);
-
 /** Determine a random photon energy according to the specified
     spectral distribution. */
 static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
@@ -147,7 +138,7 @@ static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
 
 /** Determine the photon rate in [photon/s] within a certain energy
     band for the particular spectrum. */
-static float getEbandRate(const SimputSourceEntry* const src,
+static float getEbandRate(const SimputSource* const src,
 			  const double time, const double mjdref,
 			  const float emin, const float emax,
 			  int* const status);
@@ -164,7 +155,7 @@ static double rndexp(const double avgdist);
     given in the source catalog. If the the source does not refer to a
     light curve (i.e. it is a source with constant brightness) the
     function return value is NULL. */
-static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
+static SimputLC* returnSimputLC(const SimputSource* const src,
 				const double time, const double mjdref,
 				int* const status);
 
@@ -175,7 +166,7 @@ static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
     source catalog. If the the source does not refer to an image
     (i.e. it is a point-like source) the function return value is
     NULL. */
-static SimputImg* returnSimputImg(const SimputSourceEntry* const src,
+static SimputImg* returnSimputImg(const SimputSource* const src,
 				  int* const status);
 
 
@@ -184,11 +175,11 @@ static SimputImg* returnSimputImg(const SimputSourceEntry* const src,
 /////////////////////////////////////////////////////////////////
 
 
-SimputSourceEntry* getSimputSourceEntry(int* const status)
+SimputSource* getSimputSource(int* const status)
 {
-  SimputSourceEntry* entry=(SimputSourceEntry*)malloc(sizeof(SimputSourceEntry));
+  SimputSource* entry=(SimputSource*)malloc(sizeof(SimputSource));
   CHECK_NULL_RET(entry, *status, 
-		 "memory allocation for SimputSourceEntry failed", entry);
+		 "memory allocation for SimputSource failed", entry);
 
   // Initialize elements.
   entry->src_id  =0;
@@ -210,21 +201,21 @@ SimputSourceEntry* getSimputSourceEntry(int* const status)
 }
 
 
-SimputSourceEntry* getSimputSourceEntryV(const long src_id, 
-					 const char* const src_name,
-					 const double ra,
-					 const double dec,
-					 const float imgrota,
-					 const float imgscal,
-					 const float e_min,
-					 const float e_max,
-					 const float flux,
-					 const char* const spectrum,
-					 const char* const image,
-					 const char* const lightcur,
-					 int* const status)
+SimputSource* getSimputSourceV(const long src_id, 
+			       const char* const src_name,
+			       const double ra,
+			       const double dec,
+			       const float imgrota,
+			       const float imgscal,
+			       const float e_min,
+			       const float e_max,
+			       const float flux,
+			       const char* const spectrum,
+			       const char* const image,
+			       const char* const lightcur,
+			       int* const status)
 {
-  SimputSourceEntry* entry=getSimputSourceEntry(status);
+  SimputSource* entry=getSimputSource(status);
   CHECK_STATUS_RET(*status, entry);
 
   // Initialize with the given values.
@@ -263,7 +254,7 @@ SimputSourceEntry* getSimputSourceEntryV(const long src_id,
 }
 
 
-void freeSimputSourceEntry(SimputSourceEntry** const entry)
+void freeSimputSource(SimputSource** const entry)
 {
   if (NULL!=*entry) {
     if (NULL!=(*entry)->src_name) {
@@ -284,11 +275,13 @@ void freeSimputSourceEntry(SimputSourceEntry** const entry)
 }
 
 
-static SimputSourceEntry* loadSimputSourceEntry(SimputSourceCatalogFile* const cf,
-						const long row,
-						int* const status)
+/** Load a source from a particular row of the catalog in the FITS
+    file. Row numbering starts at 1. */
+static SimputSource* loadSimputSource(SimputCatalog* const cf,
+				      const long row,
+				      int* const status)
 {
-  SimputSourceEntry* se=NULL;
+  SimputSource* se=NULL;
 
   // String buffers.
   char* src_name[1]={NULL};
@@ -319,53 +312,53 @@ static SimputSourceEntry* loadSimputSourceEntry(SimputSourceCatalogFile* const c
       
     // Read the data from the table.
     int anynul=0;
-    fits_read_col(cf->fptr, TLONG, cf->csrc_id, row+1, 1, 1, 
+    fits_read_col(cf->fptr, TLONG, cf->csrc_id, row, 1, 1, 
 		  &src_id, &src_id, &anynul, status);
     
     if (cf->csrc_name>0) {
-      fits_read_col_str(cf->fptr, cf->csrc_name, row+1, 1, 1, 
+      fits_read_col_str(cf->fptr, cf->csrc_name, row, 1, 1, 
 			"", src_name, &anynul, status);
     } else {
       strcpy(src_name[0], "");
     }
 
-    fits_read_col(cf->fptr, TDOUBLE, cf->cra, row+1, 1, 1, &ra, &ra, &anynul, status);
+    fits_read_col(cf->fptr, TDOUBLE, cf->cra, row, 1, 1, &ra, &ra, &anynul, status);
     ra  *= cf->fra;  // Convert to [rad].
-    fits_read_col(cf->fptr, TDOUBLE, cf->cdec, row+1, 1, 1, &dec, &dec, &anynul, status);
+    fits_read_col(cf->fptr, TDOUBLE, cf->cdec, row, 1, 1, &dec, &dec, &anynul, status);
     dec *= cf->fdec; // Convert to [rad].
 
     if (cf->cimgrota>0) {
-      fits_read_col(cf->fptr, TFLOAT, cf->cimgrota, row+1, 1, 1, 
+      fits_read_col(cf->fptr, TFLOAT, cf->cimgrota, row, 1, 1, 
 		    &imgrota, &imgrota, &anynul, status);
       imgrota *= cf->fimgrota; // Convert to [rad].
     }
     if (cf->cimgscal>0) {
-      fits_read_col(cf->fptr, TFLOAT, cf->cimgscal, row+1, 1, 1, 
+      fits_read_col(cf->fptr, TFLOAT, cf->cimgscal, row, 1, 1, 
 		    &imgscal, &imgscal, &anynul, status);
     }
     
-    fits_read_col(cf->fptr, TFLOAT, cf->ce_min, row+1, 1, 1, 
+    fits_read_col(cf->fptr, TFLOAT, cf->ce_min, row, 1, 1, 
 		  &e_min, &e_min, &anynul, status);
     e_min *= cf->fe_min; // Convert to [keV].
-    fits_read_col(cf->fptr, TFLOAT, cf->ce_max, row+1, 1, 1, 
+    fits_read_col(cf->fptr, TFLOAT, cf->ce_max, row, 1, 1, 
 		  &e_max, &e_max, &anynul, status);
     e_max *= cf->fe_max; // Convert to [keV].
-    fits_read_col(cf->fptr, TFLOAT, cf->cflux, row+1, 1, 1, 
+    fits_read_col(cf->fptr, TFLOAT, cf->cflux, row, 1, 1, 
 		  &flux, &flux, &anynul, status);
     flux  *= cf->fflux; // Convert to [erg/s/cm**2].
 
-    fits_read_col(cf->fptr, TSTRING, cf->cspectrum, row+1, 1, 1, 
+    fits_read_col(cf->fptr, TSTRING, cf->cspectrum, row, 1, 1, 
 		  "", spectrum, &anynul, status);
-    fits_read_col(cf->fptr, TSTRING, cf->cimage, row+1, 1, 1, 
+    fits_read_col(cf->fptr, TSTRING, cf->cimage, row, 1, 1, 
 		  "", image, &anynul, status);
-    fits_read_col(cf->fptr, TSTRING, cf->clightcur, row+1, 1, 1, 
+    fits_read_col(cf->fptr, TSTRING, cf->clightcur, row, 1, 1, 
 		  "", lightcur, &anynul, status);
 
     CHECK_STATUS_BREAK(*status);
 
-    // Create a new SimputSourceEntry data structure.
+    // Create a new SimputSource data structure.
     se = 
-      getSimputSourceEntryV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
+      getSimputSourceV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
 			    e_min, e_max, flux, spectrum[0], image[0],
 			    lightcur[0], status);
     CHECK_STATUS_BREAK(*status);
@@ -387,16 +380,16 @@ static SimputSourceEntry* loadSimputSourceEntry(SimputSourceCatalogFile* const c
 }
 
 
-SimputSourceEntry* returnSimputSourceEntry(SimputSourceCatalogFile* const cf,
-					   const long row,
-					   int* const status)
+SimputSource* returnSimputSource(SimputCatalog* const cf,
+				 const long row,
+				 int* const status)
 {
   const long maxsources=1000000; // Maximum number of sources in the cash.
   static long nsources=0;        // Current number of sources in the cash.
   static long csource=0;         // Index of next position in cash that will be used.
 
   // Cash for the sources.
-  static SimputSourceEntry** sources=NULL;
+  static SimputSource** sources=NULL;
   // Rows in the FITS table corresponding to the sources in the cash.
   static long* rows=NULL;
 
@@ -407,7 +400,7 @@ SimputSourceEntry* returnSimputSourceEntry(SimputSourceCatalogFile* const cf,
     rows=(long*)malloc(maxsources*sizeof(long));
     CHECK_NULL_RET(rows, *status, 
 		   "memory allocation for source cash failed", NULL);
-    sources=(SimputSourceEntry**)malloc(maxsources*sizeof(SimputSourceEntry*));
+    sources=(SimputSource**)malloc(maxsources*sizeof(SimputSource*));
     CHECK_NULL_RET(sources, *status,
 		   "memory allocation for source cash failed", NULL);
   }
@@ -434,11 +427,11 @@ SimputSourceEntry* returnSimputSourceEntry(SimputSourceCatalogFile* const cf,
     }
     // Destroy the source that is currently stored at this place 
     // in the cash.
-    freeSimputSourceEntry(&(sources[csource]));
+    freeSimputSource(&(sources[csource]));
   }
 
   // Load the source from the FITS file.
-  sources[csource]=loadSimputSourceEntry(cf, row, status);
+  sources[csource]=loadSimputSource(cf, row, status);
   CHECK_STATUS_RET(*status, sources[csource]);
   rows[csource]=row;
 
@@ -446,190 +439,12 @@ SimputSourceEntry* returnSimputSourceEntry(SimputSourceCatalogFile* const cf,
 }
 
 
-SimputSourceCatalog* getSimputSourceCatalog(int* const status)
+SimputCatalog* getSimputCatalog(int* const status)
 {
-  SimputSourceCatalog* catalog=(SimputSourceCatalog*)malloc(sizeof(SimputSourceCatalog));
-  CHECK_NULL_RET(catalog, *status, 
-		 "memory allocation for SimputSourceCatalog failed", catalog);
-
-  // Initialize elements.
-  catalog->nentries=0;
-  catalog->entries =NULL;
-
-  return(catalog);
-}
-
-
-void freeSimputSourceCatalog(SimputSourceCatalog** const catalog)
-{
-  if (NULL!=*catalog) {
-    if ((*catalog)->nentries>0) {
-      long ii;
-      for (ii=0; ii<(*catalog)->nentries; ii++) {
-	if (NULL!=(*catalog)->entries[ii]) {
-	  freeSimputSourceEntry(&((*catalog)->entries[ii]));
-	}
-      }
-    }
-    if (NULL!=(*catalog)->entries) {
-      free((*catalog)->entries);
-    }
-    free(*catalog);
-    *catalog=NULL;
-  }
-}
-
-
-SimputSourceCatalog* loadSimputSourceCatalog(SimputSourceCatalogFile* const cf,
-					     int* const status)
-{
-  SimputSourceCatalog* catalog=getSimputSourceCatalog(status);
-  CHECK_STATUS_RET(*status, catalog);
-
-  do { // Beginning of error handling loop.
-
-    // Allocate memory for the entries.
-    catalog->entries  = 
-      (SimputSourceEntry**)malloc(cf->nentries*sizeof(SimputSourceEntry*));
-    CHECK_NULL_BREAK(catalog->entries, *status, 
-		     "memory allocation for catalog entries failed");
-    catalog->nentries = cf->nentries;
-
-    // Loop over all rows in the FITS table.
-    long ii;
-    for (ii=0; ii<cf->nentries; ii++) {
-      catalog->entries[ii] = loadSimputSourceEntry(cf, ii, status);
-      CHECK_STATUS_BREAK(*status);
-    }
-    // END of loop over all rows in the table.
-    CHECK_STATUS_BREAK(*status);
-
-  } while(0); // END of error handling loop.
-  
-  return(catalog);
-}
-
-
-void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
-			     const char* const filename,
-			     int* const status)
-{
-  fitsfile* fptr=NULL;
-  
-  do { // Error handling loop.
-
-    // Check if the file already exists.
-    int exists;
-    fits_file_exists(filename, &exists, status);
-    CHECK_STATUS_BREAK(*status);
-    if (1==exists) {
-      // The file already exists.
-      // Open the file and check, whether it contains a source catalog.
-      fits_open_file(&fptr, filename, READWRITE, status);
-      CHECK_STATUS_BREAK(*status);
-      
-      int status2=EXIT_SUCCESS;
-      fits_write_errmark();
-      fits_movnam_hdu(fptr, BINARY_TBL, "SRC_CAT", 0, &status2);
-      if (BAD_HDU_NUM!=status2) {
-	// The file alreay contains a source catalog.
-	char msg[SIMPUT_MAXSTR];
-	sprintf(msg, "the file '%s' already contains a source catalog", filename);
-	SIMPUT_ERROR(msg);
-	*status=EXIT_FAILURE;
-	break;
-      }
-      fits_clear_errmark();
-
-    } else {
-      // The does not exist yet.
-      // Create and open a new empty FITS file.
-      fits_create_file(&fptr, filename, status);
-      CHECK_STATUS_BREAK(*status);
-    }
-
-
-    // Create a binary table.
-    const int csrc_id   = 1;
-    const int csrc_name = 2;
-    const int cra       = 3;
-    const int cdec      = 4;
-    const int cimgrota  = 5;
-    const int cimgscal  = 6;
-    const int ce_min    = 7;
-    const int ce_max    = 8;
-    const int cflux     = 9;
-    const int cspectrum = 10;
-    const int cimage    = 11;
-    const int clightcur = 12;
-    char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
-		      "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
-    char *tform[] = { "J", "1PA", "D", "D", "E", "E", 
-		      "E", "E", "E", "1PA", "1PA", "1PA" };
-    char *tunit[] = { "", "", "deg", "deg", "deg", "",  
-		      "keV", "keV", "erg/s/cm**2", "", "", "" };
-    // Provide option to use different units?
-    fits_create_tbl(fptr, BINARY_TBL, 0, 12, ttype, tform, tunit, "SRC_CAT", status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Write the necessary header keywords.
-    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
-    fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-    fits_write_key(fptr, TSTRING, "HDUCLAS2", "SRC_CAT", "", status);
-    fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
-    fits_write_key(fptr, TSTRING, "RADESYS", "FK5", "", status);
-    float equinox=2000.0;
-    fits_update_key(fptr, TFLOAT, "EQUINOX", &equinox, "", status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Write the data.
-    fits_insert_rows(fptr, 0, catalog->nentries, status);
-    CHECK_STATUS_BREAK(*status);
-    long ii;
-    for (ii=0; ii<catalog->nentries; ii++) {
-      fits_write_col(fptr, TLONG, csrc_id, ii+1, 1, 1, 
-		     &catalog->entries[ii]->src_id, status);
-      fits_write_col(fptr, TSTRING, csrc_name, ii+1, 1, 1, 
-		     &catalog->entries[ii]->src_name, status);
-      double ra = catalog->entries[ii]->ra*180./M_PI;
-      fits_write_col(fptr, TDOUBLE, cra, ii+1, 1, 1, &ra, status);
-      double dec = catalog->entries[ii]->dec*180./M_PI;
-      fits_write_col(fptr, TDOUBLE, cdec, ii+1, 1, 1, &dec, status);
-      float imgrota = catalog->entries[ii]->imgrota*180./M_PI;
-      fits_write_col(fptr, TFLOAT, cimgrota, ii+1, 1, 1, &imgrota, status);
-      fits_write_col(fptr, TFLOAT, cimgscal, ii+1, 1, 1, 
-		     &catalog->entries[ii]->imgscal, status);
-      fits_write_col(fptr, TFLOAT, ce_min, ii+1, 1, 1, 
-		     &catalog->entries[ii]->e_min, status);
-      fits_write_col(fptr, TFLOAT, ce_max, ii+1, 1, 1, 
-		     &catalog->entries[ii]->e_max, status);
-      fits_write_col(fptr, TFLOAT, cflux, ii+1, 1, 1, 
-		     &catalog->entries[ii]->flux, status);
-      fits_write_col(fptr, TSTRING, cspectrum, ii+1, 1, 1, 
-		     &catalog->entries[ii]->spectrum, status);
-      fits_write_col(fptr, TSTRING, cimage, ii+1, 1, 1, 
-		     &catalog->entries[ii]->image, status);
-      fits_write_col(fptr, TSTRING, clightcur, ii+1, 1, 1, 
-		     &catalog->entries[ii]->lightcur, status);
-      CHECK_STATUS_BREAK(*status);
-    }
-    CHECK_STATUS_BREAK(*status);
-    // END of loop over all entries in the catalog.
-
-  } while(0); // END of error handling loop.
-
-  // Close the file.
-  if (NULL!=fptr) fits_close_file(fptr, status);
-  CHECK_STATUS_VOID(*status);
-}
-
-
-SimputSourceCatalogFile* getSimputSourceCatalogFile(int* const status)
-{
-  SimputSourceCatalogFile* cf=
-    (SimputSourceCatalogFile*)malloc(sizeof(SimputSourceCatalogFile));
+  SimputCatalog* cf=
+    (SimputCatalog*)malloc(sizeof(SimputCatalog));
   CHECK_NULL_RET(cf, *status, 
-		 "memory allocation for SimputSourceCatalogFile failed", cf);
+		 "memory allocation for SimputCatalog failed", cf);
 
   // Initialize elements.
   cf->fptr     =NULL;
@@ -659,8 +474,8 @@ SimputSourceCatalogFile* getSimputSourceCatalogFile(int* const status)
 }
 
 
-void freeSimputSourceCatalogFile(SimputSourceCatalogFile** const cf,
-				 int* const status)
+void freeSimputCatalog(SimputCatalog** const cf,
+		       int* const status)
 {
   if (NULL!=*cf) {
     if (NULL!=(*cf)->fptr) {
@@ -678,58 +493,115 @@ void freeSimputSourceCatalogFile(SimputSourceCatalogFile** const cf,
 }
 
 
-SimputSourceCatalogFile* openSimputSourceCatalogFile(const char* const filename,
-						     int* const status)
+SimputCatalog* openSimputCatalog(const char* const filename,
+				 const int mode,
+				 int* const status)
 {
-  SimputSourceCatalogFile* cf = getSimputSourceCatalogFile(status);
-  CHECK_STATUS_RET(*status, cf);
-
-  // Store the filename and filepath of the FITS file containing
-  // the source catalog.
-  char cfilename[SIMPUT_MAXSTR];
-  char rootname[SIMPUT_MAXSTR];
-  // Make a local copy of the filename variable in order to avoid
-  // compiler warnings due to discarded const qualifier at the 
-  // subsequent function call.
-  strcpy(cfilename, filename);
-  fits_parse_rootname(cfilename, rootname, status);
-  CHECK_STATUS_RET(*status, cf);
-
-  // Split rootname into the file path and the file name.
-  char* lastslash = strrchr(rootname, '/');
-  if (NULL==lastslash) {
-    cf->filepath=(char*)malloc(sizeof(char));
-    CHECK_NULL_RET(cf->filepath, *status, 
-		   "memory allocation for filepath failed", cf);
-    cf->filename=(char*)malloc((strlen(rootname)+1)*sizeof(char));
-    CHECK_NULL_RET(cf->filename, *status, 
-		   "memory allocation for filename failed", cf);
-    strcpy(cf->filepath, "");
-    strcpy(cf->filename, rootname);
-  } else {
-    lastslash++;
-    cf->filename=(char*)malloc((strlen(lastslash)+1)*sizeof(char));
-    CHECK_NULL_RET(cf->filename, *status, 
-		   "memory allocation for filename failed", cf);
-    strcpy(cf->filename, lastslash);
-      
-    *lastslash='\0';
-    cf->filepath=(char*)malloc((strlen(rootname)+1)*sizeof(char));
-    CHECK_NULL_RET(cf->filepath, *status, 
-		   "memory allocation for filepath failed", cf);
-    strcpy(cf->filepath, rootname);
-  }
-  // END of storing the filename and filepath.
-
-  // Open the specified FITS file.
-  fits_open_file(&cf->fptr, filename, READONLY, status);
-  CHECK_STATUS_RET(*status, cf);
-
-  // Move to the right extension.
-  fits_movnam_hdu(cf->fptr, BINARY_TBL, "SRC_CAT", 0, status);
+  SimputCatalog* cf = getSimputCatalog(status);
   CHECK_STATUS_RET(*status, cf);
 
   do { // Error handling loop.
+
+    // Store the filename and filepath of the FITS file containing
+    // the source catalog.
+    char cfilename[SIMPUT_MAXSTR];
+    char rootname[SIMPUT_MAXSTR];
+    // Make a local copy of the filename variable in order to avoid
+    // compiler warnings due to discarded const qualifier at the 
+    // subsequent function call.
+    strcpy(cfilename, filename);
+    fits_parse_rootname(cfilename, rootname, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Split rootname into the file path and the file name.
+    char* lastslash = strrchr(rootname, '/');
+    if (NULL==lastslash) {
+      cf->filepath=(char*)malloc(sizeof(char));
+      CHECK_NULL_BREAK(cf->filepath, *status, 
+		       "memory allocation for filepath failed");
+      cf->filename=(char*)malloc((strlen(rootname)+1)*sizeof(char));
+      CHECK_NULL_BREAK(cf->filename, *status, 
+		       "memory allocation for filename failed");
+      strcpy(cf->filepath, "");
+      strcpy(cf->filename, rootname);
+    } else {
+      lastslash++;
+      cf->filename=(char*)malloc((strlen(lastslash)+1)*sizeof(char));
+      CHECK_NULL_BREAK(cf->filename, *status, 
+		       "memory allocation for filename failed");
+      strcpy(cf->filename, lastslash);
+      
+      *lastslash='\0';
+      cf->filepath=(char*)malloc((strlen(rootname)+1)*sizeof(char));
+      CHECK_NULL_BREAK(cf->filepath, *status, 
+		       "memory allocation for filepath failed");
+      strcpy(cf->filepath, rootname);
+    }
+    // END of storing the filename and filepath.
+
+    // Check if the file already exists.
+    int exists;
+    fits_file_exists(filename, &exists, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==exists) {
+      // The file already exists => open it.
+      fits_open_file(&cf->fptr, filename, mode, status);
+      CHECK_STATUS_BREAK(*status);
+
+    } else if (READWRITE==mode) {
+      // The file does not exist, but it shall be created.
+      fits_create_file(&cf->fptr, filename, status);
+      CHECK_STATUS_BREAK(*status);
+
+    } else {
+      // The file should be opened for read access, but it does not exist.
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "file '%s' does not exist", filename);
+      SIMPUT_ERROR(msg);
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    // Try to move to the source catalog extension.
+    int status2=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_movnam_hdu(cf->fptr, BINARY_TBL, "SRC_CAT", 0, &status2);
+    fits_clear_errmark();
+    if (BAD_HDU_NUM==status2) {
+      if (READWRITE==mode) {
+	// The file does not contain a source catalog => create one.
+	char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
+			  "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
+	char *tform[] = { "J", "1PA", "D", "D", "E", "E", 
+			  "E", "E", "E", "1PA", "1PA", "1PA" };
+	char *tunit[] = { "", "", "deg", "deg", "deg", "",  
+			  "keV", "keV", "erg/s/cm**2", "", "", "" };
+	fits_create_tbl(cf->fptr, BINARY_TBL, 0, 12, ttype, tform, tunit, 
+			"SRC_CAT", status);
+	CHECK_STATUS_BREAK(*status);
+	
+	// Write the necessary header keywords.
+	fits_write_key(cf->fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
+	fits_write_key(cf->fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+	fits_write_key(cf->fptr, TSTRING, "HDUCLAS2", "SRC_CAT", "", status);
+	fits_write_key(cf->fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+	fits_write_key(cf->fptr, TSTRING, "RADESYS", "FK5", "", status);
+	float equinox=2000.0;
+	fits_update_key(cf->fptr, TFLOAT, "EQUINOX", &equinox, "", status);
+	CHECK_STATUS_BREAK(*status);
+
+      } else {
+	// The file is opened for read access, but does not contain
+	// a source catalog extension.
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "file '%s' does not contain a source catalog", filename);
+	SIMPUT_ERROR(msg);
+	*status=EXIT_FAILURE;
+	break;
+      }
+    }
+
+
     // Get the column names.
     // Required columns:
     fits_get_colnum(cf->fptr, CASEINSEN, "SRC_ID", &cf->csrc_id, status);
@@ -824,6 +696,43 @@ SimputSourceCatalogFile* openSimputSourceCatalogFile(const char* const filename,
   } while(0); // END of error handling loop.
 
   return(cf);
+}
+
+
+void appendSimputSource(SimputCatalog* const cf,
+			SimputSource* const src,
+			int* const status)
+{
+  // Write the data.
+  fits_insert_rows(cf->fptr, cf->nentries, 1, status);
+  CHECK_STATUS_VOID(*status);
+  cf->nentries++;
+
+  fits_write_col(cf->fptr, TLONG, cf->csrc_id, cf->nentries, 1, 1, 
+		 &src->src_id, status);
+  fits_write_col(cf->fptr, TSTRING, cf->csrc_name, cf->nentries, 1, 1, 
+		 &src->src_name, status);
+  double ra = src->ra*180./M_PI;
+  fits_write_col(cf->fptr, TDOUBLE, cf->cra, cf->nentries, 1, 1, &ra, status);
+  double dec = src->dec*180./M_PI;
+  fits_write_col(cf->fptr, TDOUBLE, cf->cdec, cf->nentries, 1, 1, &dec, status);
+  float imgrota = src->imgrota*180./M_PI;
+  fits_write_col(cf->fptr, TFLOAT, cf->cimgrota, cf->nentries, 1, 1, &imgrota, status);
+  fits_write_col(cf->fptr, TFLOAT, cf->cimgscal, cf->nentries, 1, 1, 
+		 &src->imgscal, status);
+  fits_write_col(cf->fptr, TFLOAT, cf->ce_min, cf->nentries, 1, 1, 
+		 &src->e_min, status);
+  fits_write_col(cf->fptr, TFLOAT, cf->ce_max, cf->nentries, 1, 1, 
+		 &src->e_max, status);
+  fits_write_col(cf->fptr, TFLOAT, cf->cflux, cf->nentries, 1, 1, 
+		 &src->flux, status);
+  fits_write_col(cf->fptr, TSTRING, cf->cspectrum, cf->nentries, 1, 1, 
+		 &src->spectrum, status);
+  fits_write_col(cf->fptr, TSTRING, cf->cimage, cf->nentries, 1, 1, 
+		 &src->image, status);
+  fits_write_col(cf->fptr, TSTRING, cf->clightcur, cf->nentries, 1, 1, 
+		 &src->lightcur, status);
+  CHECK_STATUS_VOID(*status);
 }
 
 
@@ -1430,8 +1339,8 @@ static long getLCBin(const SimputLC* const lc,
 }
 
 
-static SimputMissionIndepSpec* 
-returnSimputMissionIndepSpec(const SimputSourceEntry* const src,
+SimputMissionIndepSpec* 
+returnSimputMissionIndepSpec(const SimputSource* const src,
 			     const double time, const double mjdref,
 			     int* const status)
 {
@@ -1577,7 +1486,7 @@ static void getSpecEbounds(const SimputMissionIndepSpec* const spec,
 }
 
 
-float getSimputPhotonEnergy(const SimputSourceEntry* const src,
+float getSimputPhotonEnergy(const SimputSource* const src,
 			    const double time,
 			    const double mjdref,
 			    int* const status)
@@ -1674,7 +1583,7 @@ void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec,
 }
 
 
-float getEbandFlux(const SimputSourceEntry* const src,
+float getEbandFlux(const SimputSource* const src,
 		   const double time, const double mjdref,
 		   const float emin, const float emax,
 		   int* const status)
@@ -1708,7 +1617,7 @@ float getEbandFlux(const SimputSourceEntry* const src,
 }
 
 
-static float getEbandRate(const SimputSourceEntry* const src,
+static float getEbandRate(const SimputSource* const src,
 			  const double time, const double mjdref,
 			  const float emin, const float emax,
 			  int* const status)
@@ -1743,7 +1652,7 @@ static float getEbandRate(const SimputSourceEntry* const src,
 }
 
 
-float getSimputPhotonRate(const SimputSourceEntry* const src,
+float getSimputPhotonRate(const SimputSource* const src,
 			  const double time, const double mjdref,
 			  int* const status)
 {
@@ -2483,7 +2392,7 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
 }
 
 
-double getSimputPhotonTime(const SimputSourceEntry* const src,
+double getSimputPhotonTime(const SimputSource* const src,
 			   double prevtime,
 			   const double mjdref,
 			   int* const status)
@@ -2578,7 +2487,7 @@ static double rndexp(const double avgdist)
 }
 
 
-static SimputLC* returnSimputLC(const SimputSourceEntry* const src,
+static SimputLC* returnSimputLC(const SimputSource* const src,
 				const double time, const double mjdref,
 				int* const status)
 {
@@ -2992,7 +2901,7 @@ void saveSimputImg(SimputImg* const img,
 }
 
 
-static SimputImg* returnSimputImg(const SimputSourceEntry* const src,
+static SimputImg* returnSimputImg(const SimputSource* const src,
 				  int* const status)
 {
   const int maximgs=10;
@@ -3101,7 +3010,7 @@ static double RADist(const double ra1, const double ra2)
 }
 
 
-void getSimputPhotonCoord(const SimputSourceEntry* const src,
+void getSimputPhotonCoord(const SimputSource* const src,
 			  double* const ra, double* const dec,
 			  int* const status)
 {
@@ -3310,7 +3219,7 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
 }
 
 
-float getSimputSourceExtension(const SimputSourceEntry* const src,
+float getSimputSourceExtension(const SimputSource* const src,
 			       int* const status)
 {
   // Return value.

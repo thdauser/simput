@@ -33,7 +33,7 @@
 /////////////////////////////////////////////////////////////////
 
 
-/** Single Entry in the SimputSourceCatalog. Requires about 128 bytes,
+/** Single entry in the SimputSourceCatalog. Requires about 128 bytes,
     depending on the string lengths. */
 typedef struct {
   /** Unique source ID. */
@@ -79,18 +79,7 @@ typedef struct {
   /** Pointer to the filepath in the source catalog file. */
   char** filepath;
 
-} SimputSourceEntry;
-
-
-/** SIMPUT source catalog. */
-typedef struct {
-  /** Number of entries in the source catalog. */
-  long nentries;
-
-  /** Array of the individual entries in the catalog. */
-  SimputSourceEntry** entries;
-
-} SimputSourceCatalog;
+} SimputSource;
 
 
 typedef struct {
@@ -118,7 +107,7 @@ typedef struct {
       file. This pointer should not be modified directly. */
   char* filepath;
 
-} SimputSourceCatalogFile;
+} SimputCatalog;
 
 
 /** Mission-independent spectrum. */
@@ -248,74 +237,62 @@ typedef struct {
 /////////////////////////////////////////////////////////////////
 
 
-/** Constructor for the SimputSourceEntry data structure. Allocates
+/** Constructor for the SimputCatalog data structure. Allocates
     memory, initializes elements with their default values and
     pointers with NULL. */
-SimputSourceEntry* getSimputSourceEntry(int* const status);
+SimputCatalog* getSimputCatalog(int* const status);
 
-/** Constructor for the SimputSourceEntry data structure. Allocates
-    memory and initializes elements with the given values. */
-SimputSourceEntry* getSimputSourceEntryV(const long src_id, 
-					 const char* const src_name,
-					 const double ra,
-					 const double dec,
-					 const float imgrota,
-					 const float imgscal,
-					 const float e_min,
-					 const float e_max,
-					 const float flux,
-					 const char* const spectrum,
-					 const char* const image,
-					 const char* const lightcur,
-					 int* const status);
-
-/** Destructor for the SimputSourceEntry. Calls destructor routines
-    for all contained elements, releases the allocated memory, and
-    finally sets the pointer to NULL. */
-void freeSimputSourceEntry(SimputSourceEntry** const entry);
-
-/** Constructor for the SimputSourceCatalog data structure. Allocates
-    memory, initializes elements with their default values and
-    pointers with NULL. */
-SimputSourceCatalog* getSimputSourceCatalog(int* const status);
-
-/** Destructor for the SimputSourceCatalog. Calls destructor routines
-    for all contained SimputSourceEntry elements, releases the
-    allocated memory, and finally sets the pointer to NULL. */
-void freeSimputSourceCatalog(SimputSourceCatalog** const catalog);
-
-/** Load the entire SIMPUT source catalog from the open
-    SimputSourceCatalogFile. The returned SimputSourceCatalog object
-    must be destroyed before destroying the SimputSourceFile
-    object. This routine is deprecated. */
-SimputSourceCatalog* loadSimputSourceCatalog(SimputSourceCatalogFile* const cf,
-					     int* const status);
-
-/** Store the SimputSourceCatalog in the specified file. */
-void saveSimputSourceCatalog(const SimputSourceCatalog* const catalog,
-			     const char* const filename,
-			     int* const status);
-
-/** Constructor for the SimputSourceCatalogFile data
-    structure. Allocates memory, initializes elements with their
-    default values and pointers with NULL. */
-SimputSourceCatalogFile* getSimputSourceCatalogFile(int* const status);
-
-/** Destructor for the SimputSourceCatalogFile. Closes the FITS file,
+/** Destructor for the SimputCatalog. Closes the FITS file,
     releases the allocated memory, and finally sets the pointer to
     NULL. */
-void freeSimputSourceCatalogFile(SimputSourceCatalogFile** const catalog,
+void freeSimputCatalog(SimputCatalog** const catalog,
+		       int* const status);
+
+/** Open a FITS file with a SIMPUT source catalog. The access mode can
+    be either READONLY to open an existing catalog or READWRITE for
+    both existing or non-existing files. */
+SimputCatalog* openSimputCatalog(const char* const filename,
+				 const int mode,
 				 int* const status);
 
-/** Open an existing file with a SIMPUT source catalog. */
-SimputSourceCatalogFile* openSimputSourceCatalogFile(const char* const filename,
-						     int* const status);
 
-/** Return an entry from a SimputSourceCatalogFile, which is contained
-    in a particular row of the FITS table. */
-SimputSourceEntry* returnSimputSourceEntry(SimputSourceCatalogFile* const cf,
-					   const long row,
-					   int* const status);
+/** Constructor for the SimputSource data structure. Allocates
+    memory, initializes elements with their default values and
+    pointers with NULL. */
+SimputSource* getSimputSource(int* const status);
+
+/** Constructor for the SimputSource data structure. Allocates
+    memory and initializes elements with the given values. */
+SimputSource* getSimputSourceV(const long src_id, 
+			       const char* const src_name,
+			       const double ra,
+			       const double dec,
+			       const float imgrota,
+			       const float imgscal,
+			       const float e_min,
+			       const float e_max,
+			       const float flux,
+			       const char* const spectrum,
+			       const char* const image,
+			       const char* const lightcur,
+			       int* const status);
+
+/** Destructor for the SimputSource. Calls destructor routines
+    for all contained elements, releases the allocated memory, and
+    finally sets the pointer to NULL. */
+void freeSimputSource(SimputSource** const entry);
+
+/** Return an entry from a SimputCatalog, which is contained in a
+    particular row of the FITS table. According to the FITS
+    conventions row numbering starts with 1 for the first line. */
+SimputSource* returnSimputSource(SimputCatalog* const cf,
+				 const long row,
+				 int* const status);
+
+/** Append a SimputSource to an existing catalog. */
+void appendSimputSource(SimputCatalog* const cf,
+			SimputSource* const src,
+			int* const status);
 
 
 /** Constructor for the SimputMissionIndepSpec data
@@ -323,7 +300,7 @@ SimputSourceEntry* returnSimputSourceEntry(SimputSourceCatalogFile* const cf,
     default values and pointers with NULL. */
 SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status);
 
-/** Destructor for the SimputSourceEntry. Calls destructor routines
+/** Destructor for the SimputSource. Calls destructor routines
     for all contained elements, releases the allocated memory, and
     finally sets the pointer to NULL. */
 void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec);
@@ -350,6 +327,14 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const indepspec, 
 				       int* const status);
 
+/** Return the requested spectrum. Keeps a certain number of spectra
+    in an internal storage. If the requested spectrum is not located
+    in the internal storage, it is loaded from the reference given in
+    the source catalog. */
+SimputMissionIndepSpec* 
+returnSimputMissionIndepSpec(const SimputSource* const src,
+			     const double time, const double mjdref,
+			     int* const status);
 
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
@@ -367,14 +352,14 @@ void simputSetRndGen(double(*rndgen)(void));
     specified in the the catalog. If the source has a time-variable
     spectrum, which is defined via the light curve extension, the
     reference time is required. */
-float getSimputPhotonEnergy(const SimputSourceEntry* const src,
+float getSimputPhotonEnergy(const SimputSource* const src,
 			    const double time,
 			    const double mjdref,
 			    int* const status);
 
 /** Determine the source flux in [erg/s/cm**2] within a certain energy
     band for the particular spectrum. */
-float getEbandFlux(const SimputSourceEntry* const src,
+float getEbandFlux(const SimputSource* const src,
 		   const double time, const double mjdref,
 		   const float emin, const float emax,
 		   int* const status);
@@ -383,7 +368,7 @@ float getEbandFlux(const SimputSourceEntry* const src,
     the nominal photon rate given in the source catalog. It does not
     contain any light curve or other time-variable
     contributions. Specification of instrument ARF required. */
-float getSimputPhotonRate(const SimputSourceEntry* const src,
+float getSimputPhotonRate(const SimputSource* const src,
 			  const double time, const double mjdref,
 			  int* const status);
 
@@ -429,7 +414,7 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status);
     previous photon has to be specified. If the source refers to a
     light curve, which is not stored in memory, it is loaded from the
     location specified in the the catalog. */
-double getSimputPhotonTime(const SimputSourceEntry* const src,
+double getSimputPhotonTime(const SimputSource* const src,
 			   double prevtime,
 			   const double mjdref,
 			   int* const status);
@@ -462,13 +447,13 @@ void saveSimputImg(SimputImg* const img, const char* const filename,
     random position is determined according to the flux distribution
     defined by the source image. The returned coordinate values are
     given in [rad]. */
-void getSimputPhotonCoord(const SimputSourceEntry* const src,
+void getSimputPhotonCoord(const SimputSource* const src,
 			  double* const ra, double* const dec,
 			  int* const status);
 
 /** Return the maximum spatial extension of a particular source around
     its reference point in [rad]. */
-float getSimputSourceExtension(const SimputSourceEntry* const src,
+float getSimputSourceExtension(const SimputSource* const src,
 			       int* const status);
 
 

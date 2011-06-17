@@ -21,7 +21,7 @@ int main( )
 {
   const char filename[] = "crab.fits";
 
-  SimputSourceCatalog* catalog=NULL;
+  SimputCatalog* cat=NULL;
   SimputMissionIndepSpec* spec=NULL;
   SimputLC* lc=NULL;
   int status=EXIT_SUCCESS;
@@ -29,21 +29,20 @@ int main( )
   do { // Error handling loop.
 
     // Create a source catalog with a single source.
-    catalog = getSimputSourceCatalog(&status);
+    cat = openSimputCatalog(filename, READWRITE, &status);
     CHECK_STATUS_BREAK(status);
-    catalog->entries = (SimputSourceEntry**)malloc(sizeof(SimputSourceEntry*));
-    CHECK_NULL_BREAK(catalog->entries, status, "memory allocation failed!\n");
-    catalog->entries[0] = 
-      getSimputSourceEntryV(1, "PSRB0531+21", 
-			    83.633125*M_PI/180., 22.014472*M_PI/180., 
-			    0., 1., 
-			    1., 10., 2.79674e-8, 
-			    "[SPECTRUM,1]", "", "[LIGHTCUR,1]", 
-			    &status);
+    SimputSource* src = 
+      getSimputSourceV(1, "PSRB0531+21", 
+		       83.633125*M_PI/180., 22.014472*M_PI/180., 
+		       0., 1., 
+		       1., 10., 2.79674e-8, 
+		       "[SPECTRUM,1]", "", "[LIGHTCUR,1]", 
+		       &status);
     CHECK_STATUS_BREAK(status);
-    catalog->nentries = 1;
     
-    saveSimputSourceCatalog(catalog, filename, &status);
+    appendSimputSource(cat, src, &status);
+    CHECK_STATUS_BREAK(status);
+    freeSimputCatalog(&cat, &status);
     CHECK_STATUS_BREAK(status);
     // END of catalog creation.
 
@@ -61,7 +60,7 @@ int main( )
   
   freeSimputLC(&lc);
   freeSimputMissionIndepSpec(&spec);
-  freeSimputSourceCatalog(&catalog);
+  freeSimputCatalog(&cat, &status);
   
   fits_report_error(stderr, status);
   return(status);
