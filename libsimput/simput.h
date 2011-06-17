@@ -284,8 +284,10 @@ SimputSourceCatalog* getSimputSourceCatalog(int* const status);
     allocated memory, and finally sets the pointer to NULL. */
 void freeSimputSourceCatalog(SimputSourceCatalog** const catalog);
 
-/** Load the SIMPUT source catalog from the open
-    SimputSourceCatalogFile. */
+/** Load the entire SIMPUT source catalog from the open
+    SimputSourceCatalogFile. The returned SimputSourceCatalog object
+    must be destroyed before destroying the SimputSourceFile
+    object. This routine is deprecated. */
 SimputSourceCatalog* loadSimputSourceCatalog(SimputSourceCatalogFile* const cf,
 					     int* const status);
 
@@ -308,6 +310,12 @@ void freeSimputSourceCatalogFile(SimputSourceCatalogFile** const catalog,
 /** Open an existing file with a SIMPUT source catalog. */
 SimputSourceCatalogFile* openSimputSourceCatalogFile(const char* const filename,
 						     int* const status);
+
+/** Return an entry from a SimputSourceCatalogFile, which is contained
+    in a particular row of the FITS table. */
+SimputSourceEntry* returnSimputSourceEntry(SimputSourceCatalogFile* const cf,
+					   const long row,
+					   int* const status);
 
 
 /** Constructor for the SimputMissionIndepSpec data

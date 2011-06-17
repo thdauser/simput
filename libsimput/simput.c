@@ -284,6 +284,168 @@ void freeSimputSourceEntry(SimputSourceEntry** const entry)
 }
 
 
+static SimputSourceEntry* loadSimputSourceEntry(SimputSourceCatalogFile* const cf,
+						const long row,
+						int* const status)
+{
+  SimputSourceEntry* se=NULL;
+
+  // String buffers.
+  char* src_name[1]={NULL};
+  char* spectrum[1]={NULL};
+  char* image[1]   ={NULL};
+  char* lightcur[1]={NULL};
+
+  do { // Beginning of error handling loop.
+
+    // Allocate memory for string buffers.
+    src_name[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(src_name[0], *status, 
+		     "memory allocation for string buffer failed");
+    spectrum[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(spectrum[0], *status, 
+		     "memory allocation for string buffer failed");
+    image[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(image[0], *status, 
+		     "memory allocation for string buffer failed");
+    lightcur[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(lightcur[0], *status, 
+		     "memory allocation for string buffer failed");
+
+    long src_id=0;
+    double ra=0., dec=0.;
+    float imgrota=0., imgscal=1.;
+    float e_min=0., e_max=0., flux=0.;
+      
+    // Read the data from the table.
+    int anynul=0;
+    fits_read_col(cf->fptr, TLONG, cf->csrc_id, row+1, 1, 1, 
+		  &src_id, &src_id, &anynul, status);
+    
+    if (cf->csrc_name>0) {
+      fits_read_col_str(cf->fptr, cf->csrc_name, row+1, 1, 1, 
+			"", src_name, &anynul, status);
+    } else {
+      strcpy(src_name[0], "");
+    }
+
+    fits_read_col(cf->fptr, TDOUBLE, cf->cra, row+1, 1, 1, &ra, &ra, &anynul, status);
+    ra  *= cf->fra;  // Convert to [rad].
+    fits_read_col(cf->fptr, TDOUBLE, cf->cdec, row+1, 1, 1, &dec, &dec, &anynul, status);
+    dec *= cf->fdec; // Convert to [rad].
+
+    if (cf->cimgrota>0) {
+      fits_read_col(cf->fptr, TFLOAT, cf->cimgrota, row+1, 1, 1, 
+		    &imgrota, &imgrota, &anynul, status);
+      imgrota *= cf->fimgrota; // Convert to [rad].
+    }
+    if (cf->cimgscal>0) {
+      fits_read_col(cf->fptr, TFLOAT, cf->cimgscal, row+1, 1, 1, 
+		    &imgscal, &imgscal, &anynul, status);
+    }
+    
+    fits_read_col(cf->fptr, TFLOAT, cf->ce_min, row+1, 1, 1, 
+		  &e_min, &e_min, &anynul, status);
+    e_min *= cf->fe_min; // Convert to [keV].
+    fits_read_col(cf->fptr, TFLOAT, cf->ce_max, row+1, 1, 1, 
+		  &e_max, &e_max, &anynul, status);
+    e_max *= cf->fe_max; // Convert to [keV].
+    fits_read_col(cf->fptr, TFLOAT, cf->cflux, row+1, 1, 1, 
+		  &flux, &flux, &anynul, status);
+    flux  *= cf->fflux; // Convert to [erg/s/cm**2].
+
+    fits_read_col(cf->fptr, TSTRING, cf->cspectrum, row+1, 1, 1, 
+		  "", spectrum, &anynul, status);
+    fits_read_col(cf->fptr, TSTRING, cf->cimage, row+1, 1, 1, 
+		  "", image, &anynul, status);
+    fits_read_col(cf->fptr, TSTRING, cf->clightcur, row+1, 1, 1, 
+		  "", lightcur, &anynul, status);
+
+    CHECK_STATUS_BREAK(*status);
+
+    // Create a new SimputSourceEntry data structure.
+    se = 
+      getSimputSourceEntryV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
+			    e_min, e_max, flux, spectrum[0], image[0],
+			    lightcur[0], status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Set the pointers to the filename and filepath in the
+    // SimputCatalogFile data structure.
+    se->filepath = &cf->filepath;
+    se->filename = &cf->filename;
+
+  } while(0); // END of error handling loop.
+
+  // Release memory.
+  if (NULL!=src_name[0]) free(src_name[0]);
+  if (NULL!=spectrum[0]) free(spectrum[0]);
+  if (NULL!=image[0])    free(image[0]);
+  if (NULL!=lightcur[0]) free(lightcur[0]);
+
+  return(se);
+}
+
+
+SimputSourceEntry* returnSimputSourceEntry(SimputSourceCatalogFile* const cf,
+					   const long row,
+					   int* const status)
+{
+  const long maxsources=1000000; // Maximum number of sources in the cash.
+  static long nsources=0;        // Current number of sources in the cash.
+  static long csource=0;         // Index of next position in cash that will be used.
+
+  // Cash for the sources.
+  static SimputSourceEntry** sources=NULL;
+  // Rows in the FITS table corresponding to the sources in the cash.
+  static long* rows=NULL;
+
+  // Check if the cash already exists or whether this routine is 
+  // called for the first time.
+  if (NULL==rows) {
+    // Allocate memory for the cash.
+    rows=(long*)malloc(maxsources*sizeof(long));
+    CHECK_NULL_RET(rows, *status, 
+		   "memory allocation for source cash failed", NULL);
+    sources=(SimputSourceEntry**)malloc(maxsources*sizeof(SimputSourceEntry*));
+    CHECK_NULL_RET(sources, *status,
+		   "memory allocation for source cash failed", NULL);
+  }
+
+  // Search if the requested row is already available in the cash.
+  long ii;
+  for (ii=0; ii<nsources; ii++) {
+    if (row==rows[ii]) {
+      return(sources[ii]);
+    }
+  }
+
+  // The requested source is not contained in the cash.
+  // Therefore we must load it from the FITS file.
+  
+  // Check if there is still space left in the cash.
+  if (nsources<maxsources) {
+    csource = nsources;
+    nsources++;
+  } else {
+    csource++;
+    if (csource>=maxsources) {
+      csource=0;
+    }
+    // Destroy the source that is currently stored at this place 
+    // in the cash.
+    freeSimputSourceEntry(&(sources[csource]));
+  }
+
+  // Load the source from the FITS file.
+  sources[csource]=loadSimputSourceEntry(cf, row, status);
+  CHECK_STATUS_RET(*status, sources[csource]);
+  rows[csource]=row;
+
+  return(sources[csource]);
+}
+
+
 SimputSourceCatalog* getSimputSourceCatalog(int* const status)
 {
   SimputSourceCatalog* catalog=(SimputSourceCatalog*)malloc(sizeof(SimputSourceCatalog));
@@ -333,100 +495,13 @@ SimputSourceCatalog* loadSimputSourceCatalog(SimputSourceCatalogFile* const cf,
 		     "memory allocation for catalog entries failed");
     catalog->nentries = cf->nentries;
 
-    // Allocate memory for string buffers.
-    char* src_name[1]={NULL};
-    char* spectrum[1]={NULL};
-    char* image[1]   ={NULL};
-    char* lightcur[1]={NULL};
-    src_name[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
-    CHECK_NULL_BREAK(src_name[0], *status, 
-		     "memory allocation for string buffer failed");
-    spectrum[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
-    CHECK_NULL_BREAK(spectrum[0], *status, 
-		     "memory allocation for string buffer failed");
-    image[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
-    CHECK_NULL_BREAK(image[0], *status, 
-		     "memory allocation for string buffer failed");
-    lightcur[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
-    CHECK_NULL_BREAK(lightcur[0], *status, 
-		     "memory allocation for string buffer failed");
-
     // Loop over all rows in the FITS table.
     long ii;
     for (ii=0; ii<cf->nentries; ii++) {
-      long src_id=0;
-      double ra=0., dec=0.;
-      float imgrota=0., imgscal=1.;
-      float e_min=0., e_max=0., flux=0.;
-      
-      // Read the data from the table.
-      int anynul=0;
-      fits_read_col(cf->fptr, TLONG, cf->csrc_id, ii+1, 1, 1, 
-		    &src_id, &src_id, &anynul, status);
-
-      if (cf->csrc_name>0) {
-	fits_read_col_str(cf->fptr, cf->csrc_name, ii+1, 1, 1, 
-			  "", src_name, &anynul, status);
-      } else {
-	strcpy(src_name[0], "");
-      }
-
-      fits_read_col(cf->fptr, TDOUBLE, cf->cra, ii+1, 1, 1, &ra, &ra, &anynul, status);
-      ra  *= cf->fra;  // Convert to [rad].
-      fits_read_col(cf->fptr, TDOUBLE, cf->cdec, ii+1, 1, 1, &dec, &dec, &anynul, status);
-      dec *= cf->fdec; // Convert to [rad].
-
-      if (cf->cimgrota>0) {
-	fits_read_col(cf->fptr, TFLOAT, cf->cimgrota, ii+1, 1, 1, 
-		      &imgrota, &imgrota, &anynul, status);
-	imgrota *= cf->fimgrota; // Convert to [rad].
-      }
-      if (cf->cimgscal>0) {
-	fits_read_col(cf->fptr, TFLOAT, cf->cimgscal, ii+1, 1, 1, 
-		      &imgscal, &imgscal, &anynul, status);
-      }
-      
-      fits_read_col(cf->fptr, TFLOAT, cf->ce_min, ii+1, 1, 1, 
-		    &e_min, &e_min, &anynul, status);
-      e_min *= cf->fe_min; // Convert to [keV].
-      fits_read_col(cf->fptr, TFLOAT, cf->ce_max, ii+1, 1, 1, 
-		    &e_max, &e_max, &anynul, status);
-      e_max *= cf->fe_max; // Convert to [keV].
-      fits_read_col(cf->fptr, TFLOAT, cf->cflux, ii+1, 1, 1, 
-		    &flux, &flux, &anynul, status);
-      flux  *= cf->fflux; // Convert to [erg/s/cm**2].
-
-      fits_read_col(cf->fptr, TSTRING, cf->cspectrum, ii+1, 1, 1, 
-		    "", spectrum, &anynul, status);
-      fits_read_col(cf->fptr, TSTRING, cf->cimage, ii+1, 1, 1, 
-		    "", image, &anynul, status);
-      fits_read_col(cf->fptr, TSTRING, cf->clightcur, ii+1, 1, 1, 
-		    "", lightcur, &anynul, status);
-
+      catalog->entries[ii] = loadSimputSourceEntry(cf, ii, status);
       CHECK_STATUS_BREAK(*status);
-
-      // Add a new entry to the catalog.
-      catalog->entries[ii] = 
-	getSimputSourceEntryV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
-			      e_min, e_max, flux, spectrum[0], image[0],
-			      lightcur[0], status);
-      CHECK_STATUS_BREAK(*status);
-
-      // Set the pointers to the filename and filepath in the catalog
-      // data structure.
-      // TODO Do not do this any more!
-      catalog->entries[ii]->filepath = &cf->filepath;
-      catalog->entries[ii]->filename = &cf->filename;
-
     }
     // END of loop over all rows in the table.
-
-    // Release allocated memory.
-    if (NULL!=src_name[0]) free(src_name[0]);
-    if (NULL!=spectrum[0]) free(spectrum[0]);
-    if (NULL!=image[0])    free(image[0]);
-    if (NULL!=lightcur[0]) free(lightcur[0]);
-
     CHECK_STATUS_BREAK(*status);
 
   } while(0); // END of error handling loop.
