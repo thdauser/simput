@@ -390,33 +390,55 @@ SimputSource* returnSimputSource(SimputCatalog* const cf,
 
   // Cash for the sources.
   static SimputSource** sources=NULL;
-  // Rows in the FITS table corresponding to the sources in the cash.
-  static long* rows=NULL;
 
+  // This array contains the row numbers of the sources in the storage
+  // given in the same order as the corresponding sources in the storage.
+  // The array is used to replace the oldest source in the storage.
+  static long* rownumbers=NULL;
+
+  // Array with a size corresponding to the number of entries 
+  // in the catalog. Each entry in the array refers to the index
+  // of the corresponding source in the storage. If the respective
+  // source is not contained in the storage, the value in the array
+  // is -1.
+  static long* rowmap=NULL;
+
+
+  // Check if the row map exists or whether this routine is 
+  // called for the first time.
+  if (NULL==rowmap) {
+    // Allocate memory for the cash.
+    rowmap=(long*)malloc(cf->nentries*sizeof(long));
+    CHECK_NULL_RET(rowmap, *status, 
+		   "memory allocation for row map failed", NULL);
+    long jj;
+    for (jj=0; jj<cf->nentries; jj++) {
+      rowmap[jj] = -1;
+    }
+  }
+   
   // Check if the cash already exists or whether this routine is 
   // called for the first time.
-  if (NULL==rows) {
-    // Allocate memory for the cash.
-    rows=(long*)malloc(maxsources*sizeof(long));
-    CHECK_NULL_RET(rows, *status, 
-		   "memory allocation for source cash failed", NULL);
+  if (NULL==sources) { 
     sources=(SimputSource**)malloc(maxsources*sizeof(SimputSource*));
     CHECK_NULL_RET(sources, *status,
 		   "memory allocation for source cash failed", NULL);
   }
+  if (NULL==rownumbers) { 
+    rownumbers=(long*)malloc(maxsources*sizeof(long));
+    CHECK_NULL_RET(rownumbers, *status,
+		   "memory allocation for array of row numbers failed", NULL);
+  }
 
-  // Search if the requested row is already available in the cash.
-  long ii;
-  for (ii=0; ii<nsources; ii++) {
-    if (row==rows[ii]) {
-      return(sources[ii]);
-    }
+  // Check if the requested row is already available in the cash.
+  if (rowmap[row-1]>0) {
+    return(sources[rowmap[row-1]]);
   }
 
   // The requested source is not contained in the cash.
   // Therefore we must load it from the FITS file.
   
-  // Check if there is still space left in the cash.
+  // Check if the cash is already full.
   if (nsources<maxsources) {
     csource = nsources;
     nsources++;
@@ -428,12 +450,15 @@ SimputSource* returnSimputSource(SimputCatalog* const cf,
     // Destroy the source that is currently stored at this place 
     // in the cash.
     freeSimputSource(&(sources[csource]));
+    rowmap[rownumbers[csource]-1] = -1;
+    rownumbers[csource] = 0;
   }
 
   // Load the source from the FITS file.
   sources[csource]=loadSimputSource(cf, row, status);
   CHECK_STATUS_RET(*status, sources[csource]);
-  rows[csource]=row;
+  rownumbers[csource]=row;
+  rowmap[row-1]=csource;
 
   return(sources[csource]);
 }
