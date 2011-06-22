@@ -1074,7 +1074,6 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
 }
 
 
-
 void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 				const char* const filename,
 				char* const extname,
@@ -1484,9 +1483,11 @@ returnSimputMissionIndepSpec(const SimputSource* const src,
   strcpy(spectra[cspectrum]->fileref, fileref);
 
   // Multiply it by the ARF in order to obtain the spectral distribution.
-  convSimputMissionIndepSpecWithARF(spectra[cspectrum], status);
-  CHECK_STATUS_RET(*status, spectra[cspectrum]);
-   
+  if (NULL!=static_arf) {
+    convSimputMissionIndepSpecWithARF(spectra[cspectrum], status);
+    CHECK_STATUS_RET(*status, spectra[cspectrum]);
+  }
+
   return(spectra[cspectrum]);
 }
 
@@ -1536,11 +1537,9 @@ static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
   assert(rnd>=0.);
   assert(rnd<=1.);
 
-  if (NULL==spec->distribution) {
-    SIMPUT_ERROR("spectral distribution undefined");
-    *status=EXIT_FAILURE;
-    return(0.);
-  }
+  // Check if the spectrum has been convolved with the ARF.
+  CHECK_NULL_RET(spec->distribution, *status,
+		 "spectrum is not convolved with ARF", 0.);
 
   // Multiply with the total photon rate.
   rnd *= spec->distribution[spec->nentries-1];
@@ -1651,6 +1650,10 @@ static float getEbandRate(const SimputSource* const src,
     returnSimputMissionIndepSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
+  // Check if the spectrum has been convolved with the ARF.
+  CHECK_NULL_RET(spec->distribution, *status,
+		 "spectrum is not convolved with ARF", 0.);
+
   // Return value.
   float rate=0.;
 
@@ -1684,6 +1687,10 @@ float getSimputPhotonRate(const SimputSource* const src,
   SimputMissionIndepSpec* spec=
     returnSimputMissionIndepSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
+
+  // Check if the spectrum has been convolved with the ARF.
+  CHECK_NULL_RET(spec->distribution, *status,
+		 "spectrum is not convolved with ARF", 0.);
 
   return(src->flux / 
 	 getEbandFlux(src, time, mjdref, src->e_min, src->e_max, status) *
@@ -2492,11 +2499,19 @@ double getSimputPhotonTime(const SimputSource* const src,
     
     // The range of the light curve has been exceeded.
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "light curve interval exceeded (end time %lf MJD)",
-	    mjdref + prevtime/24./3600.);
-    SIMPUT_ERROR(msg);
-    *status=EXIT_FAILURE;
-    return(0.);
+    char msg2[SIMPUT_MAXSTR];
+    strcpy(msg, "light curve interval exceeded");
+    if (src->src_name) {
+      strcat(msg, " for source '");
+      strcat(msg, src->src_name);
+      strcat(msg, "'");
+    }
+    strcat(msg, "\n");
+    sprintf(msg2, " end time: %lf\n", mjdref + prevtime/24./3600.);
+    strcat(msg, msg2);
+    //    SIMPUT_ERROR(msg); // TODO
+    //    *status=EXIT_FAILURE;
+    return(1.e12);
   }
 }
 
