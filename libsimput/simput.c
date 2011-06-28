@@ -1692,9 +1692,11 @@ float getSimputPhotonRate(const SimputSource* const src,
   CHECK_NULL_RET(spec->distribution, *status,
 		 "spectrum is not convolved with ARF", 0.);
 
-  return(src->flux / 
-	 getEbandFlux(src, time, mjdref, src->e_min, src->e_max, status) *
-	 spec->distribution[spec->nentries-1]);
+  // Flux in the reference energy band.
+  float refband_flux = 
+    getEbandFlux(src, time, mjdref, src->e_min, src->e_max, status);
+
+  return(src->flux / refband_flux * spec->distribution[spec->nentries-1]);
 }
 
 

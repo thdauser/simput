@@ -284,7 +284,9 @@ void freeSimputSource(SimputSource** const entry);
 
 /** Return an entry from a SimputCatalog, which is contained in a
     particular row of the FITS table. According to the FITS
-    conventions row numbering starts with 1 for the first line. */
+    conventions row numbering starts with 1 for the first line. The
+    returned pointer to the SimputSource should not be free'd, since
+    the allocated memory is managed by an internal cash storage. */
 SimputSource* returnSimputSource(SimputCatalog* const cf,
 				 const long row,
 				 int* const status);
@@ -330,7 +332,9 @@ void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const indepspec,
 /** Return the requested spectrum. Keeps a certain number of spectra
     in an internal storage. If the requested spectrum is not located
     in the internal storage, it is loaded from the reference given in
-    the source catalog. */
+    the source catalog. The returned pointer to the
+    SimputMissionIndepSpec should not be free'd, since the allocated
+    memory is managed by an internal cash storage.*/
 SimputMissionIndepSpec* 
 returnSimputMissionIndepSpec(const SimputSource* const src,
 			     const double time, const double mjdref,
