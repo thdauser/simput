@@ -27,7 +27,7 @@ void printSimputSource(SimputSource* sse) {
   printf(" IMGSCAL:\t%f\n", sse->imgscal);
   printf(" E_MIN:\t\t%f\n", sse->e_min);
   printf(" E_MAX:\t\t%f\n", sse->e_max);
-  printf(" FLUX:\t\t%f\n", sse->flux);
+  printf(" FLUX:\t\t%f\n", sse->eflux);
   printf(" SPECTRUM:\t'%s'\n", sse->spectrum);
   printf(" IMAGE:\t\t'%s'\n", sse->image);
   printf(" LIGHTCUR:\t'%s'\n", sse->lightcur);
@@ -94,15 +94,15 @@ int main(int argc, char **argv)
       spec->nentries=2;
       spec->energy  = (float*)malloc(2*sizeof(float));
       CHECK_NULL_BREAK(spec->energy, status, "memory allocation failed!\n");
-      spec->flux    = (float*)malloc(2*sizeof(float));
-      CHECK_NULL_BREAK(spec->flux, status, "memory allocation failed!\n");
+      spec->pflux   = (float*)malloc(2*sizeof(float));
+      CHECK_NULL_BREAK(spec->pflux, status, "memory allocation failed!\n");
       spec->name    = (char*)malloc(1024*sizeof(char));
       CHECK_NULL_BREAK(spec->name, status, "memory allocation failed!\n");
 
       spec->energy[0] = 1.;
-      spec->flux[0]   = 0.8;
+      spec->pflux[0]   = 0.8;
       spec->energy[1] = 2.;
-      spec->flux[1]   = 0.6;
+      spec->pflux[1]   = 0.6;
       strcpy(spec->name, "spec1");
 
       saveSimputMissionIndepSpec(spec, filename, "SPEC", 1, &status);
@@ -116,17 +116,17 @@ int main(int argc, char **argv)
       spec2->nentries=3;
       spec2->energy  = (float*)malloc(3*sizeof(float));
       CHECK_NULL_BREAK(spec2->energy, status, "memory allocation failed!\n");
-      spec2->flux    = (float*)malloc(3*sizeof(float));
-      CHECK_NULL_BREAK(spec2->flux, status, "memory allocation failed!\n");
+      spec2->pflux    = (float*)malloc(3*sizeof(float));
+      CHECK_NULL_BREAK(spec2->pflux, status, "memory allocation failed!\n");
       spec2->name    = (char*)malloc(1024*sizeof(char));
       CHECK_NULL_BREAK(spec2->name, status, "memory allocation failed!\n");
 
       spec2->energy[0] = 1.5;
-      spec2->flux[0]   = 0.75;
+      spec2->pflux[0]   = 0.75;
       spec2->energy[1] = 2.5;
-      spec2->flux[1]   = 0.65;
+      spec2->pflux[1]   = 0.65;
       spec2->energy[2] = 3.5;
-      spec2->flux[2]   = 0.55;
+      spec2->pflux[2]   = 0.55;
       strcpy(spec2->name, "spec2");
 
       saveSimputMissionIndepSpec(spec2, filename, "SPEC", 1, &status);

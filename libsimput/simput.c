@@ -190,7 +190,7 @@ SimputSource* getSimputSource(int* const status)
   entry->imgscal =1.;
   entry->e_min   =0.;
   entry->e_max   =0.;
-  entry->flux    =0.;
+  entry->eflux   =0.;
   entry->spectrum=NULL;
   entry->image   =NULL;
   entry->lightcur=NULL;
@@ -209,7 +209,7 @@ SimputSource* getSimputSourceV(const long src_id,
 			       const float imgscal,
 			       const float e_min,
 			       const float e_max,
-			       const float flux,
+			       const float eflux,
 			       const char* const spectrum,
 			       const char* const image,
 			       const char* const lightcur,
@@ -232,7 +232,7 @@ SimputSource* getSimputSourceV(const long src_id,
   entry->imgscal = imgscal;
   entry->e_min   = e_min;
   entry->e_max   = e_max;
-  entry->flux    = flux;
+  entry->eflux   = eflux;
 
   entry->spectrum=(char*)malloc((strlen(spectrum)+1)*sizeof(char));
   CHECK_NULL_RET(entry->spectrum, *status,
@@ -750,7 +750,7 @@ void appendSimputSource(SimputCatalog* const cf,
   fits_write_col(cf->fptr, TFLOAT, cf->ce_max, cf->nentries, 1, 1, 
 		 &src->e_max, status);
   fits_write_col(cf->fptr, TFLOAT, cf->cflux, cf->nentries, 1, 1, 
-		 &src->flux, status);
+		 &src->eflux, status);
   fits_write_col(cf->fptr, TSTRING, cf->cspectrum, cf->nentries, 1, 1, 
 		 &src->spectrum, status);
   fits_write_col(cf->fptr, TSTRING, cf->cimage, cf->nentries, 1, 1, 
@@ -904,7 +904,7 @@ SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status)
   // Initialize elements.
   spec->nentries=0;
   spec->energy  =NULL;
-  spec->flux    =NULL;
+  spec->pflux    =NULL;
   spec->distribution=NULL;
   spec->name    =NULL;
   spec->fileref =NULL;
@@ -919,8 +919,8 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec)
     if (NULL!=(*spec)->energy) {
       free((*spec)->energy);
     }
-    if (NULL!=(*spec)->flux) {
-      free((*spec)->flux);
+    if (NULL!=(*spec)->pflux) {
+      free((*spec)->pflux);
     }
     if (NULL!=(*spec)->distribution) {
       free((*spec)->distribution);
@@ -1023,8 +1023,8 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
     spec->energy  = (float*)malloc(spec->nentries*sizeof(float));
     CHECK_NULL_BREAK(spec->energy, *status, 
 		     "memory allocation for spectrum failed");
-    spec->flux    = (float*)malloc(spec->nentries*sizeof(float));
-    CHECK_NULL_BREAK(spec->flux, *status, 
+    spec->pflux   = (float*)malloc(spec->nentries*sizeof(float));
+    CHECK_NULL_BREAK(spec->pflux, *status, 
 		     "memory allocation for spectrum failed");
 
     // Allocate memory for string buffer.
@@ -1037,7 +1037,7 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
     fits_read_col(fptr, TFLOAT, cenergy, 1, 1, spec->nentries, 
 		  0, spec->energy, &anynul, status);
     fits_read_col(fptr, TFLOAT, cflux, 1, 1, spec->nentries, 
-		  0, spec->flux, &anynul, status);
+		  0, spec->pflux, &anynul, status);
 
     if (cname>0) {
       fits_read_col(fptr, TSTRING, cname, 1, 1, 1, "", name, &anynul, status);
@@ -1051,7 +1051,7 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
     long ii;
     for (ii=0; ii<spec->nentries; ii++) {
       spec->energy[ii] *= fenergy;
-      spec->flux[ii]   *= fflux;
+      spec->pflux[ii]  *= fflux;
     }
 
     // Copy the name (ID) of the spectrum from the string buffer
@@ -1238,7 +1238,7 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
     fits_write_col(fptr, TFLOAT, cenergy, nrows, 1, spec->nentries, 
 		   spec->energy, status);
     fits_write_col(fptr, TFLOAT, cflux, nrows, 1, spec->nentries, 
-		   spec->flux, status);
+		   spec->pflux, status);
     if ((cname>0) && (NULL!=spec->name)) {
       fits_write_col(fptr, TSTRING, cname, nrows, 1, 1, &spec->name, status);
     }
@@ -1586,7 +1586,7 @@ void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec,
     for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
       if ((static_arf->LowEnergy[jj] <=spec->energy[ii]) && 
 	  (static_arf->HighEnergy[jj]> spec->energy[ii])) {
-	spec->distribution[ii] = spec->flux[ii]*static_arf->EffArea[jj];
+	spec->distribution[ii] = spec->pflux[ii]*static_arf->EffArea[jj];
 	break;
       }
     }
@@ -1630,7 +1630,7 @@ float getEbandFlux(const SimputSource* const src,
       float min = MAX(binmin, emin);
       float max = MIN(binmax, emax);
       assert(max>min);
-      flux += (max-min) * spec->flux[ii] * spec->energy[ii];
+      flux += (max-min) * spec->pflux[ii] * spec->energy[ii];
     }
   }
 
@@ -1696,7 +1696,7 @@ float getSimputPhotonRate(const SimputSource* const src,
   float refband_flux = 
     getEbandFlux(src, time, mjdref, src->e_min, src->e_max, status);
 
-  return(src->flux / refband_flux * spec->distribution[spec->nentries-1]);
+  return(src->eflux / refband_flux * spec->distribution[spec->nentries-1]);
 }
 
 

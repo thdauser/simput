@@ -60,9 +60,9 @@ typedef struct {
   /** Upper limit of reference energy band [keV]. */
   float e_max;
 
-  /** Source flux density in the reference energy band
+  /** Source energy flux density in the reference energy band
       [erg/s/cm^2]. */
-  float flux;
+  float eflux;
 
   /** Reference to the storage location of the source spectrum. */
   char* spectrum;
@@ -118,8 +118,8 @@ typedef struct {
   /** Energy values [keV]. */
   float* energy;
 
-  /** Source flux distribution [photons/s/cm**2/keV]. */
-  float* flux;
+  /** Photon flux distribution [photons/s/cm**2/keV]. */
+  float* pflux;
 
   /** Probability distribution normalized to the total photon rate
       [photons/s]. */
@@ -271,7 +271,7 @@ SimputSource* getSimputSourceV(const long src_id,
 			       const float imgscal,
 			       const float e_min,
 			       const float e_max,
-			       const float flux,
+			       const float eflux,
 			       const char* const spectrum,
 			       const char* const image,
 			       const char* const lightcur,
@@ -361,8 +361,8 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 			    const double mjdref,
 			    int* const status);
 
-/** Determine the source flux in [erg/s/cm**2] within a certain energy
-    band for the particular spectrum. */
+/** Determine the energy flux of the source in [erg/s/cm**2] within a
+    certain energy band for the particular spectrum. */
 float getEbandFlux(const SimputSource* const src,
 		   const double time, const double mjdref,
 		   const float emin, const float emax,
