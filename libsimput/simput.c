@@ -2429,17 +2429,27 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
 double getSimputPhotonTime(const SimputSource* const src,
 			   double prevtime,
 			   const double mjdref,
+			   int* const failed,
 			   int* const status)
 {
   // Determine the light curve.
   SimputLC* lc=returnSimputLC(src, prevtime, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
+  // Set the 'failed' flag to its default value.
+  *failed=0.;
+
   // Check, whether the source has constant brightness.
   if (NULL==lc) {
     // The source has a constant brightness.
-    return(prevtime+
-	   rndexp((double)1./getSimputPhotonRate(src, prevtime, mjdref, status)));
+    float rate = getSimputPhotonRate(src, prevtime, mjdref, status);
+    if (0.==rate) {
+      *failed=1;
+      return(0.);
+    } else {
+      assert(rate>0.);
+      return(prevtime+ rndexp((double)1./rate));
+    }
   } else {
     // The source has a time-variable brightness.
 
@@ -2500,20 +2510,8 @@ double getSimputPhotonTime(const SimputSource* const src,
     }
     
     // The range of the light curve has been exceeded.
-    char msg[SIMPUT_MAXSTR];
-    char msg2[SIMPUT_MAXSTR];
-    strcpy(msg, "light curve interval exceeded");
-    if (src->src_name) {
-      strcat(msg, " for source '");
-      strcat(msg, src->src_name);
-      strcat(msg, "'");
-    }
-    strcat(msg, "\n");
-    sprintf(msg2, " end time: %lf\n", mjdref + prevtime/24./3600.);
-    strcat(msg, msg2);
-    //    SIMPUT_ERROR(msg); // TODO
-    //    *status=EXIT_FAILURE;
-    return(1.e12);
+    *failed=1;
+    return(0.);
   }
 }
 

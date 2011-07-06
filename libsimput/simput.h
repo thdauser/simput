@@ -417,10 +417,13 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status);
     time-dependet, a reference time defined by the arrival time of the
     previous photon has to be specified. If the source refers to a
     light curve, which is not stored in memory, it is loaded from the
-    location specified in the the catalog. */
+    location specified in the the catalog. If the light curve time is
+    exceeded or the source flux is zero, the 'failed' flag is set to
+    1. Otherwise its value is 0. */
 double getSimputPhotonTime(const SimputSource* const src,
 			   double prevtime,
 			   const double mjdref,
+			   int* const failed,
 			   int* const status);
 
 
