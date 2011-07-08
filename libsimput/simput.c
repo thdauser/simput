@@ -70,6 +70,26 @@
 /////////////////////////////////////////////////////////////////
 
 
+struct SimputSourceBuffer {
+  long nsources; // Current number of sources in the cash.
+  long csource;  // Index of next position in cash that will be used.
+
+  // Cash for the sources.
+  SimputSource** sources;
+
+  // This array contains the row numbers of the sources in the storage
+  // given in the same order as the corresponding sources in the storage.
+  // The array is used to replace the oldest source in the storage.
+  long* rownumbers;
+
+  // Array with a size corresponding to the number of entries 
+  // in the catalog. Each entry in the array refers to the index
+  // of the corresponding source in the storage. If the respective
+  // source is not contained in the storage, the value in the array
+  // is -1.
+  long* rowmap;
+};
+
 
 /////////////////////////////////////////////////////////////////
 // Static Variables.
@@ -275,11 +295,49 @@ void freeSimputSource(SimputSource** const entry)
 }
 
 
-/** Load a source from a particular row of the catalog in the FITS
-    file. Row numbering starts at 1. */
-static SimputSource* loadSimputSource(SimputCatalog* const cf,
-				      const long row,
-				      int* const status)
+static struct SimputSourceBuffer* getSimputSourceBuffer(int* const status)
+{
+  struct SimputSourceBuffer *srcbuff = 
+    (struct SimputSourceBuffer*)malloc(sizeof(struct SimputSourceBuffer));
+
+  CHECK_NULL_RET(srcbuff, *status, 
+		 "memory allocation for SimputSourceBuffer failed", srcbuff);
+    
+  srcbuff->nsources  =0;
+  srcbuff->csource   =0;
+  srcbuff->sources   =NULL;
+  srcbuff->rownumbers=NULL;
+  srcbuff->rowmap    =NULL;
+
+  return(srcbuff);
+}
+
+
+static void freeSimputSourceBuffer(struct SimputSourceBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->sources) {
+      long ii;
+      for (ii=0; ii<(*sb)->nsources; ii++) {
+	freeSimputSource(&((*sb)->sources[ii]));
+      }
+      free((*sb)->sources);
+    }
+    if (NULL!=(*sb)->rownumbers) {
+      free((*sb)->rownumbers);
+    }
+    if (NULL!=(*sb)->rowmap) {
+      free((*sb)->rowmap);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+SimputSource* loadSimputSource(SimputCatalog* const cf,
+			       const long row,
+			       int* const status)
 {
   SimputSource* se=NULL;
 
@@ -385,82 +443,74 @@ SimputSource* returnSimputSource(SimputCatalog* const cf,
 				 int* const status)
 {
   const long maxsources=1000000; // Maximum number of sources in the cash.
-  static long nsources=0;        // Current number of sources in the cash.
-  static long csource=0;         // Index of next position in cash that will be used.
 
-  // Cash for the sources.
-  static SimputSource** sources=NULL;
+  // Check if the source catalog contains a source buffer.
+  if (NULL==cf->srcbuff) {
+    cf->srcbuff = getSimputSourceBuffer(status);
+    CHECK_STATUS_RET(*status, NULL);
+  }
 
-  // This array contains the row numbers of the sources in the storage
-  // given in the same order as the corresponding sources in the storage.
-  // The array is used to replace the oldest source in the storage.
-  static long* rownumbers=NULL;
-
-  // Array with a size corresponding to the number of entries 
-  // in the catalog. Each entry in the array refers to the index
-  // of the corresponding source in the storage. If the respective
-  // source is not contained in the storage, the value in the array
-  // is -1.
-  static long* rowmap=NULL;
+  // Convert the void* pointer to the source buffer into the right
+  // format.
+  struct SimputSourceBuffer* sb = (struct SimputSourceBuffer*)cf->srcbuff;
 
 
-  // Check if the row map exists or whether this routine is 
-  // called for the first time.
-  if (NULL==rowmap) {
-    // Allocate memory for the cash.
-    rowmap=(long*)malloc(cf->nentries*sizeof(long));
-    CHECK_NULL_RET(rowmap, *status, 
+  // Allocate memory for the cash.
+  if (NULL==sb->rowmap) {
+    sb->rowmap=(long*)malloc(cf->nentries*sizeof(long));
+    CHECK_NULL_RET(sb->rowmap, *status, 
 		   "memory allocation for row map failed", NULL);
     long jj;
     for (jj=0; jj<cf->nentries; jj++) {
-      rowmap[jj] = -1;
+      sb->rowmap[jj] = -1;
     }
   }
-   
+
   // Check if the cash already exists or whether this routine is 
   // called for the first time.
-  if (NULL==sources) { 
-    sources=(SimputSource**)malloc(maxsources*sizeof(SimputSource*));
-    CHECK_NULL_RET(sources, *status,
+  if (NULL==sb->sources) {
+    sb->sources=(SimputSource**)malloc(maxsources*sizeof(SimputSource*));
+    CHECK_NULL_RET(sb->sources, *status,
 		   "memory allocation for source cash failed", NULL);
   }
-  if (NULL==rownumbers) { 
-    rownumbers=(long*)malloc(maxsources*sizeof(long));
-    CHECK_NULL_RET(rownumbers, *status,
+  if (NULL==sb->rownumbers) {
+    sb->rownumbers=(long*)malloc(maxsources*sizeof(long));
+    CHECK_NULL_RET(sb->rownumbers, *status,
 		   "memory allocation for array of row numbers failed", NULL);
   }
 
+
   // Check if the requested row is already available in the cash.
-  if (rowmap[row-1]>0) {
-    return(sources[rowmap[row-1]]);
+  if (sb->rowmap[row-1]>0) {
+    return(sb->sources[sb->rowmap[row-1]]);
   }
 
   // The requested source is not contained in the cash.
   // Therefore we must load it from the FITS file.
   
   // Check if the cash is already full.
-  if (nsources<maxsources) {
-    csource = nsources;
-    nsources++;
+  if (sb->nsources<maxsources) {
+    sb->csource = sb->nsources;
+    sb->nsources++;
   } else {
-    csource++;
-    if (csource>=maxsources) {
-      csource=0;
+    sb->csource++;
+    if (sb->csource>=maxsources) {
+      sb->csource=0;
     }
     // Destroy the source that is currently stored at this place 
     // in the cash.
-    freeSimputSource(&(sources[csource]));
-    rowmap[rownumbers[csource]-1] = -1;
-    rownumbers[csource] = 0;
+    freeSimputSource(&(sb->sources[sb->csource]));
+    sb->rowmap[sb->rownumbers[sb->csource]-1] = -1;
+    sb->rownumbers[sb->csource] = 0;
   }
 
   // Load the source from the FITS file.
-  sources[csource]=loadSimputSource(cf, row, status);
-  CHECK_STATUS_RET(*status, sources[csource]);
-  rownumbers[csource]=row;
-  rowmap[row-1]=csource;
+  sb->sources[sb->csource]=loadSimputSource(cf, row, status);
+  CHECK_STATUS_RET(*status, sb->sources[sb->csource]);
+  sb->rownumbers[sb->csource]=row;
+  sb->rowmap[row-1]=sb->csource;
 
-  return(sources[csource]);
+  return(sb->sources[sb->csource]);
 }
 
 
@@ -494,6 +544,7 @@ SimputCatalog* getSimputCatalog(int* const status)
   cf->fe_max   =0.;
   cf->filepath =NULL;
   cf->filename =NULL;
+  cf->srcbuff  =NULL;
 
   return(cf);
 }
@@ -511,6 +562,9 @@ void freeSimputCatalog(SimputCatalog** const cf,
     }
     if (NULL!=(*cf)->filename) {
       free((*cf)->filename);
+    }
+    if (NULL!=(*cf)->srcbuff) {
+      freeSimputSourceBuffer((struct SimputSourceBuffer**)&((*cf)->srcbuff));
     }
     free(*cf);
     *cf=NULL;
@@ -3346,4 +3400,5 @@ float getSimputSourceExtension(const SimputSource* const src,
 
   return(extension);
 }
+
 

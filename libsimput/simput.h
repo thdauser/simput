@@ -107,6 +107,9 @@ typedef struct {
       file. This pointer should not be modified directly. */
   char* filepath;
 
+  /** Buffer for pre-loaded SIMPUT sources. */
+  void* srcbuff;
+
 } SimputCatalog;
 
 
@@ -290,6 +293,14 @@ void freeSimputSource(SimputSource** const entry);
 SimputSource* returnSimputSource(SimputCatalog* const cf,
 				 const long row,
 				 int* const status);
+
+/** Load a source from a particular row of the catalog in the FITS
+    file. Row numbering starts at 1. The returned pointer to the
+    SimputSource must be free'd afterwards in order to avoid a memory
+    leak. */
+SimputSource* loadSimputSource(SimputCatalog* const cf,
+			       const long row,
+			       int* const status);
 
 /** Append a SimputSource to an existing catalog. */
 void appendSimputSource(SimputCatalog* const cf,
