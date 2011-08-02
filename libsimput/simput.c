@@ -3352,8 +3352,11 @@ float getSimputSourceExtension(const SimputSource* const src,
       double sx, sy;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      sx = RADist(sx, 0.); // TODO Use RA of reference pixel.
-      double ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      double dsx = RADist(sx, wcs.crval[0]*M_PI/180.); 
+      double dsy = sy - wcs.crval[1]*M_PI/180.;
+      // TODO This has to be revised in order to account properly 
+      // for spherical coordinates.
+      double ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
       if (ext>maxext) {
 	maxext = ext;
       }
@@ -3363,8 +3366,9 @@ float getSimputSourceExtension(const SimputSource* const src,
       py = 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      sx = RADist(sx, 0.);
-      ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
+      dsy = sy - wcs.crval[1]*M_PI/180.;
+      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
       if (ext>maxext) {
       maxext = ext;
       }
@@ -3374,8 +3378,9 @@ float getSimputSourceExtension(const SimputSource* const src,
       py = img->naxis2*1. + 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      sx = RADist(sx, 0.);
-      ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
+      dsy = sy - wcs.crval[1]*M_PI/180.;
+      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
       if (ext>maxext) {
 	maxext = ext;
       }
@@ -3385,8 +3390,9 @@ float getSimputSourceExtension(const SimputSource* const src,
       py = img->naxis2*1. + 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      sx = RADist(sx, 0.);
-      ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
+      dsy = sy - wcs.crval[1]*M_PI/180.;
+      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
       if (ext>maxext) {
 	maxext = ext;
       }
