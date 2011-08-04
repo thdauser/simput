@@ -3161,8 +3161,10 @@ void getSimputPhotonCoord(const SimputSource* const src,
       // sources including the image.
       wcscopy(1, img->wcs, &wcs);
 
-      // Change the scale of the image according to the source specific
-      // IMGSCAL property.
+      // Change the position of the image and the scale according to 
+      // the source specific properties.
+      wcs.crval[0] = src->ra *180./M_PI;
+      wcs.crval[1] = src->dec*180./M_PI;
       wcs.cdelt[0] *= 1./src->imgscal;
       wcs.cdelt[1] *= 1./src->imgscal;
       wcs.flag = 0;
@@ -3192,6 +3194,101 @@ void getSimputPhotonCoord(const SimputSource* const src,
 
   // Release memory.
   wcsfree(&wcs);
+}
+
+
+float getSimputSourceExtension(const SimputSource* const src,
+			       int* const status)
+{
+  // Return value.
+  float extension;
+
+  struct wcsprm wcs = { .flag=-1 };
+
+  do { // Error handling loop.
+
+    // Get the source image for this particular source.
+    SimputImg* img=returnSimputImg(src, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Check if it is a point-like or an extended source.
+    if (NULL==img) {
+      // Point-like source.
+      extension=0.;
+      break;
+    } else {
+      // Extended source => determine the maximum extension.
+      double maxext=0.;
+
+      // Copy the wcsprm structure and change the size 
+      // according to IMGSCAL.
+      wcscopy(1, img->wcs, &wcs);
+
+      // Change the scale of the image according to the source specific
+      // IMGSCAL property.
+      wcs.cdelt[0] *= 1./src->imgscal;
+      wcs.cdelt[1] *= 1./src->imgscal;
+      wcs.flag = 0;
+
+      // Check lower left corner.
+      double px = 0.5;
+      double py = 0.5;
+      double sx, sy;
+      p2s(&wcs, px, py, &sx, &sy, status);
+      CHECK_STATUS_BREAK(*status);
+      double dsx = RADist(sx, wcs.crval[0]*M_PI/180.); 
+      double dsy = sy - wcs.crval[1]*M_PI/180.;
+      // TODO This has to be revised in order to account properly 
+      // for spherical coordinates.
+      double ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
+      if (ext>maxext) {
+	maxext = ext;
+      }
+
+      // Check lower right corner.
+      px = img->naxis1*1. + 0.5;
+      py = 0.5;
+      p2s(&wcs, px, py, &sx, &sy, status);
+      CHECK_STATUS_BREAK(*status);
+      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
+      dsy = sy - wcs.crval[1]*M_PI/180.;
+      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
+      if (ext>maxext) {
+	maxext = ext;
+      }
+      
+      // Check upper left corner.
+      px = 0.5;
+      py = img->naxis2*1. + 0.5;
+      p2s(&wcs, px, py, &sx, &sy, status);
+      CHECK_STATUS_BREAK(*status);
+      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
+      dsy = sy - wcs.crval[1]*M_PI/180.;
+      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
+      if (ext>maxext) {
+	maxext = ext;
+      }
+      
+      // Check upper right corner.
+      px = img->naxis1*1. + 0.5;
+      py = img->naxis2*1. + 0.5;
+      p2s(&wcs, px, py, &sx, &sy, status);
+      CHECK_STATUS_BREAK(*status);
+      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
+      dsy = sy - wcs.crval[1]*M_PI/180.;
+      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
+      if (ext>maxext) {
+	maxext = ext;
+      }
+      
+      extension = (float)maxext;
+    }
+  } while(0); // END of error handling loop.
+
+  // Release memory.
+  wcsfree(&wcs);
+
+  return(extension);
 }
 
 
@@ -3313,98 +3410,5 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
 }
 
 
-float getSimputSourceExtension(const SimputSource* const src,
-			       int* const status)
-{
-  // Return value.
-  float extension;
-
-  struct wcsprm wcs = { .flag=-1 };
-
-  do { // Error handling loop.
-
-    // Get the source image for this particular source.
-    SimputImg* img=returnSimputImg(src, status);
-    CHECK_STATUS_BREAK(*status);
-
-    // Check if it is a point-like or an extended source.
-    if (NULL==img) {
-      // Point-like source.
-      extension=0.;
-      break;
-    } else {
-      // Extended source => determine the maximum extension.
-      double maxext=0.;
-
-      // Copy the wcsprm structure and change the size 
-      // according to IMGSCAL.
-      wcscopy(1, img->wcs, &wcs);
-
-      // Change the scale of the image according to the source specific
-      // IMGSCAL property.
-      wcs.cdelt[0] *= 1./src->imgscal;
-      wcs.cdelt[1] *= 1./src->imgscal;
-      wcs.flag = 0;
-
-      // Check lower left corner.
-      double px = 0.5;
-      double py = 0.5;
-      double sx, sy;
-      p2s(&wcs, px, py, &sx, &sy, status);
-      CHECK_STATUS_BREAK(*status);
-      double dsx = RADist(sx, wcs.crval[0]*M_PI/180.); 
-      double dsy = sy - wcs.crval[1]*M_PI/180.;
-      // TODO This has to be revised in order to account properly 
-      // for spherical coordinates.
-      double ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
-      if (ext>maxext) {
-	maxext = ext;
-      }
-
-      // Check lower right corner.
-      px = img->naxis1*1. + 0.5;
-      py = 0.5;
-      p2s(&wcs, px, py, &sx, &sy, status);
-      CHECK_STATUS_BREAK(*status);
-      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
-      dsy = sy - wcs.crval[1]*M_PI/180.;
-      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
-      if (ext>maxext) {
-      maxext = ext;
-      }
-      
-      // Check upper left corner.
-      px = 0.5;
-      py = img->naxis2*1. + 0.5;
-      p2s(&wcs, px, py, &sx, &sy, status);
-      CHECK_STATUS_BREAK(*status);
-      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
-      dsy = sy - wcs.crval[1]*M_PI/180.;
-      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
-      if (ext>maxext) {
-	maxext = ext;
-      }
-      
-      // Check upper right corner.
-      px = img->naxis1*1. + 0.5;
-      py = img->naxis2*1. + 0.5;
-      p2s(&wcs, px, py, &sx, &sy, status);
-      CHECK_STATUS_BREAK(*status);
-      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
-      dsy = sy - wcs.crval[1]*M_PI/180.;
-      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
-      if (ext>maxext) {
-	maxext = ext;
-      }
-      
-      extension = (float)maxext;
-    }
-  } while(0); // END of error handling loop.
-
-  // Release memory.
-  wcsfree(&wcs);
-
-  return(extension);
-}
 
 
