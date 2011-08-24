@@ -3168,6 +3168,18 @@ void getSimputPhotonCoord(const SimputSource* const src,
       wcs.cdelt[0] *= 1./src->imgscal;
       wcs.cdelt[1] *= 1./src->imgscal;
       wcs.flag = 0;
+      // Check that CUNIT is set to "deg". Otherwise there will be a conflict
+      // between CRVAL [deg] and CDELT [different unit]. 
+      // TODO This is not required by the standard.
+      if ((0!=strcmp(wcs.cunit[0], "deg     ")) || 
+	  (0!=strcmp(wcs.cunit[1], "deg     "))) {
+	*status=EXIT_FAILURE;
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "units of image coordinates are '%s' and '%s' (must be 'deg')",
+		wcs.cunit[0], wcs.cunit[1]);
+	SIMPUT_ERROR(msg);
+	break;
+      }
 
       // Determine floating point pixel positions shifted by 0.5 in 
       // order to match the FITS conventions and with a randomization

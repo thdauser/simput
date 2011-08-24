@@ -270,10 +270,20 @@ SimputSource* getSimputSourceV(const long src_id,
 			       const char* const src_name,
 			       const double ra,
 			       const double dec,
+			       /** Image rotation angle ([deg]). Only
+				   applicable for extended sources
+				   with an image. */
 			       const float imgrota,
 			       const float imgscal,
+			       /** Lower boundary of reference energy
+				   band ([keV]). */
 			       const float e_min,
+			       /** Upper boundary of reference energy
+				   band ([keV]). */
 			       const float e_max,
+			       /** Energy flux density in the
+				   reference energy band
+				   ([erg/s/cm^2]). */
 			       const float eflux,
 			       const char* const spectrum,
 			       const char* const image,
@@ -353,7 +363,9 @@ returnSimputMissionIndepSpec(const SimputSource* const src,
 
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
-    the mission-independent format. */
+    the mission-independent format. The access to the ARF data
+    structure must be guaranteed as long as the SIMPUT library
+    routines are used. */
 void simputSetARF(struct ARF* const arf);
 
 /** Set the random number generator, which is used by the simput
