@@ -5,6 +5,7 @@
 *.lo
 *.swp
 *.swo
+*.mod
 configure
 Makefile
 Makefile.in
@@ -15,6 +16,7 @@ pull.err
 pull.log
 pull_n_push.sh
 sample
+fortran_sample
 
 # Autotool stuff:
 aclocal.m4
