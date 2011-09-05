@@ -14,6 +14,7 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 # Check for programs:
 AC_PROG_CC     # Search for a C-Compiler and store it in the Variable 'CC'.
+AC_PROG_FC
 
 AC_DISABLE_SHARED
 LT_INIT #([disable-shared]) #([shared]) 
@@ -28,8 +29,9 @@ AM_PROG_LIBTOOL
 # "-Werror" for the compiler to treat warnings as errors
 # "-pg" for the compiler and linker to include information for gprof (Profiler)
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
-CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -O0 -pg"
-LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall -pg"
+CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -O0 -Df2cFortran"
+LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall"
+FCFLAGS="-O0"
 
 # Check for libraries:  (objdump -R/-T libncurses...)
 AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([No math library found!])], [])

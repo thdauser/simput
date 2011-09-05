@@ -23,3 +23,17 @@ libsimput_la_SOURCES = simput.c
 
 # Define the headers that will be installed in $(includedir):
 include_HEADERS = simput.h
+
+
+
+
+
+
+############ BINARIES #################
+
+# The following line lists the programs that should be created.
+noinst_PROGRAMS = simput_fortran
+
+simput_fortran_SOURCES = simput_fortran.f95
+simput_fortran_LDADD  = @top_builddir@/libsimput/libsimput.la
+

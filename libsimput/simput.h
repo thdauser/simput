@@ -258,7 +258,6 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 				 const int mode,
 				 int* const status);
 
-
 /** Constructor for the SimputSource data structure. Allocates
     memory, initializes elements with their default values and
     pointers with NULL. */
