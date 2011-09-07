@@ -1,8 +1,8 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.61)
-AC_INIT([simput], [0.01], [christian.schmid@sternwarte.uni-erlangen.de])
+AC_PREREQ(2.65)
+AC_INIT([simput],[0.01],[christian.schmid@sternwarte.uni-erlangen.de])
 AC_CONFIG_SRCDIR([libsimput/simput.c])
 # The following line tells 'configure' to create a header file 'config.h'
 # that is filled with definitions from this script.
@@ -13,15 +13,10 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 
 
 # Check for programs:
-AC_PROG_CC     # Search for a C-Compiler and store it in the Variable 'CC'.
+AC_PROG_CC # Search for a C-Compiler and store it in the Variable 'CC'.
 AC_PROG_FC
 
-AC_DISABLE_SHARED
 LT_INIT #([disable-shared]) #([shared]) 
-AC_PROG_LIBTOOL #deprecated
-AM_PROG_LIBTOOL
-#AC_DISABLE_SHARED
-#AC_DISABLE_STATIC
 
 # Compiler and Linker Flags:
 # "-g -W -Wall -O0" for the compiler for debugging
