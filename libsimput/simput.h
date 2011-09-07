@@ -2,7 +2,7 @@
 #define SIMPUT_H (1)
 
 #include "fitsio.h"
-#include <wcslib/wcslib.h>
+#include <wcslib/wcshdr.h>
 
 // GSL header files
 #include <gsl/gsl_errno.h>
