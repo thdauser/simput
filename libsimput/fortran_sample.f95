@@ -6,6 +6,9 @@ program fortran_sample
   ! PI.
   real, parameter :: pi = 3.14159265
 
+  ! Row number in the catalog.
+  integer(kind=c_long) :: row = 1 
+
   ! FITS error status.
   integer       :: status = 0
 
@@ -24,7 +27,7 @@ program fortran_sample
 
   ! Get the first source from the catalog (numbering starts at 1).
   write(*,*) "Get first source from the catalog ..."
-  source = simrtsrc(catalog, 1, status)
+  source = simrtsrc(catalog, row, status)
 
   ! Determine the coordinates of the first source.
   call simphcrd(source, ra, dec, status)
