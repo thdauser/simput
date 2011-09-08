@@ -108,18 +108,10 @@ static double(*static_rndgen)(void)=NULL;
 /////////////////////////////////////////////////////////////////
 
 
-/** Check if the HDU referred to by filename is a binary table
-    extension. */
-static int check_if_btbl(const char* const filename, int* const status);
-
 /** Read the TUNITn keyword from the header of the current FITS HDU,
     where n denotes the specfied column. */
 static void read_unit(fitsfile* const fptr, const int column, 
 		      char* unit, int* const status);
-
-/** Convert a string into lower case letters. The string has to be
-    terminated by a '\0' mark. */
-static void strtolower(char* const string);
 
 /** Determine the factor required to convert the specified unit into
     [rad]. If the conversion is not possible or implemented, the
@@ -150,19 +142,6 @@ static float unit_conversion_s(const char* const unit);
     [Hz]. If the conversion is not possible or implemented, the
     function return value is 0. */
 static float unit_conversion_Hz(const char* const unit);
-
-/** Determine the photon rate in [photon/s] within a certain energy
-    band for the particular spectrum. */
-static float getEbandRate(const SimputSource* const src,
-			  const double time, const double mjdref,
-			  const float emin, const float emax,
-			  int* const status);
-
-/** Return a random value on the basis of an exponential distribution
-    with a given average distance. In the simulation this function is
-    used to calculate the temporal differences between individual
-    photons from a source. The photons have Poisson statistics. */
-static double rndexp(const double avgdist);
 
 /** Return the requested light curve. Keeps a certain number of light
     curves in an internal storage. If the requested light curve is not
@@ -811,33 +790,6 @@ void appendSimputSource(SimputCatalog* const cf,
 }
 
 
-static int check_if_btbl(const char* const filename,
-			 int* const status)
-{
-  // Check if this is a FITS image.
-  fitsfile* fptr=NULL;
-  int hdutype;
-
-  do { // Beginning of error handling loop.
-
-    fits_open_file(&fptr, filename, READONLY, status);
-    CHECK_STATUS_BREAK(*status);
-    
-    fits_get_hdu_type(fptr, &hdutype, status);
-    CHECK_STATUS_BREAK(*status);
-
-  } while (0); // END of error handling loop.
-
-  if (NULL!=fptr) fits_close_file(fptr, status);
-
-  if (BINARY_TBL==hdutype) {
-    return(1);
-  } else {
-    return(0);
-  }
-}
-
-
 static void read_unit(fitsfile* const fptr, const int column, 
 		      char* unit, int* const status)
 {
@@ -848,15 +800,6 @@ static void read_unit(fitsfile* const fptr, const int column,
   CHECK_STATUS_VOID(*status);
 }
 
-
-static void strtolower(char* const string)
-{
-  int ii=0;
-  while (string[ii]!='\0') {
-    string[ii] = tolower(string[ii]);
-    ii++;
-  };
-}
 
 static float unit_conversion_rad(const char* const unit)
 {
@@ -1622,14 +1565,8 @@ static float getRndPhotonEnergy(SimputMissionIndepSpec* const spec,
   // Check if the spectrum has been convolved with the ARF.
   if (NULL==spec->distribution) {
     // Multiply it by the ARF in order to obtain the spectral distribution.
-    if (NULL!=static_arf) {
-      convSimputMissionIndepSpecWithARF(spec, status);
-      CHECK_STATUS_RET(*status, 0.);
-    } else {
-      SIMPUT_ERROR("no ARF defined");
-      *status=EXIT_FAILURE;
-      return(0.);
-    }
+    convSimputMissionIndepSpecWithARF(spec, status);
+    CHECK_STATUS_RET(*status, 0.);
   }
 
   // Get a random number in the interval [0,1].
@@ -1674,17 +1611,11 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 }
 
 
-float getEbandFlux(const SimputSource* const src,
-		   const double time, const double mjdref,
-		   const float emin, const float emax,
-		   int* const status)
+float getSimputSpecBandFlux(const SimputMissionIndepSpec* const spec,
+			    const float emin, const float emax)
 {
   // Conversion factor from [keV] -> [erg].
   const float keV2erg = 1.602e-9;
-
-  SimputMissionIndepSpec* spec=
-    returnSimputSrcSpec(src, time, mjdref, status);
-  CHECK_STATUS_RET(*status, 0.);
 
   // Return value.
   float flux=0.;
@@ -1708,42 +1639,16 @@ float getEbandFlux(const SimputSource* const src,
 }
 
 
-static float getEbandRate(const SimputSource* const src,
-			  const double time, const double mjdref,
-			  const float emin, const float emax,
-			  int* const status)
+float getSimputSrcBandFlux(const SimputSource* const src,
+			   const double time, const double mjdref,
+			   int* const status)
 {
+  // Determine the spectrum valid for the specified point of time.
   SimputMissionIndepSpec* spec=
     returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
-  // Check if the spectrum has been convolved with the ARF.
-  CHECK_NULL_RET(spec->distribution, *status,
-		 "spectrum is not convolved with ARF", 0.);
-
-  // Return value.
-  float rate=0.;
-
-  long ii=0;
-  for (ii=spec->nentries-1; ii>=0; ii--) {
-    float binmin, binmax;
-    getSpecEbounds(spec, ii, &binmin, &binmax);
-
-    if ((emin<binmax) && (emax>binmin)) {
-      float binrate=spec->distribution[ii];
-      if (ii>0) {
-	binrate -= spec->distribution[ii-1];
-      }
-
-      float min = MAX(binmin, emin);
-      float max = MIN(binmax, emax);
-      assert(max>min);
-
-      rate += binrate * (max-min)/(binmax-binmin);
-    }
-  }
-
-  return(rate);
+  return(getSimputSpecBandFlux(spec, src->e_min, src->e_max));
 }
 
 
@@ -1755,13 +1660,18 @@ float getSimputPhotonRate(const SimputSource* const src,
     returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
-  // Check if the spectrum has been convolved with the ARF.
-  CHECK_NULL_RET(spec->distribution, *status,
-		 "spectrum is not convolved with ARF", 0.);
-
   // Flux in the reference energy band.
-  float refband_flux = 
-    getEbandFlux(src, time, mjdref, src->e_min, src->e_max, status);
+  float refband_flux=getSimputSpecBandFlux(spec, src->e_min, src->e_max);
+
+  // TODO Add light curve contributions.
+
+  // Check for ARF convolution. This is required, since spec->distribution 
+  // is used in the next step.
+  if (NULL==spec->distribution) {
+    // Multiply it by the ARF in order to obtain the spectral distribution.
+    convSimputMissionIndepSpecWithARF(spec, status);
+    CHECK_STATUS_RET(*status, 0.);
+  }
 
   return(src->eflux / refband_flux * spec->distribution[spec->nentries-1]);
 }
@@ -2493,6 +2403,17 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
 }
 
 
+static double rndexp(const double avgdist)
+{
+  assert(avgdist>0.);
+
+  double rand = static_rndgen();
+  assert(rand>0.);
+
+  return(-log(rand)*avgdist);
+}
+
+
 double getSimputPhotonTime(const SimputSource* const src,
 			   double prevtime,
 			   const double mjdref,
@@ -2580,17 +2501,6 @@ double getSimputPhotonTime(const SimputSource* const src,
     *failed=1;
     return(0.);
   }
-}
-
-
-static double rndexp(const double avgdist)
-{
-  assert(avgdist>0.);
-
-  double rand = static_rndgen();
-  assert(rand>0.);
-
-  return(-log(rand)*avgdist);
 }
 
 

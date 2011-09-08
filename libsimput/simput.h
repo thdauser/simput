@@ -386,20 +386,25 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 			    const double mjdref,
 			    int* const status);
 
-/** Determine the energy flux of the source in [erg/s/cm**2] within a
-    certain energy band for the particular spectrum. */
-float getEbandFlux(const SimputSource* const src,
-		   const double time, const double mjdref,
-		   const float emin, const float emax,
-		   int* const status);
+/** Determine the energy flux in [erg/s/cm**2] within the reference
+    energy band of the specified source valid a the requested point of
+    time. */
+float getSimputSrcBandFlux(const SimputSource* const src,
+			   const double time, const double mjdref,
+			   int* const status);
+
+/** Determine the energy flux of the spectrum in [erg/s/cm**2] within a
+    certain energy band from emin to emax. */
+float getSimputSpecBandFlux(const SimputMissionIndepSpec* const spec,
+			    const float emin, const float emax);
 
 /** Return the photon rate of a particular source. The return value is
-    the nominal photon rate given in the source catalog. It does not
-    contain any light curve or other time-variable
+    the nominal photon rate given in the source catalog. WARNING: It
+    does not contain any light curve or other time-variable
     contributions. Specification of instrument ARF required. */
-float getSimputPhotonRate(const SimputSource* const src,
-			  const double time, const double mjdref,
-			  int* const status);
+float getSimputSrcPhotonRate(const SimputSource* const src,
+			     const double time, const double mjdref,
+			     int* const status);
 
 
 /** Constructor for the SimputLC data structure. Allocates memory,
