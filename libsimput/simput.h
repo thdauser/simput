@@ -402,9 +402,9 @@ float getSimputSpecBandFlux(const SimputMissionIndepSpec* const spec,
     the nominal photon rate given in the source catalog. WARNING: It
     does not contain any light curve or other time-variable
     contributions. Specification of instrument ARF required. */
-float getSimputSrcPhotonRate(const SimputSource* const src,
-			     const double time, const double mjdref,
-			     int* const status);
+float getSimputPhotonRate(const SimputSource* const src,
+			  const double time, const double mjdref,
+			  int* const status);
 
 
 /** Constructor for the SimputLC data structure. Allocates memory,
