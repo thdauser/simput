@@ -1566,6 +1566,54 @@ static void getSpecEbounds(const SimputMissionIndepSpec* const spec,
 }
 
 
+/** Convolve the given mission-independent spectrum with the
+    instrument ARF in order to obtain the spectral probability
+    distribution. */
+static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec, 
+					      int* const status)
+{  
+  // Check if the ARF is defined.
+  CHECK_NULL_VOID(static_arf, *status, "instrument ARF undefined");
+
+  // Allocate memory.
+  spec->distribution = (float*)malloc(spec->nentries*sizeof(float));
+  CHECK_NULL_VOID(spec->distribution, *status,
+		 "memory allocation for spectral distribution failed");
+
+  // Multiply data point of the spectrum with the ARF.
+  // [photon/s/cm^2/keV] -> [photon/s/keV]
+  long ii;
+  for (ii=0; ii<spec->nentries; ii++) {
+    // Initialize with 0. This is important! If spectral bin is outside
+    // the range of the ARF, the value has to be 0.
+    spec->distribution[ii] = 0.;
+
+    // Determine the ARF bin that contains the spectral data point.
+    long jj;
+    for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
+      if ((static_arf->LowEnergy[jj] <=spec->energy[ii]) && 
+	  (static_arf->HighEnergy[jj]> spec->energy[ii])) {
+	spec->distribution[ii] = spec->pflux[ii]*static_arf->EffArea[jj];
+	break;
+      }
+    }
+
+    // Multiply with the energy bin width defined by the neighboring
+    // spectral energies.
+    // [photon/s/keV] -> [photon/s]
+    float emin, emax;
+    getSpecEbounds(spec, ii, &emin, &emax);
+    spec->distribution[ii] *= emax-emin;
+
+    // Create the spectral distribution normalized to the total 
+    // photon rate [photon/s]. 
+    if (ii>0) {
+      spec->distribution[ii] += spec->distribution[ii-1];
+    }
+  }
+}
+
+
 /** Determine a random photon energy according to the specified
     spectral distribution. */
 static float getRndPhotonEnergy(SimputMissionIndepSpec* const spec,
@@ -1623,51 +1671,6 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 
   // Determine a random photon energy from the spectral distribution.
   return(getRndPhotonEnergy(spec, status));
-}
-
-
-void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec, 
-				       int* const status)
-{  
-  // Check if the ARF is defined.
-  CHECK_NULL_VOID(static_arf, *status, "instrument ARF undefined");
-
-  // Allocate memory.
-  spec->distribution = (float*)malloc(spec->nentries*sizeof(float));
-  CHECK_NULL_VOID(spec->distribution, *status,
-		 "memory allocation for spectral distribution failed");
-
-  // Multiply data point of the spectrum with the ARF.
-  // [photon/s/cm^2/keV] -> [photon/s/keV]
-  long ii;
-  for (ii=0; ii<spec->nentries; ii++) {
-    // Initialize with 0. This is important! If spectral bin is outside
-    // the range of the ARF, the value has to be 0.
-    spec->distribution[ii] = 0.;
-
-    // Determine the ARF bin that contains the spectral data point.
-    long jj;
-    for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
-      if ((static_arf->LowEnergy[jj] <=spec->energy[ii]) && 
-	  (static_arf->HighEnergy[jj]> spec->energy[ii])) {
-	spec->distribution[ii] = spec->pflux[ii]*static_arf->EffArea[jj];
-	break;
-      }
-    }
-
-    // Multiply with the energy bin width defined by the neighboring
-    // spectral energies.
-    // [photon/s/keV] -> [photon/s]
-    float emin, emax;
-    getSpecEbounds(spec, ii, &emin, &emax);
-    spec->distribution[ii] *= emax-emin;
-
-    // Create the spectral distribution normalized to the total 
-    // photon rate [photon/s]. 
-    if (ii>0) {
-      spec->distribution[ii] += spec->distribution[ii-1];
-    }
-  }
 }
 
 

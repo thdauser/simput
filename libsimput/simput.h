@@ -299,7 +299,7 @@ void freeSimputSource(SimputSource** const entry);
     file. Row numbering starts at 1. The returned pointer to the
     SimputSource must be free'd afterwards in order to avoid a memory
     leak. */
-SimputSource* loadSimputSource(SimputCatalog* const cf,
+SimputSource* loadSimputSource(SimputCatalog* const cat,
 			       const long row,
 			       int* const status);
 
@@ -311,13 +311,13 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
     on later access. The returned pointer to the SimputSource should
     not be free'd, since the allocated memory is managed by the
     caching mechanism. */
-SimputSource* loadCacheSimputSource(SimputCatalog* const cf,
+SimputSource* loadCacheSimputSource(SimputCatalog* const cat,
 				    const long row,
 				    int* const status);
 
 /** Append a SimputSource to an existing catalog. The source is
     inserted at the end of the binary table in the FITS file. */
-void appendSimputSource(SimputCatalog* const cf,
+void appendSimputSource(SimputCatalog* const cat,
 			SimputSource* const src,
 			int* const status);
 
@@ -362,13 +362,6 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 				char* const extname,
 				int extver,
 				int* const status);
-
-/** Convolve the given mission-independent spectrum with the
-    instrument ARF in order to obtain the spectral probability
-    distribution. */
-void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const indepspec, 
-				       int* const status);
-
 
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
