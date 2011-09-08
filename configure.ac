@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.65)
+AC_PREREQ(2.61)
 AC_INIT([simput],[0.01],[christian.schmid@sternwarte.uni-erlangen.de])
 AC_CONFIG_SRCDIR([libsimput/simput.c])
 # The following line tells 'configure' to create a header file 'config.h'
