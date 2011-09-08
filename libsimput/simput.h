@@ -321,8 +321,9 @@ void appendSimputSource(SimputCatalog* const cat,
 			SimputSource* const src,
 			int* const status);
 
-/** Append a SimputSource to an existing catalog. The source is
-    inserted at the end of the binary table in the FITS file. */
+/** Append an array of SimputSources to an existing catalog. The
+    sources are inserted at the end of the binary table in the FITS
+    file. */
 void appendSimputSourceBlock(SimputCatalog* const cat,
 			     SimputSource* const src,
 			     const long nsources,
