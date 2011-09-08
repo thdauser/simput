@@ -790,6 +790,112 @@ void appendSimputSource(SimputCatalog* const cf,
 }
 
 
+void appendSimputSourceBlock(SimputCatalog* const cf,
+			     SimputSource* const src,
+			     const long nsources,
+			     int* const status)
+{
+  // Insert new rows.
+  fits_insert_rows(cf->fptr, cf->nentries, nsources, status);
+  CHECK_STATUS_VOID(*status);
+
+  long first=cf->nentries;
+  cf->nentries+=nsources;
+
+  // Buffers.
+  long* src_id=NULL;
+  double* ra=NULL;
+  double* dec=NULL;
+  float* imgrota=NULL;
+  float* imgscal=NULL;
+  float* e_min=NULL;
+  float* e_max=NULL;
+  float* eflux=NULL;
+
+  // Beginning of error handling loop.
+  do {
+
+    // Allocate memory for buffers.
+    src_id = (long*)malloc(nsources*sizeof(long));
+    CHECK_NULL_BREAK(src_id, *status, "memory allocation failed");
+    ra  = (double*)malloc(nsources*sizeof(double));
+    CHECK_NULL_BREAK(ra, *status, "memory allocation failed");
+    dec = (double*)malloc(nsources*sizeof(double));
+    CHECK_NULL_BREAK(dec, *status, "memory allocation failed");
+    imgrota = (float*)malloc(nsources*sizeof(float));
+    CHECK_NULL_BREAK(imgrota, *status, "memory allocation failed");
+    imgscal = (float*)malloc(nsources*sizeof(float));
+    CHECK_NULL_BREAK(imgscal, *status, "memory allocation failed");
+    e_min   = (float*)malloc(nsources*sizeof(float));
+    CHECK_NULL_BREAK(e_min, *status, "memory allocation failed");
+    e_max   = (float*)malloc(nsources*sizeof(float));
+    CHECK_NULL_BREAK(e_max, *status, "memory allocation failed");
+    eflux   = (float*)malloc(nsources*sizeof(float));
+    CHECK_NULL_BREAK(eflux, *status, "memory allocation failed");
+
+    
+    // Write the data.
+    long ii;
+    for (ii=0; ii<nsources; ii++) {
+
+      // Copy values to buffers.
+      src_id[ii] = src[ii].src_id;
+      ra[ii]     = src[ii].ra *180./M_PI;
+      dec[ii]    = src[ii].dec*180./M_PI;
+      imgrota[ii]= src[ii].imgrota;
+      imgscal[ii]= src[ii].imgscal;
+      e_min[ii]  = src[ii].e_min;
+      e_max[ii]  = src[ii].e_max;
+      eflux[ii]  = src[ii].eflux;
+
+      // Write strings.
+      fits_write_col(cf->fptr, TSTRING, cf->csrc_name, first+ii, 1, 1, 
+		     &(src[ii].src_name), status);
+      fits_write_col(cf->fptr, TSTRING, cf->cspectrum, first+ii, 1, 1, 
+		     &(src[ii].spectrum), status);
+      fits_write_col(cf->fptr, TSTRING, cf->cimage, first+ii, 1, 1, 
+		     &(src[ii].image), status);
+      fits_write_col(cf->fptr, TSTRING, cf->clightcur, first+ii, 1, 1, 
+		     &(src[ii].lightcur), status);
+      CHECK_STATUS_BREAK(*status);
+    }
+    CHECK_STATUS_BREAK(*status);
+    // END of loop over all sources.
+
+    // Write the buffers to the file.
+    fits_write_col(cf->fptr, TLONG, cf->csrc_id, first, 1, nsources, 
+		   src_id, status);
+    fits_write_col(cf->fptr, TDOUBLE, cf->cra, first, 1, nsources, 
+		   ra, status);
+    fits_write_col(cf->fptr, TDOUBLE, cf->cdec, first, 1, nsources, 
+		   dec, status);
+    fits_write_col(cf->fptr, TFLOAT, cf->cimgrota, first, 1, nsources, 
+		   imgrota, status);
+    fits_write_col(cf->fptr, TFLOAT, cf->cimgscal, first, 1, nsources, 
+		   imgscal, status);
+    fits_write_col(cf->fptr, TFLOAT, cf->ce_min, first, 1, nsources, 
+		   e_min, status);
+    fits_write_col(cf->fptr, TFLOAT, cf->ce_max, first, 1, nsources, 
+		   e_max, status);
+    fits_write_col(cf->fptr, TFLOAT, cf->cflux, first, 1, nsources, 
+		   eflux, status);
+    CHECK_STATUS_BREAK(*status);
+
+
+  } while(0); // END of error handling loop.
+
+  // Free memory.
+  if (NULL!=src_id) free(src_id);
+  if (NULL!=ra)     free(ra);
+  if (NULL!=dec)    free(dec);
+  if (NULL!=imgrota) free(imgrota);
+  if (NULL!=imgscal) free(imgscal);
+  if (NULL!=e_min)   free(e_min);
+  if (NULL!=e_max)   free(e_max);
+  if (NULL!=eflux)   free(eflux);
+}
+
+
 static void read_unit(fitsfile* const fptr, const int column, 
 		      char* unit, int* const status)
 {

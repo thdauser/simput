@@ -321,6 +321,12 @@ void appendSimputSource(SimputCatalog* const cat,
 			SimputSource* const src,
 			int* const status);
 
+/** Append a SimputSource to an existing catalog. The source is
+    inserted at the end of the binary table in the FITS file. */
+void appendSimputSourceBlock(SimputCatalog* const cat,
+			     SimputSource* const src,
+			     const long nsources,
+			     int* const status);
 
 /** Constructor for the SimputMissionIndepSpec data
     structure. Allocates memory, initializes elements with their
