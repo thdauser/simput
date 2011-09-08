@@ -151,11 +151,6 @@ static float unit_conversion_s(const char* const unit);
     function return value is 0. */
 static float unit_conversion_Hz(const char* const unit);
 
-/** Determine a random photon energy according to the specified
-    spectral distribution. */
-static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
-				int* const status);
-
 /** Determine the photon rate in [photon/s] within a certain energy
     band for the particular spectrum. */
 static float getEbandRate(const SimputSource* const src,
@@ -1547,12 +1542,6 @@ loadCacheSimputMissionIndepSpec(const char* const filename,
 		 spectra[cspectrum]);
   strcpy(spectra[cspectrum]->fileref, filename);
 
-  // Multiply it by the ARF in order to obtain the spectral distribution.
-  if (NULL!=static_arf) {
-    convSimputMissionIndepSpecWithARF(spectra[cspectrum], status);
-    CHECK_STATUS_RET(*status, spectra[cspectrum]);
-  }
-
   return(spectra[cspectrum]);
 }
 
@@ -1577,40 +1566,35 @@ static void getSpecEbounds(const SimputMissionIndepSpec* const spec,
 }
 
 
-float getSimputPhotonEnergy(const SimputSource* const src,
-			    const double time,
-			    const double mjdref,
-			    int* const status)
-{
-  // Get the spectrum which is stored in the catalog.
-  SimputMissionIndepSpec* spec=
-    returnSimputSrcSpec(src, time, mjdref, status);
-  CHECK_STATUS_RET(*status, 0.);
-
-  // Determine a random photon energy from the spectral distribution.
-  return(getRndPhotonEnergy(spec, status));
-}
-
-
-static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
+/** Determine a random photon energy according to the specified
+    spectral distribution. */
+static float getRndPhotonEnergy(SimputMissionIndepSpec* const spec,
 				int* const status) 
 {
-  long upper=spec->nentries-1, lower=0, mid;
-  
+  // Check if the spectrum has been convolved with the ARF.
+  if (NULL==spec->distribution) {
+    // Multiply it by the ARF in order to obtain the spectral distribution.
+    if (NULL!=static_arf) {
+      convSimputMissionIndepSpecWithARF(spec, status);
+      CHECK_STATUS_RET(*status, 0.);
+    } else {
+      SIMPUT_ERROR("no ARF defined");
+      *status=EXIT_FAILURE;
+      return(0.);
+    }
+  }
+
   // Get a random number in the interval [0,1].
   float rnd = (float)static_rndgen();
   assert(rnd>=0.);
   assert(rnd<=1.);
-
-  // Check if the spectrum has been convolved with the ARF.
-  CHECK_NULL_RET(spec->distribution, *status,
-		 "spectrum is not convolved with ARF", 0.);
 
   // Multiply with the total photon rate.
   rnd *= spec->distribution[spec->nentries-1];
 
   // Determine the corresponding point in the spectral 
   // distribution (using binary search).
+  long upper=spec->nentries-1, lower=0, mid;
   while (upper>lower) {
     mid = (lower+upper)/2;
     if (spec->distribution[mid]<rnd) {
@@ -1624,6 +1608,21 @@ static float getRndPhotonEnergy(const SimputMissionIndepSpec* const spec,
   float binmin, binmax;
   getSpecEbounds(spec, lower, &binmin, &binmax);
   return(binmin + static_rndgen()*(binmax-binmin));
+}
+
+
+float getSimputPhotonEnergy(const SimputSource* const src,
+			    const double time,
+			    const double mjdref,
+			    int* const status)
+{
+  // Get the spectrum which is stored in the catalog.
+  SimputMissionIndepSpec* spec=
+    returnSimputSrcSpec(src, time, mjdref, status);
+  CHECK_STATUS_RET(*status, 0.);
+
+  // Determine a random photon energy from the spectral distribution.
+  return(getRndPhotonEnergy(spec, status));
 }
 
 
