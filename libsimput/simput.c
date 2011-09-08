@@ -438,11 +438,12 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
 }
 
 
-SimputSource* returnSimputSource(SimputCatalog* const cf,
-				 const long row,
-				 int* const status)
+SimputSource* loadCacheSimputSource(SimputCatalog* const cf,
+				    const long row,
+				    int* const status)
 {
-  const long maxsources=1000000; // Maximum number of sources in the cash.
+  // Maximum number of sources in the cache.
+  const long maxsources=1000000; 
 
   // Check if the source catalog contains a source buffer.
   if (NULL==cf->srcbuff) {
@@ -455,7 +456,7 @@ SimputSource* returnSimputSource(SimputCatalog* const cf,
   struct SimputSourceBuffer* sb = (struct SimputSourceBuffer*)cf->srcbuff;
 
 
-  // Allocate memory for the cash.
+  // Allocate memory for the cache.
   if (NULL==sb->rowmap) {
     sb->rowmap=(long*)malloc(cf->nentries*sizeof(long));
     CHECK_NULL_RET(sb->rowmap, *status, 
@@ -466,12 +467,12 @@ SimputSource* returnSimputSource(SimputCatalog* const cf,
     }
   }
 
-  // Check if the cash already exists or whether this routine is 
+  // Check if the cache already exists or whether this routine is 
   // called for the first time.
   if (NULL==sb->sources) {
     sb->sources=(SimputSource**)malloc(maxsources*sizeof(SimputSource*));
     CHECK_NULL_RET(sb->sources, *status,
-		   "memory allocation for source cash failed", NULL);
+		   "memory allocation for source cache failed", NULL);
   }
   if (NULL==sb->rownumbers) {
     sb->rownumbers=(long*)malloc(maxsources*sizeof(long));
@@ -480,15 +481,15 @@ SimputSource* returnSimputSource(SimputCatalog* const cf,
   }
 
 
-  // Check if the requested row is already available in the cash.
+  // Check if the requested row is already available in the cache.
   if (sb->rowmap[row-1]>0) {
     return(sb->sources[sb->rowmap[row-1]]);
   }
 
-  // The requested source is not contained in the cash.
+  // The requested source is not contained in the cache.
   // Therefore we must load it from the FITS file.
   
-  // Check if the cash is already full.
+  // Check if the cache is already full.
   if (sb->nsources<maxsources) {
     sb->csource = sb->nsources;
     sb->nsources++;
@@ -498,7 +499,7 @@ SimputSource* returnSimputSource(SimputCatalog* const cf,
       sb->csource=0;
     }
     // Destroy the source that is currently stored at this place 
-    // in the cash.
+    // in the cache.
     freeSimputSource(&(sb->sources[sb->csource]));
     sb->rowmap[sb->rownumbers[sb->csource]-1] = -1;
     sb->rownumbers[sb->csource] = 0;
@@ -1418,16 +1419,10 @@ static long getLCBin(const SimputLC* const lc,
 
 
 SimputMissionIndepSpec* 
-returnSimputMissionIndepSpec(const SimputSource* const src,
-			     const double time, const double mjdref,
-			     int* const status)
+returnSimputSrcSpec(const SimputSource* const src,
+		    const double time, const double mjdref,
+		    int* const status)
 {
-  const int maxspectra=2000; // Maximum number of spectra in storage.
-  static int nspectra=0;     // Current number of spectra in storage.
-  static int cspectrum=0;    // Index of next position in storage that will be used.
-
-  static SimputMissionIndepSpec** spectra=NULL;
-
   // Reference to the requested spectrum.
   char fileref[SIMPUT_MAXSTR];
   strcpy(fileref, ""); // Initialize with empty string.
@@ -1468,6 +1463,42 @@ returnSimputMissionIndepSpec(const SimputSource* const src,
     return(NULL);
   }
 
+  // Check if the filename and filepath properties for the
+  // source are properly set.
+  CHECK_NULL_RET(src->filepath, *status,
+		 "filepath of source catalog is not known", NULL);
+  CHECK_NULL_RET(src->filename, *status,
+		 "filename of source catalog is not known", NULL);
+
+  // Load the mission-independent spectrum.
+  char filename[SIMPUT_MAXSTR];
+  if ('['==fileref[0]) {
+    strcpy(filename, *src->filepath);
+    strcat(filename, *src->filename);
+    strcat(filename, fileref);
+  } else {
+    if ('/'!=fileref[0]) {
+      strcpy(filename, *src->filepath);
+    } else {
+      strcpy(filename, "");
+    }
+    strcat(filename, fileref);
+  }
+
+  return(loadCacheSimputMissionIndepSpec(filename, status));
+}
+
+
+SimputMissionIndepSpec* 
+loadCacheSimputMissionIndepSpec(const char* const filename,
+				int* const status)
+{
+  const int maxspectra=2000; // Maximum number of spectra in storage.
+  static int nspectra=0;     // Current number of spectra in storage.
+  static int cspectrum=0;    // Index of next position in storage that will be used.
+
+  static SimputMissionIndepSpec** spectra=NULL;
+
   // In case there are no spectra available at all, allocate 
   // memory for the array (storage for spectra).
   if (NULL==spectra) {
@@ -1481,7 +1512,7 @@ returnSimputMissionIndepSpec(const SimputSource* const src,
   int ii;
   for (ii=0; ii<nspectra; ii++) {
     // Check if the spectrum is equivalent to the required one.
-    if (0==strcmp(spectra[ii]->fileref, fileref)) {
+    if (0==strcmp(spectra[ii]->fileref, filename)) {
       // If yes, return the spectrum.
       return(spectra[ii]);
     }
@@ -1504,37 +1535,17 @@ returnSimputMissionIndepSpec(const SimputSource* const src,
     freeSimputMissionIndepSpec(&spectra[cspectrum]);
   }
 
-  // Check if the filename and filepath properties for the
-  // source are properly set.
-  CHECK_NULL_RET(src->filepath, *status,
-		 "filepath of source catalog is not known", NULL);
-  CHECK_NULL_RET(src->filename, *status,
-		 "filename of source catalog is not known", NULL);
-
   // Load the mission-independent spectrum.
-  char filename[SIMPUT_MAXSTR];
-  if ('['==fileref[0]) {
-    strcpy(filename, *src->filepath);
-    strcat(filename, *src->filename);
-    strcat(filename, fileref);
-  } else {
-    if ('/'!=fileref[0]) {
-      strcpy(filename, *src->filepath);
-    } else {
-      strcpy(filename, "");
-    }
-    strcat(filename, fileref);
-  }
   spectra[cspectrum]=loadSimputMissionIndepSpec(filename, status);
   CHECK_STATUS_RET(*status, spectra[cspectrum]);
 
   // Store the file reference to the spectrum for later comparisons.
   spectra[cspectrum]->fileref = 
-    (char*)malloc((strlen(fileref)+1)*sizeof(char));
+    (char*)malloc((strlen(filename)+1)*sizeof(char));
   CHECK_NULL_RET(spectra[cspectrum]->fileref, *status, 
 		 "memory allocation for file reference failed", 
 		 spectra[cspectrum]);
-  strcpy(spectra[cspectrum]->fileref, fileref);
+  strcpy(spectra[cspectrum]->fileref, filename);
 
   // Multiply it by the ARF in order to obtain the spectral distribution.
   if (NULL!=static_arf) {
@@ -1573,7 +1584,7 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 {
   // Get the spectrum which is stored in the catalog.
   SimputMissionIndepSpec* spec=
-    returnSimputMissionIndepSpec(src, time, mjdref, status);
+    returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Determine a random photon energy from the spectral distribution.
@@ -1670,7 +1681,7 @@ float getEbandFlux(const SimputSource* const src,
   const float keV2erg = 1.602e-9;
 
   SimputMissionIndepSpec* spec=
-    returnSimputMissionIndepSpec(src, time, mjdref, status);
+    returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Return value.
@@ -1701,7 +1712,7 @@ static float getEbandRate(const SimputSource* const src,
 			  int* const status)
 {
   SimputMissionIndepSpec* spec=
-    returnSimputMissionIndepSpec(src, time, mjdref, status);
+    returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Check if the spectrum has been convolved with the ARF.
@@ -1739,7 +1750,7 @@ float getSimputPhotonRate(const SimputSource* const src,
 			  int* const status)
 {
   SimputMissionIndepSpec* spec=
-    returnSimputMissionIndepSpec(src, time, mjdref, status);
+    returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Check if the spectrum has been convolved with the ARF.
@@ -2633,7 +2644,7 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
       clc=0;
     }
     // Release the light curve that is currently stored at this place
-    // in the cash.
+    // in the cache.
     freeSimputLC(&lcs[clc]);
   }
 

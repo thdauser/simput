@@ -2,19 +2,11 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.61)
-AC_INIT([simput],[0.01],[christian.schmid@sternwarte.uni-erlangen.de])
-AC_CONFIG_SRCDIR([libsimput/simput.c])
-# The following line tells 'configure' to create a header file 'config.h'
-# that is filled with definitions from this script.
-# The 'config.h' contains for example the name of the package and can be
-# included in the programm sources.
-AC_CONFIG_HEADER([config.h])
-AM_INIT_AUTOMAKE([-Wall -Werror foreign])
-
-
-# Check for programs:
+AC_INIT([simput],[0.02],[christian.schmid@sternwarte.uni-erlangen.de])
+AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
 AC_PROG_FC # Search for a Fortran compiler.
+AC_CONFIG_SRCDIR([libsimput/simput.c])
 
 LT_INIT #([disable-shared]) #([shared]) 
 
@@ -81,6 +73,13 @@ AC_CHECK_HEADERS([limit.h math.h malloc.h stdio.h stdlib.h stdarg.h string.h])
 AC_C_CONST
 
 # Checks for library functions.
+
+
+# The following line tells 'configure' to create a header file 'config.h'
+# that is filled with definitions from this script.
+# The 'config.h' contains for example the name of the package and can be
+# included in the programm sources.
+AC_CONFIG_HEADER([config.h])
 
 # Create the following Makefiles (including subdirectories).
 # A Makefile that is not listed here will not be created by 'automake'!

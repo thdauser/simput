@@ -20,13 +20,13 @@ module simput
   end interface
 
   interface
-     function simrtsrc(catalog, row, status) bind(c,name="returnSimputSource")
+     function simlcsrc(catalog, row, status) bind(c,name="loadCacheSimputSource")
        use, intrinsic :: iso_c_binding
        type(c_ptr),value          :: catalog
        integer(kind=c_long),value :: row
        integer(kind=c_int)        :: status
-       type(c_ptr)                :: simrtsrc
-     end function simrtsrc
+       type(c_ptr)                :: simlcsrc
+     end function simlcsrc
   end interface
 
   interface

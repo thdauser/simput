@@ -54,11 +54,11 @@ int main(int argc, char **argv)
 
       printf("catalog contains %ld entries\n", cat->nentries);
 
-      SimputSource* src = returnSimputSource(cat, 0, &status);
+      SimputSource* src=loadCacheSimputSource(cat, 0, &status);
       CHECK_STATUS_BREAK(status);
       printSimputSource(src);
 
-      src = returnSimputSource(cat, 1, &status);
+      src=loadCacheSimputSource(cat, 1, &status);
       CHECK_STATUS_BREAK(status);
       printSimputSource(src);
 

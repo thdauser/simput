@@ -27,7 +27,7 @@ program fortran_sample
 
   ! Get the first source from the catalog (numbering starts at 1).
   write(*,*) "Get first source from the catalog ..."
-  source = simrtsrc(catalog, row, status)
+  source = simlcsrc(catalog, row, status)
 
   ! Determine the coordinates of the first source.
   call simphcrd(source, ra, dec, status)

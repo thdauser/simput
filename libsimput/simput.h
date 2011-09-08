@@ -20,6 +20,7 @@
   Version  Date       Author                
   --------------------------------------------------------------------------- 
   0.0.1  2011/04/02   Christian Schmid      initial 
+  0.0.2  2011/09/08   Christian Schmid      updated
   --------------------------------------------------------------------------- 
 
    This is the header file of the simput library. The library provides
@@ -294,15 +295,6 @@ SimputSource* getSimputSourceV(const long src_id,
     finally sets the pointer to NULL. */
 void freeSimputSource(SimputSource** const entry);
 
-/** Return an entry from a SimputCatalog, which is contained in a
-    particular row of the FITS table. According to the FITS
-    conventions row numbering starts with 1 for the first line. The
-    returned pointer to the SimputSource should not be free'd, since
-    the allocated memory is managed by an internal cash storage. */
-SimputSource* returnSimputSource(SimputCatalog* const cf,
-				 const long row,
-				 int* const status);
-
 /** Load a source from a particular row of the catalog in the FITS
     file. Row numbering starts at 1. The returned pointer to the
     SimputSource must be free'd afterwards in order to avoid a memory
@@ -311,7 +303,20 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
 			       const long row,
 			       int* const status);
 
-/** Append a SimputSource to an existing catalog. */
+/** Return an entry from a SimputCatalog, which is contained in a
+    particular row of the FITS table. According to the FITS
+    conventions row numbering starts with 1 for the first line. When
+    loading the SimputSource for the first time, the data are stored
+    in an static cache, such that they do not have to be loaded again
+    on later access. The returned pointer to the SimputSource should
+    not be free'd, since the allocated memory is managed by the
+    caching mechanism. */
+SimputSource* loadCacheSimputSource(SimputCatalog* const cf,
+				    const long row,
+				    int* const status);
+
+/** Append a SimputSource to an existing catalog. The source is
+    inserted at the end of the binary table in the FITS file. */
 void appendSimputSource(SimputCatalog* const cf,
 			SimputSource* const src,
 			int* const status);
@@ -331,6 +336,21 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec);
 SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
 						   int* const status);
 
+/** Load the requested spectrum. Keeps a certain number of spectra in
+    an internal cache. If the requested spectrum is not located in the
+    cache, it is loaded from the given filename. The returned pointer
+    to the SimputMissionIndepSpec should not be free'd, since the
+    allocated memory is managed by the internal caching mechanism. */
+SimputMissionIndepSpec* 
+loadCacheSimputMissionIndepSpec(const char* const filename,
+				int* const status);
+
+/** Return the spectrum of the specified SimputSource for the
+    particular point of time. */
+SimputMissionIndepSpec* returnSimputSrcSpec(const SimputSource* const src,
+					    const double time, const double mjdref,
+					    int* const status);
+
 /** Save the mission-independent spectrum in the specified extension
     of the given FITS file. If the file does not exist yet, a new file
     is created. If the file exists, but does not contain the specified
@@ -349,16 +369,6 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const indepspec, 
 				       int* const status);
 
-/** Return the requested spectrum. Keeps a certain number of spectra
-    in an internal storage. If the requested spectrum is not located
-    in the internal storage, it is loaded from the reference given in
-    the source catalog. The returned pointer to the
-    SimputMissionIndepSpec should not be free'd, since the allocated
-    memory is managed by an internal cash storage.*/
-SimputMissionIndepSpec* 
-returnSimputMissionIndepSpec(const SimputSource* const src,
-			     const double time, const double mjdref,
-			     int* const status);
 
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
