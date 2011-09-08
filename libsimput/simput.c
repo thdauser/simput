@@ -791,7 +791,7 @@ void appendSimputSource(SimputCatalog* const cf,
 
 
 void appendSimputSourceBlock(SimputCatalog* const cf,
-			     SimputSource* const src,
+			     SimputSource** const src,
 			     const long nsources,
 			     int* const status)
 {
@@ -839,24 +839,24 @@ void appendSimputSourceBlock(SimputCatalog* const cf,
     for (ii=0; ii<nsources; ii++) {
 
       // Copy values to buffers.
-      src_id[ii] = src[ii].src_id;
-      ra[ii]     = src[ii].ra *180./M_PI;
-      dec[ii]    = src[ii].dec*180./M_PI;
-      imgrota[ii]= src[ii].imgrota;
-      imgscal[ii]= src[ii].imgscal;
-      e_min[ii]  = src[ii].e_min;
-      e_max[ii]  = src[ii].e_max;
-      eflux[ii]  = src[ii].eflux;
+      src_id[ii] = src[ii]->src_id;
+      ra[ii]     = src[ii]->ra *180./M_PI;
+      dec[ii]    = src[ii]->dec*180./M_PI;
+      imgrota[ii]= src[ii]->imgrota;
+      imgscal[ii]= src[ii]->imgscal;
+      e_min[ii]  = src[ii]->e_min;
+      e_max[ii]  = src[ii]->e_max;
+      eflux[ii]  = src[ii]->eflux;
 
       // Write strings.
       fits_write_col(cf->fptr, TSTRING, cf->csrc_name, first+ii, 1, 1, 
-		     &(src[ii].src_name), status);
+		     &(src[ii]->src_name), status);
       fits_write_col(cf->fptr, TSTRING, cf->cspectrum, first+ii, 1, 1, 
-		     &(src[ii].spectrum), status);
+		     &(src[ii]->spectrum), status);
       fits_write_col(cf->fptr, TSTRING, cf->cimage, first+ii, 1, 1, 
-		     &(src[ii].image), status);
+		     &(src[ii]->image), status);
       fits_write_col(cf->fptr, TSTRING, cf->clightcur, first+ii, 1, 1, 
-		     &(src[ii].lightcur), status);
+		     &(src[ii]->lightcur), status);
       CHECK_STATUS_BREAK(*status);
     }
     CHECK_STATUS_BREAK(*status);

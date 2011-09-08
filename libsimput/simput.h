@@ -325,7 +325,7 @@ void appendSimputSource(SimputCatalog* const cat,
     sources are inserted at the end of the binary table in the FITS
     file. */
 void appendSimputSourceBlock(SimputCatalog* const cat,
-			     SimputSource* const src,
+			     SimputSource** const src,
 			     const long nsources,
 			     int* const status);
 
