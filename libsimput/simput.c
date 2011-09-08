@@ -3213,7 +3213,7 @@ float getSimputSourceExtension(const SimputSource* const src,
 			       int* const status)
 {
   // Return value.
-  float extension;
+  float extension=0.;
 
   struct wcsprm wcs = { .flag=-1 };
 
