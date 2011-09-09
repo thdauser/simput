@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.02],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.03],[christian.schmid@sternwarte.uni-erlangen.de])
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
 AC_PROG_FC # Search for a Fortran compiler.

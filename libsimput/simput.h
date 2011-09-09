@@ -268,9 +268,11 @@ SimputSource* getSimputSource(int* const status);
     memory and initializes elements with the given values. */
 SimputSource* getSimputSourceV(const long src_id, 
 			       const char* const src_name,
+			       /** ([rad]). */
 			       const double ra,
+			       /** ([rad]). */
 			       const double dec,
-			       /** Image rotation angle ([deg]). Only
+			       /** Image rotation angle ([rad]). Only
 				   applicable for extended sources
 				   with an image. */
 			       const float imgrota,
