@@ -54,7 +54,7 @@ AC_SEARCH_LIBS(ffopen,
 #################################### 
 # WCS Library:
 
-AC_SEARCH_LIBS(wcsbth, [wcs_6.10 wcs_6.9 wcs_6.8 wcs_6.7 wcs_6.6 \
+AC_SEARCH_LIBS(wcspih, [wcs_6.10 wcs_6.9 wcs_6.8 wcs_6.7 wcs_6.6 \
 		       wcs-4.4.4 wcs-4.3.3 wcs-4.3], [], \
 		       [AC_MSG_ERROR([No WCS library found!])], [])
 
