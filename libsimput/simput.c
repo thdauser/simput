@@ -3200,8 +3200,10 @@ void getSimputPhotonCoord(const SimputSource* const src,
       // Check that CUNIT is set to "deg". Otherwise there will be a conflict
       // between CRVAL [deg] and CDELT [different unit]. 
       // TODO This is not required by the standard.
-      if ((0!=strcmp(wcs.cunit[0], "deg     ")) || 
-	  (0!=strcmp(wcs.cunit[1], "deg     "))) {
+      if (((0!=strcmp(wcs.cunit[0], "deg     ")) && 
+	   (0!=strcmp(wcs.cunit[0], "degree  "))) || 
+	  ((0!=strcmp(wcs.cunit[1], "deg     ")) &&
+	   (0!=strcmp(wcs.cunit[1], "degree  ")))) {
 	*status=EXIT_FAILURE;
 	char msg[SIMPUT_MAXSTR];
 	sprintf(msg, "units of image coordinates are '%s' and '%s' (must be 'deg')",
