@@ -3145,7 +3145,7 @@ void getSimputPhotonCoord(const SimputSource* const src,
     SimputImg* img=returnSimputImg(src, status);
     CHECK_STATUS_BREAK(*status);
 
-    // Check, whether the source is point-like.
+    // Check, whether the source is point-like or spatially extended.
     if (NULL==img) {
       // The source is point-like.
       *ra  = src->ra;
@@ -3190,13 +3190,13 @@ void getSimputPhotonCoord(const SimputSource* const src,
       // sources including the image.
       wcscopy(1, img->wcs, &wcs);
 
-      // Change the position of the image and the scale according to 
-      // the source specific properties.
-      wcs.crval[0] = src->ra *180./M_PI;
-      wcs.crval[1] = src->dec*180./M_PI;
+      // Set the position to the origin and assign the correct scaling.
+      wcs.crval[0] = 0.; 
+      wcs.crval[1] = 0.; //src->dec*180./M_PI;
       wcs.cdelt[0] *= 1./src->imgscal;
       wcs.cdelt[1] *= 1./src->imgscal;
       wcs.flag = 0;
+
       // Check that CUNIT is set to "deg". Otherwise there will be a conflict
       // between CRVAL [deg] and CDELT [different unit]. 
       // TODO This is not required by the standard.
@@ -3232,6 +3232,10 @@ void getSimputPhotonCoord(const SimputSource* const src,
       // pixel coordinates to RA and DEC using the  WCS information.
       p2s(&wcs, xdrot, ydrot, ra, dec, status);
       CHECK_STATUS_BREAK(*status);
+
+      // Add the offset given by the source position.
+      *ra += src->ra *180./M_PI;
+      *dec+= src->dec*180./M_PI;
     }
   } while(0); // END of error handling loop.
 
