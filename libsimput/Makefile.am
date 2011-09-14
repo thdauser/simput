@@ -13,7 +13,7 @@ noinst_PROGRAMS = fortran_sample
 
 fortran_sample_SOURCES = simput_fortran.f95 fortran_sample.f95
 fortran_sample_LDADD   = @top_builddir@/libsimput/libsimput.la
-fortran_sample_LDFLAGS = --tag=FC
+#fortran_sample_LDFLAGS = --tag=FC
 
 ############ HEADERS #################
 
