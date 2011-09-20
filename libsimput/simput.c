@@ -3027,7 +3027,7 @@ void saveSimputImg(SimputImg* const img,
 static SimputImg* returnSimputImg(const SimputSource* const src,
 				  int* const status)
 {
-  const int maximgs=10;
+  const int maximgs=200;
   static int nimgs =0;
   static SimputImg** imgs=NULL;
 
