@@ -1,5 +1,5 @@
 AM_CFLAGS = -I@top_srcdir@/libsimput 
-AM_CFLAGS += -Wall 
+AM_CFLAGS += -Wall
 #AM_CFLAGS += -Wall -Werror
 
 ############ BINARIES #################
@@ -8,10 +8,10 @@ AM_CFLAGS += -Wall
 noinst_PROGRAMS = sample crab
 
 sample_SOURCES = sample.c
-sample_LDADD  = @top_builddir@/libsimput/libsimput.la
+sample_LDADD = @top_builddir@/libsimput/libsimput.la
 
 crab_SOURCES = crab.c
-crab_LDADD  = @top_builddir@/libsimput/libsimput.la
+crab_LDADD = @top_builddir@/libsimput/libsimput.la
 
 ########### Sample data ##############
 
