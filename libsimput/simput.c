@@ -799,7 +799,7 @@ void appendSimputSourceBlock(SimputCatalog* const cf,
   fits_insert_rows(cf->fptr, cf->nentries, nsources, status);
   CHECK_STATUS_VOID(*status);
 
-  long first=cf->nentries;
+  long first=cf->nentries+1;
   cf->nentries+=nsources;
 
   // Buffers.
