@@ -2,7 +2,8 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.03],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.05],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_CONFIG_AUX_DIR([build-aux]) # Store auxiliary files in the sub-directory 'build-aux'.
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
 AC_PROG_FC # Search for a Fortran compiler.
@@ -17,7 +18,7 @@ LT_INIT #([disable-shared]) #([shared])
 # "-pg" for the compiler and linker to include information for gprof (Profiler)
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # " -O0" for zero optimization
-CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -Df2cFortran -O0"
+CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -Df2cFortran"
 LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall"
 #FCFLAGS="-O0"
 
@@ -88,6 +89,7 @@ AC_CONFIG_HEADER([config.h])
 # A Makefile that is not listed here will not be created by 'automake'!
 AC_CONFIG_FILES([Makefile
 		libsimput/Makefile
-		sample/Makefile])
+		csample/Makefile
+		fsample/Makefile])
 AC_OUTPUT
 

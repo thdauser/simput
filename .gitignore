@@ -1,4 +1,5 @@
 *~
+simput*.tar.gz
 *.o
 *.a
 *.la
@@ -16,6 +17,7 @@ pull.err
 pull.log
 pull_n_push.sh
 sample
+crab
 fortran_sample
 
 # Autotool stuff:
