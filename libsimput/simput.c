@@ -1947,6 +1947,8 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
   double* fcomp =NULL;
   float* power  =NULL;
 
+  printf("*** warning: the loadSimputLCfromPSD() routine has to be revised!\n");
+
   do { // Error handling loop.
 
     // Load the PSD.
@@ -2786,7 +2788,6 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     CHECK_STATUS_BREAK(*status);
     // Parse the header string and store the data in the wcsprm data
     // structure.
-    // TODO Maybe "1" instead of nkeys (nkeyrecs)
     int nreject, nwcs;
     if (0!=wcspih(headerstr, nkeys, 0, 3, &nreject, &nwcs, &img->wcs)) {
       SIMPUT_ERROR("parsing of WCS header failed");
