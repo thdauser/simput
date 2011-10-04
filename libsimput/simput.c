@@ -3121,19 +3121,6 @@ static void p2s(struct wcsprm* const wcs,
 }
 
 
-static double RADist(const double ra1, const double ra2) 
-{
-  double distance = ra2-ra1;
-  while (distance > M_PI) {
-    distance -= 2.*M_PI;
-  }
-  while (distance < -M_PI) {
-    distance += 2.*M_PI;
-  }
-  return(distance);
-}
-
-
 void getSimputPhotonCoord(const SimputSource* const src,
 			  double* const ra, double* const dec,
 			  int* const status)
@@ -3193,7 +3180,7 @@ void getSimputPhotonCoord(const SimputSource* const src,
 
       // Set the position to the origin and assign the correct scaling.
       wcs.crval[0] = 0.; 
-      wcs.crval[1] = 0.; //src->dec*180./M_PI;
+      wcs.crval[1] = 0.;
       wcs.cdelt[0] *= 1./src->imgscal;
       wcs.cdelt[1] *= 1./src->imgscal;
       wcs.flag = 0;
@@ -3264,6 +3251,7 @@ float getSimputSourceExtension(const SimputSource* const src,
       // Point-like source.
       extension=0.;
       break;
+
     } else {
       // Extended source => determine the maximum extension.
       double maxext=0.;
@@ -3274,6 +3262,8 @@ float getSimputSourceExtension(const SimputSource* const src,
 
       // Change the scale of the image according to the source specific
       // IMGSCAL property.
+      wcs.crval[0] = 0.; 
+      wcs.crval[1] = 0.;
       wcs.cdelt[0] *= 1./src->imgscal;
       wcs.cdelt[1] *= 1./src->imgscal;
       wcs.flag = 0;
@@ -3284,11 +3274,8 @@ float getSimputSourceExtension(const SimputSource* const src,
       double sx, sy;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      double dsx = RADist(sx, wcs.crval[0]*M_PI/180.); 
-      double dsy = sy - wcs.crval[1]*M_PI/180.;
-      // TODO This has to be revised in order to account properly 
-      // for spherical coordinates.
-      double ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
+      // TODO This has not been tested extensively, yet.
+      double ext = sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
 	maxext = ext;
       }
@@ -3298,9 +3285,7 @@ float getSimputSourceExtension(const SimputSource* const src,
       py = 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
-      dsy = sy - wcs.crval[1]*M_PI/180.;
-      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
+      ext = sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
 	maxext = ext;
       }
@@ -3310,9 +3295,7 @@ float getSimputSourceExtension(const SimputSource* const src,
       py = img->naxis2*1. + 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
-      dsy = sy - wcs.crval[1]*M_PI/180.;
-      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
+      ext = sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
 	maxext = ext;
       }
@@ -3322,9 +3305,7 @@ float getSimputSourceExtension(const SimputSource* const src,
       py = img->naxis2*1. + 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      dsx = RADist(sx, wcs.crval[0]*M_PI/180.);
-      dsy = sy - wcs.crval[1]*M_PI/180.;
-      ext = sqrt(pow(dsx,2.)+pow(dsy,2.));
+      ext = sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
 	maxext = ext;
       }
