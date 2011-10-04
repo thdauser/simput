@@ -3179,8 +3179,8 @@ void getSimputPhotonCoord(const SimputSource* const src,
       wcscopy(1, img->wcs, &wcs);
 
       // Set the position to the origin and assign the correct scaling.
-      wcs.crval[0] = 0.; 
-      wcs.crval[1] = 0.;
+      wcs.crval[0] = src->ra *180./M_PI; // Units (CUNITn) must be [deg]!
+      wcs.crval[1] = src->dec*180./M_PI;
       wcs.cdelt[0] *= 1./src->imgscal;
       wcs.cdelt[1] *= 1./src->imgscal;
       wcs.flag = 0;
@@ -3221,9 +3221,14 @@ void getSimputPhotonCoord(const SimputSource* const src,
       p2s(&wcs, xdrot, ydrot, ra, dec, status);
       CHECK_STATUS_BREAK(*status);
 
-      // Add the offset given by the source position.
-      *ra += src->ra;
-      *dec+= src->dec;
+      // Determine the RA in the interval from [0:2pi).
+      while(*ra>=2.*M_PI) {
+	*ra -= 2.*M_PI;
+      }
+      while(*ra<0.) {
+	*ra += 2.*M_PI;
+      }
+
     }
   } while(0); // END of error handling loop.
 
