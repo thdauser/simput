@@ -3230,13 +3230,13 @@ void getSimputPhotonCoord(const SimputSource* const src,
       
       // Convert the long-valued pixel coordinates to double values,
       // including a randomization over the pixel and transform from 
-      // pixel coordinates to RA and DEC using the  WCS information.
+      // pixel coordinates to RA and DEC ([rad]) using the  WCS information.
       p2s(&wcs, xdrot, ydrot, ra, dec, status);
       CHECK_STATUS_BREAK(*status);
 
       // Add the offset given by the source position.
-      *ra += src->ra *180./M_PI;
-      *dec+= src->dec*180./M_PI;
+      *ra += src->ra;
+      *dec+= src->dec;
     }
   } while(0); // END of error handling loop.
 
