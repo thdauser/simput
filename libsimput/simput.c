@@ -1625,24 +1625,26 @@ static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec
   CHECK_NULL_VOID(static_arf, *status, "instrument ARF undefined");
 
   // Allocate memory.
-  spec->distribution = (float*)malloc(spec->nentries*sizeof(float));
+  spec->distribution=(float*)malloc(spec->nentries*sizeof(float));
   CHECK_NULL_VOID(spec->distribution, *status,
 		 "memory allocation for spectral distribution failed");
 
-  // Multiply data point of the spectrum with the ARF.
+  // Multiply each data point of the spectrum with the ARF.
   // [photon/s/cm^2/keV] -> [photon/s/keV]
   long ii;
   for (ii=0; ii<spec->nentries; ii++) {
     // Initialize with 0. This is important! If spectral bin is outside
     // the range of the ARF, the value has to be 0.
-    spec->distribution[ii] = 0.;
+    spec->distribution[ii]=0.;
 
     // Determine the ARF bin that contains the spectral data point.
+    // TODO Revise this, since the current method can be inaccurate 
+    // for large energy bins and small ARF bins => Use interpolation instead.
     long jj;
     for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
       if ((static_arf->LowEnergy[jj] <=spec->energy[ii]) && 
 	  (static_arf->HighEnergy[jj]> spec->energy[ii])) {
-	spec->distribution[ii] = spec->pflux[ii]*static_arf->EffArea[jj];
+	spec->distribution[ii]=spec->pflux[ii]*static_arf->EffArea[jj];
 	break;
       }
     }
@@ -1652,12 +1654,12 @@ static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec
     // [photon/s/keV] -> [photon/s]
     float emin, emax;
     getSpecEbounds(spec, ii, &emin, &emax);
-    spec->distribution[ii] *= emax-emin;
+    spec->distribution[ii]*=emax-emin;
 
     // Create the spectral distribution normalized to the total 
     // photon rate [photon/s]. 
     if (ii>0) {
-      spec->distribution[ii] += spec->distribution[ii-1];
+      spec->distribution[ii]+=spec->distribution[ii-1];
     }
   }
 }
@@ -2515,8 +2517,11 @@ static double rndexp(const double avgdist)
 {
   assert(avgdist>0.);
 
-  double rand = static_rndgen();
-  assert(rand>0.);
+  double rand;
+  do {
+    rand=static_rndgen();
+    assert(rand>=0.);
+  } while (rand==0.);
 
   return(-log(rand)*avgdist);
 }
