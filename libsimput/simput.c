@@ -1114,15 +1114,15 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
       *status=EXIT_FAILURE;
       break;
     }
-    spec->nentries = nenergy;
+    spec->nentries=nenergy;
     printf("spectrum '%s' contains %ld data points\n", 
 	   filename, spec->nentries);
 
     // Allocate memory for the arrays.
-    spec->energy  = (float*)malloc(spec->nentries*sizeof(float));
+    spec->energy=(float*)malloc(spec->nentries*sizeof(float));
     CHECK_NULL_BREAK(spec->energy, *status, 
 		     "memory allocation for spectrum failed");
-    spec->pflux   = (float*)malloc(spec->nentries*sizeof(float));
+    spec->pflux =(float*)malloc(spec->nentries*sizeof(float));
     CHECK_NULL_BREAK(spec->pflux, *status, 
 		     "memory allocation for spectrum failed");
 
@@ -1390,7 +1390,7 @@ void simputSetRndGen(double(*rndgen)(void))
 
 /** Determine the time corresponding to a particular light curve bin
     [s]. The function takes into account, whether the light curve is
-    periodic or not. For peridic light curves the specified number of
+    periodic or not. For periodic light curves the specified number of
     periods is added to the time value. For non-periodic light curves
     the nperiod parameter is neglected. The returned value includes
     the MJDREF and TIMEZERO contributions. */
@@ -1630,7 +1630,6 @@ static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec
 		 "memory allocation for spectral distribution failed");
 
   // Multiply each data point of the spectrum with the ARF.
-  // [photon/s/cm^2/keV] -> [photon/s/keV]
   long ii;
   for (ii=0; ii<spec->nentries; ii++) {
     // Initialize with 0. This is important! If spectral bin is outside
@@ -1644,6 +1643,7 @@ static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec
     for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
       if ((static_arf->LowEnergy[jj] <=spec->energy[ii]) && 
 	  (static_arf->HighEnergy[jj]> spec->energy[ii])) {
+	// [photon/s/cm^2/keV] -> [photon/s/keV]
 	spec->distribution[ii]=spec->pflux[ii]*static_arf->EffArea[jj];
 	break;
       }
@@ -1654,7 +1654,7 @@ static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec
     // [photon/s/keV] -> [photon/s]
     float emin, emax;
     getSpecEbounds(spec, ii, &emin, &emax);
-    spec->distribution[ii]*=emax-emin;
+    spec->distribution[ii]*=(emax-emin);
 
     // Create the spectral distribution normalized to the total 
     // photon rate [photon/s]. 
@@ -2543,7 +2543,7 @@ double getSimputPhotonTime(const SimputSource* const src,
   // Check, whether the source has constant brightness.
   if (NULL==lc) {
     // The source has a constant brightness.
-    float rate = getSimputPhotonRate(src, prevtime, mjdref, status);
+    float rate=getSimputPhotonRate(src, prevtime, mjdref, status);
     if (0.==rate) {
       *failed=1;
       return(0.);
@@ -2559,7 +2559,7 @@ double getSimputPhotonTime(const SimputSource* const src,
     // be applied.
 
     // Apply the individual photon rate of the particular source.
-    float avgrate = getSimputPhotonRate(src, prevtime, mjdref, status);
+    float avgrate=getSimputPhotonRate(src, prevtime, mjdref, status);
     CHECK_STATUS_RET(*status, 0.);
     assert(avgrate>0.);
 
@@ -2574,8 +2574,8 @@ double getSimputPhotonTime(const SimputSource* const src,
     while (kk < lc->nentries-1) {
       // Determine the relative time within the kk-th interval, i.e., t=0 lies
       // at the beginning of the kk-th interval.
-      double t         = prevtime-(getLCTime(lc, kk, nperiods, mjdref));
-      double stepwidth = 
+      double t        =prevtime-(getLCTime(lc, kk, nperiods, mjdref));
+      double stepwidth=
 	getLCTime(lc, kk+1, nperiods, mjdref)-getLCTime(lc, kk, nperiods, mjdref);
 
       // Step 2 in the algorithm.
@@ -3116,13 +3116,31 @@ static void p2s(struct wcsprm* const wcs,
 		double* sx, double* sy,
 		int* const status)
 {
-  double pixcrd[2] = { px, py };
+  double pixcrd[2]={ px, py };
   double imgcrd[2], world[2];
   double phi, theta;
-  wcsp2s(wcs, 1, 2, pixcrd, imgcrd, &phi, &theta, world, status);
+  
+  // If CUNIT is set to 'degree', change this to 'deg'.
+  // Otherwise the WCSlib will not work properly.
+  if (0==strcmp(wcs->cunit[0], "degree  ")) {
+    strcpy(wcs->cunit[0], "deg");
+  }
+  if (0==strcmp(wcs->cunit[1], "degree  ")) {
+    strcpy(wcs->cunit[1], "deg");
+  }
+
+  // Perform the transform using WCSlib.
+  int retval=wcsp2s(wcs, 1, 2, pixcrd, imgcrd, &phi, &theta, world, status);
   CHECK_STATUS_VOID(*status);
-  *sx = world[0]*M_PI/180.;
-  *sy = world[1]*M_PI/180.;
+  if (0!=retval) {
+    *status=EXIT_FAILURE;
+    SIMPUT_ERROR("WCS transformation failed");
+    return;
+  }
+  
+  // Convert to [rad].
+  *sx=world[0]*M_PI/180.;
+  *sy=world[1]*M_PI/180.;
 }
 
 
@@ -3130,7 +3148,7 @@ void getSimputPhotonCoord(const SimputSource* const src,
 			  double* const ra, double* const dec,
 			  int* const status)
 {
-  struct wcsprm wcs = { .flag=-1 };
+  struct wcsprm wcs={ .flag=-1 };
 
   do { // Error handling loop.
 
@@ -3141,14 +3159,14 @@ void getSimputPhotonCoord(const SimputSource* const src,
     // Check, whether the source is point-like or spatially extended.
     if (NULL==img) {
       // The source is point-like.
-      *ra  = src->ra;
-      *dec = src->dec;
+      *ra =src->ra;
+      *dec=src->dec;
 
     } else {
       // The source is spatially extended.
 
       // Perform a binary search in 2 dimensions.
-      double rnd = static_rndgen() * img->dist[img->naxis1-1][img->naxis2-1];
+      double rnd=static_rndgen() * img->dist[img->naxis1-1][img->naxis2-1];
 
       // Perform a binary search to obtain the x-coordinate.
       long high = img->naxis1-1;
@@ -3285,6 +3303,9 @@ float getSimputSourceExtension(const SimputSource* const src,
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
       // TODO This has not been tested extensively, yet.
+      while(sx>M_PI) {
+	sx-=2*M_PI;
+      }
       double ext = sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
 	maxext = ext;
@@ -3295,6 +3316,9 @@ float getSimputSourceExtension(const SimputSource* const src,
       py = 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
+      while(sx>M_PI) {
+	sx-=2*M_PI;
+      }
       ext = sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
 	maxext = ext;
@@ -3305,22 +3329,28 @@ float getSimputSourceExtension(const SimputSource* const src,
       py = img->naxis2*1. + 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
+      while(sx>M_PI) {
+	sx-=2*M_PI;
+      }
       ext = sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
 	maxext = ext;
       }
       
       // Check upper right corner.
-      px = img->naxis1*1. + 0.5;
-      py = img->naxis2*1. + 0.5;
+      px=img->naxis1*1. + 0.5;
+      py=img->naxis2*1. + 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
-      ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      while(sx>M_PI) {
+	sx-=2*M_PI;
+      }
+      ext=sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
-	maxext = ext;
+	maxext=ext;
       }
       
-      extension = (float)maxext;
+      extension=(float)maxext;
     }
   } while(0); // END of error handling loop.
 

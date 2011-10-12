@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.07],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.08],[christian.schmid@sternwarte.uni-erlangen.de])
 AC_CONFIG_AUX_DIR([build-aux]) # Store auxiliary files in the sub-directory 'build-aux'.
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
@@ -54,11 +54,9 @@ AC_SEARCH_LIBS(ffopen,
 
 #################################### 
 # WCS Library:
-
 AC_SEARCH_LIBS(wcspih, [wcs_6.10 wcs_6.9 wcs_6.8 wcs_6.7 wcs_6.6 \
 		       wcs-4.4.4 wcs-4.3.3 wcs-4.3], [], \
 		       [AC_MSG_ERROR([No WCS library found!])], [])
-
 #################################### 
 # GSL Libraries:
 AC_SEARCH_LIBS(cblas_sdot, [gslcblas], [], \
