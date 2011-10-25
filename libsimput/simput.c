@@ -1376,6 +1376,23 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 }
 
 
+void getSimputSpectrumValue(const SimputMissionIndepSpec* const spec,
+			    const long row,
+			    float* const energy, 
+			    float* const pflux,
+			    int* const status)
+{
+  if (row>=spec->nentries) {
+    *status=EXIT_FAILURE;
+    SIMPUT_ERROR("row number exceeds number of bins in spectrum");
+    return;
+  }
+
+  *energy=spec->energy[row];
+  *pflux =spec->pflux[row];
+}
+
+
 void simputSetARF(struct ARF* const arf)
 {
   static_arf = arf;
