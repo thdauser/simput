@@ -357,7 +357,8 @@ loadCacheSimputMissionIndepSpec(const char* const filename,
 /** Return the spectrum of the specified SimputSource for the
     particular point of time. */
 SimputMissionIndepSpec* returnSimputSrcSpec(const SimputSource* const src,
-					    const double time, const double mjdref,
+					    const double time, 
+					    const double mjdref,
 					    int* const status);
 
 /** Save the mission-independent spectrum in the specified extension
@@ -371,6 +372,15 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 				char* const extname,
 				int extver,
 				int* const status);
+
+/** Determine the energy and flux values of a particular bin in the
+    SimputMissionIndepSpec. The energy is given in [keV], the flux in
+    [photons/s/cm**2/keV]. */
+void getSimputSpectrumValue(const SimputMissionIndepSpec* const spec,
+			    const long row,
+			    float* const energy, 
+			    float* const pflux,
+			    int* const status);
 
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from

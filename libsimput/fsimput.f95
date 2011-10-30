@@ -33,7 +33,7 @@ module simput
   type, bind(c) :: simsrc
      integer(kind=c_long) :: src_id
      type(c_ptr)          :: src_name
-     real(kind=c_double)  ::ra
+     real(kind=c_double)  :: ra
      real(kind=c_double)  :: dec
      real(kind=c_float)   :: imgrota
      real(kind=c_float)   :: imgscal
@@ -92,6 +92,15 @@ module simput
        type(c_ptr)                :: returnsimputsrcspec
      end function returnsimputsrcspec
      
+     subroutine getsimputspectrumvalue(spec, row, energy, pflux, status) bind(c,name="getSimputSpectrumValue")
+       use, intrinsic             :: iso_c_binding
+       type(c_ptr),value          :: spec
+       integer(kind=c_long),value :: row
+       real(kind=c_float)         :: energy
+       real(kind=c_float)         :: pflux
+       integer(kind=c_int)        :: status
+     end subroutine getsimputspectrumvalue
+
      ! TODO? simputSetARF(struct ARF* const arf);
      ! TODO? simputSetRndGen(double(*rndgen)(void));
      ! TODO? getSimputPhotonEnergy(const SimputSource* const src, const double time, const double mjdref, int* const status);
@@ -130,7 +139,6 @@ module simput
       call freesimputcatalog(ccatalog,status)
     end subroutine simfrctl
 
-
     ! This function returns a pointer to a SIMPUT source data structure
     ! for the source in the specified line of the catalog.
     subroutine simlcsrc(catalog, row, src, status)      
@@ -146,7 +154,6 @@ module simput
       csrc=loadcachesimputsource(ccatalog,row,status)
       call c_f_pointer(csrc, src)
     end subroutine simlcsrc
-
 
     ! This subroutine returns a pointer to a data structure containing the
     ! SIMPUT mission-independent spectrum of the specified source.
@@ -164,6 +171,22 @@ module simput
       cspec=returnsimputsrcspec(csrc,time,mjdref,status)
       call c_f_pointer(cspec, spec)
     end subroutine simrspec
+
+    ! This function returns the energy and flux value for a particular 
+    ! entry in the SIMPUT mission-independent spectrum data structure. 
+    ! The energy is given in [keV], the flux in [photons/s/cm**2/keV].
+    subroutine simspecv(spec, row, energy, pflux, status)      
+      use, intrinsic :: iso_c_binding
+      type(simspec), pointer     :: spec
+      integer(kind=c_long)       :: row
+      real(kind=c_float)         :: energy
+      real(kind=c_float)         :: pflux
+      integer(kind=c_int)        :: status
+      type(c_ptr)                :: cspec
+
+      cspec=c_loc(spec)
+      call getsimputspectrumvalue(cspec, row, energy, pflux, status)
+    end subroutine simspecv
    
 end module simput
 
