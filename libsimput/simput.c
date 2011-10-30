@@ -1003,7 +1003,7 @@ SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status)
   // Initialize elements.
   spec->nentries=0;
   spec->energy  =NULL;
-  spec->pflux    =NULL;
+  spec->pflux   =NULL;
   spec->distribution=NULL;
   spec->name    =NULL;
   spec->fileref =NULL;
@@ -1042,7 +1042,7 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
   // String buffer.
   char* name[1]={NULL};
 
-  SimputMissionIndepSpec* spec = getSimputMissionIndepSpec(status);
+  SimputMissionIndepSpec* spec=getSimputMissionIndepSpec(status);
   CHECK_STATUS_RET(*status, spec);
 
   // Open the specified FITS file. The filename must uniquely identify
