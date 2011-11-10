@@ -2618,8 +2618,18 @@ double getSimputPhotonTime(const SimputSource* const src,
     long long nperiods=0;
     long kk=getLCBin(lc, prevtime, mjdref, &nperiods, status);
     CHECK_STATUS_RET(*status, 0.);
-    
-    while (kk < lc->nentries-1) {
+
+    while ((kk<lc->nentries-1)||(lc->src_id>0)) {
+
+      // If the end of the light curve is reached, check if it has
+      // been produced from a PSD. In that case one can create new one.
+      if ((kk>=lc->nentries-1)&&(lc->src_id>0)) {
+	lc=returnSimputLC(src, prevtime, mjdref, status);
+	CHECK_STATUS_RET(*status, 0.);
+	kk=getLCBin(lc, prevtime, mjdref, &nperiods, status);
+	CHECK_STATUS_RET(*status, 0.);
+      }
+
       // Determine the relative time within the kk-th interval, i.e., t=0 lies
       // at the beginning of the kk-th interval.
       double t        =prevtime-(getLCTime(lc, kk, nperiods, mjdref));
@@ -2705,7 +2715,12 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
       if (lcs[ii]->src_id>0) {
 	// Check if the SRC_IDs agree.
 	if (lcs[ii]->src_id==src->src_id) {
-	  return(lcs[ii]);
+	  // We have a light curve which has been produced from a PSD.
+	  // Check if the requested time is covered by the light curve.
+	  if (time<getLCTime(lcs[ii], lcs[ii]->nentries-1, 0, mjdref)) {
+	    return(lcs[ii]);
+	  }
+	  // If not, we have to produce a new light curve from the PSD.
 	}
       } else {
 	// This light curve is loaded from a file and can be re-used
