@@ -114,6 +114,21 @@ typedef struct {
 } SimputCatalog;
 
 
+/** Reference flux of a certain spectrum in a particular energy
+    band. */
+typedef struct {
+  /** Lower Boundary of the energy band [keV]. */
+  float emin;
+
+  /** Upper Boundary of the energy bin [keV]. */
+  float emax;
+
+  /** Reference flux in this band [erg/s/cm^2]. */
+  float flux;
+
+} SimputSpecBandFlux;
+
+
 /** Mission-independent spectrum. */
 typedef struct {
   /** Number of entries in the spectrum. */
@@ -124,6 +139,12 @@ typedef struct {
 
   /** Photon flux distribution [photons/s/cm**2/keV]. */
   float* pflux;
+
+  /** Energy flux in a certain reference band. This value is only
+      calculated once (if the same reference band is used all the
+      time) and stored here in order to avoid recalculation during the
+      photon generation. */
+  SimputSpecBandFlux* refflux;
 
   /** Probability distribution normalized to the total photon rate
       [photons/s]. */
@@ -414,8 +435,9 @@ float getSimputSrcBandFlux(const SimputSource* const src,
 
 /** Determine the energy flux of the spectrum in [erg/s/cm**2] within a
     certain energy band from emin to emax. */
-float getSimputSpecBandFlux(const SimputMissionIndepSpec* const spec,
-			    const float emin, const float emax);
+float getSimputSpecBandFlux(SimputMissionIndepSpec* const spec,
+			    const float emin, const float emax,
+			    int* const status);
 
 /** Return the photon rate of a particular source. The return value is
     the nominal photon rate given in the source catalog. WARNING: It

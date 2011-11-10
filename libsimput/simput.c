@@ -1004,6 +1004,7 @@ SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status)
   spec->nentries=0;
   spec->energy  =NULL;
   spec->pflux   =NULL;
+  spec->refflux =NULL;
   spec->distribution=NULL;
   spec->name    =NULL;
   spec->fileref =NULL;
@@ -1020,6 +1021,9 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec)
     }
     if (NULL!=(*spec)->pflux) {
       free((*spec)->pflux);
+    }
+    if (NULL!=(*spec)->refflux) {
+      free((*spec)->refflux);
     }
     if (NULL!=(*spec)->distribution) {
       free((*spec)->distribution);
@@ -1612,9 +1616,9 @@ loadCacheSimputMissionIndepSpec(const char* const filename,
 }
 
 
-static void getSpecEbounds(const SimputMissionIndepSpec* const spec,
-			   const long idx, 
-			   float* emin, float* emax)
+static inline void getSpecEbounds(const SimputMissionIndepSpec* const spec,
+				  const long idx, 
+				  float* emin, float* emax)
 {
   // Determine the lower boundary.
   if (idx>0) {
@@ -1736,9 +1740,21 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 }
 
 
-float getSimputSpecBandFlux(const SimputMissionIndepSpec* const spec,
-			    const float emin, const float emax)
+float getSimputSpecBandFlux(SimputMissionIndepSpec* const spec,
+			    const float emin, const float emax,
+			    int* const status)
 {
+  if (NULL!=spec->refflux) {
+    if ((fabs(emin-spec->refflux->emin)/emin<1.e-6) &&
+	(fabs(emax-spec->refflux->emax)/emax<1.e-6)) {
+      return(spec->refflux->flux);
+    }
+  } else {
+    spec->refflux=(SimputSpecBandFlux*)malloc(sizeof(SimputSpecBandFlux));
+    CHECK_NULL_RET(spec->refflux, *status, 
+		 "memory allocation for SimputSpecBandFlux failed", 0.);
+  }
+
   // Conversion factor from [keV] -> [erg].
   const float keV2erg = 1.602e-9;
 
@@ -1753,12 +1769,19 @@ float getSimputSpecBandFlux(const SimputMissionIndepSpec* const spec,
       float min = MAX(binmin, emin);
       float max = MIN(binmax, emax);
       assert(max>min);
-      flux += (max-min) * spec->pflux[ii] * spec->energy[ii];
+      flux += (max-min)*spec->pflux[ii]*spec->energy[ii];
     }
   }
 
   // Convert units of 'flux' from [keV/s/cm^2] -> [erg/s/cm^2].
   flux *= keV2erg;
+
+  // Store the calculated values in the SimputSpecBandFlux 
+  // data structure in order to avoid re-calculation,
+  // when this function is called later again.
+  spec->refflux->emin = emin;
+  spec->refflux->emax = emax;
+  spec->refflux->flux = flux;
 
   return(flux);
 }
@@ -1773,7 +1796,7 @@ float getSimputSrcBandFlux(const SimputSource* const src,
     returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
-  return(getSimputSpecBandFlux(spec, src->e_min, src->e_max));
+  return(getSimputSpecBandFlux(spec, src->e_min, src->e_max, status));
 }
 
 
@@ -1786,9 +1809,9 @@ float getSimputPhotonRate(const SimputSource* const src,
   CHECK_STATUS_RET(*status, 0.);
 
   // Flux in the reference energy band.
-  float refband_flux=getSimputSpecBandFlux(spec, src->e_min, src->e_max);
-
-  // TODO Add light curve contributions.
+  float refband_flux=
+    getSimputSpecBandFlux(spec, src->e_min, src->e_max, status);
+  CHECK_STATUS_RET(*status, 0.);
 
   // Check for ARF convolution. This is required, since spec->distribution 
   // is used in the next step.
