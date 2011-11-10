@@ -213,6 +213,13 @@ SimputSource* getSimputSourceV(const long src_id,
   CHECK_STATUS_RET(*status, entry);
 
   // Initialize with the given values.
+  if (src_id<=0) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "SRC_ID (%ld) must have a positive value", src_id);
+    SIMPUT_ERROR(msg);
+    *status=EXIT_FAILURE;
+    return(entry);
+  }
   entry->src_id = src_id;
 
   entry->src_name=(char*)malloc((strlen(src_name)+1)*sizeof(char));
@@ -1845,6 +1852,7 @@ SimputLC* getSimputLC(int* const status)
   lc->phase0  =0.;
   lc->period  =0.;
   lc->fluxscal=0.;
+  lc->src_id  =0;
   lc->fileref =NULL;
 
   return(lc);
@@ -2649,6 +2657,7 @@ double getSimputPhotonTime(const SimputSource* const src,
 	prevtime = getLCTime(lc, kk, nperiods, mjdref);
       }
     }
+    // END of while (kk < lc->nentries).
     
     // The range of the light curve has been exceeded.
     *failed=1;
@@ -2686,13 +2695,23 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
 		   "memory allocation for light curves failed", NULL);
   }
 
-  // Search if the requested light curve is available in the storage.
+  // Check if the requested light curve is available in the storage.
   int ii;
   for (ii=0; ii<nlcs; ii++) {
     // Check if the light curve is equivalent to the requested one.
     if (0==strcmp(lcs[ii]->fileref, src->lightcur)) {
-      // If yes, return the light curve.
-      return(lcs[ii]);
+      // For a light curve created from a PSD, we also have to check,
+      // whether this is the source associated to this light curve.
+      if (lcs[ii]->src_id>0) {
+	// Check if the SRC_IDs agree.
+	if (lcs[ii]->src_id==src->src_id) {
+	  return(lcs[ii]);
+	}
+      } else {
+	// This light curve is loaded from a file and can be re-used
+	// for different sources.
+	return(lcs[ii]);
+      }
     }
   }
 
@@ -2743,10 +2762,11 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
     lcs[clc]=loadSimputLC(filename, status);
     CHECK_STATUS_RET(*status, lcs[clc]);
   } else {
-    // TODO Do not check in internal light curve storage, if this is a PSD!
-    // We want to have independent light curves created from the same PSD!
     lcs[clc]=loadSimputLCfromPSD(filename, time, mjdref, status);
     CHECK_STATUS_RET(*status, lcs[clc]);
+    // The new LC is assigned to this particular source and 
+    // cannot be re-used.
+    lcs[clc]->src_id=src->src_id;
   }
 
   // Store the file reference to the light curve for later comparisons.

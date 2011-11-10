@@ -205,6 +205,12 @@ typedef struct {
   /** Flux scaling factor. */
   float fluxscal;
 
+  /** If the light curve has been produced from a PSD, it is assigned
+      to a particular source and cannot be re-used for different
+      sources. In that case the SRC_ID of the respective source is
+      stored in this variable. Otherwise its value is set to 0. */
+  long src_id;
+
   /** Reference to the location of the light curve given by the
       extended filename syntax. This reference is used to check,
       whether the light curve is already contained in the internal
