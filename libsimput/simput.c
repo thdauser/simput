@@ -1653,39 +1653,33 @@ static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec
   CHECK_NULL_VOID(static_arf, *status, "instrument ARF undefined");
 
   // Allocate memory.
-  spec->distribution=(float*)malloc(spec->nentries*sizeof(float));
+  spec->distribution=(double*)malloc(static_arf->NumberEnergyBins*sizeof(double));
   CHECK_NULL_VOID(spec->distribution, *status,
 		 "memory allocation for spectral distribution failed");
 
   // Multiply each data point of the spectrum with the ARF.
-  long ii;
-  for (ii=0; ii<spec->nentries; ii++) {
-    // Initialize with 0. This is important! If spectral bin is outside
-    // the range of the ARF, the value has to be 0.
+  long ii, jj=0;
+  for (ii=0; ii<static_arf->NumberEnergyBins; ii++) {
+    // Initialize with 0.
     spec->distribution[ii]=0.;
 
-    // Determine the ARF bin that contains the spectral data point.
-    // TODO Revise this, since the current method can be inaccurate 
-    // for large energy bins and small ARF bins => Use interpolation instead.
-    long jj;
-    for (jj=0; jj<static_arf->NumberEnergyBins; jj++) {
-      if ((static_arf->LowEnergy[jj] <=spec->energy[ii]) && 
-	  (static_arf->HighEnergy[jj]> spec->energy[ii])) {
-	// [photon/s/cm^2/keV] -> [photon/s/keV]
-	spec->distribution[ii]=spec->pflux[ii]*static_arf->EffArea[jj];
-	break;
-      }
+    // Determine all spectral points inside of this ARF bin.
+    for (; jj<spec->nentries; jj++) {
+      if (spec->energy[jj]<static_arf->LowEnergy[ii]) continue;
+      if (spec->energy[jj]>static_arf->HighEnergy[ii]) break;
+      
+      // [photon/s/cm^2/keV] -> [photon/s/cm^2]
+      float emin, emax;
+      getSpecEbounds(spec, jj, &emin, &emax);
+      spec->distribution[ii]+=spec->pflux[jj]*(emax-emin);
     }
 
-    // Multiply with the energy bin width defined by the neighboring
-    // spectral energies.
-    // [photon/s/keV] -> [photon/s]
-    float emin, emax;
-    getSpecEbounds(spec, ii, &emin, &emax);
-    spec->distribution[ii]*=(emax-emin);
+    // Multiply with the effective area.
+    // [photon/s/cm^2] -> [photon/s]
+    spec->distribution[ii]*=static_arf->EffArea[ii];
 
-    // Create the spectral distribution normalized to the total 
-    // photon rate [photon/s]. 
+    // Create the spectral distribution function 
+    // normalized to the total photon rate [photon/s]. 
     if (ii>0) {
       spec->distribution[ii]+=spec->distribution[ii-1];
     }
@@ -1693,7 +1687,7 @@ static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec
 }
 
 
-/** Determine a random photon energy according to the specified
+/** Determine a random photon energy [keV] according to the specified
     spectral distribution. */
 static float getRndPhotonEnergy(SimputMissionIndepSpec* const spec,
 				int* const status) 
@@ -1706,16 +1700,16 @@ static float getRndPhotonEnergy(SimputMissionIndepSpec* const spec,
   }
 
   // Get a random number in the interval [0,1].
-  float rnd = (float)static_rndgen();
+  double rnd = static_rndgen();
   assert(rnd>=0.);
   assert(rnd<=1.);
 
   // Multiply with the total photon rate.
-  rnd *= spec->distribution[spec->nentries-1];
+  rnd *= spec->distribution[static_arf->NumberEnergyBins-1];
 
   // Determine the corresponding point in the spectral 
   // distribution (using binary search).
-  long upper=spec->nentries-1, lower=0, mid;
+  long upper=static_arf->NumberEnergyBins-1, lower=0, mid;
   while (upper>lower) {
     mid = (lower+upper)/2;
     if (spec->distribution[mid]<rnd) {
@@ -1726,9 +1720,9 @@ static float getRndPhotonEnergy(SimputMissionIndepSpec* const spec,
   }
 
   // Return the corresponding photon energy.
-  float binmin, binmax;
-  getSpecEbounds(spec, lower, &binmin, &binmax);
-  return(binmin + static_rndgen()*(binmax-binmin));
+  return(static_arf->LowEnergy[lower] + 
+	 static_rndgen()*
+	 (static_arf->HighEnergy[lower]-static_arf->LowEnergy[lower]));
 }
 
 
@@ -1828,7 +1822,8 @@ float getSimputPhotonRate(const SimputSource* const src,
     CHECK_STATUS_RET(*status, 0.);
   }
 
-  return(src->eflux / refband_flux * spec->distribution[spec->nentries-1]);
+  return(src->eflux / refband_flux * 
+	 (float)(spec->distribution[static_arf->NumberEnergyBins-1]));
 }
 
 

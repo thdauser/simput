@@ -148,7 +148,7 @@ typedef struct {
 
   /** Probability distribution normalized to the total photon rate
       [photons/s]. */
-  float* distribution;
+  double* distribution;
 
   /** Unique case-sensitive designator for an individual spectrum. */
   char* name;
