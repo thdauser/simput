@@ -158,7 +158,7 @@ typedef struct {
       spectrum is already contained in the internal storage. */
   char* fileref;
 
-} SimputMissionIndepSpec;
+} SimputMIdpSpec;
 
 
 /** SIMPUT light curve. */
@@ -358,35 +358,35 @@ void appendSimputSourceBlock(SimputCatalog* const cat,
 			     const long nsources,
 			     int* const status);
 
-/** Constructor for the SimputMissionIndepSpec data
-    structure. Allocates memory, initializes elements with their
-    default values and pointers with NULL. */
-SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status);
+/** Constructor for the SimputMIdpSpec data structure. Allocates
+    memory, initializes elements with their default values and
+    pointers with NULL. */
+SimputMIdpSpec* getSimputMIdpSpec(int* const status);
 
 /** Destructor for the SimputSource. Calls destructor routines
     for all contained elements, releases the allocated memory, and
     finally sets the pointer to NULL. */
-void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec);
+void freeSimputMIdpSpec(SimputMIdpSpec** const spec);
 
-/** Load the SimputMissionIndepSpec from the specified file. */
-SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
-						   int* const status);
+/** Load the SimputMIdpSpec from the specified file. */
+SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
+				   int* const status);
 
 /** Load the requested spectrum. Keeps a certain number of spectra in
     an internal cache. If the requested spectrum is not located in the
     cache, it is loaded from the given filename. The returned pointer
-    to the SimputMissionIndepSpec should not be free'd, since the
+    to the SimputMIdpSpec should not be free'd, since the
     allocated memory is managed by the internal caching mechanism. */
-SimputMissionIndepSpec* 
-loadCacheSimputMissionIndepSpec(const char* const filename,
-				int* const status);
+SimputMIdpSpec* 
+loadCacheSimputMIdpSpec(const char* const filename,
+			int* const status);
 
 /** Return the spectrum of the specified SimputSource for the
     particular point of time. */
-SimputMissionIndepSpec* returnSimputSrcSpec(const SimputSource* const src,
-					    const double time, 
-					    const double mjdref,
-					    int* const status);
+SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
+				    const double time, 
+				    const double mjdref,
+				    int* const status);
 
 /** Save the mission-independent spectrum in the specified extension
     of the given FITS file. If the file does not exist yet, a new file
@@ -394,16 +394,16 @@ SimputMissionIndepSpec* returnSimputSrcSpec(const SimputSource* const src,
     extension, an appropriate HDU is created. If the extension exists,
     the unambiguousness of the spectrum name (contained in the data
     structure) is verified. */
-void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
-				const char* const filename,
-				char* const extname,
-				int extver,
-				int* const status);
+void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
+			const char* const filename,
+			char* const extname,
+			int extver,
+			int* const status);
 
 /** Determine the energy and flux values of a particular bin in the
-    SimputMissionIndepSpec. The energy is given in [keV], the flux in
+    SimputMIdpSpec. The energy is given in [keV], the flux in
     [photons/s/cm**2/keV]. */
-void getSimputSpectrumValue(const SimputMissionIndepSpec* const spec,
+void getSimputSpectrumValue(const SimputMIdpSpec* const spec,
 			    const long row,
 			    float* const energy, 
 			    float* const pflux,
@@ -441,7 +441,7 @@ float getSimputSrcBandFlux(const SimputSource* const src,
 
 /** Determine the energy flux of the spectrum in [erg/s/cm**2] within a
     certain energy band from emin to emax. */
-float getSimputSpecBandFlux(SimputMissionIndepSpec* const spec,
+float getSimputSpecBandFlux(SimputMIdpSpec* const spec,
 			    const float emin, const float emax,
 			    int* const status);
 

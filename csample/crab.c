@@ -22,7 +22,7 @@ int main( )
   const char filename[] = "crab.fits";
 
   SimputCatalog* cat=NULL;
-  SimputMissionIndepSpec* spec=NULL;
+  SimputMIdpSpec* spec=NULL;
   SimputLC* lc=NULL;
   int status=EXIT_SUCCESS;
 
@@ -59,7 +59,7 @@ int main( )
   } while(0); // END of error handling loop.
   
   freeSimputLC(&lc);
-  freeSimputMissionIndepSpec(&spec);
+  freeSimputMIdpSpec(&spec);
   freeSimputCatalog(&cat, &status);
   
   fits_report_error(stderr, status);

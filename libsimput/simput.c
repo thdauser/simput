@@ -1000,12 +1000,12 @@ static float unit_conversion_Hz(const char* const unit)
 }
 
 
-SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status)
+SimputMIdpSpec* getSimputMIdpSpec(int* const status)
 {
-  SimputMissionIndepSpec* spec=
-    (SimputMissionIndepSpec*)malloc(sizeof(SimputMissionIndepSpec));
+  SimputMIdpSpec* spec=
+    (SimputMIdpSpec*)malloc(sizeof(SimputMIdpSpec));
   CHECK_NULL_RET(spec, *status, 
-		 "memory allocation for SimputMissionIndepSpec failed", spec);
+		 "memory allocation for SimputMIdpSpec failed", spec);
 
   // Initialize elements.
   spec->nentries=0;
@@ -1020,7 +1020,7 @@ SimputMissionIndepSpec* getSimputMissionIndepSpec(int* const status)
 }
 
 
-void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec)
+void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
 {
   if (NULL!=*spec) {
     if (NULL!=(*spec)->energy) {
@@ -1047,13 +1047,13 @@ void freeSimputMissionIndepSpec(SimputMissionIndepSpec** const spec)
 }
 
 
-SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
-						   int* const status)
+SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
+				   int* const status)
 {
   // String buffer.
   char* name[1]={NULL};
 
-  SimputMissionIndepSpec* spec=getSimputMissionIndepSpec(status);
+  SimputMIdpSpec* spec=getSimputMIdpSpec(status);
   CHECK_STATUS_RET(*status, spec);
 
   // Open the specified FITS file. The filename must uniquely identify
@@ -1184,11 +1184,11 @@ SimputMissionIndepSpec* loadSimputMissionIndepSpec(const char* const filename,
 }
 
 
-void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
-				const char* const filename,
-				char* const extname,
-				int extver,
-				int* const status)
+void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
+			const char* const filename,
+			char* const extname,
+			int extver,
+			int* const status)
 {
   fitsfile* fptr=NULL;
   
@@ -1387,7 +1387,7 @@ void saveSimputMissionIndepSpec(SimputMissionIndepSpec* const spec,
 }
 
 
-void getSimputSpectrumValue(const SimputMissionIndepSpec* const spec,
+void getSimputSpectrumValue(const SimputMIdpSpec* const spec,
 			    const long row,
 			    float* const energy, 
 			    float* const pflux,
@@ -1490,10 +1490,9 @@ static long getLCBin(const SimputLC* const lc,
 }
 
 
-SimputMissionIndepSpec* 
-returnSimputSrcSpec(const SimputSource* const src,
-		    const double time, const double mjdref,
-		    int* const status)
+SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
+				    const double time, const double mjdref,
+				    int* const status)
 {
   // Reference to the requested spectrum.
   char fileref[SIMPUT_MAXSTR];
@@ -1557,25 +1556,24 @@ returnSimputSrcSpec(const SimputSource* const src,
     strcat(filename, fileref);
   }
 
-  return(loadCacheSimputMissionIndepSpec(filename, status));
+  return(loadCacheSimputMIdpSpec(filename, status));
 }
 
 
-SimputMissionIndepSpec* 
-loadCacheSimputMissionIndepSpec(const char* const filename,
-				int* const status)
+SimputMIdpSpec* loadCacheSimputMIdpSpec(const char* const filename,
+					int* const status)
 {
   const int maxspectra=2000; // Maximum number of spectra in storage.
   static int nspectra=0;     // Current number of spectra in storage.
   static int cspectrum=0;    // Index of next position in storage that will be used.
 
-  static SimputMissionIndepSpec** spectra=NULL;
+  static SimputMIdpSpec** spectra=NULL;
 
   // In case there are no spectra available at all, allocate 
   // memory for the array (storage for spectra).
   if (NULL==spectra) {
     spectra = 
-      (SimputMissionIndepSpec**)malloc(maxspectra*sizeof(SimputMissionIndepSpec*));
+      (SimputMIdpSpec**)malloc(maxspectra*sizeof(SimputMIdpSpec*));
     CHECK_NULL_RET(spectra, *status, 
 		   "memory allocation for spectra failed", NULL);
   }
@@ -1604,11 +1602,11 @@ loadCacheSimputMissionIndepSpec(const char* const filename,
     }
     // Release the spectrum that is currently stored at this place in the
     // storage buffer.
-    freeSimputMissionIndepSpec(&spectra[cspectrum]);
+    freeSimputMIdpSpec(&spectra[cspectrum]);
   }
 
   // Load the mission-independent spectrum.
-  spectra[cspectrum]=loadSimputMissionIndepSpec(filename, status);
+  spectra[cspectrum]=loadSimputMIdpSpec(filename, status);
   CHECK_STATUS_RET(*status, spectra[cspectrum]);
 
   // Store the file reference to the spectrum for later comparisons.
@@ -1623,7 +1621,7 @@ loadCacheSimputMissionIndepSpec(const char* const filename,
 }
 
 
-static inline void getSpecEbounds(const SimputMissionIndepSpec* const spec,
+static inline void getSpecEbounds(const SimputMIdpSpec* const spec,
 				  const long idx, 
 				  float* emin, float* emax)
 {
@@ -1646,8 +1644,8 @@ static inline void getSpecEbounds(const SimputMissionIndepSpec* const spec,
 /** Convolve the given mission-independent spectrum with the
     instrument ARF in order to obtain the spectral probability
     distribution. */
-static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec, 
-					      int* const status)
+static void convSimputMIdpSpecWithARF(SimputMIdpSpec* const spec, 
+				      int* const status)
 {  
   // Check if the ARF is defined.
   CHECK_NULL_VOID(static_arf, *status, "instrument ARF undefined");
@@ -1689,13 +1687,13 @@ static void convSimputMissionIndepSpecWithARF(SimputMissionIndepSpec* const spec
 
 /** Determine a random photon energy [keV] according to the specified
     spectral distribution. */
-static float getRndPhotonEnergy(SimputMissionIndepSpec* const spec,
+static float getRndPhotonEnergy(SimputMIdpSpec* const spec,
 				int* const status) 
 {
   // Check if the spectrum has been convolved with the ARF.
   if (NULL==spec->distribution) {
     // Multiply it by the ARF in order to obtain the spectral distribution.
-    convSimputMissionIndepSpecWithARF(spec, status);
+    convSimputMIdpSpecWithARF(spec, status);
     CHECK_STATUS_RET(*status, 0.);
   }
 
@@ -1732,7 +1730,7 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 			    int* const status)
 {
   // Get the spectrum which is stored in the catalog.
-  SimputMissionIndepSpec* spec=
+  SimputMIdpSpec* spec=
     returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
@@ -1741,7 +1739,7 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 }
 
 
-float getSimputSpecBandFlux(SimputMissionIndepSpec* const spec,
+float getSimputSpecBandFlux(SimputMIdpSpec* const spec,
 			    const float emin, const float emax,
 			    int* const status)
 {
@@ -1793,7 +1791,7 @@ float getSimputSrcBandFlux(const SimputSource* const src,
 			   int* const status)
 {
   // Determine the spectrum valid for the specified point of time.
-  SimputMissionIndepSpec* spec=
+  SimputMIdpSpec* spec=
     returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
@@ -1805,7 +1803,7 @@ float getSimputPhotonRate(const SimputSource* const src,
 			  const double time, const double mjdref,
 			  int* const status)
 {
-  SimputMissionIndepSpec* spec=
+  SimputMIdpSpec* spec=
     returnSimputSrcSpec(src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
@@ -1818,7 +1816,7 @@ float getSimputPhotonRate(const SimputSource* const src,
   // is used in the next step.
   if (NULL==spec->distribution) {
     // Multiply it by the ARF in order to obtain the spectral distribution.
-    convSimputMissionIndepSpecWithARF(spec, status);
+    convSimputMIdpSpecWithARF(spec, status);
     CHECK_STATUS_RET(*status, 0.);
   }
 

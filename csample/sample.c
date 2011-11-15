@@ -39,8 +39,8 @@ int main(int argc, char **argv)
   const char filename[] = "simput.fits";
 
   SimputCatalog* cat=NULL;
-  SimputMissionIndepSpec* spec =NULL;
-  SimputMissionIndepSpec* spec2=NULL;
+  SimputMIdpSpec* spec =NULL;
+  SimputMIdpSpec* spec2=NULL;
   SimputImg* img=NULL;
   int status=EXIT_SUCCESS;
 
@@ -88,7 +88,7 @@ int main(int argc, char **argv)
       // END of create a source catalog.
 
       // Create a spectrum and append it to the file with the source catalog.
-      spec = getSimputMissionIndepSpec(&status);
+      spec = getSimputMIdpSpec(&status);
       CHECK_STATUS_BREAK(status);
 
       spec->nentries=2;
@@ -105,12 +105,12 @@ int main(int argc, char **argv)
       spec->pflux[1]  = 0.6;
       strcpy(spec->name, "spec1");
 
-      saveSimputMissionIndepSpec(spec, filename, "SPEC", 1, &status);
+      saveSimputMIdpSpec(spec, filename, "SPEC", 1, &status);
       CHECK_STATUS_BREAK(status);
       // END of create a spectrum.
 
       // Create a 2nd spectrum and append it to the file with the source catalog.
-      spec2 = getSimputMissionIndepSpec(&status);
+      spec2 = getSimputMIdpSpec(&status);
       CHECK_STATUS_BREAK(status);
 
       spec2->nentries=3;
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
       spec2->pflux[2]  = 0.55;
       strcpy(spec2->name, "spec2");
 
-      saveSimputMissionIndepSpec(spec2, filename, "SPEC", 1, &status);
+      saveSimputMIdpSpec(spec2, filename, "SPEC", 1, &status);
       CHECK_STATUS_BREAK(status);
       // END of create a spectrum.
 
@@ -160,8 +160,8 @@ int main(int argc, char **argv)
   } while(0); // END of error handling loop.
 
   freeSimputImg(&img);
-  freeSimputMissionIndepSpec(&spec);
-  freeSimputMissionIndepSpec(&spec2);
+  freeSimputMIdpSpec(&spec);
+  freeSimputMIdpSpec(&spec2);
   freeSimputCatalog(&cat, &status);
   
   fits_report_error(stderr, status);
