@@ -488,6 +488,12 @@ void freeSimputPSD(SimputPSD** const lc);
 /** Load the SimputPSD from the specified file. */
 SimputPSD* loadSimputPSD(const char* const filename, int* const status);
 
+/** Save the PSD in the specified extension of the given FITS
+    file. If the file does not exist yet, a new file is created. If
+    the file exists, an appropriate HDU is created. */
+void saveSimputPSD(SimputPSD* const psd, const char* const filename,
+      char* const extname, int extver,
+      int* const status);
 
 /** Return a randomized photon arrival time at the telescope according
     to the photon rate and possible light curve. As the light curve is

@@ -2553,6 +2553,152 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
   CHECK_STATUS_VOID(*status);
 }
 
+void saveSimputPSD(SimputPSD* const psd, const char* const filename,
+      char* const extname, int extver, int* const status)
+{
+  fitsfile* fptr=NULL;
+
+  // String buffers.
+  int ncolumns=0;
+  char **ttype=NULL;
+  char **tform=NULL;
+  char **tunit=NULL;
+
+  do { // Error handling loop.
+
+    // Check if the EXTNAME has been specified.
+    if (NULL==extname) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    if (0==strlen(extname)) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    // Check if the specified file exists.
+    int exists;
+    fits_file_exists(filename, &exists, status);
+    CHECK_STATUS_BREAK(*status);
+    if (1==exists) {
+      // If yes, open it.
+      fits_open_file(&fptr, filename, READWRITE, status);
+      CHECK_STATUS_BREAK(*status);
+
+      // Try to move to the specified extension.
+      int status2=EXIT_SUCCESS;
+      fits_write_errmark();
+      fits_movnam_hdu(fptr, BINARY_TBL, extname, extver, &status2);
+      fits_clear_errmark();
+      if (BAD_HDU_NUM!=status2) {
+  // If that works, the extension already exists.
+  char msg[SIMPUT_MAXSTR];
+  sprintf(msg, "extension '%s' with EXTVER=%d already exists",
+    extname, extver);
+  SIMPUT_ERROR(msg);
+  *status=EXIT_FAILURE;
+  break;
+      }
+
+    } else {
+      // If not, create a new file.
+      fits_create_file(&fptr, filename, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+    // END of check, whether the specified file exists.
+
+    // Create a new binary table.
+    // Determine the number of columns.
+    ncolumns=2;
+    // Allocate memory for the format strings.
+    ttype=(char**)malloc(ncolumns*sizeof(char*));
+    tform=(char**)malloc(ncolumns*sizeof(char*));
+    tunit=(char**)malloc(ncolumns*sizeof(char*));
+    CHECK_NULL_BREAK(ttype, *status, "memory allocation for string buffer failed");
+    CHECK_NULL_BREAK(tform, *status, "memory allocation for string buffer failed");
+    CHECK_NULL_BREAK(tunit, *status, "memory allocation for string buffer failed");
+    int ii;
+    for (ii=0; ii<ncolumns; ii++) {
+      ttype[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+      tform[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+      tunit[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+      CHECK_NULL_BREAK(ttype[ii], *status,
+           "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(tform[ii], *status,
+           "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(tunit[ii], *status,
+           "memory allocation for string buffer failed");
+    }
+    CHECK_STATUS_BREAK(*status);
+
+    // Set up the table format.
+    int cfreq = 0, cpower = 0;
+    if ((psd->frequency != NULL) && (psd->power != NULL)) {
+      cfreq = 1;
+      strcpy(ttype[0], "FREQUENC");
+      strcpy(tform[0], "D");
+      strcpy(tunit[0], "Hz");
+      cpower = 1;
+      strcpy(ttype[1], "POWER");
+      strcpy(tform[1], "D");
+      strcpy(tunit[1], "1/Hz");
+    }
+
+    // Create the table.
+    fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns,
+        ttype, tform, tunit, extname, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Write header keywords.
+    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS2", "POWSPEC", "", status);
+    fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
+
+    // Create new rows in the table and store the data of the power spectrum in it.
+    fits_insert_rows(fptr, 0, psd->nentries, status);
+    CHECK_STATUS_BREAK(*status);
+
+    fits_write_col(fptr, TFLOAT, cfreq, 1, 1, psd->nentries,
+       psd->frequency, status);
+    CHECK_STATUS_BREAK(*status);
+    fits_write_col(fptr, TFLOAT, cpower, 1, 1, psd->nentries,
+       psd->power, status);
+    CHECK_STATUS_BREAK(*status);
+
+  } while(0); // END of error handling loop.
+
+  // Release allocated memory.
+
+  if (NULL!=ttype) {
+    int ii;
+    for (ii=0; ii<ncolumns; ii++) {
+      if (NULL!=ttype[ii]) free(ttype[ii]);
+    }
+    free(ttype);
+  }
+  if (NULL!=tform) {
+    int ii;
+    for (ii=0; ii<ncolumns; ii++) {
+      if (NULL!=tform[ii]) free(tform[ii]);
+    }
+    free(tform);
+  }
+  if (NULL!=tunit) {
+    int ii;
+    for (ii=0; ii<ncolumns; ii++) {
+      if (NULL!=tunit[ii]) free(tunit[ii]);
+    }
+    free(tunit);
+  }
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_VOID(*status);
+}
 
 static double rndexp(const double avgdist)
 {
