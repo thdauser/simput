@@ -2634,17 +2634,13 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
     CHECK_STATUS_BREAK(*status);
 
     // Set up the table format.
-    int cfreq = 0, cpower = 0;
-    if ((psd->frequency != NULL) && (psd->power != NULL)) {
-      cfreq = 1;
+    int cfreq = 1, cpower = 2;
       strcpy(ttype[0], "FREQUENC");
-      strcpy(tform[0], "D");
+      strcpy(tform[0], "1E");
       strcpy(tunit[0], "Hz");
-      cpower = 1;
       strcpy(ttype[1], "POWER");
-      strcpy(tform[1], "D");
+      strcpy(tform[1], "1E");
       strcpy(tunit[1], "1/Hz");
-    }
 
     // Create the table.
     fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns,
