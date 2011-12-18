@@ -1642,46 +1642,88 @@ static inline void getSpecEbounds(const SimputMIdpSpec* const spec,
 
 
 /** Convolve the given mission-independent spectrum with the
-    instrument ARF in order to obtain the spectral probability
-    distribution. */
+    instrument ARF. The product of this process is the spectral
+    probability distribution binned to the energy grid of the ARF. */
 static void convSimputMIdpSpecWithARF(SimputMIdpSpec* const spec, 
 				      int* const status)
-{  
+{
   // Check if the ARF is defined.
   CHECK_NULL_VOID(static_arf, *status, "instrument ARF undefined");
 
   // Allocate memory.
-  spec->distribution=(double*)malloc(static_arf->NumberEnergyBins*sizeof(double));
+  spec->distribution=
+    (double*)malloc(static_arf->NumberEnergyBins*sizeof(double));
   CHECK_NULL_VOID(spec->distribution, *status,
 		 "memory allocation for spectral distribution failed");
 
-  // Multiply each data point of the spectrum with the ARF.
+  // Loop over all bins of the ARF.
   long ii, jj=0;
+  int warning_printed=0; // Flag whether warning has been printed.
   for (ii=0; ii<static_arf->NumberEnergyBins; ii++) {
     // Initialize with 0.
     spec->distribution[ii]=0.;
 
-    // Determine all spectral points inside of this ARF bin.
-    for (; jj<spec->nentries; jj++) {
-      if (spec->energy[jj]<static_arf->LowEnergy[ii]) continue;
-      if (spec->energy[jj]>static_arf->HighEnergy[ii]) break;
-      
-      // [photon/s/cm^2/keV] -> [photon/s/cm^2]
-      float emin, emax;
-      getSpecEbounds(spec, jj, &emin, &emax);
-      spec->distribution[ii]+=spec->pflux[jj]*(emax-emin);
-    }
+    // Lower boundary of the current bin.
+    float lo = static_arf->LowEnergy[ii];
 
-    // Multiply with the effective area.
-    // [photon/s/cm^2] -> [photon/s]
-    spec->distribution[ii]*=static_arf->EffArea[ii];
+    // Loop over all spectral points within the ARF bin.
+    int finished=0;
+    do {
+      // Determine the next spectral point.
+      float spec_emin=0., spec_emax=0.;
+      for ( ; jj<spec->nentries; jj++) {
+	getSpecEbounds(spec, jj, &spec_emin, &spec_emax);
+	if (spec_emax>lo) break;
+      }
+      
+      // Check special cases.
+      if ((0==jj) && (spec_emin>static_arf->LowEnergy[ii])) {
+	if (0==warning_printed) {
+	  printf("*** warning: the spectrum does not cover the "
+		 "full energy range of the ARF!\n");
+	  warning_printed=1;
+	}
+	if (spec_emin>static_arf->HighEnergy[ii]) break;
+
+      } else if (jj==spec->nentries) {
+	if (0==warning_printed) {
+	  printf("*** warning: the spectrum does not cover the "
+		 "full energy range of the ARF!\n");
+	  warning_printed=1;
+	}
+	break;
+      }
+
+      if (spec_emin>lo) {
+	printf("*** warning: bins do not overlap (delta=%e)!\n",
+	       spec_emin-lo);
+      }
+
+      // Upper boundary of the current bin.
+      float hi;
+      if (spec_emax<=static_arf->HighEnergy[ii]) {
+	hi=spec_emax;
+      } else {
+	hi=static_arf->HighEnergy[ii];
+	finished=1;
+      }
+
+      // Add to the spectral probability density.
+      spec->distribution[ii]+=
+	(hi-lo)*static_arf->EffArea[ii]*spec->pflux[jj];
+      
+      // Increase the lower boundary.
+      lo=hi;
+
+    } while (0==finished);
 
     // Create the spectral distribution function 
     // normalized to the total photon rate [photon/s]. 
     if (ii>0) {
       spec->distribution[ii]+=spec->distribution[ii-1];
     }
-  }
+
+  } // Loop over all ARF bins.
 }
 
 
