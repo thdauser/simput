@@ -213,7 +213,7 @@ SimputSource* getSimputSourceV(const long src_id,
   CHECK_STATUS_RET(*status, entry);
 
   // Initialize with the given values.
-  if (src_id<=0) {
+  if (src_id<0) {
     char msg[SIMPUT_MAXSTR];
     sprintf(msg, "SRC_ID (%ld) must have a positive value", src_id);
     SIMPUT_ERROR(msg);
@@ -396,10 +396,9 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
     CHECK_STATUS_BREAK(*status);
 
     // Create a new SimputSource data structure.
-    se = 
-      getSimputSourceV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
-			    e_min, e_max, flux, spectrum[0], image[0],
-			    lightcur[0], status);
+    se = getSimputSourceV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
+			  e_min, e_max, flux, spectrum[0], image[0],
+			  lightcur[0], status);
     CHECK_STATUS_BREAK(*status);
 
     // Set the pointers to the filename and filepath in the
@@ -1693,11 +1692,11 @@ static void convSimputMIdpSpecWithARF(SimputMIdpSpec* const spec,
 	}
 	break;
       }
-
-      if (spec_emin>lo) {
-	printf("*** warning: bins do not overlap (delta=%e)!\n",
-	       spec_emin-lo);
-      }
+      
+      //if (spec_emin>lo) {
+      //printf("*** warning: bins do not overlap (delta=%e)!\n",
+      //       spec_emin-lo);
+      //}
 
       // Upper boundary of the current bin.
       float hi;
