@@ -361,9 +361,11 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
       strcpy(src_name[0], "");
     }
 
-    fits_read_col(cf->fptr, TDOUBLE, cf->cra, row, 1, 1, &ra, &ra, &anynul, status);
+    fits_read_col(cf->fptr, TDOUBLE, cf->cra, row, 1, 1, 
+		  &ra, &ra, &anynul, status);
     ra  *= cf->fra;  // Convert to [rad].
-    fits_read_col(cf->fptr, TDOUBLE, cf->cdec, row, 1, 1, &dec, &dec, &anynul, status);
+    fits_read_col(cf->fptr, TDOUBLE, cf->cdec, row, 1, 1, 
+		  &dec, &dec, &anynul, status);
     dec *= cf->fdec; // Convert to [rad].
 
     if (cf->cimgrota>0) {
@@ -385,6 +387,11 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
     fits_read_col(cf->fptr, TFLOAT, cf->cflux, row, 1, 1, 
 		  &flux, &flux, &anynul, status);
     flux  *= cf->fflux; // Convert to [erg/s/cm**2].
+    if (flux > 1.e20) {
+      printf("*** warning: flux (%e) exceeds maximum value, therefore reset to 0!\n",
+	     flux);
+      flux=0.;
+    }
 
     fits_read_col(cf->fptr, TSTRING, cf->cspectrum, row, 1, 1, 
 		  "", spectrum, &anynul, status);
@@ -396,9 +403,9 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
     CHECK_STATUS_BREAK(*status);
 
     // Create a new SimputSource data structure.
-    se = getSimputSourceV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
-			  e_min, e_max, flux, spectrum[0], image[0],
-			  lightcur[0], status);
+    se=getSimputSourceV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
+			e_min, e_max, flux, spectrum[0], image[0],
+			lightcur[0], status);
     CHECK_STATUS_BREAK(*status);
 
     // Set the pointers to the filename and filepath in the
@@ -2148,11 +2155,6 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_RET(*status, lc);
   
-  // TODO For testing we can write the generated light curve to 
-  // an default output file.
-  //remove("lc.fits");
-  //saveSimputLC(lc, "lc.fits", "LC", 1, status);
-
   return(lc);
 }
 
