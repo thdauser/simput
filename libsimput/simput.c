@@ -3453,6 +3453,8 @@ void getSimputPhotonCoord(const SimputSource* const src,
       wcscopy(1, img->wcs, &wcs);
 
       // Set the position to the origin and assign the correct scaling.
+      // TODO: This assumes that the image WCS is equivalent to the 
+      // coordinate system used in the catalog!!
       wcs.crval[0] = src->ra *180./M_PI; // Units (CUNITn) must be [deg]!
       wcs.crval[1] = src->dec*180./M_PI;
       wcs.cdelt[0] *= 1./src->imgscal;
