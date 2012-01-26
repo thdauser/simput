@@ -977,7 +977,8 @@ static float unit_conversion_phpspcm2pkeV(const char* const unit)
 static float unit_conversion_s(const char* const unit)
 {
   if ((0==strcmp(unit, "s")) ||
-      (0==strcmp(unit, "Hz^-1")) || (0==strcmp(unit, "Hz**-1")) ){
+      (0==strcmp(unit, "Hz^-1")) || (0==strcmp(unit, "Hz**-1")) ||
+      (0==strcmp(unit, "1/Hz"))){
     return(1.);
   } else if (0==strcmp(unit, "min")) {
     return(60.);
