@@ -2058,10 +2058,10 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
 
     // Allocate memory for the light curve.
     lc->nentries=2*psdlen;
-    lc->time    = (double*)malloc(lc->nentries*sizeof(double));
+    lc->time    =(double*)malloc(lc->nentries*sizeof(double));
     CHECK_NULL_BREAK(lc->time, *status, 
 		     "memory allocation for light curve failed");
-    lc->flux    = (float*)malloc(lc->nentries*sizeof(float));
+    lc->flux    =(float*)malloc(lc->nentries*sizeof(float));
     CHECK_NULL_BREAK(lc->flux, *status, 
 		     "memory allocation for light curve failed");
 
@@ -2072,7 +2072,9 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
       lc->time[ii] = ii*1./(2.*psd->frequency[psd->nentries-1]);
     }
 
-    // Calculate a PSD with an uniform frequency grid.
+    // Interpolate the PSD to a uniform frequency grid.
+    // The PSD is given in Miyamoto normalization. In order to get the RMS
+    // right, we have to multiply each bin with df (delta frequency).
     power=(float*)malloc(psdlen*sizeof(float));
     CHECK_NULL_BREAK(power, *status, 
 		     "memory allocation for PSD buffer failed");
@@ -2099,14 +2101,6 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
       }
     }
     
-    // TODO
-    // The PSD is given in Miyamoto normalization. In order to get the RMS
-    // right, we have to multiply each bin with df (delta frequency).
-    /*power[0] = psd->power[0]*psd->frequency[0];
-    for (ii=1; ii<psd->nentries; ii++) {
-      power[ii] = psd->power[ii]*(psd->frequency[ii]-psd->frequency[ii-1]);
-    }*/
-
     // Allocate the data structures required by the fftw routines.
     fftw_in  =(double*)fftw_malloc(sizeof(double)*lc->nentries);
     CHECK_NULL_BREAK(fftw_in, *status, "memory allocation for fftw "
@@ -2140,7 +2134,6 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
 				     FFTW_HC2R, FFTW_ESTIMATE);
     fftw_execute(iplan);
     fftw_destroy_plan(iplan);
-    // Normalize (divide by length)?
 
     /*
     // Normalization.
