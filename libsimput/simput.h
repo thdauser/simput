@@ -4,9 +4,8 @@
 #include "fitsio.h"
 #include <wcslib/wcshdr.h>
 
-// GSL header files
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_fft_halfcomplex.h>
+// FFTW3 library for Fast Fourier Transform.
+#include <fftw3.h>
 
 #ifndef HEASP_H
 #define HEASP_H 1
@@ -21,11 +20,13 @@
   --------------------------------------------------------------------------- 
   0.0.1  2011/04/02   Christian Schmid      initial 
   0.0.2  2011/09/08   Christian Schmid      updated
+
+  0.0.11 2012/01/26   Christian Schmid      updated
   --------------------------------------------------------------------------- 
 
    This is the header file of the simput library. The library provides
    basic routines to create a SIMPUT source catalog file according to
-   the standard defined in the SIMPUT formats document (reference ???).
+   the standard defined in the SIMPUT format document (reference ???).
 */
 
 
@@ -546,5 +547,13 @@ void getSimputPhotonCoord(const SimputSource* const src,
 float getSimputSourceExtension(const SimputSource* const src,
 			       int* const status);
 
+
+/*
+// TODO RM
+SimputLC* loadSimputLCfromPSD(const char* const filename, 
+			      const double t0,
+			      const double mjdref,
+			      int* const status);
+*/
 
 #endif /* SIMPUT_H */

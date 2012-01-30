@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.10],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.11],[christian.schmid@sternwarte.uni-erlangen.de])
 AC_CONFIG_AUX_DIR([build-aux]) # Store auxiliary files in the sub-directory 'build-aux'.
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
@@ -53,18 +53,15 @@ AC_SEARCH_LIBS(ffopen,
 #AC_SUBST(lib_cfitsio)
 
 #################################### 
-# WCS Library:
+# WCS library:
 AC_SEARCH_LIBS(wcspih, [wcs_6.11 wcs_6.10 wcs_6.9 wcs_6.8 wcs_6.7 wcs_6.6 \
 		        wcs-4.4.4 wcs-4.3.3 wcs-4.3], [], \
 		       [AC_MSG_ERROR([No WCS library found!])], [])
 #################################### 
-# GSL Libraries:
-AC_SEARCH_LIBS(cblas_sdot, [gslcblas], [], \
-			 [AC_MSG_ERROR([No gslcblas library found!])], [])
-AC_SEARCH_LIBS(gsl_sf_erf_Q, [gsl], [], \
-			 [AC_MSG_ERROR([No gsl library found!])], [])
+# FFTW library:
+AC_SEARCH_LIBS(fftw_execute, [fftw3], [], \
+		      	 [AC_MSG_ERROR([No fftw3 library found!])], [])
 #################################### 
-
 # Check for header files:
 AC_HEADER_STDC
 AC_CHECK_HEADERS([limit.h math.h malloc.h stdio.h stdlib.h stdarg.h string.h])

@@ -2036,8 +2036,8 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
   fitsfile* fptr=NULL;
 
   // Buffer for Fourier transform.
-  double* fcomp =NULL;
-  float* power  =NULL;
+  float* power=NULL;
+  double *fftw_in=NULL, *fftw_out=NULL;
 
   printf("*** warning: the loadSimputLCfromPSD() routine has to be revised!\n");
 
@@ -2047,23 +2047,12 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     psd=loadSimputPSD(filename, status);
     CHECK_STATUS_BREAK(*status);
 
-    // Check if the number of bins is a power of 2.
-    long nentries=psd->nentries;
-    while (0==nentries % 2) {
-      nentries = nentries/2;
-    }
-    if (1!=nentries) {
-      SIMPUT_ERROR("PSD length is not a power of 2");
-      *status=EXIT_FAILURE;
-      break;
-    }
-
     // Get an empty SimputLC data structure.
-    lc = getSimputLC(status);
+    lc=getSimputLC(status);
     CHECK_STATUS_BREAK(*status);
 
     // Set the MJDREF.
-    lc->mjdref = mjdref;
+    lc->mjdref=mjdref;
 
     // Allocate memory.
     lc->time    = (double*)malloc(2*psd->nentries*sizeof(double));
@@ -2074,46 +2063,84 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
 		     "memory allocation for light curve failed");
     lc->nentries=2*psd->nentries;
 
-    // Convert the PSD into a light curve.
-    // Set the time bins.
+    // Set the time bins of the light curve.
     lc->timezero = t0;
     long ii;
     for (ii=0; ii<lc->nentries; ii++) {
       lc->time[ii] = ii*1./(2.*psd->frequency[psd->nentries-1]);
     }
 
-    // Buffer for PSD. Used to rescale in order to get proper RMS.
-    power = (float*)malloc(psd->nentries*sizeof(float));
-    CHECK_NULL_BREAK(power, *status, "memory allocation for light "
-		     "curve (buffer for PSD transform) failed");
-
+    // Calculate a PSD with an uniform frequency grid.
+    power=(float*)malloc(psd->nentries*sizeof(float));
+    CHECK_NULL_BREAK(power, *status, 
+		     "memory allocation for PSD buffer failed");
+    long jj=0;
+    float delta_f=psd->frequency[psd->nentries-1]/psd->nentries;
+    for (ii=0; ii<psd->nentries; ii++) {
+      float frequency = (ii+1)*delta_f;
+      while(frequency>psd->frequency[jj]) {
+	if (jj==psd->nentries-1) break;
+	jj++;
+      }
+      if (jj==0) {
+	power[ii] = 
+	  frequency/psd->frequency[jj]* 
+	  psd->power[jj]* 
+	  delta_f;
+      } else {
+	power[ii] = 
+	  (psd->power[jj-1] + 
+	   (frequency-psd->frequency[jj-1])/
+	   (psd->frequency[jj]-psd->frequency[jj-1])*
+	   (psd->power[jj]-psd->power[jj-1])) *
+	  delta_f;
+      }
+    }
+    
+    // TODO
     // The PSD is given in Miyamoto normalization. In order to get the RMS
     // right, we have to multiply each bin with df (delta frequency).
-    power[0] = psd->power[0]*psd->frequency[0];
+    /*power[0] = psd->power[0]*psd->frequency[0];
     for (ii=1; ii<psd->nentries; ii++) {
       power[ii] = psd->power[ii]*(psd->frequency[ii]-psd->frequency[ii-1]);
-    }
+    }*/
 
-    // Create Fourier components.
-    fcomp = (double*)malloc(lc->nentries*sizeof(double));
-    CHECK_NULL_BREAK(fcomp, *status, "memory allocation for light "
-		     "curve (buffer for Fourier transform) failed");
-    
+    // Allocate the data structures required by the fftw routines.
+    fftw_in  =(double*)fftw_malloc(sizeof(double)*lc->nentries);
+    CHECK_NULL_BREAK(fftw_in, *status, "memory allocation for fftw "
+		     "data structure (fftw_in) failed");
+    fftw_out =(double*)fftw_malloc(sizeof(double)*lc->nentries);
+    CHECK_NULL_BREAK(fftw_out, *status, "memory allocation for fftw "
+		     "data structure (fftw_out) failed");
+
     // Apply the algorithm introduced by Timmer & Koenig (1995).
     double randr, randi;
     lc->fluxscal=1.; // Set Fluxscal to 1.
     gauss_rndgen(&randr, &randi);
-    fcomp[0]             = 1.;
-    fcomp[psd->nentries] = randi*sqrt(0.5*power[psd->nentries-1]);
+    //    randr *= sqrt(M_PI/2.);
+    //    randi *= sqrt(M_PI/2.);
+    // TODO 
+    //randr=1; randi=1.;
+    fftw_in[0]            =1.;
+    fftw_in[psd->nentries]=randi*sqrt(power[psd->nentries-1]);
     for (ii=1; ii<psd->nentries; ii++) {
       gauss_rndgen(&randr, &randi);
-      REAL(fcomp, ii)               = randr*sqrt(0.5*power[ii-1]);
-      IMAG(fcomp, ii, lc->nentries) = randi*sqrt(0.5*power[ii-1]);
+      //      randr *= sqrt(M_PI/2.);
+      //      randi *= sqrt(M_PI/2.);
+      // TODO 
+      //randr=1; randi=1.;
+      REAL(fftw_in, ii)              =randr*sqrt(0.25*power[ii-1]);
+      IMAG(fftw_in, ii, lc->nentries)=randi*sqrt(0.25*power[ii-1]);
     }
 
-    // Perform Fourier (back-)transformation.
-    gsl_fft_halfcomplex_radix2_backward(fcomp, 1, lc->nentries);
+    // Perform the inverse Fourier transformation.
+    fftw_plan iplan=fftw_plan_r2r_1d(lc->nentries, fftw_in, fftw_out, 
+				     FFTW_HC2R, FFTW_ESTIMATE);
+    fftw_execute(iplan);
+    fftw_destroy_plan(iplan);
+    // Normalize (divide by length)?
 
+    /*
     // Normalization.
     // Calculate the required rms.
     float requ_rms=1.;
@@ -2127,13 +2154,14 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     // Calculate the actual rms.
     float act_rms=0.;
     for (ii=0; ii<lc->nentries; ii++) {
-      act_rms += (float)pow(fcomp[ii], 2.);
+      act_rms += (float)pow(fftw_out[ii], 2.);
     }
     act_rms = sqrt(act_rms/lc->nentries);
+    */
 
     // Determine the normalized rates from the FFT.
     for (ii=0; ii<lc->nentries; ii++) {
-      lc->flux[ii] = (float)fcomp[ii] * requ_rms/act_rms;
+      lc->flux[ii] = (float)fftw_out[ii] /* *requ_rms/act_rms */;
 
       // Avoid negative fluxes (no physical meaning):
       if (lc->flux[ii]<0.) { 
@@ -2145,11 +2173,48 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     setLCAuxValues(lc, status);
     CHECK_STATUS_BREAK(*status);
 
+    /*
+    // TODO DEBUG
+    // Gauss.    
+    double ex2=0.;
+    for (ii=0; ii<100000; ii++) {
+      gauss_rndgen(&randr, &randi);
+      ex2 += pow(randr,2.)/200000.;
+      ex2 += pow(randi,2.)/200000.;
+    }
+    printf("ex2: %lf\n", ex2);
+    
+
+    // Calculate the rms, the variance, and the mean.
+    float rms=0., variance=0., mean=0.;
+    for (ii=0; ii<lc->nentries; ii++) {
+      rms  += pow(lc->flux[ii],2.) / lc->nentries;
+      mean += lc->flux[ii] / lc->nentries;
+    }
+    variance = rms - pow(mean,2.);
+    rms = sqrt(rms);
+    
+    printf("*****\n");
+    //    printf("required rms: %f, actual rms: %f\n", requ_rms, act_rms);
+    printf("rms: %f, rms**2: %f\n", rms, pow(rms, 2.));
+    printf("variance: %f, standard deviation: %f\n", variance, sqrt(variance));
+    printf("mean: %f\n", mean);
+    printf("*****\n");
+    
+    FILE* flc=fopen("lc.dat", "w+");
+    for (ii=0; ii<lc->nentries; ii++) {
+      fprintf(flc, "%f %f\n", lc->time[ii], lc->flux[ii]);
+    }
+    fclose(flc);
+    // END DEBUG
+    */
+
   } while(0); // END of error handling loop.
 
   // Release allocated memory.
   if (NULL!=power) free(power);
-  if (NULL!=fcomp) free(fcomp);
+  if (NULL!=fftw_in) fftw_free(fftw_in);
+  if (NULL!=fftw_out) fftw_free(fftw_out);
   freeSimputPSD(&psd);
 
   // Close the file.
