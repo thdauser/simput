@@ -2039,7 +2039,9 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
   float* power=NULL;
   double *fftw_in=NULL, *fftw_out=NULL;
 
-  printf("*** warning: the loadSimputLCfromPSD() routine has to be revised!\n");
+  // Length of the PSD for the FFT, which is obtained by interpolation
+  // of the input PSD.
+  const long psdlen = 100000;
 
   do { // Error handling loop.
 
@@ -2054,34 +2056,32 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     // Set the MJDREF.
     lc->mjdref=mjdref;
 
-    // Allocate memory.
-    lc->time    = (double*)malloc(2*psd->nentries*sizeof(double));
+    // Allocate memory for the light curve.
+    lc->nentries=2*psdlen;
+    lc->time    = (double*)malloc(lc->nentries*sizeof(double));
     CHECK_NULL_BREAK(lc->time, *status, 
 		     "memory allocation for light curve failed");
-    lc->flux    = (float*)malloc(2*psd->nentries*sizeof(float));
+    lc->flux    = (float*)malloc(lc->nentries*sizeof(float));
     CHECK_NULL_BREAK(lc->flux, *status, 
 		     "memory allocation for light curve failed");
-    lc->nentries=2*psd->nentries;
 
     // Set the time bins of the light curve.
-    lc->timezero = t0;
+    lc->timezero=t0;
     long ii;
     for (ii=0; ii<lc->nentries; ii++) {
       lc->time[ii] = ii*1./(2.*psd->frequency[psd->nentries-1]);
     }
 
-    // TODO Produce a longer light curve?
-
     // Calculate a PSD with an uniform frequency grid.
-    power=(float*)malloc(psd->nentries*sizeof(float));
+    power=(float*)malloc(psdlen*sizeof(float));
     CHECK_NULL_BREAK(power, *status, 
 		     "memory allocation for PSD buffer failed");
     long jj=0;
-    float delta_f=psd->frequency[psd->nentries-1]/psd->nentries;
-    for (ii=0; ii<psd->nentries; ii++) {
+    float delta_f=psd->frequency[psd->nentries-1]/psdlen;
+    for (ii=0; ii<psdlen; ii++) {
       float frequency = (ii+1)*delta_f;
-      while(frequency>psd->frequency[jj]) {
-	if (jj==psd->nentries-1) break;
+      while((frequency>psd->frequency[jj]) &&
+	    (jj<psd->nentries-1)) {
 	jj++;
       }
       if (jj==0) {
@@ -2123,16 +2123,16 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     //    randi *= sqrt(M_PI/2.);
     // TODO 
     //randr=1; randi=1.;
-    fftw_in[0]            =1.;
-    fftw_in[psd->nentries]=randi*sqrt(power[psd->nentries-1]);
-    for (ii=1; ii<psd->nentries; ii++) {
+    fftw_in[0]     =1.;
+    fftw_in[psdlen]=randi*sqrt(power[psdlen-1]);
+    for (ii=1; ii<psdlen; ii++) {
       gauss_rndgen(&randr, &randi);
       //      randr *= sqrt(M_PI/2.);
       //      randi *= sqrt(M_PI/2.);
       // TODO 
       //randr=1; randi=1.;
-      REAL(fftw_in, ii)              =randr*sqrt(0.25*power[ii-1]);
-      IMAG(fftw_in, ii, lc->nentries)=randi*sqrt(0.25*power[ii-1]);
+      REAL(fftw_in, ii)              =randr*0.5*sqrt(power[ii-1]);
+      IMAG(fftw_in, ii, lc->nentries)=randi*0.5*sqrt(power[ii-1]);
     }
 
     // Perform the inverse Fourier transformation.
