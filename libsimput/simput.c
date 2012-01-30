@@ -2087,10 +2087,10 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
 	jj++;
       }
       if (jj==0) {
-	power[ii] = 
-	  frequency/psd->frequency[jj]* 
+	power[ii] = 0.;
+	/* frequency/psd->frequency[jj]* 
 	  psd->power[jj]* 
-	  delta_f;
+	  delta_f;*/
       } else {
 	power[ii] = 
 	  (psd->power[jj-1] + 
