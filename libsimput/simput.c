@@ -2070,6 +2070,8 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
       lc->time[ii] = ii*1./(2.*psd->frequency[psd->nentries-1]);
     }
 
+    // TODO Produce a longer light curve?
+
     // Calculate a PSD with an uniform frequency grid.
     power=(float*)malloc(psd->nentries*sizeof(float));
     CHECK_NULL_BREAK(power, *status, 
