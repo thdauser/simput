@@ -2041,7 +2041,7 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
 
   // Length of the PSD for the FFT, which is obtained by interpolation
   // of the input PSD.
-  const long psdlen = 100000;
+  const long psdlen=10000000;
 
   do { // Error handling loop.
 
@@ -2195,6 +2195,7 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     printf("variance: %f, standard deviation: %f\n", variance, sqrt(variance));
     printf("mean: %f\n", mean);
     printf("*****\n");
+    */
     
     FILE* flc=fopen("lc.dat", "w+");
     for (ii=0; ii<lc->nentries; ii++) {
@@ -2202,7 +2203,6 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     }
     fclose(flc);
     // END DEBUG
-    */
 
   } while(0); // END of error handling loop.
 
