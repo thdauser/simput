@@ -2195,7 +2195,6 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     printf("variance: %f, standard deviation: %f\n", variance, sqrt(variance));
     printf("mean: %f\n", mean);
     printf("*****\n");
-    */
     
     FILE* flc=fopen("lc.dat", "w+");
     for (ii=0; ii<lc->nentries; ii++) {
@@ -2203,6 +2202,7 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     }
     fclose(flc);
     // END DEBUG
+    */
 
   } while(0); // END of error handling loop.
 
