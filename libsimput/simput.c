@@ -2825,7 +2825,7 @@ double getSimputPhotonTime(const SimputSource* const src,
   CHECK_STATUS_RET(*status, 0.);
 
   // Set the 'failed' flag to its default value.
-  *failed=0.;
+  *failed=0;
 
   // Check, whether the source has constant brightness.
   if (NULL==lc) {
