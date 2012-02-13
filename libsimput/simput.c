@@ -2041,7 +2041,7 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
 
   // Length of the PSD for the FFT, which is obtained by interpolation
   // of the input PSD.
-  const long psdlen=10000000;
+  const long psdlen=100000000;
 
   do { // Error handling loop.
 
