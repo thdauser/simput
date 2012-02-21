@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.12],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.13],[christian.schmid@sternwarte.uni-erlangen.de])
 AC_CONFIG_AUX_DIR([build-aux]) # Store auxiliary files in the sub-directory 'build-aux'.
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.

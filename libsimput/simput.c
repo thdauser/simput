@@ -562,7 +562,10 @@ void freeSimputCatalog(SimputCatalog** const cf,
 
 SimputCatalog* openSimputCatalog(const char* const filename,
 				 const int mode,
-				 const int maxstrlen,
+				 const int maxstrlen_src_name,
+				 const int maxstrlen_spectrum,
+				 const int maxstrlen_image,
+				 const int maxstrlen_lightcur,
 				 int* const status)
 {
   SimputCatalog* cf=getSimputCatalog(status);
@@ -655,6 +658,11 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 	}
 	if (EXIT_SUCCESS!=*status) break;
 	strcpy(tform[0], "J");
+	if (0==maxstrlen_src_name) {
+	  strcpy(tform[1], "1PA");
+	} else {
+	  sprintf(tform[1], "%dA", maxstrlen_src_name);  
+	}
 	strcpy(tform[2], "D");
 	strcpy(tform[3], "D");
 	strcpy(tform[4], "E");
@@ -662,16 +670,20 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 	strcpy(tform[6], "E");
 	strcpy(tform[7], "E");
 	strcpy(tform[8], "E");
-	if (0==maxstrlen) {
-	  strcpy(tform[1], "1PA");
+	if (0==maxstrlen_spectrum) {
 	  strcpy(tform[9], "1PA");
+	} else {
+	  sprintf(tform[9], "%dA", maxstrlen_spectrum);  
+	}
+	if (0==maxstrlen_image) {
 	  strcpy(tform[10], "1PA");
+	} else {
+	  sprintf(tform[10], "%dA", maxstrlen_image);  
+	}
+	if (0==maxstrlen_lightcur) {
 	  strcpy(tform[11], "1PA");
 	} else {
-	  sprintf(tform[1], "%dA", maxstrlen);  
-	  sprintf(tform[9], "%dA", maxstrlen);  
-	  sprintf(tform[10], "%dA", maxstrlen);  
-	  sprintf(tform[11], "%dA", maxstrlen);  
+	  sprintf(tform[11], "%dA", maxstrlen_lightcur);  
 	}
 	fits_create_tbl(cf->fptr, BINARY_TBL, 0, 12, ttype, tform, tunit, 
 			"SRC_CAT", status);

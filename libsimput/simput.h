@@ -283,19 +283,17 @@ void freeSimputCatalog(SimputCatalog** const catalog,
 
 /** Open a FITS file with a SIMPUT source catalog. The access mode can
     be either READONLY to open an existing catalog or READWRITE for
-    both existing or non-existing files. */
+    both existing or non-existing files. The maximum length of strings
+    to be inserted in the string columns can be specified. These
+    values are only required for the creation of a new catalog. If the
+    values are set to 0, variable length string columns will be
+    used. Otherwise fixed length string columns are used. */
 SimputCatalog* openSimputCatalog(const char* const filename,
 				 const int mode, 
-				 /** Maximum length of strings to be
-				     inserted in the string
-				     columns. This value is only
-				     required for the creation of a
-				     new catalog. If the value is set
-				     to 0, variable length string
-				     columns will be used. Otherwise
-				     fixed length string columns are
-				     used. */
-				 const int maxstrlen,
+				 const int maxstrlen_src_name,
+				 const int maxstrlen_spectrum,
+				 const int maxstrlen_image,
+				 const int maxstrlen_lightcur,
 				 int* const status);
 
 /** Constructor for the SimputSource data structure. Allocates

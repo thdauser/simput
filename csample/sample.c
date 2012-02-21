@@ -49,7 +49,7 @@ int main(int argc, char **argv)
     if ((argc>1) && (0==strcmp(argv[1],"r"))) {
 
       // Read the source catalog from the file.
-      cat=openSimputCatalog(filename, READONLY, 0, &status);
+      cat=openSimputCatalog(filename, READONLY, 0, 0, 0, 0, &status);
       CHECK_STATUS_BREAK(status);
 
       printf("catalog contains %ld entries\n", cat->nentries);
@@ -67,7 +67,7 @@ int main(int argc, char **argv)
       remove(filename);
 
       // Create a source catalog with 2 sources.
-      cat = openSimputCatalog(filename, READWRITE, 0, &status);
+      cat = openSimputCatalog(filename, READWRITE, 0, 0, 0, 0, &status);
       CHECK_STATUS_BREAK(status);
 
       SimputSource* src=
