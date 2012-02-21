@@ -18,7 +18,6 @@ pull.log
 pull_n_push.sh
 sample
 crab
-fortran_sample
 
 # Autotool stuff:
 aclocal.m4

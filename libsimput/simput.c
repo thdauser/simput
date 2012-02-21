@@ -562,10 +562,13 @@ void freeSimputCatalog(SimputCatalog** const cf,
 
 SimputCatalog* openSimputCatalog(const char* const filename,
 				 const int mode,
+				 const int maxstrlen,
 				 int* const status)
 {
-  SimputCatalog* cf = getSimputCatalog(status);
+  SimputCatalog* cf=getSimputCatalog(status);
   CHECK_STATUS_RET(*status, cf);
+
+  char **tform=NULL;
 
   do { // Error handling loop.
 
@@ -639,10 +642,37 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 	// The file does not contain a source catalog => create one.
 	char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
 			  "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
-	char *tform[] = { "J", "1PA", "D", "D", "E", "E", 
-			  "E", "E", "E", "1PA", "1PA", "1PA" };
 	char *tunit[] = { "", "", "deg", "deg", "deg", "",  
 			  "keV", "keV", "erg/s/cm**2", "", "", "" };
+	tform=(char**)malloc(12*sizeof(char*));
+	CHECK_NULL_BREAK(tform, *status, 
+			 "memory allocation for table parameters failed");
+	int ii;
+	for (ii=0; ii<12; ii++) {
+	  tform[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+	  CHECK_NULL_BREAK(tform[ii], *status, 
+			   "memory allocation for table parameters failed");
+	}
+	if (EXIT_SUCCESS!=*status) break;
+	strcpy(tform[0], "J");
+	strcpy(tform[2], "D");
+	strcpy(tform[3], "D");
+	strcpy(tform[4], "E");
+	strcpy(tform[5], "E");
+	strcpy(tform[6], "E");
+	strcpy(tform[7], "E");
+	strcpy(tform[8], "E");
+	if (0==maxstrlen) {
+	  strcpy(tform[1], "1PA");
+	  strcpy(tform[9], "1PA");
+	  strcpy(tform[10], "1PA");
+	  strcpy(tform[11], "1PA");
+	} else {
+	  sprintf(tform[1], "%dA", maxstrlen);  
+	  sprintf(tform[9], "%dA", maxstrlen);  
+	  sprintf(tform[10], "%dA", maxstrlen);  
+	  sprintf(tform[11], "%dA", maxstrlen);  
+	}
 	fits_create_tbl(cf->fptr, BINARY_TBL, 0, 12, ttype, tform, tunit, 
 			"SRC_CAT", status);
 	CHECK_STATUS_BREAK(*status);
@@ -667,7 +697,6 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 	break;
       }
     }
-
 
     // Get the column names.
     // Required columns:
@@ -762,6 +791,16 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 
   } while(0); // END of error handling loop.
 
+  // Release memory.
+  if (NULL!=tform) {
+    int ii;
+    for (ii=0; ii<12; ii++) {
+      if (NULL!=tform[ii]) {
+	free(tform[ii]);
+      }
+    }
+  }
+
   return(cf);
 }
 
@@ -780,11 +819,14 @@ void appendSimputSource(SimputCatalog* const cf,
   fits_write_col(cf->fptr, TSTRING, cf->csrc_name, cf->nentries, 1, 1, 
 		 &src->src_name, status);
   double ra = src->ra*180./M_PI;
-  fits_write_col(cf->fptr, TDOUBLE, cf->cra, cf->nentries, 1, 1, &ra, status);
+  fits_write_col(cf->fptr, TDOUBLE, cf->cra, cf->nentries, 1, 1, 
+		 &ra, status);
   double dec = src->dec*180./M_PI;
-  fits_write_col(cf->fptr, TDOUBLE, cf->cdec, cf->nentries, 1, 1, &dec, status);
+  fits_write_col(cf->fptr, TDOUBLE, cf->cdec, cf->nentries, 1, 1, 
+		 &dec, status);
   float imgrota = src->imgrota*180./M_PI;
-  fits_write_col(cf->fptr, TFLOAT, cf->cimgrota, cf->nentries, 1, 1, &imgrota, status);
+  fits_write_col(cf->fptr, TFLOAT, cf->cimgrota, cf->nentries, 1, 1, 
+		 &imgrota, status);
   fits_write_col(cf->fptr, TFLOAT, cf->cimgscal, cf->nentries, 1, 1, 
 		 &src->imgscal, status);
   fits_write_col(cf->fptr, TFLOAT, cf->ce_min, cf->nentries, 1, 1, 
@@ -893,7 +935,6 @@ void appendSimputSourceBlock(SimputCatalog* const cf,
     fits_write_col(cf->fptr, TFLOAT, cf->cflux, first, 1, nsources, 
 		   eflux, status);
     CHECK_STATUS_BREAK(*status);
-
 
   } while(0); // END of error handling loop.
 

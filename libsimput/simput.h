@@ -22,6 +22,7 @@
   0.0.2  2011/09/08   Christian Schmid      updated
 
   0.0.11 2012/01/26   Christian Schmid      updated
+  0.0.12 2012/02/21   Christian Schmid      updated
   --------------------------------------------------------------------------- 
 
    This is the header file of the simput library. The library provides
@@ -284,7 +285,17 @@ void freeSimputCatalog(SimputCatalog** const catalog,
     be either READONLY to open an existing catalog or READWRITE for
     both existing or non-existing files. */
 SimputCatalog* openSimputCatalog(const char* const filename,
-				 const int mode,
+				 const int mode, 
+				 /** Maximum length of strings to be
+				     inserted in the string
+				     columns. This value is only
+				     required for the creation of a
+				     new catalog. If the value is set
+				     to 0, variable length string
+				     columns will be used. Otherwise
+				     fixed length string columns are
+				     used. */
+				 const int maxstrlen,
 				 int* const status);
 
 /** Constructor for the SimputSource data structure. Allocates
