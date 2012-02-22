@@ -1581,7 +1581,9 @@ SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
   // to a spectrum.
   if (0==strlen(fileref)) {
     if (NULL!=src->spectrum) {
-      if ((strlen(src->spectrum)>0) && (0!=strcmp(src->spectrum, "NULL"))) {
+      if ((strlen(src->spectrum)>0) && 
+	  (0!=strcmp(src->spectrum, "NULL")) && 
+	  (0!=strcmp(src->spectrum, " "))) {
 	strcpy(fileref, src->spectrum);
       }
     }
@@ -2986,6 +2988,9 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
     return(NULL);
   }
   if (0==strcmp(src->lightcur, "NULL")) {
+    return(NULL);
+  }
+  if (0==strcmp(src->lightcur, " ")) {
     return(NULL);
   }
 
