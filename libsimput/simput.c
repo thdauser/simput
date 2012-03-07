@@ -1625,7 +1625,7 @@ SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
 SimputMIdpSpec* loadCacheSimputMIdpSpec(const char* const filename,
 					int* const status)
 {
-  const int maxspectra=2000; // Maximum number of spectra in storage.
+  const int maxspectra=3000; // Maximum number of spectra in storage.
   static int nspectra=0;     // Current number of spectra in storage.
   static int cspectrum=0;    // Index of next position in storage that will be used.
 
