@@ -1625,9 +1625,9 @@ SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
 SimputMIdpSpec* loadCacheSimputMIdpSpec(const char* const filename,
 					int* const status)
 {
-  const int maxspectra=3000; // Maximum number of spectra in storage.
-  static int nspectra=0;     // Current number of spectra in storage.
-  static int cspectrum=0;    // Index of next position in storage that will be used.
+  const int maxspectra=30000; // Maximum number of spectra in storage.
+  static int nspectra=0;      // Current number of spectra in storage.
+  static int cspectrum=0;     // Index of next position in storage that will be used.
 
   static SimputMIdpSpec** spectra=NULL;
 
@@ -2752,13 +2752,13 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
       fits_movnam_hdu(fptr, BINARY_TBL, extname, extver, &status2);
       fits_clear_errmark();
       if (BAD_HDU_NUM!=status2) {
-  // If that works, the extension already exists.
-  char msg[SIMPUT_MAXSTR];
-  sprintf(msg, "extension '%s' with EXTVER=%d already exists",
-    extname, extver);
-  SIMPUT_ERROR(msg);
-  *status=EXIT_FAILURE;
-  break;
+	// If that works, the extension already exists.
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "extension '%s' with EXTVER=%d already exists",
+		extname, extver);
+	SIMPUT_ERROR(msg);
+	*status=EXIT_FAILURE;
+	break;
       }
 
     } else {
