@@ -187,7 +187,7 @@ SimputSource* getSimputSource(int* const status)
   entry->eflux   =0.;
   entry->spectrum=NULL;
   entry->image   =NULL;
-  entry->lightcur=NULL;
+  entry->timing  =NULL;
   entry->filename=NULL;
   entry->filepath=NULL;
 
@@ -206,7 +206,7 @@ SimputSource* getSimputSourceV(const long src_id,
 			       const float eflux,
 			       const char* const spectrum,
 			       const char* const image,
-			       const char* const lightcur,
+			       const char* const timing,
 			       int* const status)
 {
   SimputSource* entry=getSimputSource(status);
@@ -237,18 +237,18 @@ SimputSource* getSimputSourceV(const long src_id,
 
   entry->spectrum=(char*)malloc((strlen(spectrum)+1)*sizeof(char));
   CHECK_NULL_RET(entry->spectrum, *status,
-		 "memory allocation for source name failed", entry);
+		 "memory allocation for reference to spectrum failed", entry);
   strcpy(entry->spectrum, spectrum);
 
-  entry->image  =(char*)malloc((strlen(image)+1)*sizeof(char));
+  entry->image   =(char*)malloc((strlen(image)+1)*sizeof(char));
   CHECK_NULL_RET(entry->image, *status,
-		 "memory allocation for source name failed", entry);
+		 "memory allocation for reference to image extension failed", entry);
   strcpy(entry->image, image);
 
-  entry->lightcur=(char*)malloc((strlen(lightcur)+1)*sizeof(char));
-  CHECK_NULL_RET(entry->lightcur, *status,
-		 "memory allocation for source name failed", entry);
-  strcpy(entry->lightcur, lightcur);
+  entry->timing  =(char*)malloc((strlen(timing)+1)*sizeof(char));
+  CHECK_NULL_RET(entry->timing, *status,
+		 "memory allocation for reference to timing extension failed", entry);
+  strcpy(entry->timing, timing);
   
 
   return(entry);
@@ -267,8 +267,8 @@ void freeSimputSource(SimputSource** const entry)
     if (NULL!=(*entry)->image) {
       free((*entry)->image);
     }
-    if (NULL!=(*entry)->lightcur) {
-      free((*entry)->lightcur);
+    if (NULL!=(*entry)->timing) {
+      free((*entry)->timing);
     }
     free(*entry);
     *entry=NULL;
@@ -326,7 +326,7 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
   char* src_name[1]={NULL};
   char* spectrum[1]={NULL};
   char* image[1]   ={NULL};
-  char* lightcur[1]={NULL};
+  char* timing[1]  ={NULL};
 
   do { // Beginning of error handling loop.
 
@@ -340,8 +340,8 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
     image[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
     CHECK_NULL_BREAK(image[0], *status, 
 		     "memory allocation for string buffer failed");
-    lightcur[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
-    CHECK_NULL_BREAK(lightcur[0], *status, 
+    timing[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(timing[0], *status, 
 		     "memory allocation for string buffer failed");
 
     long src_id=0;
@@ -397,15 +397,15 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
 		  "", spectrum, &anynul, status);
     fits_read_col(cf->fptr, TSTRING, cf->cimage, row, 1, 1, 
 		  "", image, &anynul, status);
-    fits_read_col(cf->fptr, TSTRING, cf->clightcur, row, 1, 1, 
-		  "", lightcur, &anynul, status);
+    fits_read_col(cf->fptr, TSTRING, cf->ctiming, row, 1, 1, 
+		  "", timing, &anynul, status);
 
     CHECK_STATUS_BREAK(*status);
 
     // Create a new SimputSource data structure.
     se=getSimputSourceV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
 			e_min, e_max, flux, spectrum[0], image[0],
-			lightcur[0], status);
+			timing[0], status);
     CHECK_STATUS_BREAK(*status);
 
     // Set the pointers to the filename and filepath in the
@@ -419,7 +419,7 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
   if (NULL!=src_name[0]) free(src_name[0]);
   if (NULL!=spectrum[0]) free(spectrum[0]);
   if (NULL!=image[0])    free(image[0]);
-  if (NULL!=lightcur[0]) free(lightcur[0]);
+  if (NULL!=timing[0])   free(timing[0]);
 
   return(se);
 }
@@ -523,7 +523,7 @@ SimputCatalog* getSimputCatalog(int* const status)
   cf->cflux    =0;
   cf->cspectrum=0;
   cf->cimage   =0;
-  cf->clightcur=0;
+  cf->ctiming  =0;
   cf->fra      =0.;
   cf->fdec     =0.;
   cf->fimgrota =0.;
@@ -565,7 +565,7 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 				 const int maxstrlen_src_name,
 				 const int maxstrlen_spectrum,
 				 const int maxstrlen_image,
-				 const int maxstrlen_lightcur,
+				 const int maxstrlen_timing,
 				 int* const status)
 {
   SimputCatalog* cf=getSimputCatalog(status);
@@ -644,7 +644,7 @@ SimputCatalog* openSimputCatalog(const char* const filename,
       if (READWRITE==mode) {
 	// The file does not contain a source catalog => create one.
 	char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
-			  "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "LIGHTCUR" };
+			  "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "TIMING" };
 	char *tunit[] = { "", "", "deg", "deg", "deg", "",  
 			  "keV", "keV", "erg/s/cm**2", "", "", "" };
 	tform=(char**)malloc(12*sizeof(char*));
@@ -680,10 +680,10 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 	} else {
 	  sprintf(tform[10], "%dA", maxstrlen_image);  
 	}
-	if (0==maxstrlen_lightcur) {
+	if (0==maxstrlen_timing) {
 	  strcpy(tform[11], "1PA");
 	} else {
-	  sprintf(tform[11], "%dA", maxstrlen_lightcur);  
+	  sprintf(tform[11], "%dA", maxstrlen_timing);  
 	}
 	fits_create_tbl(cf->fptr, BINARY_TBL, 0, 12, ttype, tform, tunit, 
 			"SRC_CAT", status);
@@ -720,7 +720,7 @@ SimputCatalog* openSimputCatalog(const char* const filename,
     fits_get_colnum(cf->fptr, CASEINSEN, "FLUX", &cf->cflux, status);
     fits_get_colnum(cf->fptr, CASEINSEN, "SPECTRUM", &cf->cspectrum, status);
     fits_get_colnum(cf->fptr, CASEINSEN, "IMAGE", &cf->cimage, status);
-    fits_get_colnum(cf->fptr, CASEINSEN, "LIGHTCUR", &cf->clightcur, status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "TIMING", &cf->ctiming, status);
     CHECK_STATUS_BREAK(*status);
     // Optional columns:
     int opt_status=EXIT_SUCCESS;
@@ -851,8 +851,8 @@ void appendSimputSource(SimputCatalog* const cf,
 		 &src->spectrum, status);
   fits_write_col(cf->fptr, TSTRING, cf->cimage, cf->nentries, 1, 1, 
 		 &src->image, status);
-  fits_write_col(cf->fptr, TSTRING, cf->clightcur, cf->nentries, 1, 1, 
-		 &src->lightcur, status);
+  fits_write_col(cf->fptr, TSTRING, cf->ctiming, cf->nentries, 1, 1, 
+		 &src->timing, status);
   CHECK_STATUS_VOID(*status);
 }
 
@@ -922,8 +922,8 @@ void appendSimputSourceBlock(SimputCatalog* const cf,
 		     &(src[ii]->spectrum), status);
       fits_write_col(cf->fptr, TSTRING, cf->cimage, first+ii, 1, 1, 
 		     &(src[ii]->image), status);
-      fits_write_col(cf->fptr, TSTRING, cf->clightcur, first+ii, 1, 1, 
-		     &(src[ii]->lightcur), status);
+      fits_write_col(cf->fptr, TSTRING, cf->ctiming, first+ii, 1, 1, 
+		     &(src[ii]->timing), status);
       CHECK_STATUS_BREAK(*status);
     }
     CHECK_STATUS_BREAK(*status);
@@ -2003,6 +2003,7 @@ void freeSimputLC(SimputLC** const lc)
 }
 
 
+/** Determine whether the specified extension contains a light curve. */
 static int isSimputLC(const char* const filename, 
 		      int* const status)
 {
@@ -2027,7 +2028,7 @@ static int isSimputLC(const char* const filename,
 
     if ((0==strcmp(hduclas1, "SIMPUT")) && (0==strcmp(hduclas2, "LIGHTCUR"))) {
       // This is a SIMPUT light curve.
-      ret = 1;
+      ret=1;
     }
 
   } while (0); // END of error handling loop.
@@ -2896,7 +2897,7 @@ double getSimputPhotonTime(const SimputSource* const src,
   } else {
     // The source has a time-variable brightness.
 
-    // The LinLightCurve contains data points, so the
+    // The light curve is a piece-wise constant function, so the
     // general algorithm proposed by Klein & Roberts has to 
     // be applied.
 
@@ -2981,16 +2982,16 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
   static SimputLC** lcs=NULL;
 
   // Check, whether the source refers to a light curve.
-  if (NULL==src->lightcur) {
+  if (NULL==src->timing) {
     return(NULL);
   }
-  if (0==strlen(src->lightcur)) {
+  if (0==strlen(src->timing)) {
     return(NULL);
   }
-  if (0==strcmp(src->lightcur, "NULL")) {
+  if (0==strcmp(src->timing, "NULL")) {
     return(NULL);
   }
-  if (0==strcmp(src->lightcur, " ")) {
+  if (0==strcmp(src->timing, " ")) {
     return(NULL);
   }
 
@@ -2999,14 +3000,14 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
   if (NULL==lcs) {
     lcs = (SimputLC**)malloc(maxlcs*sizeof(SimputLC*));
     CHECK_NULL_RET(lcs, *status, 
-		   "memory allocation for light curves failed", NULL);
+		   "memory allocation for light curve cache failed", NULL);
   }
 
   // Check if the requested light curve is available in the storage.
   int ii;
   for (ii=0; ii<nlcs; ii++) {
     // Check if the light curve is equivalent to the requested one.
-    if (0==strcmp(lcs[ii]->fileref, src->lightcur)) {
+    if (0==strcmp(lcs[ii]->fileref, src->timing)) {
       // For a light curve created from a PSD, we also have to check,
       // whether this is the source associated to this light curve.
       if (lcs[ii]->src_id>0) {
@@ -3053,17 +3054,17 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
 
   // Load the light curve.
   char filename[SIMPUT_MAXSTR];
-  if ('['==src->lightcur[0]) {
+  if ('['==src->timing[0]) {
     strcpy(filename, *src->filepath);
     strcat(filename, *src->filename);
-    strcat(filename, src->lightcur);
+    strcat(filename, src->timing);
   } else {
-    if ('/'!=src->lightcur[0]) {
+    if ('/'!=src->timing[0]) {
       strcpy(filename, *src->filepath);
     } else {
       strcpy(filename, "");
     }
-    strcat(filename, src->lightcur);
+    strcat(filename, src->timing);
   }
 
   // Check, whether the reference refers to a light curve or to 
@@ -3083,11 +3084,11 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
 
   // Store the file reference to the light curve for later comparisons.
   lcs[clc]->fileref = 
-    (char*)malloc((strlen(src->lightcur)+1)*sizeof(char));
+    (char*)malloc((strlen(src->timing)+1)*sizeof(char));
   CHECK_NULL_RET(lcs[clc]->fileref, *status, 
 		 "memory allocation for file reference failed", 
 		 lcs[clc]);
-  strcpy(lcs[clc]->fileref, src->lightcur);
+  strcpy(lcs[clc]->fileref, src->timing);
    
   return(lcs[clc]);
 }

@@ -30,7 +30,7 @@ void printSimputSource(SimputSource* sse) {
   printf(" FLUX:\t\t%f\n", sse->eflux);
   printf(" SPECTRUM:\t'%s'\n", sse->spectrum);
   printf(" IMAGE:\t\t'%s'\n", sse->image);
-  printf(" LIGHTCUR:\t'%s'\n", sse->lightcur);
+  printf(" TIMING:\t'%s'\n", sse->timing);
 }
 
 

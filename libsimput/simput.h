@@ -73,8 +73,9 @@ typedef struct {
   /** Reference to the storage location of the source image. */
   char* image;
 
-  /** Reference to the storage location of the source light curve. */
-  char* lightcur;
+  /** Reference to the storage location of the source light curve or
+      PSD. */
+  char* timing;
 
   /** Pointer to the filename in the source catalog file. */
   char** filename;
@@ -94,7 +95,7 @@ typedef struct {
 
   /** Column numbers. */
   int csrc_id, csrc_name, cra, cdec, cimgrota, cimgscal,
-    ce_min, ce_max, cflux, cspectrum, cimage, clightcur;
+    ce_min, ce_max, cflux, cspectrum, cimage, ctiming;
 
   /** Unit conversion factors. */
   float fra, fdec, fimgrota, fe_min, fe_max, fflux;
@@ -293,7 +294,7 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 				 const int maxstrlen_src_name,
 				 const int maxstrlen_spectrum,
 				 const int maxstrlen_image,
-				 const int maxstrlen_lightcur,
+				 const int maxstrlen_timing,
 				 int* const status);
 
 /** Constructor for the SimputSource data structure. Allocates
@@ -326,7 +327,7 @@ SimputSource* getSimputSourceV(const long src_id,
 			       const float eflux,
 			       const char* const spectrum,
 			       const char* const image,
-			       const char* const lightcur,
+			       const char* const timing,
 			       int* const status);
 
 /** Destructor for the SimputSource. Calls destructor routines
