@@ -558,12 +558,4 @@ float getSimputSourceExtension(const SimputSource* const src,
 			       int* const status);
 
 
-/*
-// TODO RM
-SimputLC* loadSimputLCfromPSD(const char* const filename, 
-			      const double t0,
-			      const double mjdref,
-			      int* const status);
-*/
-
 #endif /* SIMPUT_H */
