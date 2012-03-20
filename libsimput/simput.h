@@ -10,10 +10,10 @@
 #ifndef HEASP_H
 #define HEASP_H 1
 
-#ifdef CORRECT_RMF_FIRST_CHANNEL
-#include "Cheasp.h"
-#else
+#ifdef HEASP_CPP
 #include "heasp.h"
+#else
+#include "Cheasp.h"
 #endif
 
 #endif
