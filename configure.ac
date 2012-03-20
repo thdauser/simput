@@ -18,8 +18,8 @@ LT_INIT #([disable-shared]) #([shared])
 # "-pg" for the compiler and linker to include information for gprof (Profiler)
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # " -O0" for zero optimization
-CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -Df2cFortran -DHEASP_CPP"
-# -DCORRECT_RMF_FIRST_CHANNEL (required for HEADAS versions <6.12)
+CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -Df2cFortran"
+# -DHEASP_CPP (required for HEADAS versions <6.12)
 LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall"
 # FCFLAGS="-O0"
 
