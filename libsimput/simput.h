@@ -9,7 +9,13 @@
 
 #ifndef HEASP_H
 #define HEASP_H 1
+
+#ifdef CORRECT_RMF_FIRST_CHANNEL
+#include "Cheasp.h"
+#else
 #include "heasp.h"
+#endif
+
 #endif
 
 

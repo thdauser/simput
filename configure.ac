@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.13],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.14],[christian.schmid@sternwarte.uni-erlangen.de])
 AC_CONFIG_AUX_DIR([build-aux]) # Store auxiliary files in the sub-directory 'build-aux'.
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
@@ -19,8 +19,9 @@ LT_INIT #([disable-shared]) #([shared])
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # " -O0" for zero optimization
 CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -Df2cFortran"
-LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall"
-#FCFLAGS="-O0"
+LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall -DCORRECT_RMF_FIRST_CHANNEL"
+# FCFLAGS="-O0"
+# -DCORRECT_RMF_FIRST_CHANNEL (required for HEADAS versions <6.12)
 
 # Check for libraries:  (objdump -R/-T libncurses...)
 AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([No math library found!])], [])
