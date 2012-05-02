@@ -120,6 +120,15 @@ typedef struct {
   /** Buffer for pre-loaded SIMPUT sources. */
   void* srcbuff;
 
+  /** Buffer for pre-loaded spectra. */
+  void* specbuff;
+
+  /** Buffer for pre-loaded light curves. */
+  void* lcbuff;
+
+  /** Buffer for pre-loaded images. */
+  void* imgbuff;
+
 } SimputCatalog;
 
 
@@ -395,12 +404,14 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     to the SimputMIdpSpec should not be free'd, since the
     allocated memory is managed by the internal caching mechanism. */
 SimputMIdpSpec* 
-loadCacheSimputMIdpSpec(const char* const filename,
+loadCacheSimputMIdpSpec(SimputCatalog* const cat,
+			const char* const filename,
 			int* const status);
 
 /** Return the spectrum of the specified SimputSource for the
     particular point of time. */
-SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
+SimputMIdpSpec* returnSimputSrcSpec(SimputCatalog* const cat,
+				    const SimputSource* const src,
 				    const double time, 
 				    const double mjdref,
 				    int* const status);
@@ -444,7 +455,8 @@ void simputSetRndGen(double(*rndgen)(void));
     specified in the the catalog. If the source has a time-variable
     spectrum, which is defined via the light curve extension, the
     reference time is required. */
-float getSimputPhotonEnergy(const SimputSource* const src,
+float getSimputPhotonEnergy(SimputCatalog* const cat,
+			    const SimputSource* const src,
 			    const double time,
 			    const double mjdref,
 			    int* const status);
@@ -452,8 +464,10 @@ float getSimputPhotonEnergy(const SimputSource* const src,
 /** Determine the energy flux in [erg/s/cm**2] within the reference
     energy band of the specified source valid a the requested point of
     time. */
-float getSimputSrcBandFlux(const SimputSource* const src,
-			   const double time, const double mjdref,
+float getSimputSrcBandFlux(SimputCatalog* const cat,
+			   const SimputSource* const src,
+			   const double time, 
+			   const double mjdref,
 			   int* const status);
 
 /** Determine the energy flux of the spectrum in [erg/s/cm**2] within a
@@ -466,7 +480,8 @@ float getSimputSpecBandFlux(SimputMIdpSpec* const spec,
     the nominal photon rate given in the source catalog. WARNING: It
     does not contain any light curve or other time-variable
     contributions. Specification of instrument ARF required. */
-float getSimputPhotonRate(const SimputSource* const src,
+float getSimputPhotonRate(SimputCatalog* const cat,
+			  const SimputSource* const src,
 			  const double time, const double mjdref,
 			  int* const status);
 
@@ -520,7 +535,8 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
     location specified in the the catalog. If the light curve time is
     exceeded or the source flux is zero, the 'failed' flag is set to
     1. Otherwise its value is 0. */
-double getSimputPhotonTime(const SimputSource* const src,
+double getSimputPhotonTime(SimputCatalog* const cat,
+			   const SimputSource* const src,
 			   double prevtime,
 			   const double mjdref,
 			   int* const failed,
@@ -554,13 +570,15 @@ void saveSimputImg(SimputImg* const img, const char* const filename,
     random position is determined according to the flux distribution
     defined by the source image. The returned coordinate values are
     given in [rad]. */
-void getSimputPhotonCoord(const SimputSource* const src,
+void getSimputPhotonCoord(SimputCatalog* const cat,
+			  const SimputSource* const src,
 			  double* const ra, double* const dec,
 			  int* const status);
 
 /** Return the maximum spatial extension of a particular source around
     its reference point in [rad]. */
-float getSimputSourceExtension(const SimputSource* const src,
+float getSimputSourceExtension(SimputCatalog* const cat,
+			       const SimputSource* const src,
 			       int* const status);
 
 

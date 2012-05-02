@@ -71,11 +71,9 @@
 
 
 struct SimputSourceBuffer {
-  long nsources; // Current number of sources in the cash.
-  long csource;  // Index of next position in cash that will be used.
-
-  // Cash for the sources.
-  SimputSource** sources;
+  long nsources; // Current number of sources in the cache.
+  long csource;  // Index of next position in cache that will be used.
+  SimputSource** sources; // Cache for the sources.
 
   // This array contains the row numbers of the sources in the storage
   // given in the same order as the corresponding sources in the storage.
@@ -88,6 +86,26 @@ struct SimputSourceBuffer {
   // source is not contained in the storage, the value in the array
   // is -1.
   long* rowmap;
+};
+
+
+struct SimputSpectrumBuffer {
+  long nspectra;  // Current number of spectra in the cache.
+  long cspectrum; // Index of next position in the cache that will be used.
+  SimputMIdpSpec** spectra; // Cache for the spectra.
+};
+
+
+struct SimputLCBuffer {
+  long nlcs; // Current number of light curves in the cache.
+  long clc;  // Index of next position in the cache that will be used.
+  SimputLC** lcs; // Cache for the light curves.
+};
+
+
+struct SimputImgBuffer {
+  long nimgs; // Current number of images in the cache.
+  SimputImg** imgs; // Cache for the images.
 };
 
 
@@ -149,7 +167,8 @@ static float unit_conversion_Hz(const char* const unit);
     given in the source catalog. If the the source does not refer to a
     light curve (i.e. it is a source with constant brightness) the
     function return value is NULL. */
-static SimputLC* returnSimputLC(const SimputSource* const src,
+static SimputLC* returnSimputLC(SimputCatalog* const cat, 
+				const SimputSource* const src,
 				const double time, const double mjdref,
 				int* const status);
 
@@ -160,7 +179,8 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
     source catalog. If the the source does not refer to an image
     (i.e. it is a point-like source) the function return value is
     NULL. */
-static SimputImg* returnSimputImg(const SimputSource* const src,
+static SimputImg* returnSimputImg(SimputCatalog* const cat,
+				  const SimputSource* const src,
 				  int* const status);
 
 
@@ -242,12 +262,14 @@ SimputSource* getSimputSourceV(const long src_id,
 
   entry->image   =(char*)malloc((strlen(image)+1)*sizeof(char));
   CHECK_NULL_RET(entry->image, *status,
-		 "memory allocation for reference to image extension failed", entry);
+		 "memory allocation for reference to image extension failed", 
+		 entry);
   strcpy(entry->image, image);
 
   entry->timing  =(char*)malloc((strlen(timing)+1)*sizeof(char));
   CHECK_NULL_RET(entry->timing, *status,
-		 "memory allocation for reference to timing extension failed", entry);
+		 "memory allocation for reference to timing extension failed", 
+		 entry);
   strcpy(entry->timing, timing);
   
 
@@ -309,6 +331,101 @@ static void freeSimputSourceBuffer(struct SimputSourceBuffer** sb)
     }
     if (NULL!=(*sb)->rowmap) {
       free((*sb)->rowmap);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+static struct SimputSpectrumBuffer* getSimputSpectrumBuffer(int* const status)
+{
+  struct SimputSpectrumBuffer *specbuff = 
+    (struct SimputSpectrumBuffer*)malloc(sizeof(struct SimputSpectrumBuffer));
+
+  CHECK_NULL_RET(specbuff, *status, 
+		 "memory allocation for SimputSpectrumBuffer failed", specbuff);
+    
+  specbuff->nspectra  =0;
+  specbuff->cspectrum =0;
+  specbuff->spectra   =NULL;
+
+  return(specbuff);
+}
+
+
+static void freeSimputSpectrumBuffer(struct SimputSpectrumBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->spectra) {
+      long ii;
+      for (ii=0; ii<(*sb)->nspectra; ii++) {
+	freeSimputMIdpSpec(&((*sb)->spectra[ii]));
+      }
+      free((*sb)->spectra);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+static struct SimputLCBuffer* getSimputLCBuffer(int* const status)
+{
+  struct SimputLCBuffer *lcbuff = 
+    (struct SimputLCBuffer*)malloc(sizeof(struct SimputLCBuffer));
+
+  CHECK_NULL_RET(lcbuff, *status, 
+		 "memory allocation for SimputLCBuffer failed", lcbuff);
+    
+  lcbuff->nlcs=0;
+  lcbuff->clc =0;
+  lcbuff->lcs =NULL;
+
+  return(lcbuff);
+}
+
+
+static void freeSimputLCBuffer(struct SimputLCBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->lcs) {
+      long ii;
+      for (ii=0; ii<(*sb)->nlcs; ii++) {
+	freeSimputLC(&((*sb)->lcs[ii]));
+      }
+      free((*sb)->lcs);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+static struct SimputImgBuffer* getSimputImgBuffer(int* const status)
+{
+  struct SimputImgBuffer *imgbuff = 
+    (struct SimputImgBuffer*)malloc(sizeof(struct SimputImgBuffer));
+
+  CHECK_NULL_RET(imgbuff, *status, 
+		 "memory allocation for SimputImgBuffer failed", imgbuff);
+    
+  imgbuff->nimgs=0;
+  imgbuff->imgs =NULL;
+
+  return(imgbuff);
+}
+
+
+static void freeSimputImgBuffer(struct SimputImgBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->imgs) {
+      long ii;
+      for (ii=0; ii<(*sb)->nimgs; ii++) {
+	freeSimputImg(&((*sb)->imgs[ii]));
+      }
+      free((*sb)->imgs);
     }
     free(*sb);
     *sb=NULL;
@@ -442,7 +559,6 @@ SimputSource* loadCacheSimputSource(SimputCatalog* const cf,
   // format.
   struct SimputSourceBuffer* sb = (struct SimputSourceBuffer*)cf->srcbuff;
 
-
   // Allocate memory for the cache.
   if (NULL==sb->rowmap) {
     sb->rowmap=(long*)malloc(cf->nentries*sizeof(long));
@@ -533,6 +649,9 @@ SimputCatalog* getSimputCatalog(int* const status)
   cf->filepath =NULL;
   cf->filename =NULL;
   cf->srcbuff  =NULL;
+  cf->specbuff =NULL;
+  cf->lcbuff   =NULL;
+  cf->imgbuff  =NULL;
 
   return(cf);
 }
@@ -553,6 +672,15 @@ void freeSimputCatalog(SimputCatalog** const cf,
     }
     if (NULL!=(*cf)->srcbuff) {
       freeSimputSourceBuffer((struct SimputSourceBuffer**)&((*cf)->srcbuff));
+    }
+    if (NULL!=(*cf)->specbuff) {
+      freeSimputSpectrumBuffer((struct SimputSpectrumBuffer**)&((*cf)->specbuff));
+    }
+    if (NULL!=(*cf)->lcbuff) {
+      freeSimputLCBuffer((struct SimputLCBuffer**)&((*cf)->lcbuff));
+    }
+    if (NULL!=(*cf)->imgbuff) {
+      freeSimputImgBuffer((struct SimputImgBuffer**)&((*cf)->imgbuff));
     }
     free(*cf);
     *cf=NULL;
@@ -643,10 +771,10 @@ SimputCatalog* openSimputCatalog(const char* const filename,
     if (BAD_HDU_NUM==status2) {
       if (READWRITE==mode) {
 	// The file does not contain a source catalog => create one.
-	char *ttype[] = { "SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
-			  "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "TIMING" };
-	char *tunit[] = { "", "", "deg", "deg", "deg", "",  
-			  "keV", "keV", "erg/s/cm**2", "", "", "" };
+	char *ttype[]={"SRC_ID", "SRC_NAME", "RA", "DEC", "IMGROTA", "IMGSCAL", 
+		       "E_MIN", "E_MAX", "FLUX", "SPECTRUM", "IMAGE", "TIMING"};
+	char *tunit[]={"", "", "deg", "deg", "deg", "",  
+		       "keV", "keV", "erg/s/cm**2", "", "", ""};
 	tform=(char**)malloc(12*sizeof(char*));
 	CHECK_NULL_BREAK(tform, *status, 
 			 "memory allocation for table parameters failed");
@@ -1550,7 +1678,8 @@ static long getLCBin(const SimputLC* const lc,
 }
 
 
-SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
+SimputMIdpSpec* returnSimputSrcSpec(SimputCatalog* const cat,
+				    const SimputSource* const src,
 				    const double time, const double mjdref,
 				    int* const status)
 {
@@ -1559,7 +1688,7 @@ SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
   strcpy(fileref, ""); // Initialize with empty string.
 
   // Check, whether the source refers to a light curve.
-  SimputLC* lc=returnSimputLC(src, time, mjdref, status);
+  SimputLC* lc=returnSimputLC(cat, src, time, mjdref, status);
   CHECK_STATUS_RET(*status, NULL);
 
   // If the source has a light curve, check, whether it contains a
@@ -1618,35 +1747,43 @@ SimputMIdpSpec* returnSimputSrcSpec(const SimputSource* const src,
     strcat(filename, fileref);
   }
 
-  return(loadCacheSimputMIdpSpec(filename, status));
+  return(loadCacheSimputMIdpSpec(cat, filename, status));
 }
 
 
-SimputMIdpSpec* loadCacheSimputMIdpSpec(const char* const filename,
+SimputMIdpSpec* loadCacheSimputMIdpSpec(SimputCatalog* const cat,
+					const char* const filename,
 					int* const status)
 {
-  const int maxspectra=30000; // Maximum number of spectra in storage.
-  static int nspectra=0;      // Current number of spectra in storage.
-  static int cspectrum=0;     // Index of next position in storage that will be used.
+  const int maxspectra=30000; // Maximum number of spectra in the cache.
 
-  static SimputMIdpSpec** spectra=NULL;
+  // Check if the source catalog contains a spectrum buffer.
+  if (NULL==cat->specbuff) {
+    cat->specbuff = getSimputSpectrumBuffer(status);
+    CHECK_STATUS_RET(*status, NULL);
+  }
+
+  // Convert the void* pointer to the spectrum buffer into the right
+  // format.
+  struct SimputSpectrumBuffer* sb = 
+    (struct SimputSpectrumBuffer*)cat->specbuff;
 
   // In case there are no spectra available at all, allocate 
   // memory for the array (storage for spectra).
-  if (NULL==spectra) {
-    spectra = 
+  if (NULL==sb->spectra) {
+    sb->spectra = 
       (SimputMIdpSpec**)malloc(maxspectra*sizeof(SimputMIdpSpec*));
-    CHECK_NULL_RET(spectra, *status, 
+    CHECK_NULL_RET(sb->spectra, *status, 
 		   "memory allocation for spectra failed", NULL);
   }
 
   // Search if the required spectrum is available in the storage.
-  int ii;
-  for (ii=0; ii<nspectra; ii++) {
+  long ii;
+  for (ii=0; ii<sb->nspectra; ii++) {
     // Check if the spectrum is equivalent to the required one.
-    if (0==strcmp(spectra[ii]->fileref, filename)) {
+    if (0==strcmp(sb->spectra[ii]->fileref, filename)) {
       // If yes, return the spectrum.
-      return(spectra[ii]);
+      return(sb->spectra[ii]);
     }
   }
 
@@ -1654,32 +1791,32 @@ SimputMIdpSpec* loadCacheSimputMIdpSpec(const char* const filename,
   // Therefore we must load it from the specified location.
 
   // Check if there is still space left in the spectral storage buffer.
-  if (nspectra<maxspectra) {
-    cspectrum=nspectra;
-    nspectra++;
+  if (sb->nspectra<maxspectra) {
+    sb->cspectrum=sb->nspectra;
+    sb->nspectra++;
   } else {
-    cspectrum++;
-    if (cspectrum>=maxspectra) {
-      cspectrum=0;
+    sb->cspectrum++;
+    if (sb->cspectrum>=maxspectra) {
+      sb->cspectrum=0;
     }
     // Release the spectrum that is currently stored at this place in the
     // storage buffer.
-    freeSimputMIdpSpec(&spectra[cspectrum]);
+    freeSimputMIdpSpec(&(sb->spectra[sb->cspectrum]));
   }
 
   // Load the mission-independent spectrum.
-  spectra[cspectrum]=loadSimputMIdpSpec(filename, status);
-  CHECK_STATUS_RET(*status, spectra[cspectrum]);
+  sb->spectra[sb->cspectrum]=loadSimputMIdpSpec(filename, status);
+  CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
 
   // Store the file reference to the spectrum for later comparisons.
-  spectra[cspectrum]->fileref = 
+  sb->spectra[sb->cspectrum]->fileref = 
     (char*)malloc((strlen(filename)+1)*sizeof(char));
-  CHECK_NULL_RET(spectra[cspectrum]->fileref, *status, 
+  CHECK_NULL_RET(sb->spectra[sb->cspectrum]->fileref, *status, 
 		 "memory allocation for file reference failed", 
-		 spectra[cspectrum]);
-  strcpy(spectra[cspectrum]->fileref, filename);
+		 sb->spectra[sb->cspectrum]);
+  strcpy(sb->spectra[sb->cspectrum]->fileref, filename);
 
-  return(spectra[cspectrum]);
+  return(sb->spectra[sb->cspectrum]);
 }
 
 
@@ -1828,14 +1965,15 @@ static float getRndPhotonEnergy(SimputMIdpSpec* const spec,
 }
 
 
-float getSimputPhotonEnergy(const SimputSource* const src,
+float getSimputPhotonEnergy(SimputCatalog* const cat,
+			    const SimputSource* const src,
 			    const double time,
 			    const double mjdref,
 			    int* const status)
 {
   // Get the spectrum which is stored in the catalog.
   SimputMIdpSpec* spec=
-    returnSimputSrcSpec(src, time, mjdref, status);
+    returnSimputSrcSpec(cat, src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Determine a random photon energy from the spectral distribution.
@@ -1890,25 +2028,27 @@ float getSimputSpecBandFlux(SimputMIdpSpec* const spec,
 }
 
 
-float getSimputSrcBandFlux(const SimputSource* const src,
+float getSimputSrcBandFlux(SimputCatalog* const cat,
+			   const SimputSource* const src,
 			   const double time, const double mjdref,
 			   int* const status)
 {
   // Determine the spectrum valid for the specified point of time.
   SimputMIdpSpec* spec=
-    returnSimputSrcSpec(src, time, mjdref, status);
+    returnSimputSrcSpec(cat, src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   return(getSimputSpecBandFlux(spec, src->e_min, src->e_max, status));
 }
 
 
-float getSimputPhotonRate(const SimputSource* const src,
+float getSimputPhotonRate(SimputCatalog* const cat,
+			  const SimputSource* const src,
 			  const double time, const double mjdref,
 			  int* const status)
 {
   SimputMIdpSpec* spec=
-    returnSimputSrcSpec(src, time, mjdref, status);
+    returnSimputSrcSpec(cat, src, time, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Flux in the reference energy band.
@@ -2169,18 +2309,10 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     double randr, randi;
     lc->fluxscal=1.; // Set Fluxscal to 1.
     gauss_rndgen(&randr, &randi);
-    //    randr *= sqrt(M_PI/2.);
-    //    randi *= sqrt(M_PI/2.);
-    // TODO 
-    //randr=1; randi=1.;
     fftw_in[0]     =1.;
     fftw_in[psdlen]=randi*sqrt(power[psdlen-1]);
     for (ii=1; ii<psdlen; ii++) {
       gauss_rndgen(&randr, &randi);
-      //      randr *= sqrt(M_PI/2.);
-      //      randi *= sqrt(M_PI/2.);
-      // TODO 
-      //randr=1; randi=1.;
       REAL(fftw_in, ii)              =randr*0.5*sqrt(power[ii-1]);
       IMAG(fftw_in, ii, lc->nentries)=randi*0.5*sqrt(power[ii-1]);
     }
@@ -2190,25 +2322,6 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
 				     FFTW_HC2R, FFTW_ESTIMATE);
     fftw_execute(iplan);
     fftw_destroy_plan(iplan);
-
-    /*
-    // Normalization.
-    // Calculate the required rms.
-    float requ_rms=1.;
-    for (ii=0; ii<psd->nentries; ii++) {
-      // It is not absolutely clear to me, why we have to divide by 2 here.
-      // But the results are only right, if we do that.
-      requ_rms += power[ii]/2.;
-    }
-    requ_rms = sqrt(requ_rms);
-
-    // Calculate the actual rms.
-    float act_rms=0.;
-    for (ii=0; ii<lc->nentries; ii++) {
-      act_rms += (float)pow(fftw_out[ii], 2.);
-    }
-    act_rms = sqrt(act_rms/lc->nentries);
-    */
 
     // Determine the normalized rates from the FFT.
     for (ii=0; ii<lc->nentries; ii++) {
@@ -2223,42 +2336,6 @@ static SimputLC* loadSimputLCfromPSD(const char* const filename,
     // Determine the auxiliary light curve parameters.
     setLCAuxValues(lc, status);
     CHECK_STATUS_BREAK(*status);
-
-    /*
-    // TODO DEBUG
-    // Gauss.    
-    double ex2=0.;
-    for (ii=0; ii<100000; ii++) {
-      gauss_rndgen(&randr, &randi);
-      ex2 += pow(randr,2.)/200000.;
-      ex2 += pow(randi,2.)/200000.;
-    }
-    printf("ex2: %lf\n", ex2);
-    
-
-    // Calculate the rms, the variance, and the mean.
-    float rms=0., variance=0., mean=0.;
-    for (ii=0; ii<lc->nentries; ii++) {
-      rms  += pow(lc->flux[ii],2.) / lc->nentries;
-      mean += lc->flux[ii] / lc->nentries;
-    }
-    variance = rms - pow(mean,2.);
-    rms = sqrt(rms);
-    
-    printf("*****\n");
-    //    printf("required rms: %f, actual rms: %f\n", requ_rms, act_rms);
-    printf("rms: %f, rms**2: %f\n", rms, pow(rms, 2.));
-    printf("variance: %f, standard deviation: %f\n", variance, sqrt(variance));
-    printf("mean: %f\n", mean);
-    printf("*****\n");
-    
-    FILE* flc=fopen("lc.dat", "w+");
-    for (ii=0; ii<lc->nentries; ii++) {
-      fprintf(flc, "%f %f\n", lc->time[ii], lc->flux[ii]);
-    }
-    fclose(flc);
-    // END DEBUG
-    */
 
   } while(0); // END of error handling loop.
 
@@ -2870,14 +2947,15 @@ static double rndexp(const double avgdist)
 }
 
 
-double getSimputPhotonTime(const SimputSource* const src,
+double getSimputPhotonTime(SimputCatalog* const cat,
+			   const SimputSource* const src,
 			   double prevtime,
 			   const double mjdref,
 			   int* const failed,
 			   int* const status)
 {
   // Determine the light curve.
-  SimputLC* lc=returnSimputLC(src, prevtime, mjdref, status);
+  SimputLC* lc=returnSimputLC(cat, src, prevtime, mjdref, status);
   CHECK_STATUS_RET(*status, 0.);
 
   // Set the 'failed' flag to its default value.
@@ -2886,7 +2964,7 @@ double getSimputPhotonTime(const SimputSource* const src,
   // Check, whether the source has constant brightness.
   if (NULL==lc) {
     // The source has a constant brightness.
-    float rate=getSimputPhotonRate(src, prevtime, mjdref, status);
+    float rate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
     if (0.==rate) {
       *failed=1;
       return(0.);
@@ -2902,7 +2980,7 @@ double getSimputPhotonTime(const SimputSource* const src,
     // be applied.
 
     // Apply the individual photon rate of the particular source.
-    float avgrate=getSimputPhotonRate(src, prevtime, mjdref, status);
+    float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
     CHECK_STATUS_RET(*status, 0.);
     assert(avgrate>0.);
 
@@ -2919,7 +2997,7 @@ double getSimputPhotonTime(const SimputSource* const src,
       // If the end of the light curve is reached, check if it has
       // been produced from a PSD. In that case one can create new one.
       if ((kk>=lc->nentries-1)&&(lc->src_id>0)) {
-	lc=returnSimputLC(src, prevtime, mjdref, status);
+	lc=returnSimputLC(cat, src, prevtime, mjdref, status);
 	CHECK_STATUS_RET(*status, 0.);
 	kk=getLCBin(lc, prevtime, mjdref, &nperiods, status);
 	CHECK_STATUS_RET(*status, 0.);
@@ -2971,15 +3049,12 @@ double getSimputPhotonTime(const SimputSource* const src,
 }
 
 
-static SimputLC* returnSimputLC(const SimputSource* const src,
+static SimputLC* returnSimputLC(SimputCatalog* const cat, 
+				const SimputSource* const src,
 				const double time, const double mjdref,
 				int* const status)
 {
   const int maxlcs=10; // Maximum number of light curves in storage.
-  static int nlcs=0;   // Current number of light curves in storage.
-  static int clc =0;   // Index of next position in storage that will be used.
-
-  static SimputLC** lcs=NULL;
 
   // Check, whether the source refers to a light curve.
   if (NULL==src->timing) {
@@ -2995,35 +3070,45 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
     return(NULL);
   }
 
+  // Check if the source catalog contains a light curve buffer.
+  if (NULL==cat->lcbuff) {
+    cat->lcbuff = getSimputLCBuffer(status);
+    CHECK_STATUS_RET(*status, NULL);
+  }
+
+  // Convert the void* pointer to the light curve buffer into the right
+  // format.
+  struct SimputLCBuffer* sb=(struct SimputLCBuffer*)cat->lcbuff;
+
   // In case there are no light curves available at all, allocate 
   // memory for the array (storage for light curves).
-  if (NULL==lcs) {
-    lcs = (SimputLC**)malloc(maxlcs*sizeof(SimputLC*));
-    CHECK_NULL_RET(lcs, *status, 
+  if (NULL==sb->lcs) {
+    sb->lcs=(SimputLC**)malloc(maxlcs*sizeof(SimputLC*));
+    CHECK_NULL_RET(sb->lcs, *status, 
 		   "memory allocation for light curve cache failed", NULL);
   }
 
   // Check if the requested light curve is available in the storage.
-  int ii;
-  for (ii=0; ii<nlcs; ii++) {
+  long ii;
+  for (ii=0; ii<sb->nlcs; ii++) {
     // Check if the light curve is equivalent to the requested one.
-    if (0==strcmp(lcs[ii]->fileref, src->timing)) {
+    if (0==strcmp(sb->lcs[ii]->fileref, src->timing)) {
       // For a light curve created from a PSD, we also have to check,
       // whether this is the source associated to this light curve.
-      if (lcs[ii]->src_id>0) {
+      if (sb->lcs[ii]->src_id>0) {
 	// Check if the SRC_IDs agree.
-	if (lcs[ii]->src_id==src->src_id) {
+	if (sb->lcs[ii]->src_id==src->src_id) {
 	  // We have a light curve which has been produced from a PSD.
 	  // Check if the requested time is covered by the light curve.
-	  if (time<getLCTime(lcs[ii], lcs[ii]->nentries-1, 0, mjdref)) {
-	    return(lcs[ii]);
+	  if (time<getLCTime(sb->lcs[ii], sb->lcs[ii]->nentries-1, 0, mjdref)) {
+	    return(sb->lcs[ii]);
 	  }
 	  // If not, we have to produce a new light curve from the PSD.
 	}
       } else {
 	// This light curve is loaded from a file and can be re-used
 	// for different sources.
-	return(lcs[ii]);
+	return(sb->lcs[ii]);
       }
     }
   }
@@ -3032,17 +3117,17 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
   // Therefore we must load it from the specified location.
 
   // Check if there is still space left in the light curve storage.
-  if (nlcs<maxlcs) {
-    clc = nlcs;
-    nlcs++;
+  if (sb->nlcs<maxlcs) {
+    sb->clc = sb->nlcs;
+    sb->nlcs++;
   } else {
-    clc++;
-    if (clc>=maxlcs) {
-      clc=0;
+    sb->clc++;
+    if (sb->clc>=maxlcs) {
+      sb->clc=0;
     }
     // Release the light curve that is currently stored at this place
     // in the cache.
-    freeSimputLC(&lcs[clc]);
+    freeSimputLC(&(sb->lcs[sb->clc]));
   }
 
   // Check if the filename and filepath properties for the
@@ -3070,27 +3155,27 @@ static SimputLC* returnSimputLC(const SimputSource* const src,
   // Check, whether the reference refers to a light curve or to 
   // a PSD.
   int islc = isSimputLC(filename, status);
-  CHECK_STATUS_RET(*status, lcs[nlcs]);
+  CHECK_STATUS_RET(*status, sb->lcs[sb->nlcs]);
   if (1==islc) {
-    lcs[clc]=loadSimputLC(filename, status);
-    CHECK_STATUS_RET(*status, lcs[clc]);
+    sb->lcs[sb->clc]=loadSimputLC(filename, status);
+    CHECK_STATUS_RET(*status, sb->lcs[sb->clc]);
   } else {
-    lcs[clc]=loadSimputLCfromPSD(filename, time, mjdref, status);
-    CHECK_STATUS_RET(*status, lcs[clc]);
+    sb->lcs[sb->clc]=loadSimputLCfromPSD(filename, time, mjdref, status);
+    CHECK_STATUS_RET(*status, sb->lcs[sb->clc]);
     // The new LC is assigned to this particular source and 
     // cannot be re-used.
-    lcs[clc]->src_id=src->src_id;
+    sb->lcs[sb->clc]->src_id=src->src_id;
   }
 
   // Store the file reference to the light curve for later comparisons.
-  lcs[clc]->fileref = 
+  sb->lcs[sb->clc]->fileref = 
     (char*)malloc((strlen(src->timing)+1)*sizeof(char));
-  CHECK_NULL_RET(lcs[clc]->fileref, *status, 
+  CHECK_NULL_RET(sb->lcs[sb->clc]->fileref, *status, 
 		 "memory allocation for file reference failed", 
-		 lcs[clc]);
-  strcpy(lcs[clc]->fileref, src->timing);
+		 sb->lcs[sb->clc]);
+  strcpy(sb->lcs[sb->clc]->fileref, src->timing);
    
-  return(lcs[clc]);
+  return(sb->lcs[sb->clc]);
 }
 
 
@@ -3403,12 +3488,11 @@ void saveSimputImg(SimputImg* const img,
 }
 
 
-static SimputImg* returnSimputImg(const SimputSource* const src,
+static SimputImg* returnSimputImg(SimputCatalog* const cat,
+				  const SimputSource* const src,
 				  int* const status)
 {
   const int maximgs=200;
-  static int nimgs =0;
-  static SimputImg** imgs=NULL;
 
   // Check, whether the source refers to an image.
   if (NULL==src->image) {
@@ -3421,27 +3505,37 @@ static SimputImg* returnSimputImg(const SimputSource* const src,
     return(NULL);
   }
 
+  // Check if the source catalog contains an image buffer.
+  if (NULL==cat->imgbuff) {
+    cat->imgbuff = getSimputImgBuffer(status);
+    CHECK_STATUS_RET(*status, NULL);
+  }
+
+  // Convert the void* pointer to the image buffer into the right
+  // format.
+  struct SimputImgBuffer* sb=(struct SimputImgBuffer*)cat->imgbuff;
+
   // In case there are no images available at all, allocate 
   // memory for the array (storage for images).
-  if (NULL==imgs) {
-    imgs = (SimputImg**)malloc(maximgs*sizeof(SimputImg*));
-    CHECK_NULL_RET(imgs, *status, 
+  if (NULL==sb->imgs) {
+    sb->imgs=(SimputImg**)malloc(maximgs*sizeof(SimputImg*));
+    CHECK_NULL_RET(sb->imgs, *status, 
 		   "memory allocation for images failed", NULL);
   }
 
   // Search if the requested image is available in the storage.
-  int ii;
-  for (ii=0; ii<nimgs; ii++) {
+  long ii;
+  for (ii=0; ii<sb->nimgs; ii++) {
     // Check if the image is equivalent to the requested one.
-    if (0==strcmp(imgs[ii]->fileref, src->image)) {
+    if (0==strcmp(sb->imgs[ii]->fileref, src->image)) {
       // If yes, return the image.
-      return(imgs[ii]);
+      return(sb->imgs[ii]);
     }
   }
 
   // The requested image is not contained in the storage.
   // Therefore we must load it from the specified location.
-  if (nimgs>=maximgs) {
+  if (sb->nimgs>=maximgs) {
     SIMPUT_ERROR("too many images in the internal storage");
     *status=EXIT_FAILURE;
     return(NULL);
@@ -3468,19 +3562,19 @@ static SimputImg* returnSimputImg(const SimputSource* const src,
     }
     strcat(filename, src->image);
   }
-  imgs[nimgs]=loadSimputImg(filename, status);
-  CHECK_STATUS_RET(*status, imgs[nimgs]);
-  nimgs++;
+  sb->imgs[sb->nimgs]=loadSimputImg(filename, status);
+  CHECK_STATUS_RET(*status, sb->imgs[sb->nimgs]);
+  sb->nimgs++;
 
   // Store the file reference to the image for later comparisons.
-  imgs[nimgs-1]->fileref = 
+  sb->imgs[sb->nimgs-1]->fileref = 
     (char*)malloc((strlen(src->image)+1)*sizeof(char));
-  CHECK_NULL_RET(imgs[nimgs-1]->fileref, *status, 
+  CHECK_NULL_RET(sb->imgs[sb->nimgs-1]->fileref, *status, 
 		 "memory allocation for file reference failed", 
-		 imgs[nimgs-1]);
-  strcpy(imgs[nimgs-1]->fileref, src->image);
+		 sb->imgs[sb->nimgs-1]);
+  strcpy(sb->imgs[sb->nimgs-1]->fileref, src->image);
    
-  return(imgs[nimgs-1]);
+  return(sb->imgs[sb->nimgs-1]);
 }
 
 
@@ -3517,7 +3611,8 @@ static void p2s(struct wcsprm* const wcs,
 }
 
 
-void getSimputPhotonCoord(const SimputSource* const src,
+void getSimputPhotonCoord(SimputCatalog* const cat,
+			  const SimputSource* const src,
 			  double* const ra, double* const dec,
 			  int* const status)
 {
@@ -3526,7 +3621,7 @@ void getSimputPhotonCoord(const SimputSource* const src,
   do { // Error handling loop.
 
     // Determine the image.
-    SimputImg* img=returnSimputImg(src, status);
+    SimputImg* img=returnSimputImg(cat, src, status);
     CHECK_STATUS_BREAK(*status);
 
     // Check, whether the source is point-like or spatially extended.
@@ -3635,7 +3730,8 @@ void getSimputPhotonCoord(const SimputSource* const src,
 }
 
 
-float getSimputSourceExtension(const SimputSource* const src,
+float getSimputSourceExtension(SimputCatalog* const cat,
+			       const SimputSource* const src,
 			       int* const status)
 {
   // Return value.
@@ -3646,7 +3742,7 @@ float getSimputSourceExtension(const SimputSource* const src,
   do { // Error handling loop.
 
     // Get the source image for this particular source.
-    SimputImg* img=returnSimputImg(src, status);
+    SimputImg* img=returnSimputImg(cat, src, status);
     CHECK_STATUS_BREAK(*status);
 
     // Check if it is a point-like or an extended source.
