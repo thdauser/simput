@@ -1457,7 +1457,7 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
       strcpy(tunit[1], "photon/s/cm**2/keV");
 
       strcpy(ttype[2], "NAME");
-      strcpy(tform[2], "32A");
+      strcpy(tform[2], "48A");
       strcpy(tunit[2], "");
 
       // Create the table.
@@ -1499,8 +1499,8 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
     if (NULL!=spec->name) {
       if (strlen(spec->name)>0) {
 	// Check if the NAME string is too long.
-	if (strlen(spec->name)>32) {
-	  SIMPUT_ERROR("NAME value of spectrum contains more than 32 characters");
+	if (strlen(spec->name)>48) {
+	  SIMPUT_ERROR("NAME value of spectrum contains more than 48 characters");
 	  *status=EXIT_FAILURE;
 	  break;
 	}
