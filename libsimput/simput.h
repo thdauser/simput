@@ -129,6 +129,9 @@ typedef struct {
   /** Buffer for pre-loaded images. */
   void* imgbuff;
 
+  /** Instrument ARF. */
+  struct ARF* arf;
+
 } SimputCatalog;
 
 
@@ -442,7 +445,7 @@ void getSimputSpectrumValue(const SimputMIdpSpec* const spec,
     the mission-independent format. The access to the ARF data
     structure must be guaranteed as long as the SIMPUT library
     routines are used. */
-void simputSetARF(struct ARF* const arf);
+void simputSetARF(SimputCatalog* const cat, struct ARF* const arf);
 
 /** Set the random number generator, which is used by the simput
     library routines. The generator should return double valued,

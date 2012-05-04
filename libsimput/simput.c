@@ -114,9 +114,6 @@ struct SimputImgBuffer {
 /////////////////////////////////////////////////////////////////
 
 
-/** Instrument ARF. */
-static struct ARF* static_arf=NULL;
-
 /** Random number generator. */
 static double(*static_rndgen)(void)=NULL;
 
@@ -652,6 +649,7 @@ SimputCatalog* getSimputCatalog(int* const status)
   cf->specbuff =NULL;
   cf->lcbuff   =NULL;
   cf->imgbuff  =NULL;
+  cf->arf      =NULL;
 
   return(cf);
 }
@@ -1592,9 +1590,9 @@ void getSimputSpectrumValue(const SimputMIdpSpec* const spec,
 }
 
 
-void simputSetARF(struct ARF* const arf)
+void simputSetARF(SimputCatalog* const cat, struct ARF* const arf)
 {
-  static_arf = arf;
+  cat->arf = arf;
 }
 
 
@@ -1843,27 +1841,28 @@ static inline void getSpecEbounds(const SimputMIdpSpec* const spec,
 /** Convolve the given mission-independent spectrum with the
     instrument ARF. The product of this process is the spectral
     probability distribution binned to the energy grid of the ARF. */
-static void convSimputMIdpSpecWithARF(SimputMIdpSpec* const spec, 
+static void convSimputMIdpSpecWithARF(SimputCatalog* const cat, 
+				      SimputMIdpSpec* const spec, 
 				      int* const status)
 {
   // Check if the ARF is defined.
-  CHECK_NULL_VOID(static_arf, *status, "instrument ARF undefined");
+  CHECK_NULL_VOID(cat->arf, *status, "instrument ARF undefined");
 
   // Allocate memory.
   spec->distribution=
-    (double*)malloc(static_arf->NumberEnergyBins*sizeof(double));
+    (double*)malloc(cat->arf->NumberEnergyBins*sizeof(double));
   CHECK_NULL_VOID(spec->distribution, *status,
 		 "memory allocation for spectral distribution failed");
 
   // Loop over all bins of the ARF.
   long ii, jj=0;
   int warning_printed=0; // Flag whether warning has been printed.
-  for (ii=0; ii<static_arf->NumberEnergyBins; ii++) {
+  for (ii=0; ii<cat->arf->NumberEnergyBins; ii++) {
     // Initialize with 0.
     spec->distribution[ii]=0.;
 
     // Lower boundary of the current bin.
-    float lo = static_arf->LowEnergy[ii];
+    float lo = cat->arf->LowEnergy[ii];
 
     // Loop over all spectral points within the ARF bin.
     int finished=0;
@@ -1876,13 +1875,13 @@ static void convSimputMIdpSpecWithARF(SimputMIdpSpec* const spec,
       }
       
       // Check special cases.
-      if ((0==jj) && (spec_emin>static_arf->LowEnergy[ii])) {
+      if ((0==jj) && (spec_emin>cat->arf->LowEnergy[ii])) {
 	if (0==warning_printed) {
 	  printf("*** warning: the spectrum does not cover the "
 		 "full energy range of the ARF!\n");
 	  warning_printed=1;
 	}
-	if (spec_emin>static_arf->HighEnergy[ii]) break;
+	if (spec_emin>cat->arf->HighEnergy[ii]) break;
 
       } else if (jj==spec->nentries) {
 	if (0==warning_printed) {
@@ -1900,16 +1899,16 @@ static void convSimputMIdpSpecWithARF(SimputMIdpSpec* const spec,
 
       // Upper boundary of the current bin.
       float hi;
-      if (spec_emax<=static_arf->HighEnergy[ii]) {
+      if (spec_emax<=cat->arf->HighEnergy[ii]) {
 	hi=spec_emax;
       } else {
-	hi=static_arf->HighEnergy[ii];
+	hi=cat->arf->HighEnergy[ii];
 	finished=1;
       }
 
       // Add to the spectral probability density.
       spec->distribution[ii]+=
-	(hi-lo)*static_arf->EffArea[ii]*spec->pflux[jj];
+	(hi-lo)*cat->arf->EffArea[ii]*spec->pflux[jj];
       
       // Increase the lower boundary.
       lo=hi;
@@ -1928,27 +1927,28 @@ static void convSimputMIdpSpecWithARF(SimputMIdpSpec* const spec,
 
 /** Determine a random photon energy [keV] according to the specified
     spectral distribution. */
-static float getRndPhotonEnergy(SimputMIdpSpec* const spec,
+static float getRndPhotonEnergy(SimputCatalog* const cat, 
+				SimputMIdpSpec* const spec,
 				int* const status) 
 {
   // Check if the spectrum has been convolved with the ARF.
   if (NULL==spec->distribution) {
     // Multiply it by the ARF in order to obtain the spectral distribution.
-    convSimputMIdpSpecWithARF(spec, status);
+    convSimputMIdpSpecWithARF(cat, spec, status);
     CHECK_STATUS_RET(*status, 0.);
   }
 
   // Get a random number in the interval [0,1].
-  double rnd = static_rndgen();
+  double rnd=static_rndgen();
   assert(rnd>=0.);
   assert(rnd<=1.);
 
   // Multiply with the total photon rate.
-  rnd *= spec->distribution[static_arf->NumberEnergyBins-1];
+  rnd *= spec->distribution[cat->arf->NumberEnergyBins-1];
 
   // Determine the corresponding point in the spectral 
   // distribution (using binary search).
-  long upper=static_arf->NumberEnergyBins-1, lower=0, mid;
+  long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
   while (upper>lower) {
     mid = (lower+upper)/2;
     if (spec->distribution[mid]<rnd) {
@@ -1959,9 +1959,9 @@ static float getRndPhotonEnergy(SimputMIdpSpec* const spec,
   }
 
   // Return the corresponding photon energy.
-  return(static_arf->LowEnergy[lower] + 
+  return(cat->arf->LowEnergy[lower] + 
 	 static_rndgen()*
-	 (static_arf->HighEnergy[lower]-static_arf->LowEnergy[lower]));
+	 (cat->arf->HighEnergy[lower]-cat->arf->LowEnergy[lower]));
 }
 
 
@@ -1977,7 +1977,7 @@ float getSimputPhotonEnergy(SimputCatalog* const cat,
   CHECK_STATUS_RET(*status, 0.);
 
   // Determine a random photon energy from the spectral distribution.
-  return(getRndPhotonEnergy(spec, status));
+  return(getRndPhotonEnergy(cat, spec, status));
 }
 
 
@@ -2060,12 +2060,12 @@ float getSimputPhotonRate(SimputCatalog* const cat,
   // is used in the next step.
   if (NULL==spec->distribution) {
     // Multiply it by the ARF in order to obtain the spectral distribution.
-    convSimputMIdpSpecWithARF(spec, status);
+    convSimputMIdpSpecWithARF(cat, spec, status);
     CHECK_STATUS_RET(*status, 0.);
   }
 
   return(src->eflux / refband_flux * 
-	 (float)(spec->distribution[static_arf->NumberEnergyBins-1]));
+	 (float)(spec->distribution[cat->arf->NumberEnergyBins-1]));
 }
 
 
