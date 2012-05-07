@@ -442,6 +442,12 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
   char* image[1]   ={NULL};
   char* timing[1]  ={NULL};
 
+  // Check if the specified row number is within the valid range.
+  if ((row<=0) || (row>cf->nentries)) {
+    SIMPUT_ERROR("invalid row number");
+    return(NULL);
+  }
+
   do { // Beginning of error handling loop.
 
     // Allocate memory for string buffers.
