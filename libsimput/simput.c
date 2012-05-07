@@ -580,6 +580,11 @@ SimputSource* loadCacheSimputSource(SimputCatalog* const cf,
 		   "memory allocation for array of row numbers failed", NULL);
   }
 
+  // Check if the specified source index (row number) is valid.
+  if ((row<=0) || (row>cf->nentries)) {
+    SIMPUT_ERROR("invalid row number");
+    return(NULL);
+  }
 
   // Check if the requested row is already available in the cache.
   if (sb->rowmap[row-1]>0) {
