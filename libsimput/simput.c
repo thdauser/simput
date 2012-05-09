@@ -2205,10 +2205,10 @@ static void gauss_rndgen(double* const x, double* const y)
 static void setLCAuxValues(SimputLC* const lc, int* const status)
 {
   // Memory allocation.
-  lc->a       = (float*)malloc(lc->nentries*sizeof(float));
+  lc->a = (double*)malloc(lc->nentries*sizeof(double));
   CHECK_NULL_VOID(lc->a, *status, 
 		 "memory allocation for light curve failed");
-  lc->b       = (float*)malloc(lc->nentries*sizeof(float));
+  lc->b = (double*)malloc(lc->nentries*sizeof(double));
   CHECK_NULL_VOID(lc->b, *status, 
 		  "memory allocation for light curve failed");
 
@@ -2437,8 +2437,8 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     fits_read_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, comment, status);
     if (cphase>0) {
       // Only for periodic light curves.
-      fits_read_key(fptr, TFLOAT,  "PHASE0",   &lc->phase0,   comment, status);
-      fits_read_key(fptr, TFLOAT,  "PERIOD",   &lc->period,   comment, status);
+      fits_read_key(fptr, TDOUBLE, "PHASE0", &lc->phase0, comment, status);
+      fits_read_key(fptr, TDOUBLE, "PERIOD", &lc->period, comment, status);
     } else {
       lc->phase0 = 0.;
       lc->period = 0.;
@@ -2447,7 +2447,7 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     // Optional keywords.
     opt_status=EXIT_SUCCESS;
     fits_write_errmark();
-    fits_read_key(fptr, TFLOAT,  "FLUXSCAL", &lc->fluxscal, comment, &opt_status);
+    fits_read_key(fptr, TFLOAT, "FLUXSCAL", &lc->fluxscal, comment, &opt_status);
     if (EXIT_SUCCESS!=opt_status) {
       // FLUXSCAL is not given in the FITS header. We therefore assume
       // that it has a value of 1.
@@ -2469,7 +2469,7 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 		       "memory allocation for light curve failed");
     }
     if (cphase>0) {
-      lc->phase = (float*)malloc(lc->nentries*sizeof(float));
+      lc->phase = (double*)malloc(lc->nentries*sizeof(double));
       CHECK_NULL_BREAK(lc->phase, *status, 
 		       "memory allocation for light curve failed");
     }
@@ -2513,7 +2513,7 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 
     // PHASE
     if (cphase>0) {
-      fits_read_col(fptr, TFLOAT, cphase, 1, 1, lc->nentries, 
+      fits_read_col(fptr, TDOUBLE, cphase, 1, 1, lc->nentries, 
 		    0, lc->phase, &anynul, status);
       CHECK_STATUS_BREAK(*status);
     }
@@ -2727,8 +2727,8 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     if (cphase>0) {
       // Only for periodic light curves.
       periodic=1;
-      fits_write_key(fptr, TFLOAT,  "PHASE0", &lc->phase0, "", status);
-      fits_write_key(fptr, TFLOAT,  "PERIOD", &lc->period, "", status);
+      fits_write_key(fptr, TDOUBLE, "PHASE0", &lc->phase0, "", status);
+      fits_write_key(fptr, TDOUBLE, "PERIOD", &lc->period, "", status);
     }
     fits_write_key(fptr, TINT,  "PERIODIC", &periodic, "", status);
     CHECK_STATUS_BREAK(*status);
@@ -2742,7 +2742,7 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
 		     lc->time, status);
       CHECK_STATUS_BREAK(*status);
     } else {
-      fits_write_col(fptr, TFLOAT, cphase, 1, 1, lc->nentries, 
+      fits_write_col(fptr, TDOUBLE, cphase, 1, 1, lc->nentries, 
 		     lc->phase, status);
       CHECK_STATUS_BREAK(*status);
     }
@@ -2800,6 +2800,7 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
 }
+
 
 void saveSimputPSD(SimputPSD* const psd, const char* const filename,
       char* const extname, int extver, int* const status)
@@ -2864,9 +2865,12 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
     ttype=(char**)malloc(ncolumns*sizeof(char*));
     tform=(char**)malloc(ncolumns*sizeof(char*));
     tunit=(char**)malloc(ncolumns*sizeof(char*));
-    CHECK_NULL_BREAK(ttype, *status, "memory allocation for string buffer failed");
-    CHECK_NULL_BREAK(tform, *status, "memory allocation for string buffer failed");
-    CHECK_NULL_BREAK(tunit, *status, "memory allocation for string buffer failed");
+    CHECK_NULL_BREAK(ttype, *status, 
+		     "memory allocation for string buffer failed");
+    CHECK_NULL_BREAK(tform, *status, 
+		     "memory allocation for string buffer failed");
+    CHECK_NULL_BREAK(tunit, *status, 
+		     "memory allocation for string buffer failed");
     int ii;
     for (ii=0; ii<ncolumns; ii++) {
       ttype[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
@@ -2902,7 +2906,8 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
     fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
 
-    // Create new rows in the table and store the data of the power spectrum in it.
+    // Create new rows in the table and store the data of the power 
+    // spectrum in it.
     fits_insert_rows(fptr, 0, psd->nentries, status);
     CHECK_STATUS_BREAK(*status);
 
@@ -3018,7 +3023,8 @@ double getSimputPhotonTime(SimputCatalog* const cat,
       // at the beginning of the kk-th interval.
       double t        =prevtime-(getLCTime(lc, kk, nperiods, mjdref));
       double stepwidth=
-	getLCTime(lc, kk+1, nperiods, mjdref)-getLCTime(lc, kk, nperiods, mjdref);
+	getLCTime(lc, kk+1, nperiods, mjdref)-
+	getLCTime(lc, kk, nperiods, mjdref);
 
       // Step 2 in the algorithm.
       double uk = 1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
@@ -3026,10 +3032,10 @@ double getSimputPhotonTime(SimputCatalog* const cat,
       // Step 3 in the algorithm.
       if (u <= uk) {
 	if ( fabs(lc->a[kk]*stepwidth) > fabs(lc->b[kk]*1.e-6) ) { 
-	  // Instead of checking if a_kk = 0. check, whether its product with the 
-	  // interval length is a very small number in comparison to b_kk.
-	  // If a_kk * stepwidth is much smaller than b_kk, the rate in the interval
-	  // can be assumed to be approximately constant.
+	  // Instead of checking if a_kk = 0. check, whether its product 
+	  // with the interval length is a very small number in comparison 
+	  // to b_kk. If a_kk * stepwidth is much smaller than b_kk, the 
+	  // rate in the interval can be assumed to be approximately constant.
 	  return(getLCTime(lc, kk, nperiods, mjdref) +
 		 (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
 				  2.*lc->a[kk]*lc->b[kk]*t - 

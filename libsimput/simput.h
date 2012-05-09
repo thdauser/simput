@@ -191,7 +191,7 @@ typedef struct {
   double* time;
 
   /** Phase values (between 0 and 1). */
-  float* phase;
+  double* phase;
 
   /** Relative flux values (unitless). */
   float* flux;
@@ -201,7 +201,7 @@ typedef struct {
       and t_{k+1} (slope, [1/s]). The value b_k represents the
       constant contribution (intercept) at t_k. These values include
       the FLUXSCAL. */
-  float *a, *b;
+  double *a, *b;
 
   /** Reference to the storage location of the source spectrum at a
       particular point of time or phase respectively. */
@@ -218,10 +218,10 @@ typedef struct {
   double timezero;
 
   /** Phase of periodic oscillation at timezero. */
-  float phase0;
+  double phase0;
 
   /** Duration of one oscillation period [s]. */
-  float period;
+  double period;
   
   /** Flux scaling factor. */
   float fluxscal;
