@@ -1619,18 +1619,19 @@ void simputSetRndGen(double(*rndgen)(void))
     periods is added to the time value. For non-periodic light curves
     the nperiod parameter is neglected. The returned value includes
     the MJDREF and TIMEZERO contributions. */
-static double getLCTime(const SimputLC* const lc, 
-			const long kk, 
-			const long long nperiods,
-			const double mjdref)
+static inline double getLCTime(const SimputLC* const lc, 
+			       const long kk, 
+			       const long long nperiods,
+			       const double mjdref)
 {
   if (NULL!=lc->time) {
     // Non-periodic light curve.
     return(lc->time[kk] + lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
   } else {
-    // Periodic light curve. 
-    return((lc->phase[kk] - lc->phase0 + nperiods)*lc->period +
-	   lc->timezero + (lc->mjdref-mjdref)*24.*3600.);    
+    // Periodic light curve.
+    double phase = lc->phase[kk] - lc->phase0 + nperiods;
+    return(phase*lc->period /* *(1. + 0.5*phase*lc->dperiod )  */ 
+	   +lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
   }
 }
 
@@ -1664,11 +1665,17 @@ static long getLCBin(const SimputLC* const lc,
   } else {
     // Periodic light curve.
     double dt = time-getLCTime(lc, 0, 0, mjdref);
-    if (dt>=0.) {
-      *nperiods = (long long)(dt/lc->period);
-    } else {
-      *nperiods = (long long)(dt/lc->period)-1;
-    }      
+    double phase = lc->phase0 + dt/lc->period;
+    // Period changes in periodic light curves are currently
+    // not possible due to the implementation of the Klein & Roberts 
+    // light curve algorithm.
+    // if (lc->dperiod>0.) {
+    //  phase += 0.5/lc->dperiod*dt*dt;
+    // }
+    (*nperiods) = (long long)phase;
+    if (phase<0.) {
+      (*nperiods)--;
+    }     
   }
 
   // Determine the respective index kk of the light curve (using
@@ -2099,6 +2106,7 @@ SimputLC* getSimputLC(int* const status)
   lc->timezero=0.;
   lc->phase0  =0.;
   lc->period  =0.;
+  lc->dperiod =0.;
   lc->fluxscal=0.;
   lc->src_id  =0;
   lc->fileref =NULL;
@@ -2452,6 +2460,12 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       // FLUXSCAL is not given in the FITS header. We therefore assume
       // that it has a value of 1.
       lc->fluxscal = 1.;
+      opt_status=EXIT_SUCCESS;
+    }
+    fits_read_key(fptr, TDOUBLE, "DPERIOD", &lc->dperiod, comment, &opt_status);
+    if (EXIT_SUCCESS!=opt_status) {
+      lc->dperiod= 0.;
+      opt_status=EXIT_SUCCESS;
     }
     fits_clear_errmark();
 
@@ -2729,6 +2743,7 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
       periodic=1;
       fits_write_key(fptr, TDOUBLE, "PHASE0", &lc->phase0, "", status);
       fits_write_key(fptr, TDOUBLE, "PERIOD", &lc->period, "", status);
+      fits_write_key(fptr, TDOUBLE, "DPERIOD", &lc->dperiod, "", status);
     }
     fits_write_key(fptr, TINT,  "PERIODIC", &periodic, "", status);
     CHECK_STATUS_BREAK(*status);

@@ -222,6 +222,9 @@ typedef struct {
 
   /** Duration of one oscillation period [s]. */
   double period;
+
+  /** Derivative of the period with respect to the time. */
+  double dperiod;
   
   /** Flux scaling factor. */
   float fluxscal;
