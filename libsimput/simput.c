@@ -554,13 +554,13 @@ SimputSource* loadCacheSimputSource(SimputCatalog* const cf,
 
   // Check if the source catalog contains a source buffer.
   if (NULL==cf->srcbuff) {
-    cf->srcbuff = getSimputSourceBuffer(status);
+    cf->srcbuff=getSimputSourceBuffer(status);
     CHECK_STATUS_RET(*status, NULL);
   }
 
   // Convert the void* pointer to the source buffer into the right
   // format.
-  struct SimputSourceBuffer* sb = (struct SimputSourceBuffer*)cf->srcbuff;
+  struct SimputSourceBuffer* sb=(struct SimputSourceBuffer*)cf->srcbuff;
 
   // Allocate memory for the cache.
   if (NULL==sb->rowmap) {
