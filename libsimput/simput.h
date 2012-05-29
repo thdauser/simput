@@ -414,6 +414,12 @@ loadCacheSimputMIdpSpec(SimputCatalog* const cat,
 			const char* const filename,
 			int* const status);
 
+/** Loads all spectra from the specified FITS binary table into the
+    internal cache. */
+void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
+				const char* const filename,
+				int* const status);
+
 /** Return the spectrum of the specified SimputSource for the
     particular point of time. */
 SimputMIdpSpec* returnSimputSrcSpec(SimputCatalog* const cat,

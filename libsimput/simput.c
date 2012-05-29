@@ -66,6 +66,15 @@
 
 
 /////////////////////////////////////////////////////////////////
+// Constants.
+/////////////////////////////////////////////////////////////////
+
+
+// Maximum number of spectra in the cache.
+const int maxspectra=30000; 
+
+
+/////////////////////////////////////////////////////////////////
 // Structures.
 /////////////////////////////////////////////////////////////////
 
@@ -1318,7 +1327,8 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
     // The number of energy bins and of flux entries must be identical.
     if (nenergy!=nflux) {
-      SIMPUT_ERROR("number of energy and flux entries in spectrum is not equivalent");
+      SIMPUT_ERROR("number of energy and flux entries in spectrum is "
+		   "not equivalent");
       *status=EXIT_FAILURE;
       break;
     }
@@ -1342,9 +1352,9 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     // Read the data from the table.
     int anynul=0;
     fits_read_col(fptr, TFLOAT, cenergy, 1, 1, spec->nentries, 
-		  0, spec->energy, &anynul, status);
+		  NULL, spec->energy, &anynul, status);
     fits_read_col(fptr, TFLOAT, cflux, 1, 1, spec->nentries, 
-		  0, spec->pflux, &anynul, status);
+		  NULL, spec->pflux, &anynul, status);
 
     if (cname>0) {
       fits_read_col(fptr, TSTRING, cname, 1, 1, 1, "", name, &anynul, status);
@@ -1377,7 +1387,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_RET(*status, spec);
 
-  return(spec);  
+  return(spec);
 }
 
 
@@ -1771,11 +1781,9 @@ SimputMIdpSpec* loadCacheSimputMIdpSpec(SimputCatalog* const cat,
 					const char* const filename,
 					int* const status)
 {
-  const int maxspectra=30000; // Maximum number of spectra in the cache.
-
   // Check if the source catalog contains a spectrum buffer.
   if (NULL==cat->specbuff) {
-    cat->specbuff = getSimputSpectrumBuffer(status);
+    cat->specbuff=getSimputSpectrumBuffer(status);
     CHECK_STATUS_RET(*status, NULL);
   }
 
@@ -1825,7 +1833,7 @@ SimputMIdpSpec* loadCacheSimputMIdpSpec(SimputCatalog* const cat,
   CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
 
   // Store the file reference to the spectrum for later comparisons.
-  sb->spectra[sb->cspectrum]->fileref = 
+  sb->spectra[sb->cspectrum]->fileref=
     (char*)malloc((strlen(filename)+1)*sizeof(char));
   CHECK_NULL_RET(sb->spectra[sb->cspectrum]->fileref, *status, 
 		 "memory allocation for file reference failed", 
@@ -1833,6 +1841,187 @@ SimputMIdpSpec* loadCacheSimputMIdpSpec(SimputCatalog* const cat,
   strcpy(sb->spectra[sb->cspectrum]->fileref, filename);
 
   return(sb->spectra[sb->cspectrum]);
+}
+
+
+void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
+				const char* const filename,
+				int* const status)
+{
+  fitsfile* fptr=NULL;
+  struct SimputSpectrumBuffer* sb=NULL;
+  char* name[1]={NULL};
+
+  do { // Error handling loop.
+
+    // Check if the source catalog contains a spectrum buffer.
+    if (NULL==cat->specbuff) {
+      cat->specbuff=getSimputSpectrumBuffer(status);
+      CHECK_STATUS_BREAK(*status);
+    }
+
+    // Convert the void* pointer to the spectrum buffer into the right
+    // format.
+    sb=(struct SimputSpectrumBuffer*)cat->specbuff;
+
+    // In case there are no spectra available at all, allocate 
+    // memory for the array (storage for spectra).
+    if (NULL==sb->spectra) {
+      sb->spectra = 
+	(SimputMIdpSpec**)malloc(maxspectra*sizeof(SimputMIdpSpec*));
+      CHECK_NULL_BREAK(sb->spectra, *status, 
+		       "memory allocation for spectra failed");
+    }
+
+    // Open the specified FITS file. The filename must uniquely identify
+    // the extension containing the spectra via the extended filename 
+    // syntax.
+    fits_open_table(&fptr, filename, READONLY, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Determine the number of columns in the table.
+    long nrows;
+    fits_get_num_rows(fptr, &nrows, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Check if as many spectra can be stored in the cache.
+    if (sb->nspectra+nrows>maxspectra) {
+      *status=EXIT_FAILURE;
+      SIMPUT_ERROR("cache too small to store all spectra");
+      break;
+    }
+
+    // Get the column names.
+    int cenergy=0, cflux=0, cname=0;
+    // Required columns:
+    fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
+    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+    CHECK_STATUS_BREAK(*status);
+    // Optional columnes:
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_get_colnum(fptr, CASEINSEN, "NAME", &cname, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_clear_errmark();
+
+    // Determine the unit conversion factors.
+    char uenergy[SIMPUT_MAXSTR];
+    read_unit(fptr, cenergy, uenergy, status);
+    CHECK_STATUS_BREAK(*status);
+    float fenergy = unit_conversion_keV(uenergy);
+    if (0.==fenergy) {
+      SIMPUT_ERROR("unknown units in ENERGY column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char uflux[SIMPUT_MAXSTR];
+    read_unit(fptr, cflux, uflux, status);
+    CHECK_STATUS_BREAK(*status);
+    float fflux = unit_conversion_phpspcm2pkeV(uflux);
+    if (0.==fflux) {
+      SIMPUT_ERROR("unknown units in FLUX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    // END of determine unit conversion factors.
+
+    // Determine the number of entries in the 2 vector columns.
+    int typecode;
+    long nenergy, nflux, width;
+    fits_get_coltype(fptr, cenergy, &typecode, &nenergy, &width, status);
+    fits_get_coltype(fptr, cflux,   &typecode, &nflux,   &width, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // If the columns are of variable-length data type, the returned repeat
+    // value is 1. In that case we have to use another routine to get the
+    // number of elements in a particular row.
+    if (1==nenergy) {
+      long offset;
+      fits_read_descript(fptr, cenergy, 1, &nenergy, &offset, status);
+      fits_read_descript(fptr, cflux  , 1, &nflux  , &offset, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+
+    // The number of energy bins and of flux entries must be identical.
+    if (nenergy!=nflux) {
+      SIMPUT_ERROR("number of energy and flux entries in spectrum is "
+		   "not equivalent");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    // Allocate memory for string buffer.
+    name[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(name[0], *status, 
+		     "memory allocation for string buffer failed");
+    
+    // Load the spectra.
+    printf("load %ld spectra with %ld data points each\n", nrows, nenergy);
+    long ii;
+    for (ii=0; ii<nrows; ii++) {
+      // Allocate memory for a new spectrum.
+      SimputMIdpSpec* spec=getSimputMIdpSpec(status);
+      CHECK_STATUS_BREAK(*status);
+
+      spec->nentries=nenergy;
+
+      // Allocate memory for the arrays.
+      spec->energy=(float*)malloc(spec->nentries*sizeof(float));
+      CHECK_NULL_BREAK(spec->energy, *status, 
+		       "memory allocation for spectrum failed");
+      spec->pflux =(float*)malloc(spec->nentries*sizeof(float));
+      CHECK_NULL_BREAK(spec->pflux, *status, 
+		       "memory allocation for spectrum failed");
+
+      // Read the data from the table.
+      int anynul=0;
+      fits_read_col(fptr, TFLOAT, cenergy, ii+1, 1, spec->nentries, 
+		    NULL, spec->energy, &anynul, status);
+      fits_read_col(fptr, TFLOAT, cflux, ii+1, 1, spec->nentries, 
+		    NULL, spec->pflux, &anynul, status);
+      if (cname>0) {
+	fits_read_col(fptr, TSTRING, cname, ii+1, 1, 1, "", name, &anynul, status);
+      } else { 
+	strcpy(name[0], "");
+      }
+      CHECK_STATUS_BREAK(*status);
+
+      // Multiply with unit scaling factor.
+      long ii;
+      for (ii=0; ii<spec->nentries; ii++) {
+	spec->energy[ii] *= fenergy;
+	spec->pflux[ii]  *= fflux;
+      }
+
+      // Copy the name (ID) of the spectrum from the string buffer
+      // to the data structure.
+      spec->name=(char*)malloc((strlen(name[0])+1)*sizeof(char));
+      CHECK_NULL_BREAK(spec->name, *status, 
+		       "memory allocation for name string failed");
+      strcpy(spec->name, name[0]);
+
+      // Store the file reference to the spectrum for later comparisons.
+      spec->fileref=
+	(char*)malloc((strlen(filename)+strlen(name[0])+11)*sizeof(char));
+      CHECK_NULL_BREAK(spec->fileref, *status, 
+		       "memory allocation for file reference failed");
+      sprintf(spec->fileref, "%s[NAME=='%s']", filename, name[0]);
+
+      // Add the spectrum to the cache.
+      sb->spectra[sb->nspectra++]=spec;
+    }
+    CHECK_STATUS_BREAK(*status);
+    // END of reading all spectra.
+
+  } while(0); // END of error handling loop.
+  
+  // Release allocated memory.
+  if (NULL!=name[0]) free(name[0]);
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_VOID(*status);
 }
 
 
