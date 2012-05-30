@@ -1958,8 +1958,8 @@ void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
     
     // Load the spectra.
     printf("load %ld spectra with %ld data points each\n", nrows, nenergy);
-    long ii;
-    for (ii=0; ii<nrows; ii++) {
+    long jj;
+    for (jj=0; jj<nrows; jj++) {
       // Allocate memory for a new spectrum.
       SimputMIdpSpec* spec=getSimputMIdpSpec(status);
       CHECK_STATUS_BREAK(*status);
@@ -1976,12 +1976,12 @@ void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
 
       // Read the data from the table.
       int anynul=0;
-      fits_read_col(fptr, TFLOAT, cenergy, ii+1, 1, spec->nentries, 
+      fits_read_col(fptr, TFLOAT, cenergy, jj+1, 1, spec->nentries, 
 		    NULL, spec->energy, &anynul, status);
-      fits_read_col(fptr, TFLOAT, cflux, ii+1, 1, spec->nentries, 
+      fits_read_col(fptr, TFLOAT, cflux, jj+1, 1, spec->nentries, 
 		    NULL, spec->pflux, &anynul, status);
       if (cname>0) {
-	fits_read_col(fptr, TSTRING, cname, ii+1, 1, 1, "", name, &anynul, status);
+	fits_read_col(fptr, TSTRING, cname, jj+1, 1, 1, "", name, &anynul, status);
       } else { 
 	strcpy(name[0], "");
       }
@@ -1990,8 +1990,8 @@ void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
       // Multiply with unit scaling factor.
       long ii;
       for (ii=0; ii<spec->nentries; ii++) {
-	spec->energy[ii] *= fenergy;
-	spec->pflux[ii]  *= fflux;
+	spec->energy[ii]*=fenergy;
+	spec->pflux[ii] *=fflux;
       }
 
       // Copy the name (ID) of the spectrum from the string buffer
