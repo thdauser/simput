@@ -587,8 +587,8 @@ void getSimputPhotonCoord(SimputCatalog* const cat,
 			  double* const ra, double* const dec,
 			  int* const status);
 
-/** Return the maximum spatial extension of a particular source around
-    its reference point in [rad]. */
+/** Return the maximum angular extension (radius) of a particular
+    source around its reference point in [rad]. */
 float getSimputSourceExtension(SimputCatalog* const cat,
 			       const SimputSource* const src,
 			       int* const status);

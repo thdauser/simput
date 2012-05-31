@@ -3989,8 +3989,8 @@ float getSimputSourceExtension(SimputCatalog* const cat,
       wcs.flag = 0;
 
       // Check lower left corner.
-      double px = 0.5;
-      double py = 0.5;
+      double px=0.5;
+      double py=0.5;
       double sx, sy;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
