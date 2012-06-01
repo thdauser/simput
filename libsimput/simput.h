@@ -421,7 +421,10 @@ void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
 				int* const status);
 
 /** Return the spectrum of the specified SimputSource for the
-    particular point of time. */
+    particular point of time. If the required spectrum is already
+    located in the internal cache, a pointer to this spectrum will be
+    returned. Otherwise the spectrum is loaded into the cache. The
+    pointer returned by the function must no be free'd. */
 SimputMIdpSpec* returnSimputSrcSpec(SimputCatalog* const cat,
 				    const SimputSource* const src,
 				    const double time, 
