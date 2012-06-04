@@ -3284,10 +3284,7 @@ static SimputLC* returnSimputLC(SimputCatalog* const cat,
   if (0==strlen(src->timing)) {
     return(NULL);
   }
-  if (0==strcmp(src->timing, "NULL")) {
-    return(NULL);
-  }
-  if (0==strcmp(src->timing, " ")) {
+  if ((0==strcmp(src->timing, "NULL")) || (0==strcmp(src->timing, " "))) {
     return(NULL);
   }
 
@@ -3722,7 +3719,7 @@ static SimputImg* returnSimputImg(SimputCatalog* const cat,
   if (0==strlen(src->image)) {
     return(NULL);
   }
-  if (0==strcmp(src->image, "NULL")) {
+  if ((0==strcmp(src->image, "NULL")) || (0==strcmp(src->image, " "))) {
     return(NULL);
   }
 
