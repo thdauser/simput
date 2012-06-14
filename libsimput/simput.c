@@ -524,11 +524,14 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
 
     fits_read_col(cf->fptr, TSTRING, cf->cspectrum, row, 1, 1, 
 		  "", spectrum, &anynul, status);
-    fits_read_col(cf->fptr, TSTRING, cf->cimage, row, 1, 1, 
-		  "", image, &anynul, status);
-    fits_read_col(cf->fptr, TSTRING, cf->ctiming, row, 1, 1, 
-		  "", timing, &anynul, status);
-
+    if (cf->cimage>0) {
+      fits_read_col(cf->fptr, TSTRING, cf->cimage, row, 1, 1, 
+		    "", image, &anynul, status);
+    }
+    if (cf->ctiming>0) {
+      fits_read_col(cf->fptr, TSTRING, cf->ctiming, row, 1, 1, 
+		    "", timing, &anynul, status);
+    }
     CHECK_STATUS_BREAK(*status);
 
     // Create a new SimputSource data structure.
@@ -865,8 +868,6 @@ SimputCatalog* openSimputCatalog(const char* const filename,
     fits_get_colnum(cf->fptr, CASEINSEN, "E_MAX", &cf->ce_max, status);
     fits_get_colnum(cf->fptr, CASEINSEN, "FLUX", &cf->cflux, status);
     fits_get_colnum(cf->fptr, CASEINSEN, "SPECTRUM", &cf->cspectrum, status);
-    fits_get_colnum(cf->fptr, CASEINSEN, "IMAGE", &cf->cimage, status);
-    fits_get_colnum(cf->fptr, CASEINSEN, "TIMING", &cf->ctiming, status);
     CHECK_STATUS_BREAK(*status);
     // Optional columns:
     int opt_status=EXIT_SUCCESS;
@@ -876,6 +877,14 @@ SimputCatalog* openSimputCatalog(const char* const filename,
     fits_get_colnum(cf->fptr, CASEINSEN, "IMGROTA", &cf->cimgrota, &opt_status);
     opt_status=EXIT_SUCCESS;
     fits_get_colnum(cf->fptr, CASEINSEN, "IMGSCAL", &cf->cimgscal, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_get_colnum(cf->fptr, CASEINSEN, "IMAGE", &cf->cimage, &opt_status);
+    opt_status=EXIT_SUCCESS;
+
+    fits_get_colnum(cf->fptr, CASEINSEN, "TIMGING", &cf->ctiming, &opt_status);
+    if (EXIT_SUCCESS!=opt_status) {
+      fits_get_colnum(cf->fptr, CASEINSEN, "LIGHTCUR", &cf->ctiming, &opt_status);
+    }
     opt_status=EXIT_SUCCESS;
     fits_clear_errmark();
 
