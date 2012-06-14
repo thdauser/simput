@@ -1772,15 +1772,14 @@ SimputMIdpSpec* returnSimputSrcSpec(SimputCatalog* const cat,
   if ('['==fileref[0]) {
     strcpy(filename, *src->filepath);
     strcat(filename, *src->filename);
-    strcat(filename, fileref);
   } else {
     if ('/'!=fileref[0]) {
       strcpy(filename, *src->filepath);
     } else {
       strcpy(filename, "");
     }
-    strcat(filename, fileref);
   }
+  strcat(filename, fileref);
 
   return(loadCacheSimputMIdpSpec(cat, filename, status));
 }
@@ -1798,7 +1797,7 @@ SimputMIdpSpec* loadCacheSimputMIdpSpec(SimputCatalog* const cat,
 
   // Convert the void* pointer to the spectrum buffer into the right
   // format.
-  struct SimputSpectrumBuffer* sb = 
+  struct SimputSpectrumBuffer* sb=
     (struct SimputSpectrumBuffer*)cat->specbuff;
 
   // In case there are no spectra available at all, allocate 
