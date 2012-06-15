@@ -266,18 +266,21 @@ SimputSource* getSimputSourceV(const long src_id,
 		 "memory allocation for reference to spectrum failed", entry);
   strcpy(entry->spectrum, spectrum);
 
-  entry->image   =(char*)malloc((strlen(image)+1)*sizeof(char));
-  CHECK_NULL_RET(entry->image, *status,
-		 "memory allocation for reference to image extension failed", 
-		 entry);
-  strcpy(entry->image, image);
+  if (NULL!=image) {
+    entry->image=(char*)malloc((strlen(image)+1)*sizeof(char));
+    CHECK_NULL_RET(entry->image, *status,
+		   "memory allocation for reference to image extension failed", 
+		   entry);
+    strcpy(entry->image, image);
+  }
 
-  entry->timing  =(char*)malloc((strlen(timing)+1)*sizeof(char));
-  CHECK_NULL_RET(entry->timing, *status,
-		 "memory allocation for reference to timing extension failed", 
-		 entry);
-  strcpy(entry->timing, timing);
-  
+  if (NULL!=timing) {
+    entry->timing=(char*)malloc((strlen(timing)+1)*sizeof(char));
+    CHECK_NULL_RET(entry->timing, *status,
+		   "memory allocation for reference to timing extension failed", 
+		   entry);
+    strcpy(entry->timing, timing);
+  }
 
   return(entry);
 }
@@ -527,10 +530,15 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
     if (cf->cimage>0) {
       fits_read_col(cf->fptr, TSTRING, cf->cimage, row, 1, 1, 
 		    "", image, &anynul, status);
+    } else {
+      strcpy(image[0], "");
     }
+
     if (cf->ctiming>0) {
       fits_read_col(cf->fptr, TSTRING, cf->ctiming, row, 1, 1, 
 		    "", timing, &anynul, status);
+    } else {
+      strcpy(timing[0], "");
     }
     CHECK_STATUS_BREAK(*status);
 
