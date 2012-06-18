@@ -889,7 +889,7 @@ SimputCatalog* openSimputCatalog(const char* const filename,
     fits_get_colnum(cf->fptr, CASEINSEN, "IMAGE", &cf->cimage, &opt_status);
     opt_status=EXIT_SUCCESS;
 
-    fits_get_colnum(cf->fptr, CASEINSEN, "TIMGING", &cf->ctiming, &opt_status);
+    fits_get_colnum(cf->fptr, CASEINSEN, "TIMING", &cf->ctiming, &opt_status);
     if (EXIT_SUCCESS!=opt_status) {
       fits_get_colnum(cf->fptr, CASEINSEN, "LIGHTCUR", &cf->ctiming, &opt_status);
     }
