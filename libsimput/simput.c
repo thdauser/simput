@@ -3107,7 +3107,7 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
 
     // Set up the table format.
     int cfreq = 1, cpower = 2;
-      strcpy(ttype[0], "FREQUENC");
+      strcpy(ttype[0], "FREQUENCY");
       strcpy(tform[0], "1E");
       strcpy(tunit[0], "Hz");
       strcpy(ttype[1], "POWER");
@@ -4118,8 +4118,15 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
     // Get the column names.
     int cfrequency=0, cpower=0;
     // Required columns:
-    fits_get_colnum(fptr, CASEINSEN, "FREQUENC", &cfrequency, status);
+    fits_write_errmark();
+    fits_get_colnum(fptr, CASEINSEN, "FREQUENCY", &cfrequency, status);
+    fits_clear_errmark();
+    if (EXIT_SUCCESS!=*status) {
+      *status=EXIT_SUCCESS;
+      fits_get_colnum(fptr, CASEINSEN, "FREQUENC", &cfrequency, status);
+    }
     CHECK_STATUS_BREAK(*status);
+
     fits_get_colnum(fptr, CASEINSEN, "POWER", &cpower, status);
     CHECK_STATUS_BREAK(*status);
 
@@ -4130,7 +4137,7 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
     CHECK_STATUS_BREAK(*status);
     ffrequency = unit_conversion_Hz(ufrequency);
     if (0.==ffrequency) {
-      SIMPUT_ERROR("unknown units in FREQUENC column");
+      SIMPUT_ERROR("unknown units in FREQUENCY column");
       *status=EXIT_FAILURE;
       break;
     }
