@@ -4221,4 +4221,9 @@ int getSimputPhoton(SimputCatalog* const cat,
 }
 
 
+long getSimputCatalogNSources(const SimputCatalog* const cat)
+{
+  return(cat->nentries);
+}
+
 

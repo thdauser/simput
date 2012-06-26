@@ -318,6 +318,11 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 				 const int maxstrlen_timing,
 				 int* const status);
 
+/** Returns the number of sources contained in the specified SIMPUT
+    catalog. */
+long getSimputCatalogNSources(const SimputCatalog* const cat);
+
+
 /** Constructor for the SimputSource data structure. Allocates
     memory, initializes elements with their default values and
     pointers with NULL. */
