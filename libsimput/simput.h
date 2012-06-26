@@ -597,4 +597,21 @@ float getSimputSourceExtension(SimputCatalog* const cat,
 			       int* const status);
 
 
+/** Produce a photon for a particular source in a SIMPUT catalog. The
+    error status variable refers to errors related to the access to
+    FITS files. If no photon can be produced, because there is not
+    light curve information available for the specified point of time,
+    the return value of the function will be 1. If a photon is
+    successfully produced, the return value will be 0. */
+int getSimputPhoton(SimputCatalog* const cat,
+		    const SimputSource* const src,
+		    double prevtime,
+		    const double mjdref,
+		    double* const time,
+		    float* const energy,
+		    double* const ra,
+		    double* const dec,
+		    int* const status);
+
+
 #endif /* SIMPUT_H */

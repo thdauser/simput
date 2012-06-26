@@ -4191,5 +4191,34 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
 }
 
 
+int getSimputPhoton(SimputCatalog* const cat,
+		    const SimputSource* const src,
+		    double prevtime,
+		    const double mjdref,
+		    double* const time,
+		    float* const energy,
+		    double* const ra,
+		    double* const dec,
+		    int* const status)
+{
+  // Determine the arrival time of the photon.
+  int failed=0;
+  *time=getSimputPhotonTime(cat, src, prevtime, mjdref, &failed, status);
+  CHECK_STATUS_RET(status, failed);
+  if (0!=failed) {
+    return(failed);
+  }
+
+  // Determine the energy.
+  *energy=getSimputPhotonEnergy(cat, src, *time, mjdref, status);
+  CHECK_STATUS_RET(status, failed);
+
+  // Determine the direction of origin.
+  getSimputPhotonCoord(cat, src, ra, dec, status);
+  CHECK_STATUS_RET(status, failed);
+
+  return(0);
+}
+
 
 
