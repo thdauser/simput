@@ -20,20 +20,31 @@
 #define SIMPUT_MAXSTR (1025)
 
 
-/** Chatter levels:
+/** Chatter level:
+
     0: error messages only
+
     1: error messages and warnings
-    2: error messages, warnings, and informational output. */
-#define CHATTY 2
+
+    2: error messages, warnings, and informational output. 
+
+    The chatter level can be defined as a compiler flag. If it is not
+    set externally, use the default value of 1. */
+#ifndef DCHATTY
+#define DCHATTY 1
+#endif
+
 /** Output routine for error messages. */
 #define SIMPUT_ERROR(msg) \
   fprintf(stderr, "Error in %s: %s!\n", __func__, msg)
+
 /** Chatter routine for warnings printed to STDOUT. */
 #define SIMPUT_WARNING(msg) \
-  if(1<=CHATTY) {printf("*** Warning in %s: %s! ***\n", __func__, msg);}
+  if(1<=DCHATTY) {printf("*** Warning in %s: %s! ***\n", __func__, msg);}
+
 /** Chatter routine for informational output to STDOUT. */
 #define SIMPUT_INFO(msg) \
-  if(2==CHATTY) {printf("%s\n", msg);}
+  if(2==DCHATTY) {printf("%s\n", msg);}
 
 
 #define CHECK_STATUS_RET(a,b) \
