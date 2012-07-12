@@ -20,8 +20,21 @@
 #define SIMPUT_MAXSTR (1025)
 
 
+/** Chatter levels:
+    0: error messages only
+    1: error messages and warnings
+    2: error messages, warnings, and informational output. */
+#define CHATTY 2
+/** Output routine for error messages. */
 #define SIMPUT_ERROR(msg) \
   fprintf(stderr, "Error in %s: %s!\n", __func__, msg)
+/** Chatter routine for warnings printed to STDOUT. */
+#define SIMPUT_WARNING(msg) \
+  if(1<=CHATTY) {printf("*** Warning in %s: %s! ***\n", __func__, msg);}
+/** Chatter routine for informational output to STDOUT. */
+#define SIMPUT_INFO(msg) \
+  if(2==CHATTY) {printf("%s\n", msg);}
+
 
 #define CHECK_STATUS_RET(a,b) \
   if (EXIT_SUCCESS!=a) return(b)
@@ -520,8 +533,10 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
 		  &flux, &flux, &anynul, status);
     flux  *= cf->fflux; // Convert to [erg/s/cm**2].
     if (flux > 1.e20) {
-      printf("*** warning: flux (%e) exceeds maximum value, therefore reset to 0!\n",
-	     flux);
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "flux (%e erg/s/cm**2) exceeds maximum value, "
+	      "therefore reset to 0", flux);
+      SIMPUT_WARNING(msg);
       flux=0.;
     }
 
@@ -1350,8 +1365,12 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
       break;
     }
     spec->nentries=nenergy;
-    printf("spectrum '%s' contains %ld data points\n", 
-	   filename, spec->nentries);
+    
+    // Informational output.
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "spectrum '%s' contains %ld data points", 
+	    filename, spec->nentries);
+    SIMPUT_INFO(msg);
 
     // Allocate memory for the arrays.
     spec->energy=(float*)malloc(spec->nentries*sizeof(float));
@@ -1973,7 +1992,11 @@ void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
 		     "memory allocation for string buffer failed");
     
     // Load the spectra.
-    printf("load %ld spectra with %ld data points each\n", nrows, nenergy);
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "load %ld spectra with %ld data points each", 
+	    nrows, nenergy);
+    SIMPUT_INFO(msg);
+
     long jj;
     for (jj=0; jj<nrows; jj++) {
       // Allocate memory for a new spectrum.
@@ -2100,26 +2123,21 @@ static void convSimputMIdpSpecWithARF(SimputCatalog* const cat,
       // Check special cases.
       if ((0==jj) && (spec_emin>cat->arf->LowEnergy[ii])) {
 	if (0==warning_printed) {
-	  printf("*** warning: the spectrum does not cover the "
-		 "full energy range of the ARF!\n");
+	  SIMPUT_WARNING("the spectrum does not cover the "
+			 "full energy range of the ARF");
 	  warning_printed=1;
 	}
 	if (spec_emin>cat->arf->HighEnergy[ii]) break;
 
       } else if (jj==spec->nentries) {
 	if (0==warning_printed) {
-	  printf("*** warning: the spectrum does not cover the "
-		 "full energy range of the ARF!\n");
+	  SIMPUT_WARNING("the spectrum does not cover the "
+			 "full energy range of the ARF");
 	  warning_printed=1;
 	}
 	break;
       }
       
-      //if (spec_emin>lo) {
-      //printf("*** warning: bins do not overlap (delta=%e)!\n",
-      //       spec_emin-lo);
-      //}
-
       // Upper boundary of the current bin.
       float hi;
       if (spec_emax<=cat->arf->HighEnergy[ii]) {
@@ -2678,8 +2696,11 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     // Determine the number of rows in the table.
     fits_get_num_rows(fptr, &lc->nentries, status);
     CHECK_STATUS_BREAK(*status);
-    printf("light curve '%s' contains %ld data points\n", 
-	   filename, lc->nentries);
+
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "light curve '%s' contains %ld data points\n", 
+	    filename, lc->nentries);
+    SIMPUT_INFO(msg);
 
     // Allocate memory for the arrays.
     if (ctime>0) {
@@ -4158,8 +4179,11 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
     // Determine the number of rows in the table.
     fits_get_num_rows(fptr, &psd->nentries, status);
     CHECK_STATUS_BREAK(*status);
-    printf("PSD '%s' contains %ld data points\n", 
-	   filename, psd->nentries);
+
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "PSD '%s' contains %ld data points\n", 
+	    filename, psd->nentries);
+    SIMPUT_INFO(msg);
 
     // Allocate memory for the arrays.
     psd->frequency= (float*)malloc(psd->nentries*sizeof(float));
