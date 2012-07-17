@@ -1,5 +1,5 @@
 AM_CFLAGS = -I@top_srcdir@/libsimput 
-AM_CFLAGS += -Wall -Werror
+AM_CFLAGS+= -Wall -Werror
 
 ############ BINARIES #################
 
