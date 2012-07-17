@@ -4,12 +4,12 @@ AM_CFLAGS+= -Wall -Werror
 ############ BINARIES #################
 
 # The following line lists the programs that should be created.
-noinst_PROGRAMS = sample
+noinst_PROGRAMS = csample
 
-sample_SOURCES = sample.c
-sample_LDADD = @top_builddir@/libsimput/libsimput.la
+csample_SOURCES = csample.c
+csample_LDADD = @top_builddir@/libsimput/libsimput.la
 
 ########### Sample data ##############
 
-#sampledir = $(pkgdatadir)
-#dist_sample_DATA = image1.fits image2.fits
+sampledir = $(pkgdatadir)
+dist_sample_DATA = image1.fits image2.fits
