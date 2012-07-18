@@ -3,8 +3,14 @@
 # Libraries that are installed in the 'lib' directory.
 lib_LTLIBRARIES = libsimput.la
 
+if FORTRAN
+  FSRC=fsimput.f95
+else
+  FSRC=
+endif
+
 # Sources:
-libsimput_la_SOURCES = simput.c fsimput.f95
+libsimput_la_SOURCES = simput.c $(FSRC)
 
 ############ HEADERS #################
 
