@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.23],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.24],[christian.schmid@sternwarte.uni-erlangen.de])
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -20,19 +20,20 @@ LT_INIT #([disable-shared]) #([shared])
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # " -O0" for zero optimization
 CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -Df2cFortran"
-# -DHEASP_CPP (required for HEADAS versions >=6.12)
 LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall"
 # FCFLAGS="-O0"
 
-# Check for libraries:  (objdump -R/-T libncurses...)
-AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([No math library found!])], [])
-
-##### Conditional compilation of Fortran code.
+####################################
+# Conditional compilation of Fortran code.
 AC_ARG_ENABLE([fortran], 
               [AS_HELP_STRING([--disable-fortran], 
-	                      [disable compilation of Fortran code])],
-	      [fortran=false], [fortran=true])
+	                          [disable compilation of Fortran code])],
+	          [fortran=false], [fortran=true])
 AM_CONDITIONAL([FORTRAN], [test x$fortran = xtrue])
+
+####################################
+# Check for libraries:  (objdump -R/-T libncurses...)
+AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([No math library found!])], [])
 
 ####################################
 # cfitsio

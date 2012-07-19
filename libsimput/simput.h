@@ -31,7 +31,7 @@
   0.0.12 2012/02/21   Christian Schmid      updated
   --------------------------------------------------------------------------- 
 
-   This is the header file of the simput library. The library provides
+   This is the header file of the SIMPUT library. The library provides
    basic routines to create a SIMPUT source catalog file according to
    the standard defined in the SIMPUT format document (reference ???).
 */
