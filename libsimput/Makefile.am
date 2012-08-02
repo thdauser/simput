@@ -1,16 +1,23 @@
+if FORTRAN
+  FSRC=fsimput.f95
+  FFLS=-Df2cFortran 
+else
+  FSRC=
+  FFLS=
+endif
+
+AM_CFLAGS = -I@top_srcdir@/extlib/cfitsio -I@top_srcdir@/extlib/wcslib/C $(FFLS) 
+#-fPIC
+
 ########### LIBRARIES #################
 
 # Libraries that are installed in the 'lib' directory.
 lib_LTLIBRARIES= libsimput.la
 
-if FORTRAN
-  FSRC=fsimput.f95
-else
-  FSRC=
-endif
-
 # Sources:
 libsimput_la_SOURCES= simput.c $(FSRC)
+#libsimput_la_LIBADD = @top_builddir@/extlib/cfitsio/libcfitsio.a 
+#libsimput_la_LIBADD+= @top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
 
 ############ HEADERS #################
 

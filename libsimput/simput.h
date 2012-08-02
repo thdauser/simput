@@ -2,7 +2,7 @@
 #define SIMPUT_H (1)
 
 #include "fitsio.h"
-#include <wcslib/wcshdr.h>
+#include "wcshdr.h"
 
 // FFTW3 library for Fast Fourier Transform.
 #include <fftw3.h>
