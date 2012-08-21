@@ -16,7 +16,7 @@ lib_LTLIBRARIES= libsimput.la
 
 # Sources:
 libsimput_la_SOURCES= simput.c $(FSRC)
-#libsimput_la_LIBADD = @top_builddir@/extlib/cfitsio/libcfitsio.a 
+libsimput_la_LIBADD = @top_builddir@/extlib/cfitsio/libcfitsio.a 
 #libsimput_la_LIBADD+= @top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
 
 ############ HEADERS #################

@@ -8,7 +8,7 @@ noinst_PROGRAMS= csample
 
 csample_SOURCES= csample.c
 csample_LDADD  = @top_builddir@/libsimput/libsimput.la 
-csample_LDADD += @top_builddir@/extlib/cfitsio/libcfitsio.a 
+#csample_LDADD += @top_builddir@/extlib/cfitsio/libcfitsio.a 
 csample_LDADD += @top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
 csample_LDADD += @top_builddir@/extlib/fftw/libfftw3.la
 
