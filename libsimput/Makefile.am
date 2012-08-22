@@ -22,6 +22,6 @@ libsimput_la_LIBADD = @top_builddir@/extlib/cfitsio/libcfitsio.a
 ############ HEADERS #################
 
 # Define the headers that will be installed in $(includedir):
-include_HEADERS= simput.h
+include_HEADERS= simput.h headas.h headas_utils.h headas_stdio.h heasp.h
 
 
