@@ -19,8 +19,8 @@ LT_INIT #([disable-shared]) #([shared])
 # "-pg" for the compiler and linker to include information for gprof (Profiler)
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # " -O0" for zero optimization
-CFLAGS="$CFLAGS -g -I$HEADAS/include -std=c99 -D_GNU_SOURCE -W -Wall -fPIC"
-LDFLAGS="$LDFLAGS -g -L$HEADAS/lib -W -Wall"
+CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC"
+LDFLAGS="$LDFLAGS -g -W -Wall"
 # FCFLAGS="-O0"
 
 ####################################
@@ -39,8 +39,6 @@ AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([No math library found!])], [])
 # Check for header files:
 AC_HEADER_STDC
 AC_CHECK_HEADERS([limit.h math.h stdio.h stdlib.h stdarg.h string.h])
-#AC_CHECK_HEADERS([headas.h headas_error.h]) 
-# -> problem: not accepted by preprocessor (but by compiler)!
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
