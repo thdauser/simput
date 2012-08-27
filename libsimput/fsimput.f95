@@ -17,7 +17,7 @@ module simput
      integer(kind=c_int)  :: cflux
      integer(kind=c_int)  :: cspec
      integer(kind=c_int)  :: cimage
-     integer(kind=c_int)  :: clc
+     integer(kind=c_int)  :: ctiming
      real(kind=c_float)   :: fra
      real(kind=c_float)   :: fdec
      real(kind=c_float)   :: fimgrota
@@ -27,6 +27,10 @@ module simput
      type(c_ptr)          :: filename
      type(c_ptr)          :: filepath
      type(c_ptr)          :: srcbuff
+     type(c_ptr)          :: specbuff
+     type(c_ptr)          :: lcbuff
+     type(c_ptr)          :: imgbuff
+     type(c_ptr)          :: arf
   end type simctl
 
   ! Define source data structure.
@@ -42,7 +46,7 @@ module simput
      real(kind=c_float)   :: eflux
      type(c_ptr)          :: spectrum
      type(c_ptr)          :: image
-     type(c_ptr)          :: lightcur
+     type(c_ptr)          :: timing
      type(c_ptr)          :: filename
      type(c_ptr)          :: filepath
   end type simsrc
@@ -53,6 +57,7 @@ module simput
      integer(kind=c_long) :: nentries
      type(c_ptr)          :: energy
      type(c_ptr)          :: pflux
+     type(c_ptr)          :: refflux
      type(c_ptr)          :: distr
      type(c_ptr)          :: name
      type(c_ptr)          :: fileref
@@ -61,30 +66,35 @@ module simput
 
   ! C function and subroutine interfaces.
   interface
-     function opensimputcatalog(filename,mode,status) bind(c,name="openSimputCatalog")
+     function opensimputcatalog(filename,mode,msname,msspectrum,msimage,mstiming,status) bind(c,name="openSimputCatalog")
        use, intrinsic :: iso_c_binding
        character(kind=c_char),dimension(*) :: filename
        integer(kind=c_int),value           :: mode
+       integer(kind=c_int),value           :: msname
+       integer(kind=c_int),value           :: msspectrum
+       integer(kind=c_int),value           :: msimage
+       integer(kind=c_int),value           :: mstiming
        integer(kind=c_int)                 :: status
        type(c_ptr)                         :: opensimputcatalog
      end function opensimputcatalog
      
-     subroutine freesimputcatalog(catalog,status) bind(c,name="freeSimputCatalog")
+     subroutine freesimputcatalog(cat,status) bind(c,name="freeSimputCatalog")
        use, intrinsic :: iso_c_binding
-       type(c_ptr)          :: catalog
+       type(c_ptr)          :: cat
        integer(kind=c_int)  :: status
      end subroutine freesimputcatalog
      
-     function loadcachesimputsource(catalog, row, status) bind(c,name="loadCacheSimputSource")
+     function loadcachesimputsource(cat, row, status) bind(c,name="loadCacheSimputSource")
        use, intrinsic :: iso_c_binding
-       type(c_ptr),value          :: catalog
+       type(c_ptr),value          :: cat
        integer(kind=c_long),value :: row
        integer(kind=c_int)        :: status
        type(c_ptr)                :: loadcachesimputsource
      end function loadcachesimputsource
 
-     function returnsimputsrcspec(src, time, mjdref, status) bind(c,name="returnSimputSrcSpec")
+     function returnsimputsrcspec(cat, src, time, mjdref, status) bind(c,name="returnSimputSrcSpec")
        use, intrinsic :: iso_c_binding
+       type(c_ptr),value          :: cat
        type(c_ptr),value          :: src
        real(kind=c_double),value  :: time
        real(kind=c_double),value  :: mjdref
@@ -115,16 +125,20 @@ module simput
 
     ! This subroutine opens a SIMPUT source catalog. It returns a pointer
     ! to a catalog data structure.
-    subroutine simopctl(filename,mode,catalog,status)
+    subroutine simopctl(filename,mode,msname,msspectrum,msimage,mstiming,catalog,status)
       use, intrinsic :: iso_c_binding
       character(kind=c_char),dimension(*) :: filename
       integer(kind=c_int),value           :: mode
-      type(simctl), pointer :: catalog
-      integer(kind=c_int)   :: status
-      type(c_ptr)           :: ccatalog
+      integer(kind=c_int),value           :: msname
+      integer(kind=c_int),value           :: msspectrum
+      integer(kind=c_int),value           :: msimage
+      integer(kind=c_int),value           :: mstiming
+      type(simctl), pointer               :: catalog
+      integer(kind=c_int)                 :: status
+      type(c_ptr)                         :: ccatalog
       
-      ccatalog=opensimputcatalog(filename,mode,status)
-      call c_f_pointer(ccatalog, catalog)      
+      ccatalog=opensimputcatalog(filename,mode,msname,msspectrum,msimage,mstiming,status)
+      call c_f_pointer(ccatalog, catalog)
     end subroutine simopctl
 
     ! This subroutine closes an open SIMPUT source catalog defined by the 
@@ -157,18 +171,21 @@ module simput
 
     ! This subroutine returns a pointer to a data structure containing the
     ! SIMPUT mission-independent spectrum of the specified source.
-    subroutine simrspec(src,time,mjdref,spec,status)
+    subroutine simrspec(cat,src,time,mjdref,spec,status)
       use, intrinsic :: iso_c_binding
+      type(simctl),pointer       :: cat
       type(simsrc),pointer       :: src
       real(kind=c_double), value :: time
       real(kind=c_double), value :: mjdref
       integer(kind=c_int)        :: status
       type(simspec), pointer     :: spec
+      type(c_ptr)                :: ccat
       type(c_ptr)                :: csrc
       type(c_ptr)                :: cspec
 
+      ccat=c_loc(cat)
       csrc=c_loc(src)
-      cspec=returnsimputsrcspec(csrc,time,mjdref,status)
+      cspec=returnsimputsrcspec(ccat,csrc,time,mjdref,status)
       call c_f_pointer(cspec, spec)
     end subroutine simrspec
 
