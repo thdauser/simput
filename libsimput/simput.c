@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <malloc.h>
 #include <math.h>
 #include <time.h>
 #include <string.h>
@@ -36,11 +35,11 @@
 
 /** Output routine for error messages. */
 #define SIMPUT_ERROR(msg) \
-  fprintf(stderr, "Error in %s: %s!\n", __func__, msg)
+  fprintf(stderr, "\nError in %s: %s!\n", __func__, msg)
 
 /** Chatter routine for warnings printed to STDOUT. */
 #define SIMPUT_WARNING(msg) \
-  if(1<=DCHATTY) {printf("*** Warning in %s: %s! ***\n", __func__, msg);}
+  if(1<=DCHATTY) {printf("\n*** Warning in %s: %s! ***\n", __func__, msg);}
 
 /** Chatter routine for informational output to STDOUT. */
 #define SIMPUT_INFO(msg) \
@@ -2119,7 +2118,7 @@ static void convSimputMIdpSpecWithARF(SimputCatalog* const cat,
     spec->distribution[ii]=0.;
 
     // Lower boundary of the current bin.
-    float lo = cat->arf->LowEnergy[ii];
+    float lo=cat->arf->LowEnergy[ii];
 
     // Loop over all spectral points within the ARF bin.
     int finished=0;
