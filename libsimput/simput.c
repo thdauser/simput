@@ -872,10 +872,9 @@ SimputCatalog* openSimputCatalog(const char* const filename,
 	CHECK_STATUS_BREAK(*status);
 	
 	// Write the necessary header keywords.
-	fits_write_key(cf->fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
-	fits_write_key(cf->fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-	fits_write_key(cf->fptr, TSTRING, "HDUCLAS2", "SRC_CAT", "", status);
-	fits_write_key(cf->fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+	fits_write_key(cf->fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
+	fits_write_key(cf->fptr, TSTRING, "HDUCLAS1", "SRC_CAT", "", status);
+	fits_write_key(cf->fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
 	fits_write_key(cf->fptr, TSTRING, "RADESYS", "FK5", "", status);
 	float equinox=2000.0;
 	fits_update_key(cf->fptr, TFLOAT, "EQUINOX", &equinox, "", status);
@@ -915,6 +914,7 @@ SimputCatalog* openSimputCatalog(const char* const filename,
     opt_status=EXIT_SUCCESS;
 
     fits_get_colnum(cf->fptr, CASEINSEN, "TIMING", &cf->ctiming, &opt_status);
+    // For compatibility with SIMPUT version 1.0.0.
     if (EXIT_SUCCESS!=opt_status) {
       fits_get_colnum(cf->fptr, CASEINSEN, "LIGHTCUR", &cf->ctiming, &opt_status);
     }
@@ -1530,10 +1530,9 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
       CHECK_STATUS_BREAK(*status);
 
       // Write header keywords.
-      fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
-      fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-      fits_write_key(fptr, TSTRING, "HDUCLAS2", "SPECTRUM", "", status);
-      fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+      fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
+      fits_write_key(fptr, TSTRING, "HDUCLAS1", "SPECTRUM", "", status);
+      fits_write_key(fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
       fits_write_key(fptr, TINT, "EXTVER", &extver, "", status);
       CHECK_STATUS_BREAK(*status);
 
@@ -1942,7 +1941,7 @@ void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
     fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
     fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
     CHECK_STATUS_BREAK(*status);
-    // Optional columnes:
+    // Optional columns:
     int opt_status=EXIT_SUCCESS;
     fits_write_errmark();
     fits_get_colnum(fptr, CASEINSEN, "NAME", &cname, &opt_status);
@@ -2415,10 +2414,23 @@ static int isSimputLC(const char* const filename,
     char hduclas1[SIMPUT_MAXSTR];
     char hduclas2[SIMPUT_MAXSTR];
     fits_read_key(fptr, TSTRING, "HDUCLAS1", &hduclas1, comment, status);
-    fits_read_key(fptr, TSTRING, "HDUCLAS2", &hduclas2, comment, status);
     CHECK_STATUS_BREAK(*status);
 
-    if ((0==strcmp(hduclas1, "SIMPUT")) && (0==strcmp(hduclas2, "LIGHTCUR"))) {
+    // Read optional header keyword (is not used in SIMPUT
+    // version >= 1.1.0).
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_read_key(fptr, TSTRING, "HDUCLAS2", &hduclas2, comment, &opt_status);
+    fits_clear_errmark();
+    if (opt_status!=EXIT_SUCCESS) {
+      strcpy(hduclas2, "");
+      opt_status=EXIT_SUCCESS;
+    }
+
+    // SIMPUT version 1.0.0.
+    if (((0==strcmp(hduclas1, "SIMPUT")) && (0==strcmp(hduclas2, "LIGHTCUR"))) ||
+	// SIMPUT version 1.1.0.
+	(0==strcmp(hduclas1, "LIGHTCURVE"))) {
       // This is a SIMPUT light curve.
       ret=1;
     }
@@ -2965,10 +2977,9 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     CHECK_STATUS_BREAK(*status);
 
     // Write header keywords.
-    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
-    fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-    fits_write_key(fptr, TSTRING, "HDUCLAS2", "LIGHTCUR", "", status);
-    fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS1", "LIGHTCURVE", "", status);
+    fits_write_key(fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
     fits_write_key(fptr, TDOUBLE, "MJDREF", &lc->mjdref, "", status);
     fits_write_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, "", status);
@@ -3151,10 +3162,9 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
     CHECK_STATUS_BREAK(*status);
 
     // Write header keywords.
-    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
-    fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-    fits_write_key(fptr, TSTRING, "HDUCLAS2", "POWSPEC", "", status);
-    fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS1", "POWSPEC", "", status);
+    fits_write_key(fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
 
     // Create new rows in the table and store the data of the power 
@@ -3706,10 +3716,9 @@ void saveSimputImg(SimputImg* const img,
     // The image has been appended at the end if the FITS file.
 
     // Write header keywords.
-    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC", "", status);
-    fits_write_key(fptr, TSTRING, "HDUCLAS1", "SIMPUT", "", status);
-    fits_write_key(fptr, TSTRING, "HDUCLAS2", "IMAGE", "", status);
-    fits_write_key(fptr, TSTRING, "HDUVERS", "1.0.0", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
+    fits_write_key(fptr, TSTRING, "HDUCLAS1", "IMAGE", "", status);
+    fits_write_key(fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
     fits_write_key(fptr, TSTRING, "EXTNAME", extname, "", status);
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
     fits_write_key(fptr, TFLOAT,  "FLUXSCAL", &img->fluxscal, "", status);
@@ -3726,10 +3735,10 @@ void saveSimputImg(SimputImg* const img,
     while (strlen(strptr)>0) {
       char strbuffer[81];
       strncpy(strbuffer, strptr, 80);
-      strbuffer[80] = '\0';
+      strbuffer[80]='\0';
       fits_write_record(fptr, strbuffer, status);
       CHECK_STATUS_BREAK(*status);
-      strptr += 80;
+      strptr+=80;
     }
     CHECK_STATUS_BREAK(*status);
 
