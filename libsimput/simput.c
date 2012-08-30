@@ -237,8 +237,6 @@ SimputSource* getSimputSource(int* const status)
   entry->spectrum=NULL;
   entry->image   =NULL;
   entry->timing  =NULL;
-  entry->filename=NULL;
-  entry->filepath=NULL;
 
   return(entry);
 }
@@ -572,11 +570,6 @@ SimputSource* loadSimputSource(SimputCatalog* const cf,
 			e_min, e_max, flux, spectrum[0], image[0],
 			timing[0], status);
     CHECK_STATUS_BREAK(*status);
-
-    // Set the pointers to the filename and filepath in the
-    // SimputCatalogFile data structure.
-    se->filepath = &cf->filepath;
-    se->filename = &cf->filename;
 
   } while(0); // END of error handling loop.
 
@@ -1796,21 +1789,14 @@ SimputMIdpSpec* returnSimputSrcSpec(SimputCatalog* const cat,
     return(NULL);
   }
 
-  // Check if the filename and filepath properties for the
-  // source are properly set.
-  CHECK_NULL_RET(src->filepath, *status,
-		 "filepath of source catalog is not known", NULL);
-  CHECK_NULL_RET(src->filename, *status,
-		 "filename of source catalog is not known", NULL);
-
   // Load the mission-independent spectrum.
   char filename[SIMPUT_MAXSTR];
   if ('['==fileref[0]) {
-    strcpy(filename, *src->filepath);
-    strcat(filename, *src->filename);
+    strcpy(filename, cat->filepath);
+    strcat(filename, cat->filename);
   } else {
     if ('/'!=fileref[0]) {
-      strcpy(filename, *src->filepath);
+      strcpy(filename, cat->filepath);
     } else {
       strcpy(filename, "");
     }
@@ -2175,12 +2161,18 @@ static void convSimputMIdpSpecWithARF(SimputCatalog* const cat,
 }
 
 
-/** Determine a random photon energy [keV] according to the specified
-    spectral distribution. */
-static float getRndPhotonEnergy(SimputCatalog* const cat, 
-				SimputMIdpSpec* const spec,
-				int* const status) 
+static float getSimputPhotonEnergy(SimputCatalog* const cat,
+				   const SimputSource* const src,
+				   const double time,
+				   const double mjdref,
+				   int* const status)
 {
+  // Get the spectrum which is stored in the catalog.
+  SimputMIdpSpec* spec=
+    returnSimputSrcSpec(cat, src, time, mjdref, status);
+  CHECK_STATUS_RET(*status, 0.);
+
+  // Determine a random photon energy from the spectral distribution.
   // Check if the spectrum has been convolved with the ARF.
   if (NULL==spec->distribution) {
     // Multiply it by the ARF in order to obtain the spectral distribution.
@@ -2212,22 +2204,6 @@ static float getRndPhotonEnergy(SimputCatalog* const cat,
   return(cat->arf->LowEnergy[lower] + 
 	 static_rndgen()*
 	 (cat->arf->HighEnergy[lower]-cat->arf->LowEnergy[lower]));
-}
-
-
-float getSimputPhotonEnergy(SimputCatalog* const cat,
-			    const SimputSource* const src,
-			    const double time,
-			    const double mjdref,
-			    int* const status)
-{
-  // Get the spectrum which is stored in the catalog.
-  SimputMIdpSpec* spec=
-    returnSimputSrcSpec(cat, src, time, mjdref, status);
-  CHECK_STATUS_RET(*status, 0.);
-
-  // Determine a random photon energy from the spectral distribution.
-  return(getRndPhotonEnergy(cat, spec, status));
 }
 
 
@@ -3224,12 +3200,12 @@ static double rndexp(const double avgdist)
 }
 
 
-double getSimputPhotonTime(SimputCatalog* const cat,
-			   const SimputSource* const src,
-			   double prevtime,
-			   const double mjdref,
-			   int* const failed,
-			   int* const status)
+static double getSimputPhotonTime(SimputCatalog* const cat,
+				  const SimputSource* const src,
+				  double prevtime,
+				  const double mjdref,
+				  int* const failed,
+				  int* const status)
 {
   // Determine the light curve.
   SimputLC* lc=returnSimputLC(cat, src, prevtime, mjdref, status);
@@ -3405,22 +3381,15 @@ static SimputLC* returnSimputLC(SimputCatalog* const cat,
     freeSimputLC(&(sb->lcs[sb->clc]));
   }
 
-  // Check if the filename and filepath properties for the
-  // source are properly set.
-  CHECK_NULL_RET(src->filepath, *status,
-		 "filepath of source catalog is not known", NULL);
-  CHECK_NULL_RET(src->filename, *status,
-		 "filename of source catalog is not known", NULL);
-
   // Load the light curve.
   char filename[SIMPUT_MAXSTR];
   if ('['==src->timing[0]) {
-    strcpy(filename, *src->filepath);
-    strcat(filename, *src->filename);
+    strcpy(filename, cat->filepath);
+    strcat(filename, cat->filename);
     strcat(filename, src->timing);
   } else {
     if ('/'!=src->timing[0]) {
-      strcpy(filename, *src->filepath);
+      strcpy(filename, cat->filepath);
     } else {
       strcpy(filename, "");
     }
@@ -3815,22 +3784,15 @@ static SimputImg* returnSimputImg(SimputCatalog* const cat,
     return(NULL);
   }
 
-  // Check if the filename and filepath properties for the
-  // source are properly set.
-  CHECK_NULL_RET(src->filepath, *status,
-		 "filepath of source catalog is not known", NULL);
-  CHECK_NULL_RET(src->filename, *status,
-		 "filename of source catalog is not known", NULL);
-
   // Load the image.
   char filename[SIMPUT_MAXSTR];
   if ('['==src->image[0]) {
-    strcpy(filename, *src->filepath);
-    strcat(filename, *src->filename);
+    strcpy(filename, cat->filepath);
+    strcat(filename, cat->filename);
     strcat(filename, src->image);
   } else {
     if ('/'!=src->image[0]) {
-      strcpy(filename, *src->filepath);
+      strcpy(filename, cat->filepath);
     } else {
       strcpy(filename, "");
     }
@@ -3885,10 +3847,10 @@ static void p2s(struct wcsprm* const wcs,
 }
 
 
-void getSimputPhotonCoord(SimputCatalog* const cat,
-			  const SimputSource* const src,
-			  double* const ra, double* const dec,
-			  int* const status)
+static void getSimputPhotonCoord(SimputCatalog* const cat,
+				 const SimputSource* const src,
+				 double* const ra, double* const dec,
+				 int* const status)
 {
   struct wcsprm wcs={ .flag=-1 };
 

@@ -83,12 +83,6 @@ typedef struct {
       PSD. */
   char* timing;
 
-  /** Pointer to the filename in the source catalog file. */
-  char** filename;
-
-  /** Pointer to the filepath in the source catalog file. */
-  char** filepath;
-
 } SimputSource;
 
 
@@ -469,18 +463,6 @@ void simputSetARF(SimputCatalog* const cat, struct ARF* const arf);
     uniformly distributed numbers in the interval [0,1). */
 void simputSetRndGen(double(*rndgen)(void));
 
-/** Return a randomized photon energy according to the distribution
-    defined by the energy spectrum of the particular source. If the
-    spectrum is not stored in memory, it is loaded from the location
-    specified in the the catalog. If the source has a time-variable
-    spectrum, which is defined via the light curve extension, the
-    reference time is required. */
-float getSimputPhotonEnergy(SimputCatalog* const cat,
-			    const SimputSource* const src,
-			    const double time,
-			    const double mjdref,
-			    int* const status);
-
 /** Determine the energy flux in [erg/s/cm**2] within the reference
     energy band of the specified source valid a the requested point of
     time. */
@@ -547,22 +529,6 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
       char* const extname, int extver,
       int* const status);
 
-/** Return a randomized photon arrival time at the telescope according
-    to the photon rate and possible light curve. As the light curve is
-    time-dependet, a reference time defined by the arrival time of the
-    previous photon has to be specified. If the source refers to a
-    light curve, which is not stored in memory, it is loaded from the
-    location specified in the the catalog. If the light curve time is
-    exceeded or the source flux is zero, the 'failed' flag is set to
-    1. Otherwise its value is 0. */
-double getSimputPhotonTime(SimputCatalog* const cat,
-			   const SimputSource* const src,
-			   double prevtime,
-			   const double mjdref,
-			   int* const failed,
-			   int* const status);
-
-
 /** Constructor for the SimputImg data structure. Allocates memory,
     initializes elements with their default values and pointers with
     NULL. */
@@ -584,17 +550,6 @@ void saveSimputImg(SimputImg* const img, const char* const filename,
 		   char* const extname, int extver,
 		   int* const status);
 
-/** Determine the coordinates (RA and Dec) of a new photon emerging
-    from a particular source. For point-like sources the coordinates
-    are equivalent with the source position. For extended sources a
-    random position is determined according to the flux distribution
-    defined by the source image. The returned coordinate values are
-    given in [rad]. */
-void getSimputPhotonCoord(SimputCatalog* const cat,
-			  const SimputSource* const src,
-			  double* const ra, double* const dec,
-			  int* const status);
-
 /** Return the maximum angular extension (radius) of a particular
     source around its reference point in [rad]. */
 float getSimputSourceExtension(SimputCatalog* const cat,
@@ -604,7 +559,7 @@ float getSimputSourceExtension(SimputCatalog* const cat,
 
 /** Produce a photon for a particular source in a SIMPUT catalog. The
     error status variable refers to errors related to the access to
-    FITS files. If no photon can be produced, because there is not
+    FITS files. If no photon can be produced, because there is no
     light curve information available for the specified point of time,
     the return value of the function will be 1. If a photon is
     successfully produced, the return value will be 0. */
@@ -612,9 +567,13 @@ int getSimputPhoton(SimputCatalog* const cat,
 		    const SimputSource* const src,
 		    double prevtime,
 		    const double mjdref,
+		    /** [s]. */
 		    double* const time,
+		    /** [keV]. */
 		    float* const energy,
+		    /** [rad]. */
 		    double* const ra,
+		    /** [rad]. */
 		    double* const dec,
 		    int* const status);
 
