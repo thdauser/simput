@@ -55,10 +55,10 @@ AC_CONFIG_HEADER([config.h])
 # A Makefile that is not listed here will not be created by 'automake'!
 AC_CONFIG_FILES([Makefile
                  extlib/Makefile
-		         libsimput/Makefile
-		         sample/Makefile
-		         sample/csample/Makefile
-		         sample/fsample/Makefile])
+		 libsimput/Makefile
+		 sample/Makefile
+		 sample/csample/Makefile
+		 sample/fsample/Makefile])
 		
 AC_CONFIG_SUBDIRS([extlib/cfitsio extlib/wcslib extlib/fftw])
 

@@ -243,28 +243,28 @@ $(SHRLIB) : $(PICLIB)
 $(PICLIB) : $(MODULES:%.o=$(PICLIB)(%.o)) ;
 
 install : build
-	-  if [ ! -d "$(LIBDIR)" ] ; then \
-	     $(INSTALL) -d -m 2775 $(LIBDIR) ; \
-	   fi
-	   $(INSTALL) -m 644 $(WCSLIB) $(LIBDIR)
-	   $(RANLIB) $(LIBDIR)/$(WCSLIB)
-	-  if [ -h "$(LIBDIR)/libwcs.a" ] ; then \
-	     $(RM) $(LIBDIR)/libwcs.a ; \
-	   fi
-	-  $(LN_S) $(WCSLIB) $(LIBDIR)/libwcs.a
-	-  if [ "$(SHRLIB)" != "" ] ; then \
-	     $(INSTALL) -m 644 $(SHRLIB) $(LIBDIR) ; \
-	     if [ -h "$(LIBDIR)/$(SONAME)" ] ; then \
-	       $(RM) $(LIBDIR)/$(SONAME) ; \
-	     fi ; \
-	     $(LN_S) $(SHRLIB) $(LIBDIR)/$(SONAME) ; \
-	     if [ "$(SHRLN)" != "" ] ; then \
-	       if [ -h "$(LIBDIR)/$(SHRLN)" ] ; then \
-	         $(RM) $(LIBDIR)/$(SHRLN) ; \
-	       fi ; \
-	       $(LN_S) $(SONAME) $(LIBDIR)/$(SHRLN) ; \
-	     fi ; \
-	   fi
+#	-  if [ ! -d "$(LIBDIR)" ] ; then \
+#	     $(INSTALL) -d -m 2775 $(LIBDIR) ; \
+#	   fi
+#	   $(INSTALL) -m 644 $(WCSLIB) $(LIBDIR)
+#	   $(RANLIB) $(LIBDIR)/$(WCSLIB)
+#	-  if [ -h "$(LIBDIR)/libwcs.a" ] ; then \
+#	     $(RM) $(LIBDIR)/libwcs.a ; \
+#	   fi
+#	-  $(LN_S) $(WCSLIB) $(LIBDIR)/libwcs.a
+#	-  if [ "$(SHRLIB)" != "" ] ; then \
+#	     $(INSTALL) -m 644 $(SHRLIB) $(LIBDIR) ; \
+#	     if [ -h "$(LIBDIR)/$(SONAME)" ] ; then \
+#	       $(RM) $(LIBDIR)/$(SONAME) ; \
+#	     fi ; \
+#	     $(LN_S) $(SHRLIB) $(LIBDIR)/$(SONAME) ; \
+#	     if [ "$(SHRLN)" != "" ] ; then \
+#	       if [ -h "$(LIBDIR)/$(SHRLN)" ] ; then \
+#	         $(RM) $(LIBDIR)/$(SHRLN) ; \
+#	       fi ; \
+#	       $(LN_S) $(SONAME) $(LIBDIR)/$(SHRLN) ; \
+#	     fi ; \
+#	   fi
 	-  if [ ! -d "$(INCDIR)" ] ; then \
 	     $(INSTALL) -d -m 2775 $(INCDIR) ; \
 	   fi

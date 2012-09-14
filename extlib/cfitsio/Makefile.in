@@ -23,7 +23,7 @@ exec_prefix	= @exec_prefix@
 DESTDIR		= 
 CFITSIO_LIB	= ${DESTDIR}@libdir@
 CFITSIO_INCLUDE	= ${DESTDIR}@includedir@
-INSTALL_DIRS	= @INSTALL_ROOT@ ${CFITSIO_INCLUDE} ${CFITSIO_LIB} ${CFITSIO_LIB}/pkgconfig
+INSTALL_DIRS	= @INSTALL_ROOT@ ${CFITSIO_INCLUDE} ${CFITSIO_LIB}
 
 
 SHELL =		/bin/sh
@@ -90,14 +90,14 @@ libcfitsio${SHLIB_SUFFIX}: ${OBJECTS}
 		${SHLIB_LD} ${LDFLAGS} -o $@ ${OBJECTS}
 
 install:	libcfitsio.a $(INSTALL_DIRS)
-		@if [ -f libcfitsio.a ]; then \
-			/bin/cp libcfitsio.a ${CFITSIO_LIB}; \
-		fi; \
-		if [ -f libcfitsio${SHLIB_SUFFIX} ]; then \
-			/bin/cp libcfitsio${SHLIB_SUFFIX} ${CFITSIO_LIB}; \
-		fi; \
-		/bin/cp fitsio.h fitsio2.h longnam.h drvrsmem.h ${CFITSIO_INCLUDE}/; \
-		/bin/cp cfitsio.pc ${CFITSIO_LIB}/pkgconfig
+#		@if [ -f libcfitsio.a ]; then \
+#			/bin/cp libcfitsio.a ${CFITSIO_LIB}; \
+#		fi; \
+#		if [ -f libcfitsio${SHLIB_SUFFIX} ]; then \
+#			/bin/cp libcfitsio${SHLIB_SUFFIX} ${CFITSIO_LIB}; \
+#		fi; \
+		/bin/cp fitsio.h fitsio2.h longnam.h drvrsmem.h ${CFITSIO_INCLUDE}/;
+#		/bin/cp cfitsio.pc ${CFITSIO_LIB}/pkgconfig
 
 .c.o:
 		$(CC) -c $(CFLAGS) $(DEFS) $<
