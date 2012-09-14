@@ -97,10 +97,10 @@ install :
 	     $(INSTALL) -d -m 2775 $(HTMLDIR)/html ; \
 	   fi
 	   $(INSTALL) -m 444 html/* $(HTMLDIR)/html
-	   if [ ! -d "$(LIBDIR)/pkgconfig" ] ; then \
-	     $(INSTALL) -d -m 2775 $(LIBDIR)/pkgconfig ; \
-	   fi
-	   $(INSTALL) -m 444 wcslib.pc $(LIBDIR)/pkgconfig/wcslib.pc
+#	   if [ ! -d "$(LIBDIR)/pkgconfig" ] ; then \
+#	     $(INSTALL) -d -m 2775 $(LIBDIR)/pkgconfig ; \
+#	   fi
+#	   $(INSTALL) -m 444 wcslib.pc $(LIBDIR)/pkgconfig/wcslib.pc
 
 clean cleaner :
 	   for DIR in $(SUBDIRS) doxygen ; do \

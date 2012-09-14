@@ -1,5 +1,6 @@
 OPTIONS_AUTOMAKE=gnu
-lib_LTLIBRARIES = libfftw3@PREC_SUFFIX@.la
+#lib_LTLIBRARIES = libfftw3@PREC_SUFFIX@.la
+noinst_LTLIBRARIES = libfftw3@PREC_SUFFIX@.la
 
 # pkgincludedir = $(includedir)/fftw3@PREC_SUFFIX@
 # nodist_pkginclude_HEADERS = config.h
@@ -91,8 +92,8 @@ endif
 
 fftw3@PREC_SUFFIX@.pc: fftw.pc
 	cp -f fftw.pc fftw3@PREC_SUFFIX@.pc
-pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = fftw3@PREC_SUFFIX@.pc
+#pkgconfigdir = $(libdir)/pkgconfig
+#pkgconfig_DATA = fftw3@PREC_SUFFIX@.pc
 
 WISDOM_DIR = /etc/fftw
 WISDOM = wisdom@PREC_SUFFIX@
