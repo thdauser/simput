@@ -33,7 +33,7 @@ program fortran_sample
   ! The filename has to be terminated with a null character,
   ! since this is required for C strings.
   write(*,*) "Open SIMPUT catalog ..."
-  call simopctl("ASM_Catalog.fits" // c_null_char, 0, catalog, status)
+  call simopctl("simput.fits" // c_null_char, 0, 0, 0, 0, 0,catalog, status)
 
   ! Determine the number of entries in the catalog.
   write(*,*) "Catalog contains", catalog%nentries, "entries"
@@ -50,7 +50,7 @@ program fortran_sample
 10   format (1x, ' RA=', F6.2, 1x, ' Dec=', F6.2)
 
      ! Determine the spectrum of the source.
-     call simrspec(src, time, mjdref, spec, status)
+     call simrspec(catalog, src, time, mjdref, spec, status)
 
      ! Print the number of data points of the spectrum.
      write(*,*) " Spectrum contains", spec%nentries, "data points"
@@ -61,9 +61,10 @@ program fortran_sample
 
 
   ! Print out the spectrum of the first source in the catalog.
+  write(*,*) "Print the spectrum of the first source ..."
   row=1
   call simlcsrc(catalog, row, src, status)
-  call simrspec(src, time, mjdref, spec, status)
+  call simrspec(catalog, src, time, mjdref, spec, status)
 
   ! Loop over all entries in the spectrum.
   do entry=0,spec%nentries-1,1
