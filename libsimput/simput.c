@@ -734,8 +734,8 @@ void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
 
 
 static inline void getSpecEbounds(const SimputMIdpSpec* const spec,
-				  const long idx, 
-				  float* emin, float* emax)
+				  	  	  	  	  const long idx,
+								  float* emin, float* emax)
 {
   // Determine the lower boundary.
   if (idx>0) {

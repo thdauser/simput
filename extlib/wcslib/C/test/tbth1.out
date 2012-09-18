@@ -1,0 +1,1001 @@
+Testing WCSLIB parser for FITS binary table headers (tbth1.c)
+-------------------------------------------------------------
+
+Found 185 non-comment header keyrecords.
+
+
+Illegal-WCS header keyrecords rejected by wcsbth():
+(none)
+
+
+Header keyrecords ignored by wcsbth():
+XTENSION= 'BINTABLE'           / binary table extension                         
+BITPIX  =                    8 / 8-bit bytes                                    
+NAXIS   =                    2 / 2-dimensional binary table                     
+NAXIS1  =                 3330 / width of table in bytes                        
+NAXIS2  =                   68 / number of rows in table                        
+PCOUNT  =                    0 / size of special data area                      
+GCOUNT  =                    1 / one data group (required keyword)              
+ALTRPIX =                  0.0 / Alternate reference pixel (not handled)        
+ALTRVAL =                  0.0 / Alternate reference value (not handled)        
+END                                                                             
+
+
+Extracted 5 coordinate descriptions:
+
+  Unattached image header(s) with indices:
+        - A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+        0 - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  Binary table image array(s) with indices:
+  Col.  - A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+   33:  - - - - - - - - - 1 - - - - - - - - - - - - - - - - -
+   44:  - - - - - - - - - 2 - - - - - - - - - - - - - - - - -
+   77:  - - 3 - - - - - - - - - - - - - - - - - - - - - - - -
+
+  Pixel list(s) with indices:
+  Col.  - A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+    8:  - - - - - - - - - - - - - - - - 4 - - - - - - - - - -
+    9:  - - - - - - - - - - - - - - - - 4 - - - - - - - - - -
+   10:  - - - - - - - - - - - - - - - - 4 - - - - - - - - - -
+
+------------------------------------------------------------------------
+       flag: 137
+      naxis: 4
+      crpix: 0x<address>
+               513          513          1025         1         
+         pc: 0x<address>
+    pc[0][]:   0.96593      0.25882      0            0         
+    pc[1][]:  -0.25882      0.96593      0            0         
+    pc[2][]:   0            0            1            0         
+    pc[3][]:   0            0            0            1         
+      cdelt: 0x<address>
+              -0.1          0.1          62500        1         
+      crval: 0x<address>
+               150         -30           1.3945e+09   1         
+      cunit: 0x<address>
+             "deg"
+             "deg"
+             "Hz"
+             ""
+      ctype: 0x<address>
+             "RA---TAN"
+             "DEC--TAN"
+             "FREQ"
+             "STOKES"
+    lonpole: 180.000000
+    latpole: -30.000000
+    restfrq: 1420405750.000000
+    restwav: 0.000000
+        npv: 0
+     npvmax: 0
+         pv: 0x0
+        nps: 0
+     npsmax: 0
+         ps: 0x0
+         cd: 0x<address>
+    cd[0][]:   0            0            0            0         
+    cd[1][]:   0            0            0            0         
+    cd[2][]:   0            0            0            0         
+    cd[3][]:   0            0            0            0         
+      crota: 0x<address>
+               0            15           0            0         
+     altlin: 4
+     velref: 258
+        alt: ' '
+     colnum: 0
+      colax: 0x<address>
+                 0      0      0      0
+    wcsname: "AIPS convention: TAN projection"
+      cname: 0x<address>
+             UNDEFINED
+             UNDEFINED
+             UNDEFINED
+             UNDEFINED
+      crder: 0x<address>
+             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+      csyer: 0x<address>
+             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+    radesys: UNDEFINED
+    equinox: 2000.000000
+    specsys: "BARYCENT"
+    ssysobs: UNDEFINED
+    velosys: UNDEFINED
+    ssyssrc: UNDEFINED
+    zsource: UNDEFINED
+     obsgeo: -4.5542e+06   2.8168e+06  -3.454e+06   
+    dateobs: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+     mjdobs: 35883.625000
+     mjdavg: 35883.700000
+       ntab: 0
+        tab: 0x0
+       nwtb: 0
+        wtb: 0x0
+      types: 0x<address>
+            2200 2201 3000 1100
+     lngtyp: "RA"
+     lattyp: "DEC"
+        lng: 0
+        lat: 1
+       spec: 2
+   cubeface: -1
+        err: 0x0
+        lin: (see below)
+        cel: (see below)
+        spc: (see below)
+     m_flag: 137
+    m_naxis: 4
+    m_crpix: 0x<address>  (= crpix)
+       m_pc: 0x<address>  (= pc)
+    m_cdelt: 0x<address>  (= cdelt)
+    m_crval: 0x<address>  (= crval)
+    m_cunit: 0x<address>  (= cunit)
+    m_ctype: 0x<address>  (= ctype)
+       m_pv: 0x0  (= pv)
+       m_ps: 0x0  (= ps)
+       m_cd: 0x<address>  (= cd)
+    m_crota: 0x<address>  (= crota)
+
+    m_colax: 0x<address>  (= colax)
+    m_cname: 0x<address>  (= cname)
+    m_crder: 0x<address>  (= crder)
+    m_csyer: 0x<address>  (= csyer)
+      m_tab: 0x0  (= tab)
+      m_wtb: 0x0  (= wtb)
+
+   lin.*
+       flag: 137
+      naxis: 4
+      crpix: 0x<address>
+               513          513          1025         1         
+         pc: 0x<address>
+    pc[0][]:   0.96593      0.25882      0            0         
+    pc[1][]:  -0.25882      0.96593      0            0         
+    pc[2][]:   0            0            1            0         
+    pc[3][]:   0            0            0            1         
+      cdelt: 0x<address>
+              -0.1          0.1          62500        1         
+      unity: 0
+        err: 0x0
+piximg[0][]:  -0.096593    -0.025882    -0           -0         
+piximg[1][]:  -0.025882     0.096593     0            0         
+piximg[2][]:   0            0            62500        0         
+piximg[3][]:   0            0            0            1         
+imgpix[0][]:  -9.6593      -2.5882      -0           -0         
+imgpix[1][]:  -2.5882       9.6593       0            0         
+imgpix[2][]:   0            0            1.6e-05      0         
+imgpix[3][]:   0            0            0            1         
+     m_flag: 0
+    m_naxis: 0
+    m_crpix: 0x0
+       m_pc: 0x0
+    m_cdelt: 0x0
+
+   cel.*
+      flag: 137
+     offset: 0
+       phi0:  0.000000
+     theta0: 90.000000
+       ref:   150         -30           180         -30        
+       prj: (see below)
+     euler:   150          120          180         -0.5          0.86603   
+    latpreq: 0 (not required)
+     isolat: 0
+        err: 0x0
+
+   prj.*
+       flag: 103
+       code: "TAN"
+         r0: 57.295780
+         pv: (not used)
+       phi0:  0.000000
+     theta0: 90.000000
+     bounds: 1
+
+       name: "gnomonic"
+   category: 1 (zenithal)
+    pvrange: 0
+  simplezen: 1
+  equiareal: 0
+  conformal: 0
+     global: 0
+  divergent: 1
+         x0: 0.000000
+         y0: 0.000000
+        err: 0x0
+        w[]:   0            0            0            0            0         
+               0            0            0            0            0         
+          m: 0
+          n: 0
+     prjx2s: 0x<address>
+     prjs2x: 0x<address>
+
+   spc.*
+       flag: 0
+       type: "    "
+       code: "   "
+      crval: UNDEFINED
+    restfrq: 0.000000
+    restwav: 0.000000
+         pv: (not used)
+          w:   0            0            0           (remainder unused)
+    isGrism: 0
+        err: 0x0
+     spxX2P: 0x0
+     spxP2S: 0x0
+     spxS2P: 0x0
+     spxP2X: 0x0
+
+------------------------------------------------------------------------
+       flag: 137
+      naxis: 4
+      crpix: 0x<address>
+               513          513          1025         1         
+         pc: 0x<address>
+    pc[0][]:   0.96593      0.25882      0            0         
+    pc[1][]:  -0.25882      0.96593      0            0         
+    pc[2][]:   0            0            1            0         
+    pc[3][]:   0            0            0            1         
+      cdelt: 0x<address>
+              -0.1          0.1          62500        1         
+      crval: 0x<address>
+               150         -30           1.3945e+09   1         
+      cunit: 0x<address>
+             "deg"
+             "deg"
+             "Hz"
+             ""
+      ctype: 0x<address>
+             "RA---TAN"
+             "DEC--TAN"
+             "FREQ"
+             "STOKES"
+    lonpole: 180.000000
+    latpole: -30.000000
+    restfrq: 1420405750.000000
+    restwav: 0.000000
+        npv: 0
+     npvmax: 0
+         pv: 0x0
+        nps: 0
+     npsmax: 0
+         ps: 0x0
+         cd: 0x<address>
+    cd[0][]:   0            0            0            0         
+    cd[1][]:   0            0            0            0         
+    cd[2][]:   0            0            0            0         
+    cd[3][]:   0            0            0            0         
+      crota: 0x<address>
+               0            0            0            0         
+     altlin: 1
+     velref: 0
+        alt: 'I'
+     colnum: 33
+      colax: 0x<address>
+                 0      0      0      0
+    wcsname: "All WCS keywords inherited except for this one"
+      cname: 0x<address>
+             UNDEFINED
+             UNDEFINED
+             UNDEFINED
+             UNDEFINED
+      crder: 0x<address>
+             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+      csyer: 0x<address>
+             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+    radesys: UNDEFINED
+    equinox: 2000.000000
+    specsys: "BARYCENT"
+    ssysobs: UNDEFINED
+    velosys: UNDEFINED
+    ssyssrc: UNDEFINED
+    zsource: UNDEFINED
+     obsgeo: -4.5542e+06   2.8168e+06  -3.454e+06   
+    dateobs: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+     mjdobs: 35883.625000
+     mjdavg: 35883.700000
+       ntab: 0
+        tab: 0x0
+       nwtb: 0
+        wtb: 0x0
+      types: 0x<address>
+            2200 2201 3000 1100
+     lngtyp: "RA"
+     lattyp: "DEC"
+        lng: 0
+        lat: 1
+       spec: 2
+   cubeface: -1
+        err: 0x0
+        lin: (see below)
+        cel: (see below)
+        spc: (see below)
+     m_flag: 137
+    m_naxis: 4
+    m_crpix: 0x<address>  (= crpix)
+       m_pc: 0x<address>  (= pc)
+    m_cdelt: 0x<address>  (= cdelt)
+    m_crval: 0x<address>  (= crval)
+    m_cunit: 0x<address>  (= cunit)
+    m_ctype: 0x<address>  (= ctype)
+       m_pv: 0x0  (= pv)
+       m_ps: 0x0  (= ps)
+       m_cd: 0x<address>  (= cd)
+    m_crota: 0x<address>  (= crota)
+
+    m_colax: 0x<address>  (= colax)
+    m_cname: 0x<address>  (= cname)
+    m_crder: 0x<address>  (= crder)
+    m_csyer: 0x<address>  (= csyer)
+      m_tab: 0x0  (= tab)
+      m_wtb: 0x0  (= wtb)
+
+   lin.*
+       flag: 137
+      naxis: 4
+      crpix: 0x<address>
+               513          513          1025         1         
+         pc: 0x<address>
+    pc[0][]:   0.96593      0.25882      0            0         
+    pc[1][]:  -0.25882      0.96593      0            0         
+    pc[2][]:   0            0            1            0         
+    pc[3][]:   0            0            0            1         
+      cdelt: 0x<address>
+              -0.1          0.1          62500        1         
+      unity: 0
+        err: 0x0
+piximg[0][]:  -0.096593    -0.025882    -0           -0         
+piximg[1][]:  -0.025882     0.096593     0            0         
+piximg[2][]:   0            0            62500        0         
+piximg[3][]:   0            0            0            1         
+imgpix[0][]:  -9.6593      -2.5882      -0           -0         
+imgpix[1][]:  -2.5882       9.6593       0            0         
+imgpix[2][]:   0            0            1.6e-05      0         
+imgpix[3][]:   0            0            0            1         
+     m_flag: 0
+    m_naxis: 0
+    m_crpix: 0x0
+       m_pc: 0x0
+    m_cdelt: 0x0
+
+   cel.*
+      flag: 137
+     offset: 0
+       phi0:  0.000000
+     theta0: 90.000000
+       ref:   150         -30           180         -30        
+       prj: (see below)
+     euler:   150          120          180         -0.5          0.86603   
+    latpreq: 0 (not required)
+     isolat: 0
+        err: 0x0
+
+   prj.*
+       flag: 103
+       code: "TAN"
+         r0: 57.295780
+         pv: (not used)
+       phi0:  0.000000
+     theta0: 90.000000
+     bounds: 1
+
+       name: "gnomonic"
+   category: 1 (zenithal)
+    pvrange: 0
+  simplezen: 1
+  equiareal: 0
+  conformal: 0
+     global: 0
+  divergent: 1
+         x0: 0.000000
+         y0: 0.000000
+        err: 0x0
+        w[]:   0            0            0            0            0         
+               0            0            0            0            0         
+          m: 0
+          n: 0
+     prjx2s: 0x<address>
+     prjs2x: 0x<address>
+
+   spc.*
+       flag: 0
+       type: "    "
+       code: "   "
+      crval: UNDEFINED
+    restfrq: 0.000000
+    restwav: 0.000000
+         pv: (not used)
+          w:   0            0            0           (remainder unused)
+    isGrism: 0
+        err: 0x0
+     spxX2P: 0x0
+     spxP2S: 0x0
+     spxS2P: 0x0
+     spxP2X: 0x0
+
+------------------------------------------------------------------------
+       flag: 137
+      naxis: 4
+      crpix: 0x<address>
+               513          513          1025         1         
+         pc: 0x<address>
+    pc[0][]:   0.96593      0.25882      0            0         
+    pc[1][]:  -0.25882      0.96593      0            0         
+    pc[2][]:   0            0            1            0         
+    pc[3][]:   0            0            0            1         
+      cdelt: 0x<address>
+              -0.1          0.1          62500        1         
+      crval: 0x<address>
+               150         -30           1.3945e+09   1         
+      cunit: 0x<address>
+             "deg"
+             "deg"
+             "Hz"
+             ""
+      ctype: 0x<address>
+             "RA---SIN"
+             "DEC--SIN"
+             "FREQ"
+             "STOKES"
+    lonpole: 180.000000
+    latpole: -30.000000
+    restfrq: 1420405750.000000
+    restwav: 0.000000
+        npv: 0
+     npvmax: 0
+         pv: 0x0
+        nps: 0
+     npsmax: 0
+         ps: 0x0
+         cd: 0x<address>
+    cd[0][]:   0            0            0            0         
+    cd[1][]:   0            0            0            0         
+    cd[2][]:   0            0            0            0         
+    cd[3][]:   0            0            0            0         
+      crota: 0x<address>
+               0            0            0            0         
+     altlin: 0
+     velref: 0
+        alt: 'I'
+     colnum: 44
+      colax: 0x<address>
+                 0      0      0      0
+    wcsname: "Most WCS keywords inherited"
+      cname: 0x<address>
+             UNDEFINED
+             UNDEFINED
+             UNDEFINED
+             UNDEFINED
+      crder: 0x<address>
+             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+      csyer: 0x<address>
+             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+    radesys: UNDEFINED
+    equinox: 2000.000000
+    specsys: "BARYCENT"
+    ssysobs: UNDEFINED
+    velosys: UNDEFINED
+    ssyssrc: UNDEFINED
+    zsource: UNDEFINED
+     obsgeo: -4.5542e+06   2.8168e+06  -3.454e+06   
+    dateobs: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+     mjdobs: 35883.625000
+     mjdavg: 35883.700000
+       ntab: 0
+        tab: 0x0
+       nwtb: 0
+        wtb: 0x0
+      types: 0x<address>
+            2200 2201 3000 1100
+     lngtyp: "RA"
+     lattyp: "DEC"
+        lng: 0
+        lat: 1
+       spec: 2
+   cubeface: -1
+        err: 0x0
+        lin: (see below)
+        cel: (see below)
+        spc: (see below)
+     m_flag: 137
+    m_naxis: 4
+    m_crpix: 0x<address>  (= crpix)
+       m_pc: 0x<address>  (= pc)
+    m_cdelt: 0x<address>  (= cdelt)
+    m_crval: 0x<address>  (= crval)
+    m_cunit: 0x<address>  (= cunit)
+    m_ctype: 0x<address>  (= ctype)
+       m_pv: 0x0  (= pv)
+       m_ps: 0x0  (= ps)
+       m_cd: 0x<address>  (= cd)
+    m_crota: 0x<address>  (= crota)
+
+    m_colax: 0x<address>  (= colax)
+    m_cname: 0x<address>  (= cname)
+    m_crder: 0x<address>  (= crder)
+    m_csyer: 0x<address>  (= csyer)
+      m_tab: 0x0  (= tab)
+      m_wtb: 0x0  (= wtb)
+
+   lin.*
+       flag: 137
+      naxis: 4
+      crpix: 0x<address>
+               513          513          1025         1         
+         pc: 0x<address>
+    pc[0][]:   0.96593      0.25882      0            0         
+    pc[1][]:  -0.25882      0.96593      0            0         
+    pc[2][]:   0            0            1            0         
+    pc[3][]:   0            0            0            1         
+      cdelt: 0x<address>
+              -0.1          0.1          62500        1         
+      unity: 0
+        err: 0x0
+piximg[0][]:  -0.096593    -0.025882    -0           -0         
+piximg[1][]:  -0.025882     0.096593     0            0         
+piximg[2][]:   0            0            62500        0         
+piximg[3][]:   0            0            0            1         
+imgpix[0][]:  -9.6593      -2.5882      -0           -0         
+imgpix[1][]:  -2.5882       9.6593       0            0         
+imgpix[2][]:   0            0            1.6e-05      0         
+imgpix[3][]:   0            0            0            1         
+     m_flag: 0
+    m_naxis: 0
+    m_crpix: 0x0
+       m_pc: 0x0
+    m_cdelt: 0x0
+
+   cel.*
+      flag: 137
+     offset: 0
+       phi0:  0.000000
+     theta0: 90.000000
+       ref:   150         -30           180         -30        
+       prj: (see below)
+     euler:   150          120          180         -0.5          0.86603   
+    latpreq: 0 (not required)
+     isolat: 0
+        err: 0x0
+
+   prj.*
+       flag: 105
+       code: "SIN"
+         r0: 57.295780
+         pv: (0)
+              0            0         
+       phi0:  0.000000
+     theta0: 90.000000
+     bounds: 1
+
+       name: "orthographic/synthesis"
+   category: 1 (zenithal)
+    pvrange: 102
+  simplezen: 1
+  equiareal: 0
+  conformal: 0
+     global: 0
+  divergent: 0
+         x0: 0.000000
+         y0: 0.000000
+        err: 0x0
+        w[]:   0.017453     0            1           -1            0         
+               0            0            0            0            0         
+          m: 0
+          n: 0
+     prjx2s: 0x<address>
+     prjs2x: 0x<address>
+
+   spc.*
+       flag: 0
+       type: "    "
+       code: "   "
+      crval: UNDEFINED
+    restfrq: 0.000000
+    restwav: 0.000000
+         pv: (not used)
+          w:   0            0            0           (remainder unused)
+    isGrism: 0
+        err: 0x0
+     spxX2P: 0x0
+     spxP2S: 0x0
+     spxS2P: 0x0
+     spxP2X: 0x0
+
+------------------------------------------------------------------------
+       flag: 137
+      naxis: 4
+      crpix: 0x<address>
+               513          513          1025         1         
+         pc: 0x<address>
+    pc[0][]:   0.86603      0.5          0            0         
+    pc[1][]:  -0.5          0.86603      0            0         
+    pc[2][]:   0            0            1            0         
+    pc[3][]:   0            0            0            1         
+      cdelt: 0x<address>
+              -0.1          0.1         -9.6353e-06   1         
+      crval: 0x<address>
+               150         -30           0.21498     -2000      
+      cunit: 0x<address>
+             "deg"
+             "deg"
+             "m"
+             "s"
+      ctype: 0x<address>
+             "RA---SZP"
+             "DEC--SZP"
+             "WAVE-F2W"
+             "TIME"
+    lonpole: 195.000000
+    latpole: -30.000000
+    restfrq: 1420405750.000000
+    restwav: 0.211061
+        npv: 7
+     npvmax: 7
+         pv: 0x<address>
+               1   1   0         
+               1   2   90        
+               1   3   195       
+               1   4  -30        
+               2   1   0         
+               2   2   180       
+               2   3   45        
+        nps: 1
+     npsmax: 1
+         ps: 0x<address>
+               4   0  UTC
+         cd: 0x<address>
+    cd[0][]:   0            0            0            0         
+    cd[1][]:   0            0            0            0         
+    cd[2][]:   0            0            0            0         
+    cd[3][]:   0            0            0            0         
+      crota: 0x<address>
+               0            0            0            0         
+     altlin: 1
+     velref: 0
+        alt: 'B'
+     colnum: 77
+      colax: 0x<address>
+                 0      0      0      0
+    wcsname: "St'd representation: SZP projection"
+      cname: 0x<address>
+             "Right ascension (J2000)"
+             "Declination (J2000)"
+             "Wavelength"
+             "Time offset"
+      crder: 0x<address>
+             UNDEFINED     UNDEFINED      1e-11       UNDEFINED   
+      csyer: 0x<address>
+             UNDEFINED     UNDEFINED      1e-12       UNDEFINED   
+    radesys: "FK5"
+    equinox: 2000.000000
+    specsys: "BARYCENT"
+    ssysobs: "TOPOCENT"
+    velosys: 1500.000000
+    ssyssrc: "LSRK"
+    zsource:  0.002500
+     obsgeo: -4.5542e+06   2.8168e+06  -3.454e+06   
+    dateobs: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+     mjdobs: 35883.625000
+     mjdavg: 35883.700000
+       ntab: 0
+        tab: 0x0
+       nwtb: 0
+        wtb: 0x0
+      types: 0x<address>
+            2200 2201 3300    0
+     lngtyp: "RA"
+     lattyp: "DEC"
+        lng: 0
+        lat: 1
+       spec: 2
+   cubeface: -1
+        err: 0x0
+        lin: (see below)
+        cel: (see below)
+        spc: (see below)
+     m_flag: 137
+    m_naxis: 4
+    m_crpix: 0x<address>  (= crpix)
+       m_pc: 0x<address>  (= pc)
+    m_cdelt: 0x<address>  (= cdelt)
+    m_crval: 0x<address>  (= crval)
+    m_cunit: 0x<address>  (= cunit)
+    m_ctype: 0x<address>  (= ctype)
+       m_pv: 0x<address>  (= pv)
+       m_ps: 0x<address>  (= ps)
+       m_cd: 0x<address>  (= cd)
+    m_crota: 0x<address>  (= crota)
+
+    m_colax: 0x<address>  (= colax)
+    m_cname: 0x<address>  (= cname)
+    m_crder: 0x<address>  (= crder)
+    m_csyer: 0x<address>  (= csyer)
+      m_tab: 0x0  (= tab)
+      m_wtb: 0x0  (= wtb)
+
+   lin.*
+       flag: 137
+      naxis: 4
+      crpix: 0x<address>
+               513          513          1025         1         
+         pc: 0x<address>
+    pc[0][]:   0.86603      0.5          0            0         
+    pc[1][]:  -0.5          0.86603      0            0         
+    pc[2][]:   0            0            1            0         
+    pc[3][]:   0            0            0            1         
+      cdelt: 0x<address>
+              -0.1          0.1         -9.6353e-06   1         
+      unity: 0
+        err: 0x0
+piximg[0][]:  -0.086603    -0.05        -0           -0         
+piximg[1][]:  -0.05         0.086603     0            0         
+piximg[2][]:  -0           -0           -9.6353e-06  -0         
+piximg[3][]:   0            0            0            1         
+imgpix[0][]:  -8.6603      -5           -0           -0         
+imgpix[1][]:  -5            8.6603       0            0         
+imgpix[2][]:  -0           -0           -1.0379e+05  -0         
+imgpix[3][]:   0            0            0            1         
+     m_flag: 0
+    m_naxis: 0
+    m_crpix: 0x0
+       m_pc: 0x0
+    m_cdelt: 0x0
+
+   cel.*
+      flag: 137
+     offset: 0
+       phi0:  0.000000
+     theta0: 90.000000
+       ref:   150         -30           195         -30        
+       prj: (see below)
+     euler:   150          120          195         -0.5          0.86603   
+    latpreq: 0 (not required)
+     isolat: 0
+        err: 0x0
+
+   prj.*
+       flag: 102
+       code: "SZP"
+         r0: 57.295780
+         pv: (0)
+              0            180          45        
+       phi0:  0.000000
+     theta0: 90.000000
+     bounds: 1
+
+       name: "slant zenithal perspective"
+   category: 1 (zenithal)
+    pvrange: 103
+  simplezen: 0
+  equiareal: 0
+  conformal: 0
+     global: 0
+  divergent: 1
+         x0: 0.000000
+         y0: 0.000000
+        err: 0x0
+        w[]:   0.017453    -0           -0            1           -0         
+              -0            57.296      -1            0            0         
+          m: 0
+          n: 0
+     prjx2s: 0x<address>
+     prjs2x: 0x<address>
+
+   spc.*
+       flag: 110
+       type: "WAVE"
+       code: "F2W"
+      crval:  0.215     
+    restfrq: 1420405750.000000
+    restwav: 0.211061
+         pv: (not used)
+          w:   0            1.395e+09   -6.487e+09   (remainder unused)
+    isGrism: 0
+        err: 0x0
+     spxX2P: 0x<address>
+     spxP2S: 0x0
+     spxS2P: 0x0
+     spxP2X: 0x<address>
+
+------------------------------------------------------------------------
+       flag: 137
+      naxis: 3
+      crpix: 0x<address>
+               513          513          1025      
+         pc: 0x<address>
+    pc[0][]:  -0.086603    -0.05         0         
+    pc[1][]:  -0.05         0.086603     0         
+    pc[2][]:   0            0           -4.5652e-05
+      cdelt: 0x<address>
+               1            1            1         
+      crval: 0x<address>
+               150         -30           0.018577  
+      cunit: 0x<address>
+             "deg"
+             "deg"
+             ""
+      ctype: 0x<address>
+             "RA---ZPN"
+             "DEC--ZPN"
+             "ZOPT-F2W"
+    lonpole: 195.000000
+    latpole: -30.000000
+    restfrq: 1420405750.000000
+    restwav: 0.211061
+        npv: 10
+     npvmax: 10
+         pv: 0x<address>
+               2   1   1         
+               2   3   0.33333   
+               2   5   0.13333   
+               2   7   0.053968  
+               2   9   0.021869  
+               2  11   0.0088632 
+               2  13   0.0035921 
+               2  15   0.0014558 
+               2  17   0.00059003
+               2  19   0.00023913
+        nps: 0
+     npsmax: 0
+         ps: 0x0
+         cd: 0x<address>
+    cd[0][]:  -0.086603    -0.05         0         
+    cd[1][]:  -0.05         0.086603     0         
+    cd[2][]:   0            0           -4.5652e-05
+      crota: 0x<address>
+               0            30           0         
+     altlin: 6
+     velref: 0
+        alt: 'P'
+     colnum: 0
+      colax: 0x<address>
+                 8      9     10
+    wcsname: "IRAF representation: ZPN projection"
+      cname: 0x<address>
+             "Right ascension (J2000)"
+             "Declination (J2000)"
+             "Redshift"
+      crder: 0x<address>
+             UNDEFINED     UNDEFINED      5e-11     
+      csyer: 0x<address>
+             UNDEFINED     UNDEFINED      5e-12     
+    radesys: "FK5"
+    equinox: 2000.000000
+    specsys: "BARYCENT"
+    ssysobs: "TOPOCENT"
+    velosys: 1500.000000
+    ssyssrc: "LSRK"
+    zsource:  0.002500
+     obsgeo: -4e+06        2.8168e+06  -3.454e+06   
+    dateobs: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+     mjdobs: 35883.625000
+     mjdavg: 35883.700000
+       ntab: 0
+        tab: 0x0
+       nwtb: 0
+        wtb: 0x0
+      types: 0x<address>
+            2200 2201 3300
+     lngtyp: "RA"
+     lattyp: "DEC"
+        lng: 0
+        lat: 1
+       spec: 2
+   cubeface: -1
+        err: 0x0
+        lin: (see below)
+        cel: (see below)
+        spc: (see below)
+     m_flag: 137
+    m_naxis: 3
+    m_crpix: 0x<address>  (= crpix)
+       m_pc: 0x<address>  (= pc)
+    m_cdelt: 0x<address>  (= cdelt)
+    m_crval: 0x<address>  (= crval)
+    m_cunit: 0x<address>  (= cunit)
+    m_ctype: 0x<address>  (= ctype)
+       m_pv: 0x<address>  (= pv)
+       m_ps: 0x0  (= ps)
+       m_cd: 0x<address>  (= cd)
+    m_crota: 0x<address>  (= crota)
+
+    m_colax: 0x<address>  (= colax)
+    m_cname: 0x<address>  (= cname)
+    m_crder: 0x<address>  (= crder)
+    m_csyer: 0x<address>  (= csyer)
+      m_tab: 0x0  (= tab)
+      m_wtb: 0x0  (= wtb)
+
+   lin.*
+       flag: 137
+      naxis: 3
+      crpix: 0x<address>
+               513          513          1025      
+         pc: 0x<address>
+    pc[0][]:  -0.086603    -0.05         0         
+    pc[1][]:  -0.05         0.086603     0         
+    pc[2][]:   0            0           -4.5652e-05
+      cdelt: 0x<address>
+               1            1            1         
+      unity: 0
+        err: 0x0
+piximg[0][]:  -0.086603    -0.05         0         
+piximg[1][]:  -0.05         0.086603     0         
+piximg[2][]:   0            0           -4.5652e-05
+imgpix[0][]:  -8.6603      -5           -0         
+imgpix[1][]:  -5            8.6603       0         
+imgpix[2][]:  -0           -0           -21905     
+     m_flag: 0
+    m_naxis: 0
+    m_crpix: 0x0
+       m_pc: 0x0
+    m_cdelt: 0x0
+
+   cel.*
+      flag: 137
+     offset: 0
+       phi0:  0.000000
+     theta0: 90.000000
+       ref:   150         -30           195         -30        
+       prj: (see below)
+     euler:   150          120          195         -0.5          0.86603   
+    latpreq: 0 (not required)
+     isolat: 0
+        err: 0x0
+
+   prj.*
+       flag: 107
+       code: "ZPN"
+         r0: 57.295780
+         pv:  0         
+              1            0            0.33333      0            0.13333   
+              0            0.053968     0            0.021869     0         
+              0.0088632    0            0.0035921    0            0.0014558 
+              0            0.00059003   0            0.00023913   0         
+              0            0            0            0            0         
+              0            0            0            0         
+       phi0:  0.000000
+     theta0: 90.000000
+     bounds: 1
+
+       name: "zenithal/azimuthal polynomial"
+   category: 1 (zenithal)
+    pvrange: 30
+  simplezen: 1
+  equiareal: 0
+  conformal: 0
+     global: 1
+  divergent: 0
+         x0: 0.000000
+         y0: 0.000000
+        err: 0x0
+        w[]:   3.1416       8.9006e+05   0            0            0         
+               0            0            0            0            0         
+          m: 0
+          n: 19
+     prjx2s: 0x<address>
+     prjs2x: 0x<address>
+
+   spc.*
+       flag: 112
+       type: "ZOPT"
+       code: "F2W"
+      crval:  0.01858   
+    restfrq: 1420405750.000000
+    restwav: 0.211061
+         pv: (not used)
+          w:   0.2111       1.394e+09   -1.369e+09   (remainder unused)
+    isGrism: 0
+        err: 0x0
+     spxX2P: 0x<address>
+     spxP2S: 0x<address>
+     spxS2P: 0x<address>
+     spxP2X: 0x<address>
+
+Invoking wcsbth() a second time on the same header...
+OK, extracted 0 coordinate descriptions.

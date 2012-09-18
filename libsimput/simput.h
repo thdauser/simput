@@ -2,20 +2,14 @@
 #define SIMPUT_H (1)
 
 #include "fitsio.h"
-#include <wcslib/wcshdr.h>
+#include "wcshdr.h"
 
 // FFTW3 library for Fast Fourier Transform.
 #include <fftw3.h>
 
 #ifndef HEASP_H
 #define HEASP_H 1
-
-#ifndef HEASP_CPP
 #include "heasp.h"
-#else
-#include "Cheasp.h"
-#endif
-
 #endif
 
 
@@ -33,7 +27,7 @@
   0.25 2012/08/31   Christian Schmid      renewed interface
   -------------------------------------------------------------------- 
 
-   This is the header file of the simput library. The library provides
+   This is the header file of the SIMPUT library. The library provides
    basic routines to create a SIMPUT source catalog file according to
    the standard defined in the SIMPUT format document (reference ???).
 */

@@ -1,0 +1,414 @@
+Testing FITS image header parser (tfitshdr.c)
+---------------------------------------------
+
+Found 360 header keyrecords.
+
+The following keyrecords will not be listed:
+  "SIMPLE  "
+  "BITPIX  "
+  "NAXIS   "
+  "COMMENT "
+  "HISTORY "
+  "        "
+  "END     "
+
+360 header keyrecords parsed by fitshdr(), 14 rejected:
+
+  66    0  WCSAXES   2  4
+Four coordinate axes
+  67    0  WCSNAME   8  "AIPS convention: TAN projection"
+Name of this coordinate system
+  69    0  CRPIX1    5  +5.130000e+02
+Pixel coordinate of reference point
+  70    0  CRPIX2    5  +5.130000e+02
+Pixel coordinate of reference point
+  71    0  CRPIX3    5  +1.025000e+03
+Pixel coordinate of reference point
+  72    0  CRPIX4    5  +1.000000e+00
+Pixel coordinate of reference point
+  74    0  CDELT1    5  -1.000000e-01
+x-scale
+  75    0  CDELT2    5  +1.000000e-01
+y-scale
+  76    0  CROTA2    5  +1.500000e+01
+Bulk image rotation
+  77    0  CTYPE1    8  "RA---TAN"
+Right ascension in a gnomonic projection
+  78    0  CRVAL1    5  +1.500000e+02
+Right ascension at the reference point
+  79    0  CTYPE2    8  "DEC--TAN"
+Declination in a gnomonic projection
+  80    0  CRVAL2    5  -3.000000e+01
+Declination at the reference point
+  81    0  EPOCH     5  +2.000000e+03
+Equinox of equatorial coordinates
+  83    0  CDELT3    5  +6.250000e+04
+Frequency scale
+  84    0  CTYPE3    8  "FREQ"
+Frequency axis
+  85    0  CRVAL3    5  +1.394500e+09
+Reference frequency
+  86    0  VELREF    2  258
+Barycentric radio velocity
+  87    0  ALTRPIX   5  +0.000000e+00
+Alternate reference pixel (not handled)
+  88    0  ALTRVAL   5  +0.000000e+00
+Alternate reference value (not handled)
+  89    0  RESTFREQ  5  +1.420406e+09
+HI rest frequency
+  91    0  CDELT4    5  +1.000000e+00
+Stokes increment
+  92    0  CTYPE4    8  "STOKES"
+Stokes convention axis (I, Q, U, V)
+  93    0  CRVAL4    5  +1.000000e+00
+Stokes I
+  96    0  PROJP0    5  +0.000000e+00
+Projection parameter (not used)
+  97    0  PROJP1    5  +0.000000e+00
+Projection parameter (not used)
+  98    0  PROJP2    5  +0.000000e+00
+Projection parameter (not used)
+ 112    0  WCSAXESA  2  4
+Four coordinate axes
+ 113    0  WCSNAMEA  8  "Standard representation: SZP projection"
+Name of this system
+ 115    0  CRPIX1A   5  +5.130000e+02
+Pixel coordinate of reference point
+ 116    0  CRPIX2A   5  +5.130000e+02
+Pixel coordinate of reference point
+ 117    0  CRPIX3A   5  +1.025000e+03
+Pixel coordinate of reference point
+ 118    0  CRPIX4A   5  +1.000000e+00
+Pixel coordinate of reference point
+ 119    0  PC1_1A    5  +8.660254e-01
+Linear transformation matrix element
+ 120    0  PC1_2A    5  +5.000000e-01
+Linear transformation matrix element
+ 121    0  PC2_1A    5  -5.000000e-01
+Linear transformation matrix element
+ 122    0  PC2_2A    5  +8.660254e-01
+Linear transformation matrix element
+ 124    0  CDELT1A   5  -1.000000e-01 deg
+[deg] x-scale
+ 125    0  CUNIT1A   8  "deg"
+Degree units are required
+ 126    0  CTYPE1A   8  "RA---SZP"
+Right ascension in slant zenithal projection
+ 127    0  CRVAL1A   5  +1.500000e+02 deg
+[deg] Right ascension at the reference point
+ 128    0  CNAME1A   8  "Right ascension (J2000)"
+Axis name for labelling purposes
+ 129    0  CDELT2A   5  +1.000000e-01 deg
+[deg] y-scale
+ 130    0  CUNIT2A   8  "deg"
+Degree units are required
+ 131    0  CTYPE2A   8  "DEC--SZP"
+Declination in a slant zenithal projection
+ 132    0  CRVAL2A   5  -3.000000e+01 deg
+[deg] Declination at the reference point
+ 133    0  CNAME2A   8  "Declination (J2000)"
+Axis name for labelling purposes
+ 134    0  PV1_1A    5  +0.000000e+00 deg
+[deg] Native longitude of the reference point
+ 135    0  PV1_2A    5  +9.000000e+01 deg
+[deg] Native latitude  of the reference point
+ 136    0  PV1_3A    5  +1.950000e+02 deg
+[deg] LONPOLEa by another name (precedence)
+ 137    0  PV1_4A    5  +9.990000e+02 deg
+[deg] LATPOLEa by another name (precedence)
+ 138    0  PV2_1A    5  +0.000000e+00
+SZP distance, in spherical radii
+ 139    0  PV2_2A    5  +1.800000e+02 deg
+[deg] SZP P-longitude
+ 140    0  PV2_3A    5  +4.500000e+01 deg
+[deg] SZP P-latitude
+ 141    0  LONPOLEA  5  +1.950000e+02 deg
+[deg] Native longitude of the NCP
+ 142    0  LATPOLEA  5  +9.990000e+02 deg
+[deg] Native latitude of the NCP
+ 143    0  RADESYSA  8  "FK5"
+Mean equatorial coordinates, IAU 1984 system
+ 144    0  EQUINOXA  5  +2.000000e+03 yr
+[yr] Equinox of equatorial coordinates
+ 146    0  CDELT3A   5  -9.635265e-06 m
+[m] Wavelength scale
+ 147    0  CUNIT3A   8  "m"
+Wavelength units
+ 148    0  CTYPE3A   8  "WAVE-F2W"
+Frequency axis expressed as wavelength
+ 149    0  CRVAL3A   5  +2.149820e-01 m
+[m] Reference wavelength
+ 150    0  CNAME3A   8  "Wavelength"
+Axis name for labelling purposes
+ 151    0  CRDER3A   5  +1.000000e-11 m
+[m] Wavelength calibration, random error
+ 152    0  CSYER3A   5  +1.000000e-12 m
+[m] Wavelength calibration, systematic error
+ 153    0  RESTFRQA  5  +1.420406e+09 Hz
+[Hz] HI rest frequency
+ 154    0  RESTWAVA  5  +2.110611e-01 m
+[m] HI rest wavelength
+ 155    0  SPECSYSA  8  "BARYCENT"
+Reference frame of spectral coordinates
+ 156    0  SSYSOBSA  8  "TOPOCENT"
+Reference frame of observation
+ 157    0  VELOSYSA  5  +1.500000e+03 m/s
+[m/s] Bary-topo velocity towards the source
+ 158    0  SSYSSRCA  8  "LSRK"
+Reference frame of source redshift
+ 159    0  ZSOURCEA  5  +2.500000e-03
+Redshift of the source
+ 161    0  CDELT4A   5  +1.000000e+00 s
+[s] Time scale
+ 162    0  CUNIT4A   8  "s"
+Time units
+ 163    0  CTYPE4A   8  "TIME'x'"
+String value and comment containing quotes (')
+ 164    0  CRVAL4A   5  -2.000000e+03 s
+[s] Time at the reference point
+ 165    0  CNAME4A   8  "Time offset"
+Axis name for labelling purposes
+ 166    0  PS4_0A    8  "UTC"
+Time measurement system
+ 189    0  WCSAXESI  2  3
+Three coordinate axes
+ 190    0  WCSNAMEI  8  "IRAF representation: ZPN projection"
+Name of this coordinate system
+ 192    0  CRPIX1I   5  +5.130000e+02
+Pixel coordinate of reference point
+ 193    0  CRPIX2I   5  +5.130000e+02
+Pixel coordinate of reference point
+ 194    0  CRPIX3I   5  +1.025000e+03
+Pixel coordinate of reference point
+ 195    0  CD1_1I    5  -8.660254e-02
+Linear transformation matrix element
+ 196    0  CD1_2I    5  -5.000000e-02
+Linear transformation matrix element
+ 197    0  CD2_1I    5  -5.000000e-02
+Linear transformation matrix element
+ 198    0  CD2_2I    5  +8.660254e-02
+Linear transformation matrix element
+ 199    0  CD3_3I    5  -4.565154e-05
+Redshift scale
+ 201    0  CDELT1I   5  -1.000000e-01 deg
+[deg] x-scale (informational)
+ 202    0  CUNIT1I   8  "deg"
+Degree units are required
+ 203    0  CTYPE1I   8  "RA---ZPN"
+Right ascension in slant zenithal projection
+ 204    0  CRVAL1I   5  +1.500000e+02 deg
+[deg] Right ascension at the reference point
+ 205    0  CNAME1I   8  "Right ascension (J2000)"
+Axis name for labelling purposes
+ 206    0  CDELT2I   5  +1.000000e-01 deg
+[deg] y-scale (informational)
+ 207    0  CUNIT2I   8  "deg"
+Degree units are required
+ 208    0  CTYPE2I   8  "DEC--ZPN"
+Declination in a slant zenithal projection
+ 209    0  CRVAL2I   5  -3.000000e+01 deg
+[deg] Declination at the reference point
+ 210    0  CNAME2I   8  "Declination (J2000)"
+Axis name for labelling purposes
+ 211    0  PV2_1I    5  +1.000000e+00
+ZPN P1  coefficient for approximating TAN
+ 212    0  PV2_3I    5  +3.333333e-01
+ZPN P3  coefficient for approximating TAN
+ 213    0  PV2_5I    5  +1.333333e-01
+ZPN P5  coefficient for approximating TAN
+ 214    0  PV2_7I    5  +5.396825e-02
+ZPN P7  coefficient for approximating TAN
+ 215    0  PV2_9I    5  +2.186949e-02
+ZPN P9  coefficient for approximating TAN
+ 216    0  PV2_11I   5  +8.863236e-03
+ZPN P11 coefficient for approximating TAN
+ 217    0  PV2_13I   5  +3.592128e-03
+ZPN P13 coefficient for approximating TAN
+ 218    0  PV2_15I   5  +1.455834e-03
+ZPN P15 coefficient for approximating TAN
+ 219    0  PV2_17I   5  +5.900270e-04
+ZPN P17 coefficient for approximating TAN
+ 220    0  PV2_19I   5  +2.391290e-04
+ZPN P19 coefficient for approximating TAN
+ 221    0  LONPOLEI  5  +1.950000e+02 deg
+[deg] Native longitude of the NCP
+ 222    0  LATPOLEI  5  +9.990000e+02 deg
+[deg] Native latitude of the NCP
+ 223    0  RADESYSI  8  "FK5"
+Mean equatorial coordinates, IAU 1984 system
+ 224    0  EQUINOXI  5  +2.000000e+03 yr
+[yr] Equinox of equatorial coordinates
+ 226    0  CDELT3I   5  -4.565154e-05
+Redshift scale (informational)
+ 227    0  CTYPE3I   8  "ZOPT-F2W"
+Frequency axis expressed as redshift
+ 228    0  CRVAL3I   5  +1.857709e-02
+Reference redshift
+ 229    0  CNAME3I   8  "Redshift"
+Axis name for labelling purposes
+ 230    0  CRDER3I   5  +5.000000e-11
+Redshift calibration, random error
+ 231    0  CSYER3I   5  +5.000000e-12
+Redshift calibration, systematic error
+ 232    0  RESTFRQI  5  +1.420406e+09 Hz
+[Hz] HI rest frequency
+ 233    0  RESTWAVI  5  +2.110611e-01 m
+[m] HI rest wavelength
+ 234    0  SSYSOBSI  8  "TOPOCENT"
+Reference frame of observation
+ 235    0  VELOSYSI  5  +1.500000e+03 m/s
+[m/s] Bary-topo velocity towards the source
+ 236    0  SSYSSRCI  8  "LSRK"
+Reference frame of source redshift
+ 237    0  VSOURCEI  5  +7.485443e+05 m/s
+[m/s] Apparent radial velocity of the source
+ 240    0  CROTA2I   5  +3.000000e+01 deg
+[deg] Bulk image rotation
+ 241    0  EPOCHI    2  2000 yr
+[yr] Equinox of equatorial coordinates
+ 242    0  VELREFI   2  258
+Barycentric radio velocity
+ 254    0  OBSGEO-X  5  -4.554232e+06 m
+[m] ITRF observatory coordinates
+ 255    0  OBSGEO-Y  5  +2.816758e+06
+
+ 256    0  OBSGEO-Z  5  -3.454036e+06
+
+ 257    0  MJD-OBS   5  +3.588362e+04 d
+[d] MJD at start of observation (UTC)
+ 258    0  MJD-AVG   5  +3.588370e+04 d
+[d] MJD mid-observation time (UTC)
+ 259    0  DATE-OBS  8  "1957-02-14T15:00:00"
+UTC date corresponding to MJD-OBS
+ 260    0  DATE-AVG  8  "1957-02-14T16:48:00"
+UTC date corresponding to MJD-AVG
+ 268    0  CRPIXELS  5  +0.000000e+00
+Furphy, not CRPIXja
+ 269    0  PCATALOG  5  +0.000000e+00
+Furphy, not PCi_ja
+ 270    0  CDELTA    5  +0.000000e+00
+Furphy, not CDELTia
+ 271    0  CDI_JA    5  +0.000000e+00
+Furphy, not CDi_ja
+ 272    0  CUNITARY  5  +0.000000e+00
+Furphy, not CUNITia
+ 273    0  CTYPEXY   5  +0.000000e+00
+Furphy, not CTYPEia
+ 274    0  CRVALUE   5  +0.000000e+00
+Furphy, not CRVALia
+ 275    0  CNAME     5  +0.000000e+00
+Furphy, not CNAMEia
+ 276    0  PV1_1AL   5  +0.000000e+00
+Furphy, not PVi_ma
+ 277    0  PV02_1    5  +0.000000e+00
+Furphy, not PVi_ma (leading zero on i)
+ 278    0  PV2_01    5  +0.000000e+00
+Furphy, not PVi_ma (leading zero on m)
+ 279    0  PSEUDO    5  +0.000000e+00
+Furphy, not PSi_ma
+ 280    0  EPOCHAL   5  +0.000000e+00
+Furphy, not EPOCH
+ 281    0  VELREF1   5  +0.000000e+00
+Furphy, not VELREF
+ 289    0  CTYPE1    5  +0.000000e+00
+Illegal, CTYPEia must be string type
+ 290    0  PV2_1     8  "0.0"
+Illegal, PVi_ma must be numeric
+ 291    0  PV2_1     0
+ =                 0.0 / Illegal, "= " not in columns 9-10
+ 292    0  EPOCH     8  "2000.0"
+Illegal, EPOCH must be numeric
+ 300    0  NOVLSPEC  0
+=1                     / Not a valid value specifier (no " " in col. 10)
+ 301    0  INT32     2  12345
+Not a 64-bit integer
+ 302    0  INT32     2  -123456789
+Not a 64-bit integer
+ 303    0  INT32     2  -2147483648
+Not a 64-bit integer (INT_MIN)
+ 304    0  INT32     2  2147483647
+Not a 64-bit integer (INT_MAX)
+ 305    0  INT32     2  12345
+Not a very long integer
+ 306    0  INT32     2  -123456789
+Not a very long integer
+ 307    0  INT64     3  -2147483649
+64-bit integer (INT_MIN - 1)
+ 308    0  INT64     3  +2147483648
+64-bit integer (INT_MAX + 1)
+ 309    0  INT64     3  +100000000000000000
+64-bit integer
+ 310    0  INT64     3  -876543210987654321
+64-bit integer
+ 311    0  INT64     3  -9223372036854775808
+Not a very long integer (LONG_MIN)
+ 312    0  INT64     3  +9223372036854775807
+Not a very long integer (LONG_MAX)
+ 313    0  INT64     3  -876543210987654321
+64-bit integer
+ 314    0  INTVL     4  -9223372036854775809
+Very long integer (LONG_MIN - 1)
+ 315    0  INTVL     4  +9223372036854775808
+Very long integer (LONG_MAX + 1)
+ 316    0  INTVL     4  -100000000000000000000000000000876543210987654321
+Very-long integer
+ 317    0  INTVL     4  +123456789012345678901234567890123456789012345678901234567890123456789
+
+ 318    0  INTVL     4  +1234567890123456789012345678901234567890123456789012345678901234567890
+
+ 319    0  COMPLEX   6  137  -1
+An integer complex keyvalue
+ 320    0  COMPLEX   7  +1.000000e+06  -1.000000e-01
+A floating point complex keyvalue
+ 321    0  GOODSTR   8  ""G'DAY""
+A valid string keyvalue
+ 322    0  BLANKS    8  " "
+An all-blank string equals a single blank
+ 323    0  LONGSTR   8  "The loooooongest possible non-continued string value, 68 characters."
+
+ 324    0  CONTSTR  18  "The quick brown "
+Continued string, with & (will be stripped off)
+ 325    4  CONTINUE 28  "fox jumps over the"
+CONTINUE  'fox jumps over the'   Relaxed handling of invalid keycomment         
+ 326    0  CONTINUE 38  " lazy dog"
+
+ 327    0  PI        5  +3.141593e+00
+[!?] is not a valid units specification
+ 328    0  CONTINUE  0
+      'Not a valid string continuation'
+ 331    1  BadKey    2  111
+Example of a syntax error, invalid keyword
+ 332    1  BADKEY!   2  222
+Example of a syntax error, invalid keyword
+ 333    1  BAD KEY   2  333
+Example of a syntax error, invalid keyword
+ 334    2  BADSTR    0
+BADSTR  =                  BAD / Example of a syntax error, invalid keyvalue    
+ 335    2  BADSTR    0
+BADSTR  =                "BAD" / Example of a syntax error, invalid keyvalue    
+ 336    4  BADSTR   -8  ("BAD")
+BADSTR  =          'BAD' 'STR' / Example syntax error, invalid string keyvalue  
+ 337    4  BADFLT   -2  (49)
+BADFLT  =              49 + 94 / Example of a syntax error, invalid keyvalue    
+ 338    4  BADFLT    0
+BADFLT  =                 1D99 / Example of a syntax error, invalid keyvalue    
+ 339    4  BADCOMM  -2  (999)
+BADCOMM =                  999   Example of a syntax error, invalid keycomment  
+-340    8  END       8  "ILLEGAL"
+Illegal END keyrecord
+ 344   16  DANGLE1   0
+ Keyrecords following the END keyrecord should be ignored.
+ 345   16  DANGLE2   0
+
+ 346   16  DANGLE3   0
+
+
+
+Indexes of selected keywords:
+SIMPLE      1    0   -1   1    F
+BITPIX      1    1   -1   2  -32
+NAXIS       1    2   -1   2    0
+COMMENT   124    4  329   0
+HISTORY     0   -1   -1
+           38    3  359   0
+END         2  339  341   8

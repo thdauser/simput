@@ -1,5 +1,5 @@
 # The sub-directories are built before the current directory.
 # In order to change this, include "." in the list of SUBDIRS.
-SUBDIRS = libsimput sample
+SUBDIRS= extlib libsimput sample 
 
-dist_noinst_DATA = INSTALL.txt
+dist_noinst_DATA= INSTALL.txt

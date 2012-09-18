@@ -1,0 +1,144 @@
+Testing FITS image header parser (tfitshdr.f)
+---------------------------------------------
+
+Found 360 header keyrecords.
+
+The following keyrecords will not be listed:
+  "SIMPLE  "
+  "BITPIX  "
+  "NAXIS   "
+  "COMMENT "
+  "HISTORY "
+  "        "
+  "END     "
+
+210 header keyrecords parsed by FITSHDR, 11 rejected:
+
+  69    0  ALTRPIX   5  +0.000000E+00
+Alternate reference pixel (not handled)
+  70    0  ALTRVAL   5  +0.000000E+00
+Alternate reference value (not handled)
+ 136    0  CRPIXELS  5  +0.000000E+00
+Furphy, not CRPIXja
+ 137    0  PCATALOG  5  +0.000000E+00
+Furphy, not PCi_ja
+ 138    0  CDELTA    5  +0.000000E+00
+Furphy, not CDELTia
+ 139    0  CDI_JA    5  +0.000000E+00
+Furphy, not CDi_ja
+ 140    0  CUNITARY  5  +0.000000E+00
+Furphy, not CUNITia
+ 141    0  CTYPEXY   5  +0.000000E+00
+Furphy, not CTYPEia
+ 142    0  CRVALUE   5  +0.000000E+00
+Furphy, not CRVALia
+ 143    0  CNAME     5  +0.000000E+00
+Furphy, not CNAMEia
+ 144    0  PV1_1AL   5  +0.000000E+00
+Furphy, not PVi_ma
+ 145    0  PV02_1    5  +0.000000E+00
+Furphy, not PVi_ma (leading zero on i)
+ 146    0  PV2_01    5  +0.000000E+00
+Furphy, not PVi_ma (leading zero on m)
+ 147    0  PSEUDO    5  +0.000000E+00
+Furphy, not PSi_ma
+ 148    0  EPOCHAL   5  +0.000000E+00
+Furphy, not EPOCH
+ 149    0  VELREF1   5  +0.000000E+00
+Furphy, not VELREF
+ 157    0  CTYPE1    5  +0.000000E+00
+Illegal, CTYPEia must be string type
+ 158    0  PV2_1     8  "0.0"
+Illegal, PVi_ma must be numeric
+ 159    0  PV2_1     0
+ =                 0.0 / Illegal, "= " not in columns 9-10
+ 160    0  EPOCH     8  "2000.0"
+Illegal, EPOCH must be numeric
+ 168    0  NOVLSPEC  0
+=1                     / Not a valid value specifier (no " " in col. 10)
+ 169    0  INT32     2  12345
+Not a 64-bit integer
+ 170    0  INT32     2  -123456789
+Not a 64-bit integer
+ 171    0  INT32     2  -2147483648
+Not a 64-bit integer (INT_MIN)
+ 172    0  INT32     2  2147483647
+Not a 64-bit integer (INT_MAX)
+ 173    0  INT32     2  12345
+Not a very long integer
+ 174    0  INT32     2  -123456789
+Not a very long integer
+ 175    0  INT64     3  -2147483649
+64-bit integer (INT_MIN - 1)
+ 176    0  INT64     3  +2147483648
+64-bit integer (INT_MAX + 1)
+ 177    0  INT64     3  +100000000000000000
+64-bit integer
+ 178    0  INT64     3  -876543210987654321
+64-bit integer
+ 179    0  INT64     3  -9223372036854775808
+Not a very long integer (LONG_MIN)
+ 180    0  INT64     3  +9223372036854775807
+Not a very long integer (LONG_MAX)
+ 181    0  INT64     3  -876543210987654321
+64-bit integer
+ 182    0  INTVL     4  -9223372036854775809
+Very long integer (LONG_MIN - 1)
+ 183    0  INTVL     4  +9223372036854775808
+Very long integer (LONG_MAX + 1)
+ 184    0  INTVL     4  -100000000000000000000000000000876543210987654321
+Very-long integer
+ 185    0  INTVL     4  +123456789012345678901234567890123456789012345678901234567890123456789
+
+ 186    0  INTVL     4  +1234567890123456789012345678901234567890123456789012345678901234567890
+
+ 187    0  COMPLEX   6  137         -1
+An integer complex keyvalue
+ 188    0  COMPLEX   7  +1.000000E+06  -1.000000E-01
+A floating point complex keyvalue
+ 189    0  GOODSTR   8  ""G'DAY""
+A valid string keyvalue
+ 190    0  BLANKS    8  " "
+An all-blank string equals a single blank
+ 191    0  LONGSTR   8  "The loooooongest possible non-continued string value, 68 characters."
+
+ 192    0  CONTSTR  18  "The quick brown "
+Continued string, with & (will be stripped off)
+ 193    4  CONTINUE 28  "fox jumps over the"
+CONTINUE  'fox jumps over the'   Relaxed handling of invalid keycomment         
+ 194    0  CONTINUE 38  " lazy dog"
+
+ 195    0  PI        5  +3.141593E+00
+[!?] is not a valid units specification
+ 196    0  CONTINUE  0
+      'Not a valid string continuation'
+ 199    1  BadKey    2  111
+Example of a syntax error, invalid keyword
+ 200    1  BADKEY!   2  222
+Example of a syntax error, invalid keyword
+ 201    1  BAD KEY   2  333
+Example of a syntax error, invalid keyword
+ 202    2  BADSTR    0
+BADSTR  =                  BAD / Example of a syntax error, invalid keyvalue    
+ 203    2  BADSTR    0
+BADSTR  =                "BAD" / Example of a syntax error, invalid keyvalue    
+ 204    4  BADSTR   -8  ("BAD")
+BADSTR  =          'BAD' 'STR' / Example syntax error, invalid string keyvalue  
+ 205    4  BADFLT   -2  (49)
+BADFLT  =              49 + 94 / Example of a syntax error, invalid keyvalue    
+ 206    4  BADFLT    0
+BADFLT  =                 1D99 / Example of a syntax error, invalid keyvalue    
+ 207    4  BADCOMM  -2  (999)
+BADCOMM =                  999   Example of a syntax error, invalid keycomment  
+-208    8  END       8  "ILLEGAL"
+Illegal END keyrecord
+
+
+Indexes of selected keywords:
+SIMPLE      1    0   -1   1    F
+BITPIX      1    1   -1   2  -32
+NAXIS       1    2   -1   2    0
+COMMENT   124    4  197   0
+HISTORY     0   -1   -1
+           23    3  208   0
+END         2  207  209   8

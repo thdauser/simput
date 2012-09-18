@@ -72,13 +72,13 @@ int main(int argc, char **argv)
 
       SimputSource* src=
 	getSimputSourceV(1, "", -1.*M_PI/180., 2.5*M_PI/180., 0., 1., 
-			      1., 10., 5.e-12, "", "", "", &status);
+			      1., 10., 5.e-12, "[SPEC,1][#row==1]", "", "", &status);
       CHECK_STATUS_BREAK(status);
       appendSimputSource(cat, src, &status);
       CHECK_STATUS_BREAK(status);
 
       src=getSimputSourceV(2, "", -1.8*M_PI/180., 2.3*M_PI/180., 30.*M_PI/180., 1.2, 
-			   0.5, 15., 8.e-13, "", "", "", &status);
+			   0.5, 15., 8.e-13, "[SPEC,1][#row==1]", "", "", &status);
       CHECK_STATUS_BREAK(status);
       appendSimputSource(cat, src, &status);
       CHECK_STATUS_BREAK(status);
