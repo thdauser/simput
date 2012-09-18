@@ -23,13 +23,15 @@
   simput.h
 
   Version  Date       Author                
-  --------------------------------------------------------------------------- 
-  0.0.1  2011/04/02   Christian Schmid      initial 
-  0.0.2  2011/09/08   Christian Schmid      updated
+  -------------------------------------------------------------------- 
+  0.1  2011/04/02   Christian Schmid      initial 
+  0.2  2011/09/08   Christian Schmid      updated
 
-  0.0.11 2012/01/26   Christian Schmid      updated
-  0.0.12 2012/02/21   Christian Schmid      updated
-  --------------------------------------------------------------------------- 
+  0.11 2012/01/26   Christian Schmid      updated
+  0.12 2012/02/21   Christian Schmid      updated
+
+  0.25 2012/08/31   Christian Schmid      renewed interface
+  -------------------------------------------------------------------- 
 
    This is the header file of the simput library. The library provides
    basic routines to create a SIMPUT source catalog file according to
@@ -69,23 +71,27 @@ typedef struct {
   /** Upper limit of reference energy band [keV]. */
   float e_max;
 
-  /** Source energy flux density in the reference energy band
-      [erg/s/cm^2]. */
+  /** Flux of the source in the reference energy band [erg/s/cm^2]. */
   float eflux;
 
-  /** Reference to the storage location of the source spectrum. */
+  /** Reference string to the storage location of the spectrum of the
+      source. */
   char* spectrum;
 
-  /** Reference to the storage location of the source image. */
+  /** Reference string to the storage location of a spatial image of
+      the source. */
   char* image;
 
-  /** Reference to the storage location of the source light curve or
-      PSD. */
+  /** Reference string to the storage location of a light curve or PSD
+      of the source. */
   char* timing;
 
-} SimputSource;
+} SimputSrc;
 
 
+/** Main data structure providing access to a SIMPUT catalog in a FITS
+    file. The data structure contains basic information about the
+    catalog as well as buffers for data extensions. */
 typedef struct {
   /** Pointer to the catalog extension. */
   fitsfile* fptr;
@@ -114,34 +120,31 @@ typedef struct {
   /** Buffer for pre-loaded SIMPUT sources. */
   void* srcbuff;
 
-  /** Buffer for pre-loaded spectra. */
-  void* specbuff;
+  /** Buffer for pre-loaded mission-independent spectra. */
+  void* midpspecbuff;
+  
+  /** Buffer for pre-loaded photon lists. */
+  void* phlistbuff;
 
   /** Buffer for pre-loaded light curves. */
   void* lcbuff;
 
+  /** Buffer for pre-loaded power spectra. */
+  void* psdbuff;
+
   /** Buffer for pre-loaded images. */
   void* imgbuff;
+
+  /** Buffer for pre-loaded spectra. */
+  void* specbuff;
+
+  /** Buffer for pre-loaded Klein and Robert light curves. */
+  void* krlcbuff;
 
   /** Instrument ARF. */
   struct ARF* arf;
 
-} SimputCatalog;
-
-
-/** Reference flux of a certain spectrum in a particular energy
-    band. */
-typedef struct {
-  /** Lower Boundary of the energy band [keV]. */
-  float emin;
-
-  /** Upper Boundary of the energy bin [keV]. */
-  float emax;
-
-  /** Reference flux in this band [erg/s/cm^2]. */
-  float flux;
-
-} SimputSpecBandFlux;
+} SimputCtlg;
 
 
 /** Mission-independent spectrum. */
@@ -155,25 +158,29 @@ typedef struct {
   /** Photon flux distribution [photons/s/cm**2/keV]. */
   float* pflux;
 
-  /** Energy flux in a certain reference band. This value is only
-      calculated once (if the same reference band is used all the
-      time) and stored here in order to avoid recalculation during the
-      photon generation. */
-  SimputSpecBandFlux* refflux;
-
-  /** Probability distribution normalized to the total photon rate
-      [photons/s]. */
-  double* distribution;
-
   /** Unique case-sensitive designator for an individual spectrum. */
   char* name;
 
   /** Reference to the location of the spectrum given by the extended
-      filename syntax. This reference is used to check, whether a
+      filename syntax. This reference is used to check, whether the
       spectrum is already contained in the internal storage. */
   char* fileref;
 
 } SimputMIdpSpec;
+
+
+/** Spectrum (spectral distribution function). */
+typedef struct {
+  /** Probability distribution normalized to the total photon rate
+      [photons/s]. */
+  double* distribution;
+
+  /** Reference to the location of the spectrum given by the extended
+      filename syntax. This reference is used to check, whether the
+      spectrum is already contained in the internal storage. */
+  char* fileref;
+
+} SimputSpec;
 
 
 /** SIMPUT light curve. */
@@ -189,6 +196,56 @@ typedef struct {
 
   /** Relative flux values (unitless). */
   float* flux;
+
+  /** Reference to the storage location of the source spectrum at a
+      particular point of time or phase respectively. */
+  char** spectrum;
+
+  /** Reference to the storage location of the source image at a
+      particular point of time or phase respectively. */
+  char** image;
+
+  /** MJD for reference time [d]. */
+  double mjdref;
+
+  /** Zero time [s]. */
+  double timezero;
+
+  /** Phase of periodic oscillation at timezero. */
+  double phase0;
+
+  /** Duration of one oscillation period [s]. */
+  double period;
+
+  /** Flux scaling factor. */
+  float fluxscal;
+
+  /** If the light curve has been produced from a PSD, it is assigned
+      to a particular source and cannot be re-used for different
+      sources. In that case the SRC_ID of the respective source is
+      stored in this variable. Otherwise its value is set to 0. */
+  long src_id;
+
+  /** Reference to the location of the light curve given by the
+      extended filename syntax. This reference is used to check,
+      whether the light curve is already contained in the internal
+      storage. */
+  char* fileref;
+
+} SimputLC;
+
+
+/** SIMPUT light curve converted to the form needed by the Klein &
+    Roberts (1984) algorithm. */
+typedef struct {
+  /** Number of entries in the light curve. */
+  long nentries;
+
+  /** Time values [s]. */
+  double* time;
+
+  /** Phase values (between 0 and 1). */
+  double* phase;
 
   /** Piece-wise linear light curve data points. The value a_k
       represents the gradient of the light curve between the time t_k
@@ -216,9 +273,6 @@ typedef struct {
 
   /** Duration of one oscillation period [s]. */
   double period;
-
-  /** Derivative of the period with respect to the time. */
-  double dperiod;
   
   /** Flux scaling factor. */
   float fluxscal;
@@ -235,7 +289,7 @@ typedef struct {
       storage. */
   char* fileref;
 
-} SimputLC;
+} SimputKRLC;
 
 
 /** SIMPUT power spectral density (PSD). */
@@ -286,16 +340,14 @@ typedef struct {
 /////////////////////////////////////////////////////////////////
 
 
-/** Constructor for the SimputCatalog data structure. Allocates
-    memory, initializes elements with their default values and
-    pointers with NULL. */
-SimputCatalog* getSimputCatalog(int* const status);
-
-/** Destructor for the SimputCatalog. Closes the FITS file,
-    releases the allocated memory, and finally sets the pointer to
+/** Constructor for the SimputCtlg data structure. Allocates memory,
+    initializes elements with their default values and pointers with
     NULL. */
-void freeSimputCatalog(SimputCatalog** const catalog,
-		       int* const status);
+SimputCtlg* getSimputCtlg(int* const status);
+
+/** Destructor for the SimputCtlg. Closes the FITS file, releases the
+    allocated memory, and finally sets the pointer to NULL. */
+void freeSimputCtlg(SimputCtlg** const ctlg, int* const status);
 
 /** Open a FITS file with a SIMPUT source catalog. The access mode can
     be either READONLY to open an existing catalog or READWRITE for
@@ -304,64 +356,70 @@ void freeSimputCatalog(SimputCatalog** const catalog,
     values are only required for the creation of a new catalog. If the
     values are set to 0, variable length string columns will be
     used. Otherwise fixed length string columns are used. */
-SimputCatalog* openSimputCatalog(const char* const filename,
-				 const int mode, 
-				 const int maxstrlen_src_name,
-				 const int maxstrlen_spectrum,
-				 const int maxstrlen_image,
-				 const int maxstrlen_timing,
-				 int* const status);
+SimputCtlg* openSimputCtlg(const char* const filename,
+			   const int mode, 
+			   const int maxstrlen_src_name,
+			   const int maxstrlen_spectrum,
+			   const int maxstrlen_image,
+			   const int maxstrlen_timing,
+			   int* const status);
 
-/** Returns the number of sources contained in the specified SIMPUT
-    catalog. */
-long getSimputCatalogNSources(const SimputCatalog* const cat);
+/** Returns the number of sources contained in the specified
+    SIMPUTCtlg. */
+long getSimputCtlgNSources(const SimputCtlg* const cat);
 
 
-/** Constructor for the SimputSource data structure. Allocates
-    memory, initializes elements with their default values and
-    pointers with NULL. */
-SimputSource* getSimputSource(int* const status);
+/** Constructor for the SimputSrc data structure. Allocates memory,
+    initializes elements with their default values and pointers with
+    NULL. */
+SimputSrc* getSimputSrc(int* const status);
 
-/** Constructor for the SimputSource data structure. Allocates
-    memory and initializes elements with the given values. */
-SimputSource* getSimputSourceV(const long src_id, 
-			       const char* const src_name,
-			       /** ([rad]). */
-			       const double ra,
-			       /** ([rad]). */
-			       const double dec,
-			       /** Image rotation angle ([rad]). Only
-				   applicable for extended sources
-				   with an image. */
-			       const float imgrota,
-			       const float imgscal,
-			       /** Lower boundary of reference energy
-				   band ([keV]). */
-			       const float e_min,
-			       /** Upper boundary of reference energy
-				   band ([keV]). */
-			       const float e_max,
-			       /** Energy flux density in the
-				   reference energy band
-				   ([erg/s/cm^2]). */
-			       const float eflux,
-			       const char* const spectrum,
-			       const char* const image,
-			       const char* const timing,
-			       int* const status);
+/** Constructor for the SimputSrc data structure. Allocates memory and
+    initializes elements with the given values. */
+SimputSource* getSimputSrcV(const long src_id, 
+			    const char* const src_name,
+			    /** ([rad]). */
+			    const double ra,
+			    /** ([rad]). */
+			    const double dec,
+			    /** Image rotation angle ([rad]). Only
+				applicable for extended sources with
+				an image. */
+			    const float imgrota,
+			    const float imgscal,
+			    /** Lower boundary of reference energy
+				band ([keV]). */
+			    const float e_min,
+			    /** Upper boundary of reference energy
+				band ([keV]). */
+			    const float e_max,
+			    /** Energy flux density in the reference
+				energy band ([erg/s/cm^2]). */
+			    const float eflux,
+			    const char* const spectrum,
+			    const char* const image,
+			    const char* const timing,
+			    int* const status);
 
-/** Destructor for the SimputSource. Calls destructor routines
+/** Destructor for the SimputSrc. Calls destructor routines
     for all contained elements, releases the allocated memory, and
     finally sets the pointer to NULL. */
-void freeSimputSource(SimputSource** const entry);
+void freeSimputSrc(SimputSrc** const src);
 
 /** Load a source from a particular row of the catalog in the FITS
     file. Row numbering starts at 1. The returned pointer to the
-    SimputSource must be free'd afterwards in order to avoid a memory
+    SimputSrc must be free'd afterwards in order to avoid a memory
     leak. */
-SimputSource* loadSimputSource(SimputCatalog* const cat,
-			       const long row,
-			       int* const status);
+SimputSrc* loadSimputSrc(SimputCtlg* const cat,
+			 const long row,
+			 int* const status);
+
+
+
+
+
+
+
 
 /** Return an entry from a SimputCatalog, which is contained in a
     particular row of the FITS table. According to the FITS
