@@ -646,7 +646,7 @@ SimputMIdpSpec* getSimputSrcMIdpSpec(SimputCtlg* const cat,
 
   if (EXTTYPE_MIDPSPEC==spectype) {
     // Determine the spectrum.
-    SimputSpec* spec=getSimputMIdpSpec(cat, specref, status);
+    SimputMIdpSpec* spec=getSimputMIdpSpec(cat, specref, status);
     CHECK_STATUS_RET(*status, 0);
 
     return(spec);
@@ -1279,31 +1279,18 @@ float getSimputPhotonRate(SimputCtlg* const cat,
 }
 
 
-int getSimputPhoton(SimputCtlg* const cat,
-		    SimputSrc* const src,
-		    double prevtime,
-		    const double mjdref,
-		    double* const time,
-		    float* const energy,
-		    double* const ra,
-		    double* const dec,
-		    int* const status)
+int getSimputPhotonTime(SimputCtlg* const cat,
+			SimputSrc* const src,
+			double prevtime,
+			const double mjdref,
+			double* const nexttime,
+			int* const status)
 {
-  // Determine the references to the spectrum, timing, and image
-  // extensions.
-  char specref[SIMPUT_MAXSTR];
+  // Determine the time of the next photon.
+  // Determine the reference to the timing extension.
   char timeref[SIMPUT_MAXSTR];
-  char imagref[SIMPUT_MAXSTR];
-  getSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
-  CHECK_STATUS_RET(*status, 0);
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_RET(*status, 0);
-  getSrcImagRef(cat, src, prevtime, mjdref, imagref, status);
-  CHECK_STATUS_RET(*status, 0);
-
-
-  // ---
-  // Determine the time of the next photon.
 
   // Determine the average photon rate.
   float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
@@ -1316,7 +1303,8 @@ int getSimputPhoton(SimputCtlg* const cat,
       return(1);
     } else {
       assert(avgrate>0.);
-      *time=prevtime+ rndexp((double)1./avgrate);
+      *nexttime=prevtime+ rndexp((double)1./avgrate);
+      return(0);
     }
 
   } else {
@@ -1367,14 +1355,17 @@ int getSimputPhoton(SimputCtlg* const cat,
 	  // with the interval length is a very small number in comparison 
 	  // to b_kk. If a_kk * stepwidth is much smaller than b_kk, the 
 	  // rate in the interval can be assumed to be approximately constant.
-	  return(getKRLCTime(lc, kk, nperiods, mjdref) +
-		 (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
-				  2.*lc->a[kk]*lc->b[kk]*t - 
-				  2.*lc->a[kk]*log(1.-u)/avgrate)
-		  )/lc->a[kk]);
+	  *nexttime=
+	    getKRLCTime(lc, kk, nperiods, mjdref) +
+	    (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
+			     2.*lc->a[kk]*lc->b[kk]*t - 
+			     2.*lc->a[kk]*log(1.-u)/avgrate)
+	     )/lc->a[kk];
+	  return(0);
 	  
 	} else { // a_kk == 0
-	  return(prevtime-log(1.-u)/(lc->b[kk]*avgrate));
+	  *nexttime=prevtime-log(1.-u)/(lc->b[kk]*avgrate);
+	  return(0);
 	}
 
       } else {
@@ -1394,24 +1385,34 @@ int getSimputPhoton(SimputCtlg* const cat,
     // So the routine has failed to determine a photon time.
     return(1);
   }
-  // END of determine the time of the next photon.
-  // ---
+}
 
-  
-  // Determine again the references to the spectrum and 
+
+void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
+				SimputSrc* const src,
+				double currtime,
+				const double mjdref,
+				float* const energy,
+				double* const ra,
+				double* const dec,
+				int* const status)
+{
+  // Determine the references to the spectrum and 
   // image for the updated photon arrival time.
-  getSrcSpecRef(cat, src, *time, mjdref, specref, status);
-  CHECK_STATUS_RET(*status, 0);
-  getSrcImagRef(cat, src, *time, mjdref, imagref, status);
-  CHECK_STATUS_RET(*status, 0);
+  char specref[SIMPUT_MAXSTR];
+  getSrcSpecRef(cat, src, currtime, mjdref, specref, status);
+  CHECK_STATUS_VOID(*status);
+  char imagref[SIMPUT_MAXSTR];
+  getSrcImagRef(cat, src, currtime, mjdref, imagref, status);
+  CHECK_STATUS_VOID(*status);
 
   
   // Determine the extension type of the spectrum and the image
   // reference.
   int spectype=getExtType(cat, specref, status);
-  CHECK_STATUS_RET(*status, 0);
+  CHECK_STATUS_VOID(*status);
   int imagtype=getExtType(cat, imagref, status);
-  CHECK_STATUS_RET(*status, 0);
+  CHECK_STATUS_VOID(*status);
 
 
   // If the spectrum and the image reference point to a photon list,
@@ -1420,7 +1421,7 @@ int getSimputPhoton(SimputCtlg* const cat,
     float b_energy;
     double b_ra, b_dec;
     //getSimputPhotonFromPhoList(, &b_energy, &b_ra, &b_dec, status);
-    CHECK_STATUS_RET(*status, 0);
+    CHECK_STATUS_VOID(*status);
     // TODO
 
     if (EXTTYPE_PHOLIST==spectype) {
@@ -1435,11 +1436,11 @@ int getSimputPhoton(SimputCtlg* const cat,
 
   // ---
   // If the spectrum does NOT refer to a photon list, determine the 
-  // photon energy.
+  // photon energy from a spectrum.
   if (EXTTYPE_MIDPSPEC==spectype) {
     // Determine the spectrum.
     SimputSpec* spec=getSimputSpec(cat, specref, status);
-    CHECK_STATUS_RET(*status, 0);
+    CHECK_STATUS_VOID(*status);
 
     // Get a random number in the interval [0,1].
     double rnd=static_rndgen();
@@ -1454,11 +1455,11 @@ int getSimputPhoton(SimputCtlg* const cat,
     // distribution (using binary search).
     long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
     while (upper>lower) {
-      mid = (lower+upper)/2;
+      mid=(lower+upper)/2;
       if (spec->distribution[mid]<rnd) {
-	lower = mid+1;
+	lower=mid+1;
       } else {
-	upper = mid;
+	upper=mid;
       }
     }
 
@@ -1494,31 +1495,31 @@ int getSimputPhoton(SimputCtlg* const cat,
       CHECK_STATUS_BREAK(*status);
 
       // Perform a binary search in 2 dimensions.
-      double rnd=static_rndgen() * img->dist[img->naxis1-1][img->naxis2-1];
+      double rnd=static_rndgen()*img->dist[img->naxis1-1][img->naxis2-1];
 
       // Perform a binary search to obtain the x-coordinate.
-      long high = img->naxis1-1;
-      long xl   = 0;
+      long high=img->naxis1-1;
+      long xl  =0;
       long mid;
-      long ymax = img->naxis2-1;
+      long ymax=img->naxis2-1;
       while (high > xl) {
-	mid = (xl+high)/2;
+	mid=(xl+high)/2;
 	if (img->dist[mid][ymax] < rnd) {
-	  xl = mid+1;
+	  xl=mid+1;
 	} else {
-	  high = mid;
+	  high=mid;
 	}
       }
 
       // Search for the y coordinate.
-      high = img->naxis2-1;
-      long yl = 0;
+      high=img->naxis2-1;
+      long yl=0;
       while (high > yl) {
-	mid = (yl+high)/2;
+	mid=(yl+high)/2;
 	if (img->dist[xl][mid] < rnd) {
-	  yl = mid+1;
+	  yl=mid+1;
 	} else {
-	  high = mid;
+	  high=mid;
 	}
       }
       // Now xl and yl have pixel positions [long pixel coordinates].
@@ -1534,9 +1535,9 @@ int getSimputPhoton(SimputCtlg* const cat,
       // coordinate system used in the catalog!!
       wcs.crval[0] = src->ra *180./M_PI; // Units (CUNITn) must be [deg]!
       wcs.crval[1] = src->dec*180./M_PI;
-      wcs.cdelt[0] *= 1./src->imgscal;
-      wcs.cdelt[1] *= 1./src->imgscal;
-      wcs.flag = 0;
+      wcs.cdelt[0]*= 1./src->imgscal;
+      wcs.cdelt[1]*= 1./src->imgscal;
+      wcs.flag=0;
 
       // Check that CUNIT is set to "deg". Otherwise there will be a conflict
       // between CRVAL [deg] and CDELT [different unit]. 
@@ -1556,15 +1557,15 @@ int getSimputPhoton(SimputCtlg* const cat,
       // Determine floating point pixel positions shifted by 0.5 in 
       // order to match the FITS conventions and with a randomization
       // over the pixels.
-      double xd = (double)xl + 0.5 + static_rndgen();
-      double yd = (double)yl + 0.5 + static_rndgen();
+      double xd=(double)xl + 0.5 + static_rndgen();
+      double yd=(double)yl + 0.5 + static_rndgen();
 
       // Rotate the image (pixel coordinates) by IMGROTA around the 
       // reference point.
-      double xdrot =  
+      double xdrot= 
 	(xd-wcs.crpix[0])*cos(src->imgrota) + 
 	(yd-wcs.crpix[1])*sin(src->imgrota) + wcs.crpix[0];
-      double ydrot = 
+      double ydrot=
 	-(xd-wcs.crpix[0])*sin(src->imgrota) + 
 	 (yd-wcs.crpix[1])*cos(src->imgrota) + wcs.crpix[1];
       
@@ -1589,6 +1590,30 @@ int getSimputPhoton(SimputCtlg* const cat,
   }
   // END of determine the photon direction.
   // ---
+
+  return;
+}
+
+
+int getSimputPhoton(SimputCtlg* const cat,
+		    SimputSrc* const src,
+		    double prevtime,
+		    const double mjdref,
+		    double* const nexttime,
+		    float* const energy,
+		    double* const ra,
+		    double* const dec,
+		    int* const status)
+{
+  // Determine the time of the next photon.
+  int failed=getSimputPhotonTime(cat, src, prevtime, mjdref, nexttime, status);
+  CHECK_STATUS_RET(*status, failed);
+  if (failed>0) return(failed);
+
+  // Determine the energy and the direction of origin of the photon.
+  getSimputPhotonEnergyCoord(cat, src, *nexttime, mjdref,
+			     energy, ra, dec, status);
+  CHECK_STATUS_RET(*status, 0);
 
   return(0);
 }

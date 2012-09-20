@@ -499,7 +499,7 @@ void setSimputARF(SimputCtlg* const cat, struct ARF* const arf);
 /** Set the random number generator, which is used by the simput
     library routines. The generator should return double valued,
     uniformly distributed numbers in the interval [0,1). */
-void simputSetRndGen(double(*rndgen)(void));
+void setSimputRndGen(double(*rndgen)(void));
 
 /** Determine the energy flux in [erg/s/cm**2] within the reference
     energy band of the specified source valid a the requested point of
@@ -601,6 +601,29 @@ float getSimputSrcExt(SimputCtlg* const cat,
 		      const double mjdref,
 		      int* const status);
 
+
+/* If no photon can be produced, because there is no light curve
+   information available for the specified point of time, the return
+   value of the function will be 1. If a photon is successfully
+   produced, the return value will be 0. */
+int getSimputPhotonTime(SimputCtlg* const cat,
+			SimputSrc* const src,
+			double prevtime,
+			const double mjdref,
+			double* const nexttime,
+			int* const status);
+
+/** Determine the energy and the direction of origin of a new
+    photon. These two calculations have to be combined in one step,
+    because, e.g., a photon list contains both information. */
+void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
+				SimputSrc* const src,
+				double currtime,
+				const double mjdref,
+				float* const energy,
+				double* const ra,
+				double* const dec,
+				int* const status);
 
 /** Produce a photon for a particular source in a SIMPUT catalog. The
     error status variable refers to errors related to the access to
