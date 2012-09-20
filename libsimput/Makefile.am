@@ -15,10 +15,7 @@ AM_CFLAGS = -I@top_srcdir@/extlib/cfitsio -I@top_srcdir@/extlib/wcslib/C $(FFLS)
 lib_LTLIBRARIES= libsimput.la
 
 # Sources:
-libsimput_la_SOURCES = simput.c datastruct.c fileaccess.c $(FSRC)
-#libsimput_la_LIBADD = @top_builddir@/extlib/cfitsio/libcfitsio.a 
-#libsimput_la_LIBADD+= @top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
-#libsimput_la_LIBADD= @top_builddir@/extlib/fftw/libfftw3.la
+libsimput_la_SOURCES= datastruct.c fileaccess.c datahandling.c $(FSRC)
 
 ############ HEADERS #################
 

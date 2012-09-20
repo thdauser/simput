@@ -11,7 +11,7 @@ program fortran_sample
   real(kind=c_double), parameter :: time = 0.0
 
   ! SIMPUT catalog.
-  type(simctl),pointer   :: catalog
+  type(simctl),pointer   :: cat
   ! Single source entry in the catalog.
   type(simsrc),pointer   :: src
   ! Source spectrum.
@@ -33,24 +33,24 @@ program fortran_sample
   ! The filename has to be terminated with a null character,
   ! since this is required for C strings.
   write(*,*) "Open SIMPUT catalog ..."
-  call simopctl("simput.fits" // c_null_char, 0, 0, 0, 0, 0,catalog, status)
+  call simopctl("simput.fits" // c_null_char, 0, 0, 0, 0, 0,cat, status)
 
   ! Determine the number of entries in the catalog.
-  write(*,*) "Catalog contains", catalog%nentries, "entries"
+  write(*,*) "Catalog contains", cat%nentries, "entries"
 
   ! Loop over all sources.
-  do row=1,catalog%nentries,1
+  do row=1,cat%nentries,1
 
      ! Get a source from the catalog (numbering starts at 1).
      write(*,*) " Get source number", row, "from the catalog"
-     call simlcsrc(catalog, row, src, status)
+     call simlcsrc(cat, row, src, status)
 
      ! Print the coordinates of the source.
      write(*,10) src%ra*180/pi, src%dec*180/pi
 10   format (1x, ' RA=', F6.2, 1x, ' Dec=', F6.2)
 
      ! Determine the spectrum of the source.
-     call simrspec(catalog, src, time, mjdref, spec, status)
+     call simrspec(cat, src, time, mjdref, spec, status)
 
      ! Print the number of data points of the spectrum.
      write(*,*) " Spectrum contains", spec%nentries, "data points"
@@ -63,8 +63,8 @@ program fortran_sample
   ! Print out the spectrum of the first source in the catalog.
   write(*,*) "Print the spectrum of the first source ..."
   row=1
-  call simlcsrc(catalog, row, src, status)
-  call simrspec(catalog, src, time, mjdref, spec, status)
+  call simlcsrc(cat, row, src, status)
+  call simrspec(cat, src, time, mjdref, spec, status)
 
   ! Loop over all entries in the spectrum.
   do entry=0,spec%nentries-1,1
@@ -81,7 +81,7 @@ program fortran_sample
 
   ! Close the SIMPUT catalog FITS file.
   write(*,*) "Close SIMPUT catalog ..."
-  call simfrctl(catalog, status)
+  call simfrctl(cat, status)
  
   ! Print the error status.
   write(*,*) "Error status: ", status

@@ -1,7 +1,7 @@
 #include "common.h"
 
 
-SimputSrc* getSimputSrc(int* const status)
+SimputSrc* newSimputSrc(int* const status)
 {
   SimputSrc* entry=(SimputSrc*)malloc(sizeof(SimputSrc));
   CHECK_NULL_RET(entry, *status, 
@@ -17,6 +17,7 @@ SimputSrc* getSimputSrc(int* const status)
   entry->e_min   =0.;
   entry->e_max   =0.;
   entry->eflux   =0.;
+  entry->phrate  =NULL;
   entry->spectrum=NULL;
   entry->image   =NULL;
   entry->timing  =NULL;
@@ -25,7 +26,7 @@ SimputSrc* getSimputSrc(int* const status)
 }
 
 
-SimputSrc* getSimputSrcV(const long src_id, 
+SimputSrc* newSimputSrcV(const long src_id, 
 			 const char* const src_name,
 			 const double ra,
 			 const double dec,
@@ -39,7 +40,7 @@ SimputSrc* getSimputSrcV(const long src_id,
 			 const char* const timing,
 			 int* const status)
 {
-  SimputSrc* src=getSimputSrc(status);
+  SimputSrc* src=newSimputSrc(status);
   CHECK_STATUS_RET(*status, src);
 
   // Initialize with the given values.
@@ -93,6 +94,9 @@ SimputSrc* getSimputSrcV(const long src_id,
 void freeSimputSrc(SimputSrc** const src)
 {
   if (NULL!=*src) {
+    if (NULL!=(*src)->phrate) {
+      free((*src)->phrate);
+    }
     if (NULL!=(*src)->src_name) {
       free((*src)->src_name);
     }
@@ -111,7 +115,47 @@ void freeSimputSrc(SimputSrc** const src)
 }
 
 
-SimputCtlg* getSimputCtlg(int* const status)
+struct SimputSrcBuffer* newSimputSrcBuffer(int* const status)
+{
+  struct SimputSrcBuffer *srcbuff = 
+    (struct SimputSrcBuffer*)malloc(sizeof(struct SimputSrcBuffer));
+
+  CHECK_NULL_RET(srcbuff, *status, 
+		 "memory allocation for SimputSrcBuffer failed", srcbuff);
+    
+  srcbuff->nsrcs  =0;
+  srcbuff->csrc   =0;
+  srcbuff->srcs   =NULL;
+  srcbuff->rownums=NULL;
+  srcbuff->rowmap =NULL;
+
+  return(srcbuff);
+}
+
+
+void freeSimputSrcBuffer(struct SimputSrcBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->srcs) {
+      long ii;
+      for (ii=0; ii<(*sb)->nsrcs; ii++) {
+	freeSimputSrc(&((*sb)->srcs[ii]));
+      }
+      free((*sb)->srcs);
+    }
+    if (NULL!=(*sb)->rownums) {
+      free((*sb)->rownums);
+    }
+    if (NULL!=(*sb)->rowmap) {
+      free((*sb)->rowmap);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+SimputCtlg* newSimputCtlg(int* const status)
 {
   SimputCtlg* cat=
     (SimputCtlg*)malloc(sizeof(SimputCtlg));
@@ -169,28 +213,42 @@ void freeSimputCtlg(SimputCtlg** const cat,
       free((*cat)->filename);
     }
     if (NULL!=(*cat)->srcbuff) {
-      freeSimputSourceBuffer((struct SimputSourceBuffer**)&((*cat)->srcbuff));
+      freeSimputSrcBuffer((struct SimputSrcBuffer**)&((*cat)->srcbuff));
     }
-    // TODO midpspecbuff
-    // TODO phlistbuff
+    if (NULL!=(*cat)->midpspecbuff) {
+      freeSimputMIdpSpecBuffer((struct SimputMIdpSpecBuffer**)&((*cat)->midpspecbuff));
+    }
+    if (NULL!=(*cat)->phlistbuff) {
+      //freeSimputPhListBuffer((struct SimputPhListBuffer**)&((*cat)->phlistbuff)); // TODO
+    }
     if (NULL!=(*cat)->lcbuff) {
       freeSimputLCBuffer((struct SimputLCBuffer**)&((*cat)->lcbuff));
     }
-    // TODO psdbuff
+    if (NULL!=(*cat)->psdbuff) {
+      freeSimputPSDBuffer((struct SimputPSDBuffer**)&((*cat)->psdbuff));
+    }
     if (NULL!=(*cat)->imgbuff) {
       freeSimputImgBuffer((struct SimputImgBuffer**)&((*cat)->imgbuff));
     }
     if (NULL!=(*cat)->specbuff) {
-      freeSimputSpectrumBuffer((struct SimputSpectrumBuffer**)&((*cat)->specbuff));
+      freeSimputSpecBuffer((struct SimputSpecBuffer**)&((*cat)->specbuff));
     }
-    // TODO krlcbuff
+    if (NULL!=(*cat)->krlcbuff) {
+      freeSimputKRLCBuffer((struct SimputKRLCBuffer**)&((*cat)->krlcbuff));
+    }
     free(*cat);
     *cat=NULL;
   }
 }
 
 
-SimputMIdpSpec* getSimputMIdpSpec(int* const status)
+long getSimputCtlgNSources(const SimputCtlg* const cat)
+{
+  return(cat->nentries);
+}
+
+
+SimputMIdpSpec* newSimputMIdpSpec(int* const status)
 {
   SimputMIdpSpec* spec=
     (SimputMIdpSpec*)malloc(sizeof(SimputMIdpSpec));
@@ -229,7 +287,56 @@ void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
 }
 
 
-SimputSpec* getSimputSpec(int* const status)
+struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status)
+{
+  struct SimputMIdpSpecBuffer *specbuff = 
+    (struct SimputMIdpSpecBuffer*)malloc(sizeof(struct SimputMIdpSpecBuffer));
+
+  CHECK_NULL_RET(specbuff, *status, 
+		 "memory allocation for SimputMIdpSpecBuffer failed", specbuff);
+    
+  specbuff->nspectra  =0;
+  specbuff->cspectrum =0;
+  specbuff->spectra   =NULL;
+
+  return(specbuff);
+}
+
+
+void freeSimputMIdpSpecBuffer(struct SimputMIdpSpecBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->spectra) {
+      long ii;
+      for (ii=0; ii<(*sb)->nspectra; ii++) {
+	freeSimputMIdpSpec(&((*sb)->spectra[ii]));
+      }
+      free((*sb)->spectra);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
+			  const long row,
+			  float* const energy, 
+			  float* const pflux,
+			  int* const status)
+{
+  if (row>=spec->nentries) {
+    *status=EXIT_FAILURE;
+    SIMPUT_ERROR("row number exceeds number of bins in spectrum");
+    return;
+  }
+
+  *energy=spec->energy[row];
+  *pflux =spec->pflux[row];
+}
+
+
+SimputSpec* newSimputSpec(int* const status)
 {
   SimputSpec* spec=(SimputSpec*)malloc(sizeof(SimputSpec));
   CHECK_NULL_RET(spec, *status, 
@@ -258,7 +365,39 @@ void freeSimputSpec(SimputSpec** const spec)
 }
 
 
-SimputLC* getSimputLC(int* const status)
+struct SimputSpecBuffer* newSimputSpecBuffer(int* const status)
+{
+  struct SimputSpecBuffer *specbuff = 
+    (struct SimputSpecBuffer*)malloc(sizeof(struct SimputSpecBuffer));
+
+  CHECK_NULL_RET(specbuff, *status, 
+		 "memory allocation for SimputSpecBuffer failed", specbuff);
+    
+  specbuff->nspectra  =0;
+  specbuff->cspectrum =0;
+  specbuff->spectra   =NULL;
+
+  return(specbuff);
+}
+
+
+void freeSimputSpecBuffer(struct SimputSpecBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->spectra) {
+      long ii;
+      for (ii=0; ii<(*sb)->nspectra; ii++) {
+	freeSimputSpec(&((*sb)->spectra[ii]));
+      }
+      free((*sb)->spectra);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+SimputLC* newSimputLC(int* const status)
 {
   SimputLC* lc=(SimputLC*)malloc(sizeof(SimputLC));
   CHECK_NULL_RET(lc, *status, 
@@ -324,7 +463,39 @@ void freeSimputLC(SimputLC** const lc)
 }
 
 
-SimputKRLC* getSimputKRLC(int* const status)
+struct SimputLCBuffer* newSimputLCBuffer(int* const status)
+{
+  struct SimputLCBuffer *lcbuff= 
+    (struct SimputLCBuffer*)malloc(sizeof(struct SimputLCBuffer));
+
+  CHECK_NULL_RET(lcbuff, *status, 
+		 "memory allocation for SimputLCBuffer failed", lcbuff);
+    
+  lcbuff->nlcs=0;
+  lcbuff->clc =0;
+  lcbuff->lcs =NULL;
+
+  return(lcbuff);
+}
+
+
+void freeSimputLCBuffer(struct SimputLCBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->lcs) {
+      long ii;
+      for (ii=0; ii<(*sb)->nlcs; ii++) {
+	freeSimputLC(&((*sb)->lcs[ii]));
+      }
+      free((*sb)->lcs);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+SimputKRLC* newSimputKRLC(int* const status)
 {
   SimputKRLC* lc=(SimputKRLC*)malloc(sizeof(SimputKRLC));
   CHECK_NULL_RET(lc, *status, 
@@ -336,13 +507,10 @@ SimputKRLC* getSimputKRLC(int* const status)
   lc->phase   =NULL;
   lc->a       =NULL;
   lc->b       =NULL;
-  lc->spectrum=NULL;
-  lc->image   =NULL;
   lc->mjdref  =0.;
   lc->timezero=0.;
   lc->phase0  =0.;
   lc->period  =0.;
-  lc->fluxscal=0.;
   lc->src_id  =0;
   lc->fileref =NULL;
 
@@ -353,26 +521,6 @@ SimputKRLC* getSimputKRLC(int* const status)
 void freeSimputKRLC(SimputKRLC** const lc)
 {
   if (NULL!=*lc) {
-    if ((*lc)->nentries>0) {
-      if (NULL!=(*lc)->spectrum) {
-	long ii;
-	for (ii=0; ii<(*lc)->nentries; ii++) {
-	  if (NULL!=(*lc)->spectrum[ii]) {
-	    free((*lc)->spectrum[ii]);
-	  }
-	}
-	free((*lc)->spectrum);    
-      }
-      if (NULL!=(*lc)->image) {
-	long ii;
-	for (ii=0; ii<(*lc)->nentries; ii++) {
-	  if (NULL!=(*lc)->image[ii]) {
-	    free((*lc)->image[ii]);
-	  }
-	}
-	free((*lc)->image);
-      }
-    }
     if (NULL!=(*lc)->time) {
       free((*lc)->time);
     }
@@ -394,7 +542,39 @@ void freeSimputKRLC(SimputKRLC** const lc)
 }
 
 
-SimputPSD* getSimputPSD(int* const status)
+struct SimputKRLCBuffer* newSimputKRLCBuffer(int* const status)
+{
+  struct SimputKRLCBuffer *lcbuff= 
+    (struct SimputKRLCBuffer*)malloc(sizeof(struct SimputKRLCBuffer));
+
+  CHECK_NULL_RET(lcbuff, *status, 
+		 "memory allocation for SimputKRLCBuffer failed", lcbuff);
+    
+  lcbuff->nkrlcs=0;
+  lcbuff->ckrlc =0;
+  lcbuff->krlcs =NULL;
+
+  return(lcbuff);
+}
+
+
+void freeSimputKRLCBuffer(struct SimputKRLCBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->krlcs) {
+      long ii;
+      for (ii=0; ii<(*sb)->nkrlcs; ii++) {
+	freeSimputKRLC(&((*sb)->krlcs[ii]));
+      }
+      free((*sb)->krlcs);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+SimputPSD* newSimputPSD(int* const status)
 {
   SimputPSD* psd=(SimputPSD*)malloc(sizeof(SimputPSD));
   CHECK_NULL_RET(psd, *status, 
@@ -428,7 +608,38 @@ void freeSimputPSD(SimputPSD** const psd)
 }
 
 
-SimputImg* getSimputImg(int* const status)
+struct SimputPSDBuffer* newSimputPSDBuffer(int* const status)
+{
+  struct SimputPSDBuffer *psdbuff = 
+    (struct SimputPSDBuffer*)malloc(sizeof(struct SimputPSDBuffer));
+
+  CHECK_NULL_RET(psdbuff, *status, 
+		 "memory allocation for SimputPSDBuffer failed", psdbuff);
+    
+  psdbuff->npsds=0;
+  psdbuff->psds =NULL;
+
+  return(psdbuff);
+}
+
+
+void freeSimputPSDBuffer(struct SimputPSDBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->psds) {
+      long ii;
+      for (ii=0; ii<(*sb)->npsds; ii++) {
+	freeSimputPSD(&((*sb)->psds[ii]));
+      }
+      free((*sb)->psds);
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+SimputImg* newSimputImg(int* const status)
 {
   SimputImg* img=(SimputImg*)malloc(sizeof(SimputImg));
   CHECK_NULL_RET(img, *status, 
@@ -468,6 +679,37 @@ void freeSimputImg(SimputImg** const img)
     }
     free(*img);
     *img=NULL;
+  }
+}
+
+
+struct SimputImgBuffer* newSimputImgBuffer(int* const status)
+{
+  struct SimputImgBuffer *imgbuff = 
+    (struct SimputImgBuffer*)malloc(sizeof(struct SimputImgBuffer));
+
+  CHECK_NULL_RET(imgbuff, *status, 
+		 "memory allocation for SimputImgBuffer failed", imgbuff);
+    
+  imgbuff->nimgs=0;
+  imgbuff->imgs =NULL;
+
+  return(imgbuff);
+}
+
+
+void freeSimputImgBuffer(struct SimputImgBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->imgs) {
+      long ii;
+      for (ii=0; ii<(*sb)->nimgs; ii++) {
+	freeSimputImg(&((*sb)->imgs[ii]));
+      }
+      free((*sb)->imgs);
+    }
+    free(*sb);
+    *sb=NULL;
   }
 }
 

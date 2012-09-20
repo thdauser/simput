@@ -20,7 +20,7 @@
 
 
 /////////////////////////////////////////////////////////////////
-// Macros.
+// Constants.
 /////////////////////////////////////////////////////////////////
 
 
@@ -41,6 +41,25 @@
 #ifndef DCHATTY
 #define DCHATTY 1
 #endif
+
+
+/** Different types of extensions in SIMPUT FITS files. */
+#define EXTTYPE_NONE (0)
+#define EXTTYPE_MIDPSPEC (1)
+#define EXTTYPE_IMAGE (2)
+#define EXTTYPE_PHOLIST (3)
+#define EXTTYPE_LC (4)
+#define EXTTYPE_PSD (5)
+
+
+/** Maximum number of mission-independet spectra in the cache. */
+#define MAXMIDPSPEC (30000) 
+
+
+/////////////////////////////////////////////////////////////////
+// Macros.
+/////////////////////////////////////////////////////////////////
+
 
 /** Output routine for error messages. */
 #define SIMPUT_ERROR(msg) \
@@ -85,16 +104,129 @@
     break;\
   }
 
+
 /** Macro returning the maximum of 2 values. */
 #define MAX(a, b) ( (a)>(b) ? (a) : (b) )
 
 /** Macro returning the minimum of 2 values. */
 #define MIN(a, b) ( (a)<(b) ? (a) : (b) )
 
+
 /** The following macros are used to the store light curve and the PSD
     in the right format for the GSL routines. */
 #define REAL(z,i) ((z)[(i)])
 #define IMAG(z,i,n) ((z)[(n)-(i)])
+
+
+/////////////////////////////////////////////////////////////////
+// Data structures.
+/////////////////////////////////////////////////////////////////
+
+
+struct SimputSrcBuffer {
+  long nsrcs; // Current number of sources in the cache.
+  long csrc;  // Index of next position in cache that will be used.
+  SimputSrc** srcs; // Cache for the sources.
+
+  // This array contains the row numbers of the sources in the storage
+  // given in the same order as the corresponding sources in the storage.
+  // The array is used to replace the oldest source in the storage.
+  long* rownums;
+
+  // Array with a size corresponding to the number of entries 
+  // in the catalog. Each entry in the array refers to the index
+  // of the corresponding source in the storage. If the respective
+  // source is not contained in the storage, the value in the array
+  // is -1.
+  long* rowmap;
+};
+
+
+struct SimputSpecBuffer {
+  long nspectra;  // Current number of spectra in the cache.
+  long cspectrum; // Index of next position in the cache that will be used.
+  SimputSpec** spectra; // Cache for the spectra.
+};
+
+
+struct SimputMIdpSpecBuffer {
+  long nspectra;  // Current number of spectra in the cache.
+  long cspectrum; // Index of next position in the cache that will be used.
+  SimputMIdpSpec** spectra; // Cache for the spectra.
+};
+
+
+struct SimputLCBuffer {
+  long nlcs; // Current number of light curves in the cache.
+  long clc;  // Index of next position in the cache that will be used.
+  SimputLC** lcs; // Cache for the light curves.
+};
+
+
+struct SimputKRLCBuffer {
+  long nkrlcs; // Current number of K&R light curves in the cache.
+  long ckrlc;  // Index of next position in the cache that will be used.
+  SimputKRLC** krlcs; // Cache for the K&R light curves.
+};
+
+
+struct SimputPSDBuffer {
+  long npsds; // Current number of PSDs in the cache.
+  SimputPSD** psds; // Cache for the PSDs.
+};
+
+
+struct SimputImgBuffer {
+  long nimgs; // Current number of images in the cache.
+  SimputImg** imgs; // Cache for the images.
+};
+
+
+/////////////////////////////////////////////////////////////////
+// Functions.
+/////////////////////////////////////////////////////////////////
+
+
+struct SimputSrcBuffer* newSimputSrcBuffer(int* const status);
+void freeSimputSrcBuffer(struct SimputSrcBuffer** sb);
+
+
+struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status);
+void freeSimputMIdpSpecBuffer(struct SimputMIdpSpecBuffer** sb);
+
+
+SimputSpec* newSimputSpec(int* const status);
+void freeSimputSpec(SimputSpec** const spec);
+
+
+struct SimputSpecBuffer* newSimputSpecBuffer(int* const status);
+void freeSimputSpecBuffer(struct SimputSpecBuffer** sb);
+
+
+struct SimputLCBuffer* newSimputLCBuffer(int* const status);
+void freeSimputLCBuffer(struct SimputLCBuffer** sb);
+
+
+SimputKRLC* newSimputKRLC(int* const status);
+void freeSimputKRLC(SimputKRLC** const lc);
+
+
+struct SimputKRLCBuffer* newSimputKRLCBuffer(int* const status);
+void freeSimputKRLCBuffer(struct SimputKRLCBuffer** sb);
+
+
+struct SimputPSDBuffer* newSimputPSDBuffer(int* const status);
+void freeSimputPSDBuffer(struct SimputPSDBuffer** sb);
+
+
+struct SimputImgBuffer* newSimputImgBuffer(int* const status);
+void freeSimputImgBuffer(struct SimputImgBuffer** sb);
+
+
+/** Determine the extension type of a particular FITS file HDU. */
+int getExtType(SimputCtlg* const cat, 
+	       char* const filename, 
+	       int* const status);
 
 
 #endif /* COMMON_H */

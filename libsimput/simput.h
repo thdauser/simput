@@ -38,7 +38,7 @@
 /////////////////////////////////////////////////////////////////
 
 
-/** Single entry in the SimputSourceCatalog. Requires about 128 bytes,
+/** Single entry in the SimputCtlg. Requires about 128 bytes,
     depending on the string lengths. */
 typedef struct {
   /** Unique source ID. */
@@ -67,6 +67,9 @@ typedef struct {
 
   /** Flux of the source in the reference energy band [erg/s/cm^2]. */
   float eflux;
+
+  /** Photon rate. Determined from the spectrum and the reference flux. */
+  float* phrate;
 
   /** Reference string to the storage location of the spectrum of the
       source. */
@@ -248,14 +251,6 @@ typedef struct {
       the FLUXSCAL. */
   double *a, *b;
 
-  /** Reference to the storage location of the source spectrum at a
-      particular point of time or phase respectively. */
-  char** spectrum;
-
-  /** Reference to the storage location of the source image at a
-      particular point of time or phase respectively. */
-  char** image;
-
   /** MJD for reference time [d]. */
   double mjdref;
 
@@ -268,9 +263,6 @@ typedef struct {
   /** Duration of one oscillation period [s]. */
   double period;
   
-  /** Flux scaling factor. */
-  float fluxscal;
-
   /** If the light curve has been produced from a PSD, it is assigned
       to a particular source and cannot be re-used for different
       sources. In that case the SRC_ID of the respective source is
@@ -337,7 +329,7 @@ typedef struct {
 /** Constructor for the SimputCtlg data structure. Allocates memory,
     initializes elements with their default values and pointers with
     NULL. */
-SimputCtlg* getSimputCtlg(int* const status);
+SimputCtlg* newSimputCtlg(int* const status);
 
 /** Destructor for the SimputCtlg. Closes the FITS file, releases the
     allocated memory, and finally sets the pointer to NULL. */
@@ -366,34 +358,34 @@ long getSimputCtlgNSources(const SimputCtlg* const cat);
 /** Constructor for the SimputSrc data structure. Allocates memory,
     initializes elements with their default values and pointers with
     NULL. */
-SimputSrc* getSimputSrc(int* const status);
+SimputSrc* newSimputSrc(int* const status);
 
 /** Constructor for the SimputSrc data structure. Allocates memory and
     initializes elements with the given values. */
-SimputSource* getSimputSrcV(const long src_id, 
-			    const char* const src_name,
-			    /** ([rad]). */
-			    const double ra,
-			    /** ([rad]). */
-			    const double dec,
-			    /** Image rotation angle ([rad]). Only
-				applicable for extended sources with
-				an image. */
-			    const float imgrota,
-			    const float imgscal,
-			    /** Lower boundary of reference energy
-				band ([keV]). */
-			    const float e_min,
-			    /** Upper boundary of reference energy
-				band ([keV]). */
-			    const float e_max,
-			    /** Energy flux density in the reference
-				energy band ([erg/s/cm^2]). */
-			    const float eflux,
-			    const char* const spectrum,
-			    const char* const image,
-			    const char* const timing,
-			    int* const status);
+SimputSrc* newSimputSrcV(const long src_id, 
+			 const char* const src_name,
+			 /** ([rad]). */
+			 const double ra,
+			 /** ([rad]). */
+			 const double dec,
+			 /** Image rotation angle ([rad]). Only
+			     applicable for extended sources with an
+			     image. */
+			 const float imgrota,
+			 const float imgscal,
+			 /** Lower boundary of reference energy band
+			     ([keV]). */
+			 const float e_min,
+			 /** Upper boundary of reference energy band
+			     ([keV]). */
+			 const float e_max,
+			 /** Energy flux density in the reference
+			     energy band ([erg/s/cm^2]). */
+			 const float eflux,
+			 const char* const spectrum,
+			 const char* const image,
+			 const char* const timing,
+			 int* const status);
 
 /** Destructor for the SimputSrc. Calls destructor routines
     for all contained elements, releases the allocated memory, and
@@ -409,46 +401,40 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
 			 int* const status);
 
 
-
-
-
-
-
-
-/** Return an entry from a SimputCatalog, which is contained in a
+/** Return an entry from a SimputCtlg, which is contained in a
     particular row of the FITS table. According to the FITS
     conventions row numbering starts with 1 for the first line. When
-    loading the SimputSource for the first time, the data are stored
+    loading the SimputSrc for the first time, the data are stored
     in an static cache, such that they do not have to be loaded again
-    on later access. The returned pointer to the SimputSource should
+    on later access. The returned pointer to the SimputSrc should
     not be free'd, since the allocated memory is managed by the
     caching mechanism. */
-SimputSource* loadCacheSimputSource(SimputCatalog* const cat,
-				    const long row,
-				    int* const status);
-
-/** Append a SimputSource to an existing catalog. The source is
-    inserted at the end of the binary table in the FITS file. */
-void appendSimputSource(SimputCatalog* const cat,
-			SimputSource* const src,
+SimputSrc* getSimputSrc(SimputCtlg* const cat,
+			const long row,
 			int* const status);
 
-/** Append an array of SimputSources to an existing catalog. The
-    sources are inserted at the end of the binary table in the FITS
-    file. */
-void appendSimputSourceBlock(SimputCatalog* const cat,
-			     SimputSource** const src,
-			     const long nsources,
-			     int* const status);
+/** Append a SimputSrc to an existing catalog. The source is
+    inserted at the end of the binary table in the FITS file. */
+void appendSimputSrc(SimputCtlg* const cat,
+		     SimputSrc* const src,
+		     int* const status);
+
+/** Append an array of SimputSrc data structures to an existing
+    catalog. The sources are inserted at the end of the binary table
+    in the FITS file. */
+void appendSimputSrcBlock(SimputCtlg* const cat,
+			  SimputSrc** const src,
+			  const long nsources,
+			  int* const status);
 
 /** Constructor for the SimputMIdpSpec data structure. Allocates
     memory, initializes elements with their default values and
     pointers with NULL. */
-SimputMIdpSpec* getSimputMIdpSpec(int* const status);
+SimputMIdpSpec* newSimputMIdpSpec(int* const status);
 
-/** Destructor for the SimputSource. Calls destructor routines
-    for all contained elements, releases the allocated memory, and
-    finally sets the pointer to NULL. */
+/** Destructor for the SimputMIdpSpec. Calls destructor routines for
+    all contained elements, releases the allocated memory, and finally
+    sets the pointer to NULL. */
 void freeSimputMIdpSpec(SimputMIdpSpec** const spec);
 
 /** Load the SimputMIdpSpec from the specified file. */
@@ -461,26 +447,15 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     to the SimputMIdpSpec should not be free'd, since the
     allocated memory is managed by the internal caching mechanism. */
 SimputMIdpSpec* 
-loadCacheSimputMIdpSpec(SimputCatalog* const cat,
+loadCacheSimputMIdpSpec(SimputCtlg* const cat,
 			const char* const filename,
 			int* const status);
 
 /** Loads all spectra from the specified FITS binary table into the
     internal cache. */
-void loadCacheAllSimputMIdpSpec(SimputCatalog* const cat,
+void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 				const char* const filename,
 				int* const status);
-
-/** Return the spectrum of the specified SimputSource for the
-    particular point of time. If the required spectrum is already
-    located in the internal cache, a pointer to this spectrum will be
-    returned. Otherwise the spectrum is loaded into the cache. The
-    pointer returned by the function must no be free'd. */
-SimputMIdpSpec* returnSimputSrcSpec(SimputCatalog* const cat,
-				    const SimputSource* const src,
-				    const double time, 
-				    const double mjdref,
-				    int* const status);
 
 /** Save the mission-independent spectrum in the specified extension
     of the given FITS file. If the file does not exist yet, a new file
@@ -494,21 +469,32 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
 			int extver,
 			int* const status);
 
+/** Return the spectrum of the specified SimputSrc for the
+    particular point of time. If the required spectrum is already
+    located in the internal cache, a pointer to this spectrum will be
+    returned. Otherwise the spectrum is loaded into the cache. The
+    pointer returned by the function must no be free'd. */
+SimputMIdpSpec* getSimputSrcMIdpSpec(SimputCtlg* const cat,
+				     const SimputSrc* const src,
+				     const double prevtime,
+				     const double mjdref,
+				     int* const status);
+
 /** Determine the energy and flux values of a particular bin in the
     SimputMIdpSpec. The energy is given in [keV], the flux in
     [photons/s/cm**2/keV]. */
-void getSimputSpectrumValue(const SimputMIdpSpec* const spec,
-			    const long row,
-			    float* const energy, 
-			    float* const pflux,
-			    int* const status);
+void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
+			  const long row,
+			  float* const energy, 
+			  float* const pflux,
+			  int* const status);
 
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
     the mission-independent format. The access to the ARF data
     structure must be guaranteed as long as the SIMPUT library
     routines are used. */
-void simputSetARF(SimputCatalog* const cat, struct ARF* const arf);
+void setSimputARF(SimputCtlg* const cat, struct ARF* const arf);
 
 /** Set the random number generator, which is used by the simput
     library routines. The generator should return double valued,
@@ -518,8 +504,8 @@ void simputSetRndGen(double(*rndgen)(void));
 /** Determine the energy flux in [erg/s/cm**2] within the reference
     energy band of the specified source valid a the requested point of
     time. */
-float getSimputSrcBandFlux(SimputCatalog* const cat,
-			   const SimputSource* const src,
+float getSimputSrcBandFlux(SimputCtlg* const cat,
+			   const SimputSrc* const src,
 			   const double time, 
 			   const double mjdref,
 			   int* const status);
@@ -534,16 +520,17 @@ float getSimputSpecBandFlux(SimputMIdpSpec* const spec,
     the nominal photon rate given in the source catalog. WARNING: It
     does not contain any light curve or other time-variable
     contributions. Specification of instrument ARF required. */
-float getSimputPhotonRate(SimputCatalog* const cat,
-			  const SimputSource* const src,
-			  const double time, const double mjdref,
+float getSimputPhotonRate(SimputCtlg* const cat,
+			  SimputSrc* const src,
+			  const double time, 
+			  const double mjdref,
 			  int* const status);
 
 
 /** Constructor for the SimputLC data structure. Allocates memory,
     initializes elements with their default values and pointers with
     NULL. */
-SimputLC* getSimputLC(int* const status);
+SimputLC* newSimputLC(int* const status);
 
 /** Destructor for the SimputLC. Calls destructor routines for all
     contained elements, releases the allocated memory, and finally
@@ -564,7 +551,7 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
 /** Constructor for the SimputPSD data structure. Allocates memory,
     initializes elements with their default values and pointers with
     NULL. */
-SimputPSD* getSimputPSD(int* const status);
+SimputPSD* newSimputPSD(int* const status);
 
 /** Destructor for the SimputPSD. Calls destructor routines for all
     contained elements, releases the allocated memory, and finally
@@ -577,14 +564,16 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status);
 /** Save the PSD in the specified extension of the given FITS
     file. If the file does not exist yet, a new file is created. If
     the file exists, an appropriate HDU is created. */
-void saveSimputPSD(SimputPSD* const psd, const char* const filename,
-      char* const extname, int extver,
-      int* const status);
+void saveSimputPSD(SimputPSD* const psd, 
+		   const char* const filename,
+		   char* const extname, 
+		   int extver,
+		   int* const status);
 
 /** Constructor for the SimputImg data structure. Allocates memory,
     initializes elements with their default values and pointers with
     NULL. */
-SimputImg* getSimputImg(int* const status);
+SimputImg* newSimputImg(int* const status);
 
 /** Destructor for the SimputImg. Calls destructor routines for all
     contained elements, releases the allocated memory, and finally
@@ -598,15 +587,19 @@ SimputImg* loadSimputImg(const char* const filename, int* const status);
 /** Save the source image in the specified extension of the given FITS
     file. If the file does not exist yet, a new file is created. If
     the file exists, an appropriate HDU is created. */
-void saveSimputImg(SimputImg* const img, const char* const filename,
-		   char* const extname, int extver,
+void saveSimputImg(SimputImg* const img, 
+		   const char* const filename,
+		   char* const extname, 
+		   int extver,
 		   int* const status);
 
 /** Return the maximum angular extension (radius) of a particular
     source around its reference point in [rad]. */
-float getSimputSourceExtension(SimputCatalog* const cat,
-			       const SimputSource* const src,
-			       int* const status);
+float getSimputSrcExt(SimputCtlg* const cat,
+		      const SimputSrc* const src,
+		      const double prevtime,
+		      const double mjdref,
+		      int* const status);
 
 
 /** Produce a photon for a particular source in a SIMPUT catalog. The
@@ -615,9 +608,9 @@ float getSimputSourceExtension(SimputCatalog* const cat,
     light curve information available for the specified point of time,
     the return value of the function will be 1. If a photon is
     successfully produced, the return value will be 0. */
-int getSimputPhoton(SimputCatalog* const cat,
-		    const SimputSource* const src,
-		    double prevtime,
+int getSimputPhoton(SimputCtlg* const cat,
+		    SimputSrc* const src,
+		    const double prevtime,
 		    const double mjdref,
 		    /** [s]. */
 		    double* const time,

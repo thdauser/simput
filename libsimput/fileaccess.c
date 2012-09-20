@@ -107,7 +107,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
 			   const int maxstrlen_timing,
 			   int* const status)
 {
-  SimputCtlg* cat=getSimputCtlg(status);
+  SimputCtlg* cat=newSimputCtlg(status);
   CHECK_STATUS_RET(*status, cat);
 
   char **tform=NULL;
@@ -436,7 +436,7 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
     fits_read_col(cat->fptr, TFLOAT, cat->ce_max, row, 1, 1, 
 		  &e_max, &e_max, &anynul, status);
     e_max*=cat->fe_max; // Convert to [keV].
-    fits_read_col(cat->fptr, TFLOAT, cat->catlux, row, 1, 1, 
+    fits_read_col(cat->fptr, TFLOAT, cat->cflux, row, 1, 1, 
 		  &flux, &flux, &anynul, status);
     flux *=cat->fflux; // Convert to [erg/s/cm**2].
     if (flux > 1.e20) {
@@ -465,7 +465,7 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
     CHECK_STATUS_BREAK(*status);
 
     // Create a new SimputSource data structure.
-    src=getSimputSrcV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
+    src=newSimputSrcV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
 		      e_min, e_max, flux, spectrum[0], image[0],
 		      timing[0], status);
     CHECK_STATUS_BREAK(*status);
@@ -510,7 +510,7 @@ void appendSimputSrc(SimputCtlg* const cat,
 		 &src->e_min, status);
   fits_write_col(cat->fptr, TFLOAT, cat->ce_max, cat->nentries, 1, 1, 
 		 &src->e_max, status);
-  fits_write_col(cat->fptr, TFLOAT, cat->catlux, cat->nentries, 1, 1, 
+  fits_write_col(cat->fptr, TFLOAT, cat->cflux, cat->nentries, 1, 1, 
 		 &src->eflux, status);
   fits_write_col(cat->fptr, TSTRING, cat->cspectrum, cat->nentries, 1, 1, 
 		 &src->spectrum, status);
@@ -633,7 +633,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   // String buffer.
   char* name[1]={NULL};
 
-  SimputMIdpSpec* spec=getSimputMIdpSpec(status);
+  SimputMIdpSpec* spec=newSimputMIdpSpec(status);
   CHECK_STATUS_RET(*status, spec);
 
   // Open the specified FITS file. The filename must uniquely identify
@@ -766,6 +766,192 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   CHECK_STATUS_RET(*status, spec);
 
   return(spec);
+}
+
+
+void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
+				const char* const filename,
+				int* const status)
+{
+  fitsfile* fptr=NULL;
+  char* name[1]={NULL};
+
+  do { // Error handling loop.
+
+    // Check if the source catalog contains a spectrum buffer.
+    if (NULL==cat->specbuff) {
+      cat->specbuff=newSimputMIdpSpecBuffer(status);
+      CHECK_STATUS_BREAK(*status);
+    }
+
+    // Convert the void* pointer to the spectrum buffer into the right
+    // format.
+    struct SimputMIdpSpecBuffer* sb=
+      (struct SimputMIdpSpecBuffer*)cat->specbuff;
+
+    // In case there are no spectra available at all, allocate 
+    // memory for the array (storage for spectra).
+    if (NULL==sb->spectra) {
+      sb->spectra = 
+	(SimputMIdpSpec**)malloc(MAXMIDPSPEC*sizeof(SimputMIdpSpec*));
+      CHECK_NULL_BREAK(sb->spectra, *status, 
+		       "memory allocation for spectra failed");
+    }
+
+    // Open the specified FITS file. The filename must uniquely identify
+    // the extension containing the spectra via the extended filename 
+    // syntax.
+    fits_open_table(&fptr, filename, READONLY, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Determine the number of columns in the table.
+    long nrows;
+    fits_get_num_rows(fptr, &nrows, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // Check if as many spectra can be stored in the cache.
+    if (sb->nspectra+nrows>MAXMIDPSPEC) {
+      *status=EXIT_FAILURE;
+      SIMPUT_ERROR("cache too small to store all spectra");
+      break;
+    }
+
+    // Get the column names.
+    int cenergy=0, cflux=0, cname=0;
+    // Required columns:
+    fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
+    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+    CHECK_STATUS_BREAK(*status);
+    // Optional columns:
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_get_colnum(fptr, CASEINSEN, "NAME", &cname, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_clear_errmark();
+
+    // Determine the unit conversion factors.
+    char uenergy[SIMPUT_MAXSTR];
+    read_unit(fptr, cenergy, uenergy, status);
+    CHECK_STATUS_BREAK(*status);
+    float fenergy = unit_conversion_keV(uenergy);
+    if (0.==fenergy) {
+      SIMPUT_ERROR("unknown units in ENERGY column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    char uflux[SIMPUT_MAXSTR];
+    read_unit(fptr, cflux, uflux, status);
+    CHECK_STATUS_BREAK(*status);
+    float fflux = unit_conversion_phpspcm2pkeV(uflux);
+    if (0.==fflux) {
+      SIMPUT_ERROR("unknown units in FLUX column");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    // END of determine unit conversion factors.
+
+    // Determine the number of entries in the 2 vector columns.
+    int typecode;
+    long nenergy, nflux, width;
+    fits_get_coltype(fptr, cenergy, &typecode, &nenergy, &width, status);
+    fits_get_coltype(fptr, cflux,   &typecode, &nflux,   &width, status);
+    CHECK_STATUS_BREAK(*status);
+
+    // If the columns are of variable-length data type, the returned repeat
+    // value is 1. In that case we have to use another routine to get the
+    // number of elements in a particular row.
+    if (1==nenergy) {
+      long offset;
+      fits_read_descript(fptr, cenergy, 1, &nenergy, &offset, status);
+      fits_read_descript(fptr, cflux  , 1, &nflux  , &offset, status);
+      CHECK_STATUS_BREAK(*status);
+    }
+
+    // The number of energy bins and of flux entries must be identical.
+    if (nenergy!=nflux) {
+      SIMPUT_ERROR("number of energy and flux entries in spectrum is "
+		   "not equivalent");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    // Allocate memory for string buffer.
+    name[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+    CHECK_NULL_BREAK(name[0], *status, 
+		     "memory allocation for string buffer failed");
+    
+    // Load the spectra.
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "load %ld spectra with %ld data points each", 
+	    nrows, nenergy);
+    SIMPUT_INFO(msg);
+
+    long jj;
+    for (jj=0; jj<nrows; jj++) {
+      // Allocate memory for a new spectrum.
+      SimputMIdpSpec* spec=newSimputMIdpSpec(status);
+      CHECK_STATUS_BREAK(*status);
+
+      spec->nentries=nenergy;
+
+      // Allocate memory for the arrays.
+      spec->energy=(float*)malloc(spec->nentries*sizeof(float));
+      CHECK_NULL_BREAK(spec->energy, *status, 
+		       "memory allocation for spectrum failed");
+      spec->pflux =(float*)malloc(spec->nentries*sizeof(float));
+      CHECK_NULL_BREAK(spec->pflux, *status, 
+		       "memory allocation for spectrum failed");
+
+      // Read the data from the table.
+      int anynul=0;
+      fits_read_col(fptr, TFLOAT, cenergy, jj+1, 1, spec->nentries, 
+		    NULL, spec->energy, &anynul, status);
+      fits_read_col(fptr, TFLOAT, cflux, jj+1, 1, spec->nentries, 
+		    NULL, spec->pflux, &anynul, status);
+      if (cname>0) {
+	fits_read_col(fptr, TSTRING, cname, jj+1, 1, 1, "", name, 
+		      &anynul, status);
+      } else { 
+	strcpy(name[0], "");
+      }
+      CHECK_STATUS_BREAK(*status);
+
+      // Multiply with unit scaling factor.
+      long ii;
+      for (ii=0; ii<spec->nentries; ii++) {
+	spec->energy[ii]*=fenergy;
+	spec->pflux[ii] *=fflux;
+      }
+
+      // Copy the name (ID) of the spectrum from the string buffer
+      // to the data structure.
+      spec->name=(char*)malloc((strlen(name[0])+1)*sizeof(char));
+      CHECK_NULL_BREAK(spec->name, *status, 
+		       "memory allocation for name string failed");
+      strcpy(spec->name, name[0]);
+
+      // Store the file reference to the spectrum for later comparisons.
+      spec->fileref=
+	(char*)malloc((strlen(filename)+strlen(name[0])+11)*sizeof(char));
+      CHECK_NULL_BREAK(spec->fileref, *status, 
+		       "memory allocation for file reference failed");
+      sprintf(spec->fileref, "%s[NAME=='%s']", filename, name[0]);
+
+      // Add the spectrum to the cache.
+      sb->spectra[sb->nspectra++]=spec;
+    }
+    CHECK_STATUS_BREAK(*status);
+    // END of reading all spectra.
+
+  } while(0); // END of error handling loop.
+  
+  // Release allocated memory.
+  if (NULL!=name[0]) free(name[0]);
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_VOID(*status);
 }
 
 
@@ -989,7 +1175,7 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     CHECK_STATUS_BREAK(*status);
 
     // Get an empty SimputLC data structure.
-    lc=getSimputLC(status);
+    lc=newSimputLC(status);
     CHECK_STATUS_BREAK(*status);
 
     // Get the column names.
@@ -1166,12 +1352,6 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       CHECK_STATUS_BREAK(*status);
     }
     // END of reading the data from the FITS table.
-
-
-    // Determine the auxiliary values for the light curve (including
-    // FLUXSCAL).
-    setLCAuxValues(lc, status);
-    CHECK_STATUS_BREAK(*status);
 
   } while(0); // END of error handling loop.
   
@@ -1430,7 +1610,7 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
 SimputPSD* loadSimputPSD(const char* const filename, int* const status)
 {
   // Get an empty SimputPSD data structure.
-  SimputPSD* psd = getSimputPSD(status);
+  SimputPSD* psd=newSimputPSD(status);
   CHECK_STATUS_RET(*status, psd);
 
   // Open the specified FITS file. The filename must uniquely identify
@@ -1677,7 +1857,7 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
   char* headerstr=NULL;
 
   // Get an empty SimputImg data structure.
-  SimputImg* img = getSimputImg(status);
+  SimputImg* img=newSimputImg(status);
   CHECK_STATUS_RET(*status, img);
 
   // Open the specified FITS file. The filename must uniquely identify
@@ -1930,6 +2110,93 @@ void saveSimputImg(SimputImg* const img,
   // Close the file.
   if (NULL!=fptr) fits_close_file(fptr, status);
   CHECK_STATUS_VOID(*status);
+}
+
+
+int getExtType(SimputCtlg* const cat, 
+	       char* const filename, 
+	       int* const status)
+{
+  int type=EXTTYPE_NONE;
+
+  // Check if there is any reference at all.
+  if (0==strlen(filename)) {
+    return(EXTTYPE_NONE);
+  }
+
+  // Keep an internal cache in order to avoid 
+  // continuous re-opening.
+  // TODO
+
+  // The extension is not contained in the cache. Therefore 
+  // we have to open it an check the header keywords.
+  fitsfile* fptr=NULL;
+  fits_open_file(&fptr, filename, READONLY, status);
+  CHECK_STATUS_RET(*status, type);
+
+  // Read the HDUCLAS1 and HDUCLAS2 header keywords.
+  char comment[SIMPUT_MAXSTR];
+  char hduclas1[SIMPUT_MAXSTR];
+  char hduclas2[SIMPUT_MAXSTR];
+  fits_read_key(fptr, TSTRING, "HDUCLAS1", &hduclas1, comment, status);
+  // (Don't do an error checking here! Otherwise the file
+  //  might not be closed after an error occurred with reading
+  //  the header keyword.)
+
+  // Read optional header keyword (is not used in SIMPUT
+  // version >= 1.1.0).
+  int opt_status=EXIT_SUCCESS;
+  fits_write_errmark();
+  fits_read_key(fptr, TSTRING, "HDUCLAS2", &hduclas2, comment, &opt_status);
+  fits_clear_errmark();
+  if (opt_status!=EXIT_SUCCESS) {
+    strcpy(hduclas2, "");
+    opt_status=EXIT_SUCCESS;
+  }
+  
+  fits_close_file(fptr, status);
+  CHECK_STATUS_RET(*status, type);
+
+
+  // Check for the different extension types.
+
+  if (0==strcmp(hduclas1, "SPECTRUM")) {
+    type=EXTTYPE_MIDPSPEC;
+  }
+
+  // SIMPUT version 1.0.0.
+  else if (((0==strcmp(hduclas1, "SIMPUT")) && 
+	    (0==strcmp(hduclas2, "LIGHTCUR"))) ||
+      // SIMPUT version 1.1.0.
+      (0==strcmp(hduclas1, "LIGHTCURVE"))) {
+    type=EXTTYPE_LC;
+  }
+
+  else if (0==strcmp(hduclas1, "POWSPEC")) {
+    type=EXTTYPE_PSD;
+  }
+
+  else if (0==strcmp(hduclas1, "IMAGE")) {
+    type=EXTTYPE_IMAGE;
+  }
+
+  else if (0==strcmp(hduclas1, "PHOTONS")) {
+    type=EXTTYPE_PHOLIST;
+  }
+
+  else {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "extension type '%s' not supported", hduclas1);
+    SIMPUT_ERROR(msg);
+    *status=EXIT_FAILURE;
+    return(type);
+  }
+
+  // Store the extension type in the internal cache.
+  // TODO 
+
+
+  return(type);
 }
 
 
