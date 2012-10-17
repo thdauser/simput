@@ -6,8 +6,8 @@ else
   FFLS=
 endif
 
-AM_CFLAGS = -I@top_srcdir@/extlib/cfitsio -I@top_srcdir@/extlib/wcslib/C $(FFLS) 
-#-fPIC
+AM_CFLAGS =-I@top_srcdir@/extlib/cfitsio -I@top_srcdir@/extlib/wcslib/C $(FFLS) 
+AM_CFLAGS+=-I@top_srcdir@/extlib/fftw/api
 
 ########### LIBRARIES #################
 

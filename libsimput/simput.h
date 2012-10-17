@@ -4,9 +4,6 @@
 #include "fitsio.h"
 #include "wcshdr.h"
 
-// FFTW3 library for Fast Fourier Transform.
-#include <fftw3.h>
-
 #ifndef HEASP_H
 #define HEASP_H 1
 #include "heasp.h"
