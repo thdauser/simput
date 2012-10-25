@@ -779,15 +779,15 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
   do { // Error handling loop.
 
     // Check if the source catalog contains a spectrum buffer.
-    if (NULL==cat->specbuff) {
-      cat->specbuff=newSimputMIdpSpecBuffer(status);
+    if (NULL==cat->midpspecbuff) {
+      cat->midpspecbuff=newSimputMIdpSpecBuffer(status);
       CHECK_STATUS_BREAK(*status);
     }
 
     // Convert the void* pointer to the spectrum buffer into the right
     // format.
     struct SimputMIdpSpecBuffer* sb=
-      (struct SimputMIdpSpecBuffer*)cat->specbuff;
+      (struct SimputMIdpSpecBuffer*)cat->midpspecbuff;
 
     // In case there are no spectra available at all, allocate 
     // memory for the array (storage for spectra).

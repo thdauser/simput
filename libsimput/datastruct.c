@@ -289,7 +289,7 @@ void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
 
 struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status)
 {
-  struct SimputMIdpSpecBuffer *specbuff = 
+  struct SimputMIdpSpecBuffer *specbuff= 
     (struct SimputMIdpSpecBuffer*)malloc(sizeof(struct SimputMIdpSpecBuffer));
 
   CHECK_NULL_RET(specbuff, *status, 
