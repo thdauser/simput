@@ -792,7 +792,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     // In case there are no spectra available at all, allocate 
     // memory for the array (storage for spectra).
     if (NULL==sb->spectra) {
-      sb->spectra = 
+      sb->spectra=
 	(SimputMIdpSpec**)malloc(MAXMIDPSPEC*sizeof(SimputMIdpSpec*));
       CHECK_NULL_BREAK(sb->spectra, *status, 
 		       "memory allocation for spectra failed");

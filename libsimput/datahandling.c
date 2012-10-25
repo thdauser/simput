@@ -831,6 +831,9 @@ static SimputSpec* getSimputSpec(SimputCtlg* const cat,
     convSimputMIdpSpecWithARF(cat, midpspec, status);
   CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
 
+  // Release the memory of the mission-independent spectrum.
+  freeSimputMIdpSpec(&midpspec);
+
   // Store the file reference to the spectrum for later comparisons.
   sb->spectra[sb->cspectrum]->fileref=
     (char*)malloc((strlen(filename)+1)*sizeof(char));
