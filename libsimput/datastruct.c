@@ -248,6 +248,44 @@ long getSimputCtlgNSources(const SimputCtlg* const cat)
 }
 
 
+struct SimputExttypeBuffer* newSimputExttypeBuffer(int* const status)
+{
+  struct SimputExttypeBuffer *extbuff= 
+    (struct SimputExttypeBuffer*)malloc(sizeof(struct SimputExttypeBuffer));
+
+  CHECK_NULL_RET(extbuff, *status, 
+		 "memory allocation for SimputExttypeBuffer failed", extbuff);
+    
+  extbuff->nhdus=0;
+  extbuff->chdu =0;
+  extbuff->hdus =NULL;
+  extbuff->filenames=NULL;
+
+  return(extbuff);
+}
+
+
+void freeSimputExttypeBuffer(struct SimputExttypeBuffer** eb)
+{
+  if (NULL!=*eb) {
+    if (NULL!=(*eb)->hdus) {
+      free((*eb)->hdus);
+    }
+    if (NULL!=(*eb)->filenames) {
+      long ii;
+      for (ii=0; ii<(*eb)->nhdus; ii++) {
+	if (NULL!=(*eb)->filenames[ii]) {
+	  free((*eb)->filenames[ii]);
+	}
+      }
+      free((*eb)->filenames);
+    }
+    free(*eb);
+    *eb=NULL;
+  }
+}
+
+
 SimputMIdpSpec* newSimputMIdpSpec(int* const status)
 {
   SimputMIdpSpec* spec=

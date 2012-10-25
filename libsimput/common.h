@@ -142,6 +142,14 @@ struct SimputSrcBuffer {
 };
 
 
+struct SimputExttypeBuffer {
+  long nhdus;// Current number of extensions in the cache.
+  long chdu; // Index of next position in the cache that will be used.
+  int* hdus; // Cache for the extension types.
+  char** filenames; // Cache for the corresponding file references.
+};
+
+
 struct SimputSpecBuffer {
   long nspectra;  // Current number of spectra in the cache.
   long cspectrum; // Index of next position in the cache that will be used.
@@ -189,6 +197,10 @@ struct SimputImgBuffer {
 
 struct SimputSrcBuffer* newSimputSrcBuffer(int* const status);
 void freeSimputSrcBuffer(struct SimputSrcBuffer** sb);
+
+
+struct SimputExttypeBuffer* newSimputExttypeBuffer(int* const status);
+void freeSimputExttypeBuffer(struct SimputExttypeBuffer** eb);
 
 
 struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status);

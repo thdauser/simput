@@ -2134,9 +2134,49 @@ int getExtType(SimputCtlg* const cat,
     return(EXTTYPE_NONE);
   }
 
-  // Keep an internal cache in order to avoid 
+  // Keep an internal cache of extension types in order to avoid 
   // continuous re-opening.
-  // TODO
+
+  // Maximum number of extensions in the cache.
+  const int maxhdus=100000; 
+
+  // Check if the source catalog contains an extension type buffer.
+  if (NULL==cat->extbuff) {
+    cat->extbuff=newSimputExttypeBuffer(status);
+    CHECK_STATUS_RET(*status, type);
+  }
+
+  // Convert the void* pointer to the extension type buffer 
+  // into the right format.
+  struct SimputExttypeBuffer* eb=
+    (struct SimputExttypeBuffer*)cat->extbuff;
+
+  // In case there are no extensions available at all, allocate 
+  // memory for the array (storage for extension types).
+  if (NULL==eb->hdus) {
+    eb->hdus=(int*)malloc(maxhdus*sizeof(int));
+    CHECK_NULL_RET(eb->hdus, *status, 
+		   "memory allocation for extension types failed", type);
+    eb->filenames=(char**)malloc(maxhdus*sizeof(char*));
+    CHECK_NULL_RET(eb->filenames, *status, 
+		   "memory allocation for extension types failed", type);
+    long ii;
+    for (ii=0; ii<maxhdus; ii++) {
+      eb->hdus[ii]=EXTTYPE_NONE;
+      eb->filenames[ii]=NULL;
+    }
+  }
+
+  // Search if the required extension is available in the storage.
+  long ii;
+  for (ii=0; ii<eb->nhdus; ii++) {
+    // Check if the extension is equivalent to the required one.
+    if (0==strcmp(eb->filenames[ii], filename)) {
+      // If yes, return the extension type.
+      return(eb->hdus[ii]);
+    }
+  }
+
 
   // The extension is not contained in the cache. Therefore 
   // we have to open it an check the header keywords.
@@ -2224,7 +2264,24 @@ int getExtType(SimputCtlg* const cat,
   }
 
   // Store the extension type in the internal cache.
-  // TODO 
+  // Determine the storage position.
+  if (eb->nhdus<maxhdus) {
+    eb->chdu=eb->nhdus;
+    eb->nhdus++;
+  } else {
+    eb->chdu++;
+    if (eb->chdu>=maxhdus) {
+      eb->chdu=0;
+    }
+    free(eb->hdus[eb->chdu]);
+  }
+  eb->hdus[eb->chdu]=type;
+  eb->filenames[eb->chdu]=
+    (char*)malloc((strlen(filename)+1)*sizeof(char));
+  CHECK_NULL_RET(eb->filenames[eb->chdu], *status, 
+		 "memory allocation for file reference failed", 
+		 eb->hdus[eb->chdu]);
+  strcpy(eb->filenames[eb->chdu], filename);
 
 
   return(type);

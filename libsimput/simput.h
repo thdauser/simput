@@ -117,6 +117,9 @@ typedef struct {
   /** Buffer for pre-loaded SIMPUT sources. */
   void* srcbuff;
 
+  /** Buffer for FITS file HDU types. */
+  void* extbuff;
+
   /** Buffer for pre-loaded mission-independent spectra. */
   void* midpspecbuff;
   
