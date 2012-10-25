@@ -427,6 +427,14 @@ void appendSimputSrcBlock(SimputCtlg* const cat,
 			  const long nsources,
 			  int* const status);
 
+/** Determine the reference of a source to its spectrum. */
+void getSimputSrcSpecRef(SimputCtlg* const cat,
+			 const SimputSrc* const src,
+			 const double prevtime,
+			 const double mjdref,
+			 char* const specref,
+			 int* const status);
+
 /** Constructor for the SimputMIdpSpec data structure. Allocates
     memory, initializes elements with their default values and
     pointers with NULL. */

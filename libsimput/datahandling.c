@@ -414,12 +414,12 @@ static inline long getLCBin(const SimputLC* const lc,
 }
 
 
-static void getSrcSpecRef(SimputCtlg* const cat,
-			  const SimputSrc* const src,
-			  const double prevtime,
-			  const double mjdref,
-			  char* const specref,
-			  int* const status)
+void getSimputSrcSpecRef(SimputCtlg* const cat,
+		   const SimputSrc* const src,
+		   const double prevtime,
+		   const double mjdref,
+		   char* const specref,
+		   int* const status)
 {
   // Initialize with an empty string.
   strcpy(specref, "");
@@ -638,7 +638,7 @@ SimputMIdpSpec* getSimputSrcMIdpSpec(SimputCtlg* const cat,
 				     int* const status)
 {
   char specref[SIMPUT_MAXSTR];
-  getSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
+  getSimputSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
   CHECK_STATUS_RET(*status, 0);
 
   int spectype=getExtType(cat, specref, status);
@@ -1238,7 +1238,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
   if (NULL==src->phrate) {
     // Obtain the spectrum.
     char specref[SIMPUT_MAXSTR];
-    getSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
+    getSimputSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
     CHECK_STATUS_RET(*status, 0.);
 
     int spectype=getExtType(cat, specref, status);
@@ -1400,7 +1400,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   // Determine the references to the spectrum and 
   // image for the updated photon arrival time.
   char specref[SIMPUT_MAXSTR];
-  getSrcSpecRef(cat, src, currtime, mjdref, specref, status);
+  getSimputSrcSpecRef(cat, src, currtime, mjdref, specref, status);
   CHECK_STATUS_VOID(*status);
   char imagref[SIMPUT_MAXSTR];
   getSrcImagRef(cat, src, currtime, mjdref, imagref, status);
