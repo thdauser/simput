@@ -405,8 +405,8 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
     particular row of the FITS table. According to the FITS
     conventions row numbering starts with 1 for the first line. When
     loading the SimputSrc for the first time, the data are stored
-    in an static cache, such that they do not have to be loaded again
-    on later access. The returned pointer to the SimputSrc should
+    in a static cache, such that they do not have to be loaded again
+    on later access. The returned pointer to the SimputSrc must
     not be free'd, since the allocated memory is managed by the
     caching mechanism. */
 SimputSrc* getSimputSrc(SimputCtlg* const cat,

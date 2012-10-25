@@ -2170,27 +2170,48 @@ int getExtType(SimputCtlg* const cat,
 
   // Check for the different extension types.
 
-  if (0==strcmp(hduclas1, "SPECTRUM")) {
+  if
+    // SIMPUT version 1.0.0. 
+    (((0==strcmp(hduclas1, "SIMPUT")) && 
+      (0==strcmp(hduclas2, "SPECTRUM"))) ||
+     // SIMPUT version 1.1.0.
+     (0==strcmp(hduclas1, "SPECTRUM"))) {
     type=EXTTYPE_MIDPSPEC;
   }
 
-  // SIMPUT version 1.0.0.
-  else if (((0==strcmp(hduclas1, "SIMPUT")) && 
-	    (0==strcmp(hduclas2, "LIGHTCUR"))) ||
-      // SIMPUT version 1.1.0.
-      (0==strcmp(hduclas1, "LIGHTCURVE"))) {
+  else if 
+    // SIMPUT version 1.0.0.
+    (((0==strcmp(hduclas1, "SIMPUT")) && 
+      (0==strcmp(hduclas2, "LIGHTCUR"))) ||
+     // SIMPUT version 1.1.0.
+     (0==strcmp(hduclas1, "LIGHTCURVE"))) {
     type=EXTTYPE_LC;
   }
-
-  else if (0==strcmp(hduclas1, "POWSPEC")) {
+     
+  else if 
+    // SIMPUT version 1.0.0.
+    (((0==strcmp(hduclas1, "SIMPUT")) && 
+      (0==strcmp(hduclas2, "POWSPEC"))) ||
+     // SIMPUT version 1.1.0.
+     (0==strcmp(hduclas1, "POWSPEC"))) {
     type=EXTTYPE_PSD;
   }
 
-  else if (0==strcmp(hduclas1, "IMAGE")) {
+  else if
+    // SIMPUT version 1.0.0. 
+    (((0==strcmp(hduclas1, "SIMPUT")) && 
+      (0==strcmp(hduclas2, "IMAGE"))) ||
+     // SIMPUT version 1.1.0.
+     (0==strcmp(hduclas1, "IMAGE"))) {
     type=EXTTYPE_IMAGE;
   }
 
-  else if (0==strcmp(hduclas1, "PHOTONS")) {
+  else if 
+    // SIMPUT version 1.0.0.
+    (((0==strcmp(hduclas1, "SIMPUT")) && 
+      (0==strcmp(hduclas2, "PHOTONS"))) ||
+     // SIMPUT version 1.1.0.
+     (0==strcmp(hduclas1, "PHOTONS"))) {
     type=EXTTYPE_PHOLIST;
   }
 
