@@ -1962,7 +1962,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       // Determine the maximum extension by going through
       // the whole list of photons.
       double maxext=0.;
-      const long buffsize=1000000;
+      const long buffsize=100000;
       double rabuffer[buffsize];
       double decbuffer[buffsize];
       long ii;
