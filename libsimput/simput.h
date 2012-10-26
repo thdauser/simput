@@ -324,6 +324,33 @@ typedef struct {
 } SimputImg;
 
 
+/** SIMPUT photon list. */
+typedef struct {
+  /** Pointer to the FITS file HDU. */
+  fitsfile* fptr;
+
+  /** Column numbers. */
+  int cra, cdec, cenergy;
+
+  /** Unit conversion factors. */
+  float fra, fdec, fenergy;
+
+  /** Total number of photons in the list. */
+  long nphs;
+
+  /** Reference effective area [cm^2]. This value must be greater or
+      equal to the maximum value of the used ARF. */
+  float refarea;
+
+  /** Reference to the location of the photon list given by the
+      extended filename syntax. This reference is used to check,
+      whether the photon list is already contained in the internal
+      storage. */
+  char* fileref;
+
+} SimputPhList;
+
+
 /////////////////////////////////////////////////////////////////
 // Function Declarations.
 /////////////////////////////////////////////////////////////////
@@ -581,14 +608,15 @@ void saveSimputPSD(SimputPSD* const psd,
 		   int extver,
 		   int* const status);
 
+
 /** Constructor for the SimputImg data structure. Allocates memory,
     initializes elements with their default values and pointers with
     NULL. */
 SimputImg* newSimputImg(int* const status);
 
-/** Destructor for the SimputImg. Calls destructor routines for all
-    contained elements, releases the allocated memory, and finally
-    sets the pointer to NULL. */
+/** Destructor for the SimputImg data structure. Calls destructor
+    routines for all contained elements, releases the allocated
+    memory, and finally sets the pointer to NULL. */
 void freeSimputImg(SimputImg** const img);
 
 /** Load a SIMPUT source image from the specified file and store it in
@@ -603,6 +631,23 @@ void saveSimputImg(SimputImg* const img,
 		   char* const extname, 
 		   int extver,
 		   int* const status);
+
+
+/** Constructor for the SimputPhList data structure. Allocates memory,
+    initializes elements with their default values and pointers with
+    NULL. */
+SimputPhList* newSimputPhList(int* const status);
+
+/** Destructor for the SimputPhList data structure. Calls destructor
+    routines for all contained elements, releases the allocated
+    memory, and finally sets the pointer to NULL. */
+void freeSimputPhList(SimputPhList** const phl, int* const status);
+
+/** Open a SimputPhList from a FITS file extension. */
+SimputPhList* openSimputPhList(const char* const filename,
+			       const int mode,
+			       int* const status);
+
 
 /** Return the maximum angular extension (radius) of a particular
     source around its reference point in [rad]. */

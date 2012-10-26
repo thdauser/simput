@@ -219,7 +219,7 @@ void freeSimputCtlg(SimputCtlg** const cat,
       freeSimputMIdpSpecBuffer((struct SimputMIdpSpecBuffer**)&((*cat)->midpspecbuff));
     }
     if (NULL!=(*cat)->phlistbuff) {
-      //freeSimputPhListBuffer((struct SimputPhListBuffer**)&((*cat)->phlistbuff)); // TODO
+      freeSimputPhListBuffer((struct SimputPhListBuffer**)&((*cat)->phlistbuff), status);
     }
     if (NULL!=(*cat)->lcbuff) {
       freeSimputLCBuffer((struct SimputLCBuffer**)&((*cat)->lcbuff));
@@ -725,7 +725,6 @@ struct SimputImgBuffer* newSimputImgBuffer(int* const status)
 {
   struct SimputImgBuffer *imgbuff = 
     (struct SimputImgBuffer*)malloc(sizeof(struct SimputImgBuffer));
-
   CHECK_NULL_RET(imgbuff, *status, 
 		 "memory allocation for SimputImgBuffer failed", imgbuff);
     
@@ -748,6 +747,74 @@ void freeSimputImgBuffer(struct SimputImgBuffer** sb)
     }
     free(*sb);
     *sb=NULL;
+  }
+}
+
+
+SimputPhList* newSimputPhList(int* const status)
+{
+  SimputPhList* phl=(SimputPhList*)malloc(sizeof(SimputPhList));
+  CHECK_NULL_RET(phl, *status, 
+		 "memory allocation for SimputPhList failed", phl);
+
+  // Initialize elements.
+  phl->fptr   =NULL;
+  phl->nphs   =0;
+  phl->cra    =0;
+  phl->cdec   =0;
+  phl->cenergy=0;
+  phl->fra    =0.;
+  phl->fdec   =0.;
+  phl->fenergy=0.;
+  phl->refarea=0.;
+  phl->fileref=NULL;
+
+  return(phl);
+}
+
+
+void freeSimputPhList(SimputPhList** const phl, int* const status)
+{
+  if (NULL!=*phl) {
+    if (NULL!=(*phl)->fileref) {
+      free((*phl)->fileref);
+    }
+    if (NULL!=(*phl)->fptr) {
+      fits_close_file((*phl)->fptr, status);
+    }
+    free(*phl);
+    *phl=NULL;
+  }
+}
+
+
+struct SimputPhListBuffer* newSimputPhListBuffer(int* const status)
+{
+  struct SimputPhListBuffer *phlbuff = 
+    (struct SimputPhListBuffer*)malloc(sizeof(struct SimputPhListBuffer));
+  CHECK_NULL_RET(phlbuff, *status, 
+		 "memory allocation for SimputPhListBuffer failed", phlbuff);
+    
+  phlbuff->nphls=0;
+  phlbuff->phls =NULL;
+
+  return(phlbuff);
+}
+
+
+void freeSimputPhListBuffer(struct SimputPhListBuffer** pb,
+			    int* const status)
+{
+  if (NULL!=*pb) {
+    if (NULL!=(*pb)->phls) {
+      long ii;
+      for (ii=0; ii<(*pb)->nphls; ii++) {
+	freeSimputPhList(&((*pb)->phls[ii]), status);
+      }
+      free((*pb)->phls);
+    }
+    free(*pb);
+    *pb=NULL;
   }
 }
 

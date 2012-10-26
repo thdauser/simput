@@ -47,7 +47,7 @@
 #define EXTTYPE_NONE (0)
 #define EXTTYPE_MIDPSPEC (1)
 #define EXTTYPE_IMAGE (2)
-#define EXTTYPE_PHOLIST (3)
+#define EXTTYPE_PHLIST (3)
 #define EXTTYPE_LC (4)
 #define EXTTYPE_PSD (5)
 
@@ -60,6 +60,9 @@
 // Macros.
 /////////////////////////////////////////////////////////////////
 
+
+/** Conversion factor from [keV]->[erg]. */
+#define keV2erg (1.602e-9)
 
 /** Output routine for error messages. */
 #define SIMPUT_ERROR(msg) \
@@ -190,6 +193,12 @@ struct SimputImgBuffer {
 };
 
 
+struct SimputPhListBuffer {
+  long nphls; // Current number of photon lists in the cache.
+  SimputPhList** phls; // Cache for the photon lists.
+};
+
+
 /////////////////////////////////////////////////////////////////
 // Functions.
 /////////////////////////////////////////////////////////////////
@@ -233,6 +242,10 @@ void freeSimputPSDBuffer(struct SimputPSDBuffer** sb);
 
 struct SimputImgBuffer* newSimputImgBuffer(int* const status);
 void freeSimputImgBuffer(struct SimputImgBuffer** sb);
+
+
+struct SimputPhListBuffer* newSimputPhListBuffer(int* const status);
+void freeSimputPhListBuffer(struct SimputPhListBuffer** pb, int* const status);
 
 
 /** Determine the extension type of a particular FITS file HDU. */

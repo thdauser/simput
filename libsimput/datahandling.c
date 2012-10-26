@@ -302,7 +302,6 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
   long ii;
   for (ii=0; ii<lb->nlcs; ii++) {
     // Check if the light curve is equivalent to the requested one.
-    // TODO 
     if (0==strcmp(lb->lcs[ii]->fileref, filename)) {
       // For a light curve created from a PSD, we also have to check,
       // whether this is the source associated to this light curve.
@@ -1160,9 +1159,7 @@ static SimputKRLC* getSimputKRLC(SimputCtlg* const cat,
 /** Return the requested image. Keeps a certain number of images in an
     internal storage. If the requested image is not located in the
     internal storage, it is loaded from the reference given in the
-    source catalog. If the the source does not refer to an image
-    (i.e. it is a point-like source) the function return value is
-    NULL. */
+    source catalog. */
 static SimputImg* getSimputImg(SimputCtlg* const cat,
 			       char* const filename,
 			       int* const status)
@@ -1257,13 +1254,73 @@ static void p2s(struct wcsprm* const wcs,
 }
 
 
+/** Return the requested photon lists. Keeps a certain number of
+    photon lists in an internal storage. If the requested photon list
+    is not located in the internal storage, it is obtained from the
+    reference given in the source catalog. */
+static SimputPhList* getSimputPhList(SimputCtlg* const cat,
+				     char* const filename,
+				     int* const status)
+{
+  const int maxphls=200;
+
+  // Check if the source catalog contains a photon list buffer.
+  if (NULL==cat->phlistbuff) {
+    cat->phlistbuff=newSimputPhListBuffer(status);
+    CHECK_STATUS_RET(*status, NULL);
+  }
+
+  // Convert the void* pointer to the photon list buffer into the right
+  // format.
+  struct SimputPhListBuffer* pb=(struct SimputPhListBuffer*)cat->phlistbuff;
+
+  // In case there are no photon lists available at all, allocate 
+  // memory for the array (storage for photon lists).
+  if (NULL==pb->phls) {
+    pb->phls=(SimputPhList**)malloc(maxphls*sizeof(SimputPhList*));
+    CHECK_NULL_RET(pb->phls, *status, 
+		   "memory allocation for photon lists failed", NULL);
+  }
+
+  // Search if the requested photon list is available in the storage.
+  long ii;
+  for (ii=0; ii<pb->nphls; ii++) {
+    // Check if the photon list is equivalent to the requested one.
+    if (0==strcmp(pb->phls[ii]->fileref, filename)) {
+      // If yes, return the photon list.
+      return(pb->phls[ii]);
+    }
+  }
+
+  // The requested photon list is not contained in the storage.
+  // Therefore we must open it from the specified location.
+  if (pb->nphls>=maxphls) {
+    SIMPUT_ERROR("too many photon lists in the internal storage");
+    *status=EXIT_FAILURE;
+    return(NULL);
+  }
+
+  // Open the photon list from the file.
+  pb->phls[pb->nphls]=openSimputPhList(filename, READONLY, status);
+  CHECK_STATUS_RET(*status, pb->phls[pb->nphls]);
+  pb->nphls++;
+
+  // Store the file reference to the photon lists for later use.
+  pb->phls[pb->nphls-1]->fileref=
+    (char*)malloc((strlen(filename)+1)*sizeof(char));
+  CHECK_NULL_RET(pb->phls[pb->nphls-1]->fileref, *status, 
+		 "memory allocation for file reference failed", 
+		 pb->phls[pb->nphls-1]);
+  strcpy(pb->phls[pb->nphls-1]->fileref, filename);
+   
+  return(pb->phls[pb->nphls-1]);
+}
+
+
 float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
 				const float emin, 
 				const float emax)
 {
-  // Conversion factor from [keV]->[erg].
-  const float keV2erg=1.602e-9;
-
   // Return value.
   float flux=0.;
 
@@ -1302,13 +1359,12 @@ float getSimputPhotonRate(SimputCtlg* const cat,
     int spectype=getExtType(cat, specref, status);
     CHECK_STATUS_RET(*status, 0.);
 
-    float refband_flux=0.;
     if (EXTTYPE_MIDPSPEC==spectype) {
       SimputMIdpSpec* midpspec=getSimputMIdpSpec(cat, specref, status);
       CHECK_STATUS_RET(*status, 0.);
 
       // Flux in the reference energy band.
-      refband_flux=
+      float refband_flux=
 	getSimputMIdpSpecBandFlux(midpspec, src->e_min, src->e_max);
 
       SimputSpec* spec=getSimputSpec(cat, specref, status);
@@ -1323,8 +1379,65 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       *(src->phrate)=
 	src->eflux / refband_flux * 
 	(float)(spec->distribution[cat->arf->NumberEnergyBins-1]);
+      
+    } else if (EXTTYPE_PHLIST==spectype) {
 
-      // TODO Photon lists.
+      // Get the photon list.
+      SimputPhList* phl=getSimputPhList(cat, specref, status);
+      CHECK_STATUS_RET(*status, 0.);
+      
+      // Determine the flux in the reference energy band.
+      float refband_flux=0.;
+      const long buffsize=1000000;
+      float buffer[buffsize];
+      long ii;
+      for (ii=0; ii*buffsize<phl->nphs; ii++) {
+	// Read a block of photons.
+	int anynul=0;
+	long nphs=MIN(buffsize, phl->nphs-(ii*buffsize));
+	fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii*buffsize+1, 
+		      1, nphs, NULL, buffer, &anynul, status);
+	CHECK_STATUS_RET(*status, 0.);
+
+	// Determine the photons/illuminated energy in the
+	// reference energy band.
+	long jj;
+	for (jj=0; jj<nphs; jj++) {
+	  if ((buffer[jj]>=src->e_min)&&(buffer[jj]<=src->e_max)) {
+	    refband_flux+=buffer[jj]*keV2erg;
+	  }
+	}
+      }
+
+      if (0.==phl->refarea) {
+	// Determine the maximum value of the instrument ARF.
+	if (NULL==cat->arf) {
+	  *status=EXIT_FAILURE;
+	  SIMPUT_ERROR("ARF not found");
+	  return(0.);
+	}
+	long kk;
+	float maxarea=0.;
+	for (kk=0; kk<cat->arf->NumberEnergyBins; kk++) {
+	  if (cat->arf->EffArea[kk]>maxarea) {
+	    maxarea=cat->arf->EffArea[kk];
+	  }
+	}
+	phl->refarea=maxarea;
+      }
+
+      // Use the maximum value of the ARF as a reference to determine
+      // the flux.
+      // [erg/s]->[erg/s/cm^2]
+      refband_flux*=1./phl->refarea;
+
+      // Store the determined photon rate in the source data structure
+      // for later use.
+      // Allocate memory.
+      src->phrate=(float*)malloc(sizeof(float));
+      CHECK_NULL_RET(src->phrate, *status,
+		     "memory allocation for photon rate buffer failed", 0.);
+      *(src->phrate)=src->eflux / refband_flux * phl->nphs;
 
     } else {
       SIMPUT_ERROR("could not find valid spectrum extension");
@@ -1369,6 +1482,16 @@ int getSimputPhotonTime(SimputCtlg* const cat,
     // The source has a time-variable brightness.
     assert(avgrate>0.);
   
+    int timetype=getExtType(cat, timeref, status);
+    CHECK_STATUS_RET(*status, 0);
+
+    // Check if the timing reference points to a photon list.
+    if (EXTTYPE_PHLIST==timetype) {
+      *status=EXIT_FAILURE;
+      SIMPUT_ERROR("photon list are currently not supported for timing extensions");
+      return(0);
+    }
+
     // Get the light curve.
     SimputKRLC* lc=getSimputKRLC(cat, src, timeref, prevtime, mjdref, status);
     CHECK_STATUS_RET(*status, 0);
@@ -1446,6 +1569,48 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 }
 
 
+void getSimputPhFromPhList(const SimputCtlg* const cat,
+			   const SimputPhList* const phl, 
+			   float* const energy, 
+			   double* const ra, 
+			   double* const dec, 
+			   int* const status)
+{
+  while(1) {
+    // Determine a random photon within the list.
+    long ii=(long)(static_rndgen()*phl->nphs);
+
+    // Read the photon energy.
+    int anynul=0;
+    fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1, 
+		  NULL, energy, &anynul, status);
+    CHECK_STATUS_VOID(*status);
+
+    // Determine the ARF value for the photon energy.
+    long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
+    while (upper>lower) {
+      mid=(lower+upper)/2;
+      if (cat->arf->HighEnergy[mid]<*energy) {
+	lower=mid+1;
+      } else {
+	upper=mid;
+      }
+    }
+    
+    // Randomly determine according to the effective area
+    // of the instrument, whether this photon is seen or not.
+    if (static_rndgen()<cat->arf->EffArea[lower]/phl->refarea) {
+      // Read the position of the photon.
+      fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1, 
+		    NULL, ra, &anynul, status);
+      fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
+		    NULL, dec, &anynul, status);
+      return;
+    }
+  }
+}
+
+
 void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 				SimputSrc* const src,
 				double currtime,
@@ -1473,19 +1638,26 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   CHECK_STATUS_VOID(*status);
 
 
-  // If the spectrum and the image reference point to a photon list,
+  // If the spectrum or the image reference point to a photon list,
   // determine simultaneously the energy and spatial information.
-  if ((EXTTYPE_PHOLIST==spectype)||(EXTTYPE_PHOLIST==imagtype)) {
+  SimputPhList* phl=NULL;
+  if (EXTTYPE_PHLIST==spectype) {
+    phl=getSimputPhList(cat, specref, status);
+    CHECK_STATUS_VOID(*status);
+  } else if (EXTTYPE_PHLIST==imagtype) {
+    phl=getSimputPhList(cat, imagref, status);
+    CHECK_STATUS_VOID(*status);
+  }
+  if (NULL!=phl) {
     float b_energy;
     double b_ra, b_dec;
-    //getSimputPhotonFromPhoList(, &b_energy, &b_ra, &b_dec, status);
+    getSimputPhFromPhList(cat, phl, &b_energy, &b_ra, &b_dec, status);
     CHECK_STATUS_VOID(*status);
-    // TODO
 
-    if (EXTTYPE_PHOLIST==spectype) {
+    if (EXTTYPE_PHLIST==spectype) {
       *energy=b_energy;
     }
-    if (EXTTYPE_PHOLIST==imagtype) {
+    if (EXTTYPE_PHLIST==imagtype) {
       *ra =b_ra;
       *dec=b_dec;
     }

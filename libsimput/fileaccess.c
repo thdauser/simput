@@ -833,7 +833,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     char uenergy[SIMPUT_MAXSTR];
     read_unit(fptr, cenergy, uenergy, status);
     CHECK_STATUS_BREAK(*status);
-    float fenergy = unit_conversion_keV(uenergy);
+    float fenergy=unit_conversion_keV(uenergy);
     if (0.==fenergy) {
       SIMPUT_ERROR("unknown units in ENERGY column");
       *status=EXIT_FAILURE;
@@ -843,7 +843,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     char uflux[SIMPUT_MAXSTR];
     read_unit(fptr, cflux, uflux, status);
     CHECK_STATUS_BREAK(*status);
-    float fflux = unit_conversion_phpspcm2pkeV(uflux);
+    float fflux=unit_conversion_phpspcm2pkeV(uflux);
     if (0.==fflux) {
       SIMPUT_ERROR("unknown units in FLUX column");
       *status=EXIT_FAILURE;
@@ -2123,6 +2123,76 @@ void saveSimputImg(SimputImg* const img,
 }
 
 
+SimputPhList* openSimputPhList(const char* const filename,
+			       const int mode,
+			       int* const status)
+{
+  SimputPhList* phl=newSimputPhList(status);
+  CHECK_STATUS_RET(*status, phl);
+
+  // Open the photon list.
+  fits_open_table(&phl->fptr, filename, mode, status);
+  CHECK_STATUS_RET(*status, phl);
+
+  // Determine the total number of photons.
+  fits_get_num_rows(phl->fptr, &phl->nphs, status);
+  CHECK_STATUS_RET(*status, phl);
+
+  // Determine the reference RA and DEC values from the
+  // header keywords.
+  double refra=0., refdec=0.;
+  char comment[SIMPUT_MAXSTR];
+  fits_read_key(phl->fptr, TDOUBLE, "REFRA", &refra, comment, status);
+  fits_read_key(phl->fptr, TDOUBLE, "REFDEC", &refdec, comment, status);
+  CHECK_STATUS_RET(*status, phl);
+  if ((0.!=refra)||(0.!=refdec)) {
+    *status=EXIT_FAILURE;
+    SIMPUT_ERROR("in current implementation photon lists must have "
+		 "REFRA=0.0 and REFDEC=0.0");
+    return(phl);
+  }
+
+  // Determine the column numbers.
+  fits_get_colnum(phl->fptr, CASEINSEN, "RA", &phl->cra, status);
+  fits_get_colnum(phl->fptr, CASEINSEN, "DEC", &phl->cdec, status);
+  fits_get_colnum(phl->fptr, CASEINSEN, "ENERGY", &phl->cenergy, status);
+  CHECK_STATUS_RET(*status, phl);
+
+  // Determine the unit conversion factors.
+  char ura[SIMPUT_MAXSTR];
+  read_unit(phl->fptr, phl->cra, ura, status);
+  CHECK_STATUS_RET(*status, phl);
+  phl->fra=unit_conversion_rad(ura);
+  if (0.==phl->fra) {
+    SIMPUT_ERROR("unknown units in RA column");
+    *status=EXIT_FAILURE;
+    return(phl);
+  }
+
+  char udec[SIMPUT_MAXSTR];
+  read_unit(phl->fptr, phl->cdec, udec, status);
+  CHECK_STATUS_RET(*status, phl);
+  phl->fdec=unit_conversion_rad(udec);
+  if (0.==phl->fdec) {
+    SIMPUT_ERROR("unknown units in DEC column");
+    *status=EXIT_FAILURE;
+    return(phl);
+  }
+
+  char uenergy[SIMPUT_MAXSTR];
+  read_unit(phl->fptr, phl->cenergy, uenergy, status);
+  CHECK_STATUS_RET(*status, phl);
+  phl->fenergy=unit_conversion_keV(uenergy);
+  if (0.==phl->fenergy) {
+    SIMPUT_ERROR("unknown units in ENERGY column");
+    *status=EXIT_FAILURE;
+    return(phl);
+  }
+
+  return(phl);
+}
+
+
 int getExtType(SimputCtlg* const cat, 
 	       char* const filename, 
 	       int* const status)
@@ -2252,7 +2322,7 @@ int getExtType(SimputCtlg* const cat,
       (0==strcmp(hduclas2, "PHOTONS"))) ||
      // SIMPUT version 1.1.0.
      (0==strcmp(hduclas1, "PHOTONS"))) {
-    type=EXTTYPE_PHOLIST;
+    type=EXTTYPE_PHLIST;
   }
 
   else {
