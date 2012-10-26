@@ -469,11 +469,11 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 
 
 void getSimputSrcSpecRef(SimputCtlg* const cat,
-		   const SimputSrc* const src,
-		   const double prevtime,
-		   const double mjdref,
-		   char* const specref,
-		   int* const status)
+			 const SimputSrc* const src,
+			 const double prevtime,
+			 const double mjdref,
+			 char* const specref,
+			 int* const status)
 {
   // Initialize with an empty string.
   strcpy(specref, "");
@@ -1404,7 +1404,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
 	long jj;
 	for (jj=0; jj<nphs; jj++) {
 	  if ((buffer[jj]>=src->e_min)&&(buffer[jj]<=src->e_max)) {
-	    refband_flux+=buffer[jj]*keV2erg;
+	    refband_flux+=buffer[jj]*phl->fenergy*keV2erg;
 	  }
 	}
       }
@@ -1584,6 +1584,7 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
     int anynul=0;
     fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1, 
 		  NULL, energy, &anynul, status);
+    *energy *= phl->fenergy;
     CHECK_STATUS_VOID(*status);
 
     // Determine the ARF value for the photon energy.
@@ -1605,6 +1606,9 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 		    NULL, ra, &anynul, status);
       fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
 		    NULL, dec, &anynul, status);
+      *ra *= phl->fra;
+      *dec*= phl->fdec;
+      CHECK_STATUS_VOID(*status);
       return;
     }
   }
@@ -1874,8 +1878,8 @@ float getSimputSrcExt(SimputCtlg* const cat,
       // Point-like source.
       extension=0.;
       break;
-
-    } else {
+      
+    } else if (EXTTYPE_IMAGE==imagtype) {
       // Extended source => determine the maximum extension.
       double maxext=0.;
 
@@ -1890,8 +1894,8 @@ float getSimputSrcExt(SimputCtlg* const cat,
       // IMGSCAL property.
       wcs.crval[0] = 0.; 
       wcs.crval[1] = 0.;
-      wcs.cdelt[0] *= 1./src->imgscal;
-      wcs.cdelt[1] *= 1./src->imgscal;
+      wcs.cdelt[0]*= 1./src->imgscal;
+      wcs.cdelt[1]*= 1./src->imgscal;
       wcs.flag = 0;
 
       // Check lower left corner.
@@ -1904,9 +1908,9 @@ float getSimputSrcExt(SimputCtlg* const cat,
       while(sx>M_PI) {
 	sx-=2*M_PI;
       }
-      double ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      double ext=sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
-	maxext = ext;
+	maxext=ext;
       }
 
       // Check lower right corner.
@@ -1923,16 +1927,16 @@ float getSimputSrcExt(SimputCtlg* const cat,
       }
       
       // Check upper left corner.
-      px = 0.5;
-      py = img->naxis2*1. + 0.5;
+      px=0.5;
+      py=img->naxis2*1. + 0.5;
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
       while(sx>M_PI) {
 	sx-=2*M_PI;
       }
-      ext = sqrt(pow(sx,2.)+pow(sy,2.));
+      ext=sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
-	maxext = ext;
+	maxext=ext;
       }
       
       // Check upper right corner.
@@ -1948,6 +1952,40 @@ float getSimputSrcExt(SimputCtlg* const cat,
 	maxext=ext;
       }
       
+      extension=(float)maxext;
+
+    } else if (EXTTYPE_PHLIST==imagtype) {
+      // Get the photon list.
+      SimputPhList* phl=getSimputPhList(cat, imagref, status);
+      CHECK_STATUS_BREAK(*status);
+      
+      // Determine the maximum extension by going through
+      // the whole list of photons.
+      double maxext=0.;
+      const long buffsize=1000000;
+      double rabuffer[buffsize], decbuffer[buffsize];
+      long ii;
+      for (ii=0; ii*buffsize<phl->nphs; ii++) {
+	// Read a block of photons.
+	int anynul=0;
+	long nphs=MIN(buffsize, phl->nphs-(ii*buffsize));
+	fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii*buffsize+1, 
+		      1, nphs, NULL, rabuffer, &anynul, status);
+	fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii*buffsize+1, 
+		      1, nphs, NULL, decbuffer, &anynul, status);
+	CHECK_STATUS_RET(*status, 0.);
+
+	// Determine the maximum extension.
+	long jj;
+	for (jj=0; jj<nphs; jj++) {
+	  double ext=sqrt(rabuffer[jj]*rabuffer[jj]+
+			  decbuffer[jj]*decbuffer[jj]);
+	  if (ext>maxext) {
+	    maxext=ext;
+	  }
+	}
+      }
+
       extension=(float)maxext;
     }
   } while(0); // END of error handling loop.
