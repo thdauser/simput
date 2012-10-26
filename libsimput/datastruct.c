@@ -193,6 +193,7 @@ SimputCtlg* newSimputCtlg(int* const status)
   cat->imgbuff  =NULL;
   cat->specbuff =NULL;
   cat->krlcbuff =NULL;
+  cat->extbuff  =NULL;
   cat->arf      =NULL;
 
   return(cat);
@@ -235,6 +236,9 @@ void freeSimputCtlg(SimputCtlg** const cat,
     }
     if (NULL!=(*cat)->krlcbuff) {
       freeSimputKRLCBuffer((struct SimputKRLCBuffer**)&((*cat)->krlcbuff));
+    }
+    if (NULL!=(*cat)->extbuff) {
+      freeSimputExttypeBuffer((struct SimputExttypeBuffer**)&((*cat)->extbuff));
     }
     free(*cat);
     *cat=NULL;

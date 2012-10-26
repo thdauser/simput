@@ -1963,7 +1963,8 @@ float getSimputSrcExt(SimputCtlg* const cat,
       // the whole list of photons.
       double maxext=0.;
       const long buffsize=1000000;
-      double rabuffer[buffsize], decbuffer[buffsize];
+      double rabuffer[buffsize];
+      double decbuffer[buffsize];
       long ii;
       for (ii=0; ii*buffsize<phl->nphs; ii++) {
 	// Read a block of photons.
