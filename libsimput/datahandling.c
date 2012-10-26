@@ -1388,7 +1388,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       
       // Determine the flux in the reference energy band.
       float refband_flux=0.;
-      const long buffsize=1000000;
+      const long buffsize=10000;
       float buffer[buffsize];
       long ii;
       for (ii=0; ii*buffsize<phl->nphs; ii++) {
@@ -1962,7 +1962,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       // Determine the maximum extension by going through
       // the whole list of photons.
       double maxext=0.;
-      const long buffsize=100000;
+      const long buffsize=10000;
       double rabuffer[buffsize];
       double decbuffer[buffsize];
       long ii;
