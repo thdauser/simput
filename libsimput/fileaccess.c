@@ -2273,7 +2273,7 @@ int getExtType(SimputCtlg* const cat,
     if (eb->chdu>=maxhdus) {
       eb->chdu=0;
     }
-    free(eb->hdus[eb->chdu]);
+    free(eb->filenames[eb->chdu]);
   }
   eb->hdus[eb->chdu]=type;
   eb->filenames[eb->chdu]=

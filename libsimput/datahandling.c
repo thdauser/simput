@@ -197,6 +197,77 @@ static SimputPSD* getSimputPSD(SimputCtlg* const cat,
 }
 
 
+static inline double getLCTime(const SimputLC* const lc, 
+			       const long kk, 
+			       const long long nperiods,
+			       const double mjdref)
+{
+  if (NULL!=lc->time) {
+    // Non-periodic light curve.
+    return(lc->time[kk] + lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
+  } else {
+    // Periodic light curve.
+    double phase=lc->phase[kk] - lc->phase0 + nperiods;
+    return(phase*lc->period 
+	   +lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
+  }
+}
+
+
+/** Determine the index of the bin of the light curve that corresponds
+    to the specified time. */
+static inline long getLCBin(const SimputLC* const lc, 
+			    const double time, 
+			    const double mjdref,
+			    long long* nperiods, 
+			    int* const status)
+{
+  // Check if the light curve is periodic or not.
+  if (NULL!=lc->time) {
+    // Non-periodic light curve.
+
+    // Check if the requested time is within the covered interval.
+    if ((time<getLCTime(lc, 0, 0, mjdref)) || 
+	(time>=getLCTime(lc, lc->nentries-1, 0, mjdref))) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "requested time (%lf MJD) is outside the "
+	      "interval covered by the light curve (%lf to %lf MJD)",
+	      time/24./3600. + mjdref,
+	      getLCTime(lc, 0, 0, 0.)/24./3600., 
+	      getLCTime(lc, lc->nentries-1, 0, 0.)/24./3600.);
+      SIMPUT_ERROR(msg);
+      *status=EXIT_FAILURE;
+      return(0);
+    }
+    
+    *nperiods=0;
+
+  } else {
+    // Periodic light curve.
+    double dt=time-getLCTime(lc, 0, 0, mjdref);
+    double phase=lc->phase0 + dt/lc->period;
+    (*nperiods)=(long long)phase;
+    if (phase<0.) {
+      (*nperiods)--;
+    }     
+  }
+
+  // Determine the respective index kk of the light curve (using
+  // binary search).
+  long lower=0, upper=lc->nentries-2, mid;
+  while (upper>lower) {
+    mid=(lower+upper)/2;
+    if (getLCTime(lc, mid+1, *nperiods, mjdref) < time) {
+      lower=mid+1;
+    } else {
+      upper=mid;
+    }
+  }
+  
+  return(lower);
+}
+
+
 static SimputLC* getSimputLC(SimputCtlg* const cat, 
 			     const SimputSrc* const src,
 			     char* const filename, 
@@ -207,10 +278,56 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
   SimputLC* lc=NULL;
 
   // Check if the SimputLC is contained in the internal cache.
-  // TODO
+  const int maxlcs=200;
 
-  // If it is not contained in the cache, load it either from a file
-  // or create it from a SimputPSD.
+  // Check if the source catalog contains a light curve buffer.
+  if (NULL==cat->lcbuff) {
+    cat->lcbuff=newSimputLCBuffer(status);
+    CHECK_STATUS_RET(*status, NULL);
+  }
+
+  // Convert the void* pointer to the light curve buffer into 
+  // the right format.
+  struct SimputLCBuffer* lb=(struct SimputLCBuffer*)cat->lcbuff;
+
+  // In case there are no light curves available at all, allocate 
+  // memory for the array (storage for images).
+  if (NULL==lb->lcs) {
+    lb->lcs=(SimputLC**)malloc(maxlcs*sizeof(SimputLC*));
+    CHECK_NULL_RET(lb->lcs, *status, 
+		   "memory allocation for light curves failed", NULL);
+  }
+
+  // Search if the requested light curve is available in the storage.
+  long ii;
+  for (ii=0; ii<lb->nlcs; ii++) {
+    // Check if the light curve is equivalent to the requested one.
+    // TODO 
+    if (0==strcmp(lb->lcs[ii]->fileref, filename)) {
+      // For a light curve created from a PSD, we also have to check,
+      // whether this is the source associated to this light curve.
+      if (lb->lcs[ii]->src_id>0) {
+	// Check if the SRC_IDs agree.
+	if (lb->lcs[ii]->src_id==src->src_id) {
+	  // We have a light curve which has been produced from a PSD.
+	  // Check if the requested time is covered by the light curve.
+	  if (prevtime<getLCTime(lb->lcs[ii], lb->lcs[ii]->nentries-1, 
+				 0, mjdref)) {
+	    return(lb->lcs[ii]);
+	  }
+	  // If not, we have to produce a new light curve from the PSD.
+	}
+      } else {
+	// This light curve is loaded from a file and can be re-used
+	// for different sources.
+	return(lb->lcs[ii]);
+      }
+    }
+  }
+
+
+  // If the LC is not contained in the cache, load it either from 
+  // a file or create it from a SimputPSD.
   int timetype=getExtType(cat, filename, status);
   CHECK_STATUS_RET(*status, lc);
 
@@ -337,80 +454,18 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
   }
 
   // Store the SimputLC in the internal cache.
-  // TODO 
+  lb->lcs[lb->nlcs]=lc;
+  lb->nlcs++;
 
-  return(lc);
-}
+  // Store the file reference to the timing extension for later comparisons.
+  lb->lcs[lb->nlcs-1]->fileref=
+    (char*)malloc((strlen(filename)+1)*sizeof(char));
+  CHECK_NULL_RET(lb->lcs[lb->nlcs-1]->fileref, *status, 
+		 "memory allocation for file reference failed", 
+		 lb->lcs[lb->nlcs-1]);
+  strcpy(lb->lcs[lb->nlcs-1]->fileref, filename);
 
-
-static inline double getLCTime(const SimputLC* const lc, 
-			       const long kk, 
-			       const long long nperiods,
-			       const double mjdref)
-{
-  if (NULL!=lc->time) {
-    // Non-periodic light curve.
-    return(lc->time[kk] + lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
-  } else {
-    // Periodic light curve.
-    double phase=lc->phase[kk] - lc->phase0 + nperiods;
-    return(phase*lc->period 
-	   +lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
-  }
-}
-
-
-/** Determine the index of the bin of the light curve that corresponds
-    to the specified time. */
-static inline long getLCBin(const SimputLC* const lc, 
-			    const double time, 
-			    const double mjdref,
-			    long long* nperiods, 
-			    int* const status)
-{
-  // Check if the light curve is periodic or not.
-  if (NULL!=lc->time) {
-    // Non-periodic light curve.
-
-    // Check if the requested time is within the covered interval.
-    if ((time<getLCTime(lc, 0, 0, mjdref)) || 
-	(time>=getLCTime(lc, lc->nentries-1, 0, mjdref))) {
-      char msg[SIMPUT_MAXSTR];
-      sprintf(msg, "requested time (%lf MJD) is outside the "
-	      "interval covered by the light curve (%lf to %lf MJD)",
-	      time/24./3600. + mjdref,
-	      getLCTime(lc, 0, 0, 0.)/24./3600., 
-	      getLCTime(lc, lc->nentries-1, 0, 0.)/24./3600.);
-      SIMPUT_ERROR(msg);
-      *status=EXIT_FAILURE;
-      return(0);
-    }
-    
-    *nperiods=0;
-
-  } else {
-    // Periodic light curve.
-    double dt=time-getLCTime(lc, 0, 0, mjdref);
-    double phase=lc->phase0 + dt/lc->period;
-    (*nperiods)=(long long)phase;
-    if (phase<0.) {
-      (*nperiods)--;
-    }     
-  }
-
-  // Determine the respective index kk of the light curve (using
-  // binary search).
-  long lower=0, upper=lc->nentries-2, mid;
-  while (upper>lower) {
-    mid=(lower+upper)/2;
-    if (getLCTime(lc, mid+1, *nperiods, mjdref) < time) {
-      lower=mid+1;
-    } else {
-      upper=mid;
-    }
-  }
-  
-  return(lower);
+  return(lb->lcs[lb->nlcs-1]);
 }
 
 
