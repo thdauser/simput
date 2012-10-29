@@ -778,6 +778,18 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 
   do { // Error handling loop.
 
+    // TODO
+    // Check if the filename refers to a binary table extension
+    // containing mission-independent spectra.
+    int exttype=getExtType(cat, filename, status);
+    CHECK_STATUS_BREAK(*status);
+
+    if (EXTTYPE_MIDPSPEC!=exttype) {
+      // Only mission-independent spectra can be pre-loaded into 
+      // the cache.
+      break;
+    }
+
     // Check if the source catalog contains a spectrum buffer.
     if (NULL==cat->midpspecbuff) {
       cat->midpspecbuff=newSimputMIdpSpecBuffer(status);
@@ -2194,7 +2206,7 @@ SimputPhList* openSimputPhList(const char* const filename,
 
 
 int getExtType(SimputCtlg* const cat, 
-	       char* const filename, 
+	       const char* const filename, 
 	       int* const status)
 {
   int type=EXTTYPE_NONE;

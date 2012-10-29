@@ -250,7 +250,7 @@ void freeSimputPhListBuffer(struct SimputPhListBuffer** pb, int* const status);
 
 /** Determine the extension type of a particular FITS file HDU. */
 int getExtType(SimputCtlg* const cat, 
-	       char* const filename, 
+	       const char* const filename, 
 	       int* const status);
 
 
