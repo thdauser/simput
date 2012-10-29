@@ -778,7 +778,6 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 
   do { // Error handling loop.
 
-    // TODO
     // Check if the filename refers to a binary table extension
     // containing mission-independent spectra.
     int exttype=getExtType(cat, filename, status);
