@@ -500,44 +500,64 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
 
       // Copy the reference to the spectrum.
       strcpy(specref, lc->spectrum[bin]);
-      // TODO 
+
+      // Check if a spectrum is defined in this light curve bin.
+      if (0==strlen(specref)) {
+	SIMPUT_ERROR("in the current implementation light curves "
+		     "must not contain blank entries in a given "
+		     "spectrum column");
+	*status=EXIT_FAILURE;
+	return;
+      }
+
+      // Determine the relative location with respect to the 
+      // location of the light curve.
       if ('['==specref[0]) {
-	char buffer[SIMPUT_MAXSTR];
-	strcpy(buffer, timeref);
 	char* firstbrack=strchr(timeref, '[');
 	strcpy(firstbrack, specref);
-	strcpy(specref, buffer);
+	strcpy(specref, timeref);
       } else if (('/'!=specref[0])&&(NULL!=strchr(timeref, '/'))) {
-	char buffer[SIMPUT_MAXSTR];
-	strcpy(buffer, timeref);
 	char* lastslash=strrchr(timeref, '/');
 	lastslash++;
 	strcpy(lastslash, specref);
-	strcpy(specref, buffer);
+	strcpy(specref, timeref);	
       }
-      return;
     }
   }
 
-  // If no, determine the spectrum reference.
-  if (NULL==src->spectrum) {
-    strcpy(specref, "");
-  } else if ((0==strlen(src->spectrum)) || 
-	     (0==strcmp(src->spectrum, "NULL")) ||
-	     (0==strcmp(src->spectrum, " "))) {
-    strcpy(specref, "");
-  } else {
-    if ('['==src->spectrum[0]) {
-      strcpy(specref, cat->filepath);
-      strcat(specref, cat->filename);
+  // If no light curve extension with a spectrum column is given, 
+  // determine the spectrum reference directly from the source 
+  // description.
+  if (0==strlen(specref)) {
+    if (NULL==src->spectrum) {
+      strcpy(specref, "");
     } else {
-      if ('/'!=src->spectrum[0]) {
-	strcpy(specref, cat->filepath);
-      } else {
-	strcpy(specref, "");
-      }
+      strcpy(specref, src->spectrum);
     }
-    strcat(specref, src->spectrum);
+  }
+
+  // Check if this is a valid spectrum reference.
+  if ((0==strcmp(specref, "NULL")) || (0==strcmp(specref, " "))) {
+    strcpy(specref, "");
+  }
+  if (0==strlen(specref)) {
+    return;
+  }
+  
+  // Set path and file name if missing.
+  if ('['==specref[0]) {
+    char buffer[SIMPUT_MAXSTR];
+    strcpy(buffer, cat->filepath);
+    strcat(buffer, cat->filename);
+    strcat(buffer, specref);
+    strcpy(specref, buffer);
+  } else {
+    if ('/'!=specref[0]) {
+      char buffer[SIMPUT_MAXSTR];
+      strcpy(buffer, cat->filepath);
+      strcat(buffer, specref);
+      strcpy(specref, buffer);
+    } 
   }
 }
 
@@ -574,45 +594,63 @@ static void getSrcImagRef(SimputCtlg* const cat,
 
       // Copy the reference to the image.
       strcpy(imagref, lc->image[bin]);
-      // TODO 
+      
+      // Check if an image is defined in this light curve bin.
+      if (0==strlen(imagref)) {
+	SIMPUT_ERROR("in the current implementation light curves "
+		     "must not contain blank entries in a given "
+		     "image column");
+	*status=EXIT_FAILURE;
+	return;
+      }
+
+      // Determine the relative location with respect to the 
+      // location of the light curve.
       if ('['==imagref[0]) {
-	char buffer[SIMPUT_MAXSTR];
-	strcpy(buffer, timeref);
 	char* firstbrack=strchr(timeref, '[');
 	strcpy(firstbrack, imagref);
-	strcpy(imagref, buffer);
+	strcpy(imagref, timeref);
       } else if (('/'!=imagref[0])&&(NULL!=strchr(timeref, '/'))) {
-	char buffer[SIMPUT_MAXSTR];
-	strcpy(buffer, timeref);
 	char* lastslash=strrchr(timeref, '/');
 	lastslash++;
 	strcpy(lastslash, imagref);
-	strcpy(imagref, buffer);
+	strcpy(imagref, timeref);
       }
-      return;
     }
   }
 
-  // If no, determine the image reference.
+  // If no light curve extension with an image column is given, 
+  // determine the spectrum reference directly from the source 
+  // description.
   if (0==strlen(imagref)) {
     if (NULL==src->image) {
       strcpy(imagref, "");
-    } else if ((0==strlen(src->image)) || 
-	       (0==strcmp(src->image, "NULL")) ||
-	       (0==strcmp(src->image, " "))) {
-      strcpy(imagref, "");
     } else {
-      if ('['==src->image[0]) {
-	strcpy(imagref, cat->filepath);
-	strcat(imagref, cat->filename);
-      } else {
-	if ('/'!=src->image[0]) {
-	  strcpy(imagref, cat->filepath);
-	} else {
-	strcpy(imagref, "");
-	}
-      }
-      strcat(imagref, src->image);
+      strcpy(imagref, src->image);
+    }
+  }
+
+  // Check if this is a valid image reference.
+  if ((0==strcmp(src->image, "NULL")) || (0==strcmp(src->image, " "))) {
+      strcpy(imagref, "");
+  }
+  if (0==imagref) {
+    return;
+  }
+
+  // Set path and file name if missing.
+  if ('['==imagref[0]) {
+    char buffer[SIMPUT_MAXSTR];
+    strcpy(buffer, cat->filepath);
+    strcat(buffer, cat->filename);
+    strcat(buffer, imagref);
+    strcpy(imagref, buffer);
+  } else {
+    if ('/'!=imagref[0]) {
+      char buffer[SIMPUT_MAXSTR];
+      strcpy(buffer, cat->filepath);
+      strcat(buffer, imagref);
+      strcpy(imagref, buffer);
     }
   }
 }
