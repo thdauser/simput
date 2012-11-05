@@ -632,9 +632,9 @@ static void getSrcImagRef(SimputCtlg* const cat,
 
   // Check if this is a valid image reference.
   if ((0==strcmp(src->image, "NULL")) || (0==strcmp(src->image, " "))) {
-      strcpy(imagref, "");
+    strcpy(imagref, "");
   }
-  if (0==imagref) {
+  if (0==strlen(imagref)) {
     return;
   }
 
