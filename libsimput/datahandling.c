@@ -2,7 +2,7 @@
 
 
 /** Random number generator. */
-static double(*static_rndgen)(void)=NULL;
+static double(*static_rndgen)(int* const)=NULL;
 
 
 void setSimputARF(SimputCtlg* const cat, struct ARF* const arf)
@@ -11,7 +11,7 @@ void setSimputARF(SimputCtlg* const cat, struct ARF* const arf)
 }
 
 
-void setSimputRndGen(double(*rndgen)(void))
+void setSimputRndGen(double(*rndgen)(int* const))
 {
   static_rndgen=rndgen;
 }
@@ -128,10 +128,12 @@ static void getSrcTimeRef(SimputCtlg* const cat,
 }
 
 
-static void gauss_rndgen(double* const x, double* const y)
+static void gauss_rndgen(double* const x, double* const y, int* const status)
 {
-  double sqrt_2rho=sqrt(-log(static_rndgen())*2.);
-  double phi=static_rndgen()*2.*M_PI;
+  double sqrt_2rho=sqrt(-log(static_rndgen(status))*2.);
+  CHECK_STATUS_VOID(*status);
+  double phi=static_rndgen(status)*2.*M_PI;
+  CHECK_STATUS_VOID(*status);
 
   *x=sqrt_2rho * cos(phi);
   *y=sqrt_2rho * sin(phi);
@@ -414,11 +416,13 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       // Apply the algorithm introduced by Timmer & Koenig (1995).
       double randr, randi;
       lc->fluxscal=1.; // Set Fluxscal to 1.
-      gauss_rndgen(&randr, &randi);
+      gauss_rndgen(&randr, &randi, status);
+      CHECK_STATUS_RET(*status, lc);
       fftw_in[0]     =1.;
       fftw_in[psdlen]=randi*sqrt(power[psdlen-1]);
       for (ii=1; ii<psdlen; ii++) {
-	gauss_rndgen(&randr, &randi);
+	gauss_rndgen(&randr, &randi, status);
+	CHECK_STATUS_RET(*status, lc);
 	REAL(fftw_in, ii)              =randr*0.5*sqrt(power[ii-1]);
 	IMAG(fftw_in, ii, lc->nentries)=randi*0.5*sqrt(power[ii-1]);
       }
@@ -938,13 +942,14 @@ static SimputSpec* getSimputSpec(SimputCtlg* const cat,
 }
 
 
-static inline double rndexp(const double avgdist)
+static inline double rndexp(const double avgdist, int* const status)
 {
   assert(avgdist>0.);
 
   double rand;
   do {
-    rand=static_rndgen();
+    rand=static_rndgen(status);
+    CHECK_STATUS_RET(*status, 0.);
     assert(rand>=0.);
   } while (rand==0.);
 
@@ -1512,7 +1517,8 @@ int getSimputPhotonTime(SimputCtlg* const cat,
       return(1);
     } else {
       assert(avgrate>0.);
-      *nexttime=prevtime+ rndexp((double)1./avgrate);
+      *nexttime=prevtime+ rndexp((double)1./avgrate, status);
+      CHECK_STATUS_RET(*status, 0);
       return(0);
     }
 
@@ -1539,7 +1545,8 @@ int getSimputPhotonTime(SimputCtlg* const cat,
     // general algorithm proposed by Klein & Roberts has to 
     // be applied.
     // Step 1 in the algorithm.
-    double u=static_rndgen();
+    double u=static_rndgen(status);
+    CHECK_STATUS_RET(*status, 0);
 
     // Determine the respective index kk of the light curve.
     long long nperiods=0;
@@ -1616,7 +1623,8 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 {
   while(1) {
     // Determine a random photon within the list.
-    long ii=(long)(static_rndgen()*phl->nphs);
+    long ii=(long)(static_rndgen(status)*phl->nphs);
+    CHECK_STATUS_VOID(*status);
 
     // Read the photon energy.
     int anynul=0;
@@ -1638,7 +1646,9 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
     
     // Randomly determine according to the effective area
     // of the instrument, whether this photon is seen or not.
-    if (static_rndgen()<cat->arf->EffArea[lower]/phl->refarea) {
+    double r=static_rndgen(status);
+    CHECK_STATUS_VOID(*status);
+    if (r<cat->arf->EffArea[lower]/phl->refarea) {
       // Read the position of the photon.
       fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1, 
 		    NULL, ra, &anynul, status);
@@ -1715,7 +1725,8 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
     CHECK_STATUS_VOID(*status);
 
     // Get a random number in the interval [0,1].
-    double rnd=static_rndgen();
+    double rnd=static_rndgen(status);
+    CHECK_STATUS_VOID(*status);
     assert(rnd>=0.);
     assert(rnd<=1.);
 
@@ -1738,8 +1749,9 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
     // Return the corresponding photon energy.
     *energy=
       cat->arf->LowEnergy[lower] + 
-      static_rndgen()*
+      static_rndgen(status)*
       (cat->arf->HighEnergy[lower]-cat->arf->LowEnergy[lower]);
+    CHECK_STATUS_VOID(*status);
   }
   // END of determine the photon energy.
   // --- 
@@ -1767,7 +1779,8 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       CHECK_STATUS_BREAK(*status);
 
       // Perform a binary search in 2 dimensions.
-      double rnd=static_rndgen()*img->dist[img->naxis1-1][img->naxis2-1];
+      double rnd=static_rndgen(status)*img->dist[img->naxis1-1][img->naxis2-1];
+      CHECK_STATUS_BREAK(*status);
 
       // Perform a binary search to obtain the x-coordinate.
       long high=img->naxis1-1;
@@ -1829,8 +1842,10 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Determine floating point pixel positions shifted by 0.5 in 
       // order to match the FITS conventions and with a randomization
       // over the pixels.
-      double xd=(double)xl + 0.5 + static_rndgen();
-      double yd=(double)yl + 0.5 + static_rndgen();
+      double xd=(double)xl + 0.5 + static_rndgen(status);
+      CHECK_STATUS_BREAK(*status);
+      double yd=(double)yl + 0.5 + static_rndgen(status);
+      CHECK_STATUS_BREAK(*status);
 
       // Rotate the image (pixel coordinates) by IMGROTA around the 
       // reference point.

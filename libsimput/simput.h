@@ -534,7 +534,7 @@ void setSimputARF(SimputCtlg* const cat, struct ARF* const arf);
 /** Set the random number generator, which is used by the simput
     library routines. The generator should return double valued,
     uniformly distributed numbers in the interval [0,1). */
-void setSimputRndGen(double(*rndgen)(void));
+void setSimputRndGen(double(*rndgen)(int* const));
 
 /** Determine the energy flux in [erg/s/cm**2] within the reference
     energy band of the specified source valid a the requested point of
