@@ -2263,13 +2263,23 @@ int getExtType(SimputCtlg* const cat,
   // we have to open it an check the header keywords.
   fitsfile* fptr=NULL;
   fits_open_file(&fptr, filename, READONLY, status);
-  CHECK_STATUS_RET(*status, type);
+  if (EXIT_SUCCESS!=status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "failed opening file '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(type);
+  }
 
   // Read the HDUCLAS1 and HDUCLAS2 header keywords.
   char comment[SIMPUT_MAXSTR];
   char hduclas1[SIMPUT_MAXSTR];
   char hduclas2[SIMPUT_MAXSTR];
   fits_read_key(fptr, TSTRING, "HDUCLAS1", &hduclas1, comment, status);
+  if (EXIT_SUCCESS!=status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "failed reading keyword 'HDUCLAS1' from file '%s'", filename);
+    SIMPUT_ERROR(msg);
+  }
   // (Don't do an error checking here! Otherwise the file
   //  might not be closed after an error occurred with reading
   //  the header keyword.)
@@ -2338,7 +2348,7 @@ int getExtType(SimputCtlg* const cat,
 
   else {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "extension type '%s' not supported", hduclas1);
+    sprintf(msg, "extension type '%s' not supported (HDUCLAS1)", hduclas1);
     SIMPUT_ERROR(msg);
     *status=EXIT_FAILURE;
     return(type);
