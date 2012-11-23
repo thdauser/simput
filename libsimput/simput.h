@@ -2,7 +2,7 @@
 #define SIMPUT_H (1)
 
 #include "fitsio.h"
-#include "wcshdr.h"
+#include "wcs.h"
 
 #ifndef HEASP_H
 #define HEASP_H 1

@@ -1949,7 +1949,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
   // Return value.
   float extension=0.;
 
-  struct wcsprm wcs = { .flag=-1 };
+  struct wcsprm wcs={ .flag=-1 };
 
   do { // Error handling loop.
 
