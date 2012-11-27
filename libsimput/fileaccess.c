@@ -2154,8 +2154,19 @@ SimputPhList* openSimputPhList(const char* const filename,
   double refra=0., refdec=0.;
   char comment[SIMPUT_MAXSTR];
   fits_read_key(phl->fptr, TDOUBLE, "REFRA", &refra, comment, status);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not find keyword 'REFRA' in file '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(phl);
+  }
   fits_read_key(phl->fptr, TDOUBLE, "REFDEC", &refdec, comment, status);
-  CHECK_STATUS_RET(*status, phl);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not find keyword 'REFRA' in file '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(phl);
+  }
   if ((0.!=refra)||(0.!=refdec)) {
     *status=EXIT_FAILURE;
     SIMPUT_ERROR("in current implementation photon lists must have "
