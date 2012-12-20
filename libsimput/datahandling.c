@@ -1946,7 +1946,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
 		      const double mjdref,
 		      int* const status)
 {
-  // Return value.
+  // Return value [rad].
   float extension=0.;
 
   struct wcsprm wcs={ .flag=-1 };
@@ -1993,7 +1993,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       CHECK_STATUS_BREAK(*status);
       // TODO This has not been tested extensively, yet.
       while(sx>M_PI) {
-	sx-=2*M_PI;
+	sx-=2.0*M_PI;
       }
       double ext=sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
@@ -2006,7 +2006,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
       while(sx>M_PI) {
-	sx-=2*M_PI;
+	sx-=2.0*M_PI;
       }
       ext = sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
@@ -2019,7 +2019,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
       while(sx>M_PI) {
-	sx-=2*M_PI;
+	sx-=2.0*M_PI;
       }
       ext=sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
@@ -2032,7 +2032,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       p2s(&wcs, px, py, &sx, &sy, status);
       CHECK_STATUS_BREAK(*status);
       while(sx>M_PI) {
-	sx-=2*M_PI;
+	sx-=2.0*M_PI;
       }
       ext=sqrt(pow(sx,2.)+pow(sy,2.));
       if (ext>maxext) {
@@ -2066,8 +2066,8 @@ float getSimputSrcExt(SimputCtlg* const cat,
 	// Determine the maximum extension.
 	long jj;
 	for (jj=0; jj<nphs; jj++) {
-	  double ext=sqrt(rabuffer[jj]*rabuffer[jj]+
-			  decbuffer[jj]*decbuffer[jj]);
+	  double ext=
+	    sqrt(pow(rabuffer[jj],2.0)+pow(decbuffer[jj],2.0))*M_PI/180.;
 	  if (ext>maxext) {
 	    maxext=ext;
 	  }
