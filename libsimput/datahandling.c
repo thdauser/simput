@@ -1474,7 +1474,10 @@ float getSimputPhotonRate(SimputCtlg* const cat,
 	long nphs=MIN(buffsize, phl->nphs-(ii*buffsize));
 	fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii*buffsize+1, 
 		      1, nphs, NULL, buffer, &anynul, status);
-	CHECK_STATUS_RET(*status, 0.);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading unit of energy column in photon list");
+	  return(0.);
+	}
 
 	// Determine the photons/illuminated energy in the
 	// reference energy band.
@@ -1664,8 +1667,11 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
     int anynul=0;
     fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1, 
 		  NULL, energy, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading photon energy from photon list");
+      return;
+    }
     *energy *= phl->fenergy;
-    CHECK_STATUS_VOID(*status);
 
     // Determine the ARF value for the photon energy.
     long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
@@ -1685,12 +1691,21 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
     if (r<cat->arf->EffArea[lower]/phl->refarea) {
       // Read the position of the photon.
       fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1, 
-		    NULL, ra, &anynul, status);
+		    NULL, ra, &anynul, status);      
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading right ascension from photon list");
+	return;
+      }
+      *ra *= phl->fra;
+
       fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
 		    NULL, dec, &anynul, status);
-      *ra *= phl->fra;
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading declination from photon list");
+	return;
+      }
       *dec*= phl->fdec;
-      CHECK_STATUS_VOID(*status);
+
       return;
     }
   }
@@ -2059,9 +2074,16 @@ float getSimputSrcExt(SimputCtlg* const cat,
 	long nphs=MIN(buffsize, phl->nphs-(ii*buffsize));
 	fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii*buffsize+1, 
 		      1, nphs, NULL, rabuffer, &anynul, status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading right ascension from photon list");
+	  return(0.);
+	}
 	fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii*buffsize+1, 
 		      1, nphs, NULL, decbuffer, &anynul, status);
-	CHECK_STATUS_RET(*status, 0.);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading declination from photon list");
+	  return(0.);
+	}
 
 	// Determine the maximum extension.
 	long jj;

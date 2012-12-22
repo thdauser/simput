@@ -8,7 +8,12 @@ static void read_unit(fitsfile* const fptr, const int column,
   char keyword[SIMPUT_MAXSTR], comment[SIMPUT_MAXSTR];
   sprintf(keyword, "TUNIT%d", column);
   fits_read_key(fptr, TSTRING, keyword, unit, comment, status);
-  CHECK_STATUS_VOID(*status);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not read FITS keyword '%s'", keyword);
+    SIMPUT_ERROR(msg);
+    return;
+  }
 }
 
 
@@ -123,6 +128,12 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     // subsequent function call.
     strcpy(cfilename, filename);
     fits_parse_rootname(cfilename, rootname, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not determine rootname of '%s'", cfilename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
     CHECK_STATUS_BREAK(*status);
 
     // Split rootname into the file path and the file name.
@@ -154,16 +165,32 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     // Check if the file already exists.
     int exists;
     fits_file_exists(filename, &exists, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "check failed whether file '%s' exists", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     if (1==exists) {
       // The file already exists => open it.
       fits_open_file(&cat->fptr, filename, mode, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not open file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
 
     } else if (READWRITE==mode) {
       // The file does not exist, but it shall be created.
       fits_create_file(&cat->fptr, filename, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not create file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
 
     } else {
       // The file should be opened for read access, but it does not exist.
@@ -226,7 +253,13 @@ SimputCtlg* openSimputCtlg(const char* const filename,
 	}
 	fits_create_tbl(cat->fptr, BINARY_TBL, 0, 12, ttype, tform, tunit, 
 			"SRC_CAT", status);
-	CHECK_STATUS_BREAK(*status);
+	if (EXIT_SUCCESS!=*status) {
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "could not create binary table for source catalog in file '%s'", 
+		  filename);
+	  SIMPUT_ERROR(msg);
+	  break;
+	}
 	
 	// Write the necessary header keywords.
 	fits_write_key(cat->fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
@@ -234,8 +267,13 @@ SimputCtlg* openSimputCtlg(const char* const filename,
 	fits_write_key(cat->fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
 	fits_write_key(cat->fptr, TSTRING, "RADESYS", "FK5", "", status);
 	float equinox=2000.0;
-	fits_update_key(cat->fptr, TFLOAT, "EQUINOX", &equinox, "", status);
-	CHECK_STATUS_BREAK(*status);
+	fits_write_key(cat->fptr, TFLOAT, "EQUINOX", &equinox, "", status);
+	if (EXIT_SUCCESS!=*status) {
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "failed writing FITS keywords in file '%s'", filename);
+	  SIMPUT_ERROR(msg);
+	  break;
+	}
 
       } else {
 	// The file is opened for read access, but does not contain
@@ -251,13 +289,47 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     // Get the column names.
     // Required columns:
     fits_get_colnum(cat->fptr, CASEINSEN, "SRC_ID", &cat->csrc_id, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not find column 'SRC_ID' in source catalog");
+      break;
+    }
+
     fits_get_colnum(cat->fptr, CASEINSEN, "RA", &cat->cra, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not find column 'RA' in source catalog");
+      break;
+    }
+
     fits_get_colnum(cat->fptr, CASEINSEN, "DEC", &cat->cdec, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not find column 'DEC' in source catalog");
+      break;
+    }
+
     fits_get_colnum(cat->fptr, CASEINSEN, "E_MIN", &cat->ce_min, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not find column 'E_MIN' in source catalog");
+      break;
+    }
+
     fits_get_colnum(cat->fptr, CASEINSEN, "E_MAX", &cat->ce_max, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not find column 'E_MAX' in source catalog");
+      break;
+    }
+
     fits_get_colnum(cat->fptr, CASEINSEN, "FLUX", &cat->cflux, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not find column 'FLUX' in source catalog");
+      break;
+    }
+
     fits_get_colnum(cat->fptr, CASEINSEN, "SPECTRUM", &cat->cspectrum, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not find column 'SPECTRUM' in source catalog");
+      break;
+    }
+
     // Optional columns:
     int opt_status=EXIT_SUCCESS;
     fits_write_errmark();
@@ -284,7 +356,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     CHECK_STATUS_BREAK(*status);
     cat->fra = unit_conversion_rad(ura);
     if (0.==cat->fra) {
-      SIMPUT_ERROR("unknown units in RA column");
+      SIMPUT_ERROR("unknown units of 'RA' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -294,7 +366,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     CHECK_STATUS_BREAK(*status);
     cat->fdec = unit_conversion_rad(udec);
     if (0.==cat->fdec) {
-      SIMPUT_ERROR("unknown units in DEC column");
+      SIMPUT_ERROR("unknown units of 'DEC' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -305,7 +377,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
       CHECK_STATUS_BREAK(*status);
       cat->fimgrota = unit_conversion_rad(uimgrota);
       if (0.==cat->fimgrota) {
-	SIMPUT_ERROR("unknown units in IMGROTA column");
+	SIMPUT_ERROR("unknown units of 'IMGROTA' column");
 	*status=EXIT_FAILURE;
 	break;
       }
@@ -316,7 +388,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     CHECK_STATUS_BREAK(*status);
     cat->fe_min = unit_conversion_keV(ue_min);
     if (0.==cat->fe_min) {
-      SIMPUT_ERROR("unknown units in E_MIN column");
+      SIMPUT_ERROR("unknown units of 'E_MIN' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -326,7 +398,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     CHECK_STATUS_BREAK(*status);
     cat->fe_max = unit_conversion_keV(ue_max);
     if (0.==cat->fe_max) {
-      SIMPUT_ERROR("unknown units in E_MAX column");
+      SIMPUT_ERROR("unknown units of 'E_MAX' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -336,7 +408,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     CHECK_STATUS_BREAK(*status);
     cat->fflux = unit_conversion_ergpspcm2(uflux);
     if (0.==cat->fflux) {
-      SIMPUT_ERROR("unknown units in FLUX column");
+      SIMPUT_ERROR("unknown units of 'FLUX' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -344,7 +416,10 @@ SimputCtlg* openSimputCtlg(const char* const filename,
 
     // Determine the number of entries.
     fits_get_num_rows(cat->fptr, &cat->nentries, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not determine number of entries in source catalog");
+      break;
+    }
 
   } while(0); // END of error handling loop.
 
@@ -405,39 +480,75 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
     int anynul=0;
     fits_read_col(cat->fptr, TLONG, cat->csrc_id, row, 1, 1, 
 		  &src_id, &src_id, &anynul, status);
-    
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading source ID from source catalog");
+      break;
+    }
+
     if (cat->csrc_name>0) {
-      fits_read_col_str(cat->fptr, cat->csrc_name, row, 1, 1, 
-			"", src_name, &anynul, status);
+      fits_read_col_str(cat->fptr, cat->csrc_name, row, 1, 1, "", src_name, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading source name from source catalog");
+	break;
+      }
     } else {
       strcpy(src_name[0], "");
     }
 
-    fits_read_col(cat->fptr, TDOUBLE, cat->cra, row, 1, 1, 
-		  &ra, &ra, &anynul, status);
-    ra *=cat->fra;  // Convert to [rad].
-    fits_read_col(cat->fptr, TDOUBLE, cat->cdec, row, 1, 1, 
-		  &dec, &dec, &anynul, status);
+    fits_read_col(cat->fptr, TDOUBLE, cat->cra, row, 1, 1, &ra, &ra, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading right ascension from source catalog");
+      break;
+    }
+    ra *=cat->fra; // Convert to [rad].
+
+    fits_read_col(cat->fptr, TDOUBLE, cat->cdec, row, 1, 1, &dec, &dec, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading declination from source catalog");
+      break;
+    }
     dec*=cat->fdec; // Convert to [rad].
 
     if (cat->cimgrota>0) {
       fits_read_col(cat->fptr, TFLOAT, cat->cimgrota, row, 1, 1, 
 		    &imgrota, &imgrota, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading image rotation angle from source catalog");
+	break;
+      }
       imgrota*=cat->fimgrota; // Convert to [rad].
     }
     if (cat->cimgscal>0) {
       fits_read_col(cat->fptr, TFLOAT, cat->cimgscal, row, 1, 1, 
 		    &imgscal, &imgscal, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading image scaling from source catalog");
+	break;
+      }
     }
     
     fits_read_col(cat->fptr, TFLOAT, cat->ce_min, row, 1, 1, 
 		  &e_min, &e_min, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading 'E_MIN' from source catalog");
+      break;
+    }
     e_min*=cat->fe_min; // Convert to [keV].
+
     fits_read_col(cat->fptr, TFLOAT, cat->ce_max, row, 1, 1, 
 		  &e_max, &e_max, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading 'E_MAX' from source catalog");
+      break;
+    }
     e_max*=cat->fe_max; // Convert to [keV].
+
     fits_read_col(cat->fptr, TFLOAT, cat->cflux, row, 1, 1, 
 		  &flux, &flux, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading reference flux from source catalog");
+      break;
+    }
     flux *=cat->fflux; // Convert to [erg/s/cm**2].
     if (flux > 1.e20) {
       char msg[SIMPUT_MAXSTR];
@@ -449,9 +560,18 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
 
     fits_read_col(cat->fptr, TSTRING, cat->cspectrum, row, 1, 1, 
 		  "", spectrum, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading spectrum reference from source catalog");
+      break;
+    }
+
     if (cat->cimage>0) {
       fits_read_col(cat->fptr, TSTRING, cat->cimage, row, 1, 1, 
 		    "", image, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading image reference from source catalog");
+	break;
+      }
     } else {
       strcpy(image[0], "");
     }
@@ -459,10 +579,13 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
     if (cat->ctiming>0) {
       fits_read_col(cat->fptr, TSTRING, cat->ctiming, row, 1, 1, 
 		    "", timing, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading timing reference from source catalog");
+	break;
+      }
     } else {
       strcpy(timing[0], "");
     }
-    CHECK_STATUS_BREAK(*status);
 
     // Create a new SimputSource data structure.
     src=newSimputSrcV(src_id, src_name[0], ra, dec, imgrota, imgscal, 
@@ -488,37 +611,98 @@ void appendSimputSrc(SimputCtlg* const cat,
 {
   // Write the data.
   fits_insert_rows(cat->fptr, cat->nentries, 1, status);
-  CHECK_STATUS_VOID(*status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed appending new row to source catalog");
+    return;
+  }
   cat->nentries++;
 
   fits_write_col(cat->fptr, TLONG, cat->csrc_id, cat->nentries, 1, 1, 
 		 &src->src_id, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing source ID to catalog");
+    return;
+  }
+
   fits_write_col(cat->fptr, TSTRING, cat->csrc_name, cat->nentries, 1, 1, 
 		 &src->src_name, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing source name to catalog");
+    return;
+  }
+
   double ra = src->ra*180./M_PI;
   fits_write_col(cat->fptr, TDOUBLE, cat->cra, cat->nentries, 1, 1, 
 		 &ra, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing right ascension to source catalog");
+    return;
+  }
+
   double dec = src->dec*180./M_PI;
   fits_write_col(cat->fptr, TDOUBLE, cat->cdec, cat->nentries, 1, 1, 
 		 &dec, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing declination to source catalog");
+    return;
+  }
+
   float imgrota = src->imgrota*180./M_PI;
   fits_write_col(cat->fptr, TFLOAT, cat->cimgrota, cat->nentries, 1, 1, 
 		 &imgrota, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing image rotation angle to source catalog");
+    return;
+  }
+
   fits_write_col(cat->fptr, TFLOAT, cat->cimgscal, cat->nentries, 1, 1, 
 		 &src->imgscal, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing image scaling to source catalog");
+    return;
+  }
+
   fits_write_col(cat->fptr, TFLOAT, cat->ce_min, cat->nentries, 1, 1, 
 		 &src->e_min, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing 'E_MIN' to source catalog");
+    return;
+  }
+
   fits_write_col(cat->fptr, TFLOAT, cat->ce_max, cat->nentries, 1, 1, 
 		 &src->e_max, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing 'E_MAX' to source catalog");
+    return;
+  }
+
   fits_write_col(cat->fptr, TFLOAT, cat->cflux, cat->nentries, 1, 1, 
 		 &src->eflux, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing reference flux to source catalog");
+    return;
+  }
+
   fits_write_col(cat->fptr, TSTRING, cat->cspectrum, cat->nentries, 1, 1, 
 		 &src->spectrum, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing spectrum reference to source catalog");
+    return;
+  }
+
   fits_write_col(cat->fptr, TSTRING, cat->cimage, cat->nentries, 1, 1, 
 		 &src->image, status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing image reference to source catalog");
+    return;
+  }
+
   fits_write_col(cat->fptr, TSTRING, cat->ctiming, cat->nentries, 1, 1, 
 		 &src->timing, status);
-  CHECK_STATUS_VOID(*status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed writing timing reference to source catalog");
+    return;
+  }
 }
 
 
@@ -529,7 +713,10 @@ void appendSimputSrcBlock(SimputCtlg* const cat,
 {
   // Insert new rows.
   fits_insert_rows(cat->fptr, cat->nentries, nsources, status);
-  CHECK_STATUS_VOID(*status);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("failed appending new rows to source catalog");
+    return;
+  }
 
   long first=cat->nentries+1;
   cat->nentries+=nsources;
@@ -583,13 +770,31 @@ void appendSimputSrcBlock(SimputCtlg* const cat,
       // Write strings.
       fits_write_col(cat->fptr, TSTRING, cat->csrc_name, first+ii, 1, 1, 
 		     &(src[ii]->src_name), status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing source name to catalog");
+	break;
+      }
+
       fits_write_col(cat->fptr, TSTRING, cat->cspectrum, first+ii, 1, 1, 
 		     &(src[ii]->spectrum), status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing spectrum reference to source catalog");
+	break;
+      }
+
       fits_write_col(cat->fptr, TSTRING, cat->cimage, first+ii, 1, 1, 
 		     &(src[ii]->image), status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing image reference to source catalog");
+	break;
+      }
+
       fits_write_col(cat->fptr, TSTRING, cat->ctiming, first+ii, 1, 1, 
 		     &(src[ii]->timing), status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing timing reference to source catalog");
+	break;
+      }
     }
     CHECK_STATUS_BREAK(*status);
     // END of loop over all sources.
@@ -597,21 +802,59 @@ void appendSimputSrcBlock(SimputCtlg* const cat,
     // Write the buffers to the file.
     fits_write_col(cat->fptr, TLONG, cat->csrc_id, first, 1, nsources, 
 		   src_id, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing source IDs to catalog");
+      break;
+    }
+
     fits_write_col(cat->fptr, TDOUBLE, cat->cra, first, 1, nsources, 
 		   ra, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing right ascensions to catalog");
+      break;
+    }
+
     fits_write_col(cat->fptr, TDOUBLE, cat->cdec, first, 1, nsources, 
 		   dec, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing declinations to catalog");
+      break;
+    }
+
     fits_write_col(cat->fptr, TFLOAT, cat->cimgrota, first, 1, nsources, 
 		   imgrota, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing image rotation angles to catalog");
+      break;
+    }
+
     fits_write_col(cat->fptr, TFLOAT, cat->cimgscal, first, 1, nsources, 
 		   imgscal, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing image scalings to catalog");
+      break;
+    }
+
     fits_write_col(cat->fptr, TFLOAT, cat->ce_min, first, 1, nsources, 
 		   e_min, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing 'E_MIN' values to catalog");
+      break;
+    }
+
     fits_write_col(cat->fptr, TFLOAT, cat->ce_max, first, 1, nsources, 
 		   e_max, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing 'E_MAX' values to catalog");
+      break;
+    }
+
     fits_write_col(cat->fptr, TFLOAT, cat->cflux, first, 1, nsources, 
 		   eflux, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing reference fluxes to catalog");
+      break;
+    }
 
   } while(0); // END of error handling loop.
 
@@ -643,7 +886,12 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   // number.
   fitsfile* fptr=NULL;
   fits_open_table(&fptr, filename, READONLY, status);
-  CHECK_STATUS_RET(*status, spec);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not open FITS table in file '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(spec);
+  }
 
   do { // Error handling loop.
 
@@ -651,8 +899,21 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     int cenergy=0, cflux=0, cname=0;
     // Required columns:
     fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'ENERGY' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'FLUX' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     // Optional columnes:
     int opt_status=EXIT_SUCCESS;
     fits_write_errmark();
@@ -666,7 +927,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     CHECK_STATUS_BREAK(*status);
     float fenergy = unit_conversion_keV(uenergy);
     if (0.==fenergy) {
-      SIMPUT_ERROR("unknown units in ENERGY column");
+      SIMPUT_ERROR("unknown units of 'ENERGY' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -676,7 +937,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     CHECK_STATUS_BREAK(*status);
     float fflux = unit_conversion_phpspcm2pkeV(uflux);
     if (0.==fflux) {
-      SIMPUT_ERROR("unknown units in FLUX column");
+      SIMPUT_ERROR("unknown units of 'FLUX' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -686,8 +947,16 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     int typecode;
     long nenergy, nflux, width;
     fits_get_coltype(fptr, cenergy, &typecode, &nenergy, &width, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not determine type of column 'ENERGY'");
+      break;
+    }
+    
     fits_get_coltype(fptr, cflux,   &typecode, &nflux,   &width, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not determine type of column 'FLUX'");
+      break;
+    }
 
     // If the columns are of variable-length data type, the returned repeat
     // value is 1. In that case we have to use another routine to get the
@@ -695,14 +964,24 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     if (1==nenergy) {
       long offset;
       fits_read_descript(fptr, cenergy, 1, &nenergy, &offset, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("could not determine type of column 'ENERGY'");
+	break;
+      }
+
       fits_read_descript(fptr, cflux  , 1, &nflux  , &offset, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("could not determine type of column 'FLUX'");
+	break;
+      }
     }
 
     // The number of energy bins and of flux entries must be identical.
     if (nenergy!=nflux) {
-      SIMPUT_ERROR("number of energy and flux entries in spectrum is "
-		   "not equivalent");
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "number of energy and flux entries in spectrum '%s' is "
+	      "not equivalent", filename);
+      SIMPUT_ERROR(msg);
       *status=EXIT_FAILURE;
       break;
     }
@@ -731,16 +1010,27 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     int anynul=0;
     fits_read_col(fptr, TFLOAT, cenergy, 1, 1, spec->nentries, 
 		  NULL, spec->energy, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading energy values from spectrum");
+      break;
+    }
+
     fits_read_col(fptr, TFLOAT, cflux, 1, 1, spec->nentries, 
 		  NULL, spec->pflux, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading flux values from spectrum");
+      break;
+    }
 
     if (cname>0) {
       fits_read_col(fptr, TSTRING, cname, 1, 1, 1, "", name, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading designator of spectrum");
+	break;
+      }
     } else { 
       strcpy(name[0], "");
     }
-
-    CHECK_STATUS_BREAK(*status);
 
     // Multiply with unit scaling factor.
     long ii;
@@ -813,14 +1103,22 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     // the extension containing the spectra via the extended filename 
     // syntax.
     fits_open_table(&fptr, filename, READONLY, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not open FITS table in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
 
     // Determine the number of columns in the table.
     long nrows;
     fits_get_num_rows(fptr, &nrows, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not determine number of entries in spectrum extension");
+      break;
+    }
 
-    // Check if as many spectra can be stored in the cache.
+    // Check if all spectra can be stored in the cache.
     if (sb->nspectra+nrows>MAXMIDPSPEC) {
       *status=EXIT_FAILURE;
       SIMPUT_ERROR("cache too small to store all spectra");
@@ -831,8 +1129,21 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     int cenergy=0, cflux=0, cname=0;
     // Required columns:
     fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'ENERGY' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'FLUX' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     // Optional columns:
     int opt_status=EXIT_SUCCESS;
     fits_write_errmark();
@@ -846,7 +1157,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     CHECK_STATUS_BREAK(*status);
     float fenergy=unit_conversion_keV(uenergy);
     if (0.==fenergy) {
-      SIMPUT_ERROR("unknown units in ENERGY column");
+      SIMPUT_ERROR("unknown units of 'ENERGY' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -856,7 +1167,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     CHECK_STATUS_BREAK(*status);
     float fflux=unit_conversion_phpspcm2pkeV(uflux);
     if (0.==fflux) {
-      SIMPUT_ERROR("unknown units in FLUX column");
+      SIMPUT_ERROR("unknown units of 'FLUX' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -866,8 +1177,16 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     int typecode;
     long nenergy, nflux, width;
     fits_get_coltype(fptr, cenergy, &typecode, &nenergy, &width, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not determine type of column 'ENERGY'");
+      break;
+    }
+
     fits_get_coltype(fptr, cflux,   &typecode, &nflux,   &width, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not determine type of column 'FLUX'");
+      break;
+    }
 
     // If the columns are of variable-length data type, the returned repeat
     // value is 1. In that case we have to use another routine to get the
@@ -875,8 +1194,16 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     if (1==nenergy) {
       long offset;
       fits_read_descript(fptr, cenergy, 1, &nenergy, &offset, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("could not determine type of column 'ENERGY'");
+	break;
+      }
+
       fits_read_descript(fptr, cflux  , 1, &nflux  , &offset, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("could not determine type of column 'FLUX'");
+	break;
+      }
     }
 
     // The number of energy bins and of flux entries must be identical.
@@ -918,15 +1245,28 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
       int anynul=0;
       fits_read_col(fptr, TFLOAT, cenergy, jj+1, 1, spec->nentries, 
 		    NULL, spec->energy, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading energy values from spectrum");
+	break;
+      }
+
       fits_read_col(fptr, TFLOAT, cflux, jj+1, 1, spec->nentries, 
 		    NULL, spec->pflux, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading flux values from spectrum");
+	break;
+      }
+
       if (cname>0) {
 	fits_read_col(fptr, TSTRING, cname, jj+1, 1, 1, "", name, 
 		      &anynul, status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading designator of spectrum");
+	  break;
+	}
       } else { 
 	strcpy(name[0], "");
       }
-      CHECK_STATUS_BREAK(*status);
 
       // Multiply with unit scaling factor.
       long ii;
@@ -998,15 +1338,32 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
     // Check if the specified file exists.
     int exists;
     fits_file_exists(filename, &exists, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "check failed whether file '%s' exists", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     if (1==exists) {
       // If yes, open it.
       fits_open_file(&fptr, filename, READWRITE, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not open file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
+
     } else {
       // If no, create a new file. 
       fits_create_file(&fptr, filename, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not create file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
     }
     // END of check, whether the specified file exists.
 
@@ -1056,14 +1413,25 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
 
       // Create the table.
       fits_create_tbl(fptr, BINARY_TBL, 0, 3, ttype, tform, tunit, extname, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not create binary table for spectrum in file '%s'", 
+		filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
 
       // Write header keywords.
       fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
       fits_write_key(fptr, TSTRING, "HDUCLAS1", "SPECTRUM", "", status);
       fits_write_key(fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
       fits_write_key(fptr, TINT, "EXTVER", &extver, "", status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "failed writing FITS keywords in file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
 
       // The new table contains now data up to now.
       nrows=0;
@@ -1072,15 +1440,31 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
       // The extension already exists.
       // Determine the number of contained rows.
       fits_get_num_rows(fptr, &nrows, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("could not determine number of entries in spectrum");
+	break;
+      }
     }
     // END of check, whether the specified extension exists.
 
 
     // Determine the column numbers.
     fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'ENERGY' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'FLUX' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     // Optional name column:
     int opt_status=EXIT_SUCCESS;
     fits_write_errmark();
@@ -1093,14 +1477,14 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
       if (strlen(spec->name)>0) {
 	// Check if the NAME string is too long.
 	if (strlen(spec->name)>48) {
-	  SIMPUT_ERROR("NAME value of spectrum contains more than 48 characters");
+	  SIMPUT_ERROR("'NAME' of spectrum contains more than 48 characters");
 	  *status=EXIT_FAILURE;
 	  break;
 	}
 
 	// Check if the NAME column is present.
 	if (0==cname) {
-	  SIMPUT_ERROR("spectrum extension does not contain a NAME column");
+	  SIMPUT_ERROR("spectrum extension does not contain a 'NAME' column");
 	  *status=EXIT_FAILURE;
 	  break;
 	}
@@ -1113,8 +1497,12 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
 	for(row=0; row<nrows; row++) {
 	  int anynul=0;
 	  fits_read_col(fptr, TSTRING, cname, row+1, 1, 1, "", name, &anynul, status);
+	  if (EXIT_SUCCESS!=*status) {
+	    SIMPUT_ERROR("failed reading 'NAME' from spectrum");
+	    break;
+	  }
 	  if (0==strcmp(name[0], spec->name)) {
-	    SIMPUT_ERROR("name in spectrum data structure is not unique");
+	    SIMPUT_ERROR("'NAME' in spectrum data structure is not unique");
 	    *status=EXIT_FAILURE;
 	    break;
 	  }
@@ -1125,13 +1513,31 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
 
     // Create a new row in the table and store the data of the spectrum in it.
     fits_insert_rows(fptr, nrows++, 1, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed appending new row to spectrum");
+      return;
+    }
+
     fits_write_col(fptr, TFLOAT, cenergy, nrows, 1, spec->nentries, 
 		   spec->energy, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing energy values to spectrum");
+      break;
+    }
+
     fits_write_col(fptr, TFLOAT, cflux, nrows, 1, spec->nentries, 
 		   spec->pflux, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing flux values to spectrum");
+      break;
+    }
+
     if ((cname>0) && (NULL!=spec->name)) {
       fits_write_col(fptr, TSTRING, cname, nrows, 1, 1, &spec->name, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing 'NAME' value to spectrum");
+	break;
+      }
     }
     CHECK_STATUS_BREAK(*status);
 
@@ -1183,7 +1589,12 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     // the light curve contained in a binary table via the extended filename 
     // syntax. Therefore we do not have to care about the HDU number.
     fits_open_table(&fptr, filename, READONLY, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not open FITS table in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
 
     // Get an empty SimputLC data structure.
     lc=newSimputLC(status);
@@ -1193,7 +1604,13 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     int ctime=0, cphase=0, cflux=0, cspectrum=0, cimage=0;
     // Required columns:
     fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'FLUX' in light curve '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     // Optional columnes:
     int opt_status=EXIT_SUCCESS;
     fits_write_errmark();
@@ -1219,11 +1636,11 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 
     // Check, whether there is either a TIME or a PHASE column (but not both).
     if ((0==ctime)&&(0==cphase)) {
-      SIMPUT_ERROR("table extension contains neither TIME nor PHASE column");
+      SIMPUT_ERROR("table extension contains neither 'TIME' nor 'PHASE' column");
       *status=EXIT_FAILURE;
       return(lc);
     } else if ((ctime>0)&&(cphase>0)) {
-      SIMPUT_ERROR("table extension contains both TIME and PHASE column");
+      SIMPUT_ERROR("table extension contains both 'TIME' and 'PHASE' column");
       *status=EXIT_FAILURE;
       return(lc);
     }
@@ -1234,9 +1651,9 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       char utime[SIMPUT_MAXSTR];
       read_unit(fptr, ctime, utime, status);
       CHECK_STATUS_BREAK(*status);
-      ftime = unit_conversion_s(utime);
+      ftime=unit_conversion_s(utime);
       if (0.==ftime) {
-	SIMPUT_ERROR("unknown units in TIME column");
+	SIMPUT_ERROR("unknown units of 'TIME' column");
 	*status=EXIT_FAILURE;
 	break;
       }
@@ -1248,16 +1665,44 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     char comment[SIMPUT_MAXSTR];
     // Required keywords.
     fits_read_key(fptr, TDOUBLE, "MJDREF",   &lc->mjdref,   comment, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not read FITS keyword 'MJDREF' from light curve '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     fits_read_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, comment, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not read FITS keyword 'TIMEZERO' from light curve '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     if (cphase>0) {
       // Only for periodic light curves.
       fits_read_key(fptr, TDOUBLE, "PHASE0", &lc->phase0, comment, status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not read FITS keyword 'PHASE0' from light curve '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
+
       fits_read_key(fptr, TDOUBLE, "PERIOD", &lc->period, comment, status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not read FITS keyword 'PERIOD' from light curve '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
+
     } else {
       lc->phase0 = 0.;
       lc->period = 0.;
     }
-    CHECK_STATUS_BREAK(*status);
+
     // Optional keywords.
     opt_status=EXIT_SUCCESS;
     fits_write_errmark();
@@ -1273,7 +1718,10 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 
     // Determine the number of rows in the table.
     fits_get_num_rows(fptr, &lc->nentries, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not determine number of entries in light curve");
+      break;
+    }
 
     char msg[SIMPUT_MAXSTR];
     sprintf(msg, "light curve '%s' contains %ld data points\n", 
@@ -1321,7 +1769,11 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     if (ctime>0) {
       fits_read_col(fptr, TDOUBLE, ctime, 1, 1, lc->nentries, 
 		    0, lc->time, &anynul, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading time values from light curve");
+	break;
+      }
+
       // Multiply with unit scaling factor.
       long row;
       for (row=0; row<lc->nentries; row++) {
@@ -1333,13 +1785,19 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     if (cphase>0) {
       fits_read_col(fptr, TDOUBLE, cphase, 1, 1, lc->nentries, 
 		    0, lc->phase, &anynul, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading phase values from light curve");
+	break;
+      }
     }
 
     // FLUX
     fits_read_col(fptr, TFLOAT, cflux, 1, 1, lc->nentries, 
 		  0, lc->flux, &anynul, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading flux values from light curve");
+      break;
+    }
 
     // SPECTRUM
     if (cspectrum>0) {
@@ -1347,7 +1805,11 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       for (row=0; row<lc->nentries; row++) {
 	fits_read_col(fptr, TSTRING, cspectrum, row+1, 1, 1, 
 		      "", spectrum, &anynul, status);
-	CHECK_STATUS_BREAK(*status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading spectrum references from light curve");
+	  break;
+	}
+
 	lc->spectrum[row]=
 	  (char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
 	CHECK_NULL_BREAK(lc->spectrum[row], *status,
@@ -1363,7 +1825,11 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       for (row=0; row<lc->nentries; row++) {
 	fits_read_col(fptr, TSTRING, cimage, row+1, 1, 1, 
 		      "", image, &anynul, status);
-	CHECK_STATUS_BREAK(*status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading image references from light curve");
+	  break;
+	}
+
 	lc->image[row]=
 	  (char*)malloc((strlen(image[0])+1)*sizeof(char));
 	CHECK_NULL_BREAK(lc->image[row], *status,
@@ -1443,11 +1909,22 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     // Check if the specified file exists.
     int exists;
     fits_file_exists(filename, &exists, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "check failed whether file '%s' exists", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     if (1==exists) {
       // If yes, open it.
       fits_open_file(&fptr, filename, READWRITE, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not open file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
       
       // Try to move to the specified extension.
       int status2=EXIT_SUCCESS;
@@ -1467,7 +1944,12 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     } else {
       // If no, create a new file. 
       fits_create_file(&fptr, filename, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not create file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
     }
     // END of check, whether the specified file exists.
 
@@ -1533,7 +2015,13 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     // Create the table.
     fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns, 
 		    ttype, tform, tunit, extname, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not create binary table for source catalog in file '%s'", 
+	      filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
 
     // Write header keywords.
     fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
@@ -1551,30 +2039,52 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
       fits_write_key(fptr, TDOUBLE, "PERIOD", &lc->period, "", status);
     }
     fits_write_key(fptr, TINT,  "PERIODIC", &periodic, "", status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "failed writing FITS keywords in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
 
     // Create new rows in the table and store the data of the spectrum in it.
     fits_insert_rows(fptr, 0, lc->nentries, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed appending new rows to light curve");
+      break;
+    }
     
     if (ctime>0) {
       fits_write_col(fptr, TDOUBLE, ctime, 1, 1, lc->nentries, 
 		     lc->time, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing time values to light curve");
+	break;
+      }
     } else {
       fits_write_col(fptr, TDOUBLE, cphase, 1, 1, lc->nentries, 
 		     lc->phase, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing phase values to light curve");
+	break;
+      }
     }
+
     fits_write_col(fptr, TFLOAT, cflux, 1, 1, lc->nentries, 
 		   lc->flux, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing flux values to light curve");
+      break;
+    }
+
     if (cspectrum>0) {
       long row;
       for (row=0; row<lc->nentries; row++) {
 	fits_write_col(fptr, TSTRING, cspectrum, row+1, 1, 1, 
 		       &lc->spectrum[row], status);
-	CHECK_STATUS_BREAK(*status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed writing spectrum reference to light curve");
+	  break;
+	}
       }
       CHECK_STATUS_BREAK(*status);
     }
@@ -1583,7 +2093,10 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
       for (row=0; row<lc->nentries; row++) {
 	fits_write_col(fptr, TSTRING, cimage, row+1, 1, 1, 
 		       &lc->image[row], status);
-	CHECK_STATUS_BREAK(*status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed writing image reference to light curve");
+	  break;
+	}
       }
       CHECK_STATUS_BREAK(*status);
     }
@@ -1639,7 +2152,12 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
   // syntax. Therefore we do not have to care about the HDU number.
   fitsfile* fptr=NULL;
   fits_open_table(&fptr, filename, READONLY, status);
-  CHECK_STATUS_RET(*status, psd);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not open FITS table in file '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(psd);
+  }
 
   do { // Error handling loop.
 
@@ -1653,10 +2171,20 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
       *status=EXIT_SUCCESS;
       fits_get_colnum(fptr, CASEINSEN, "FREQUENC", &cfrequency, status);
     }
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'FREQUENCY' in PSD '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }    
 
     fits_get_colnum(fptr, CASEINSEN, "POWER", &cpower, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'POWER' in PSD '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }    
 
     // Determine the unit conversion factors.
     float ffrequency=0.;
@@ -1665,7 +2193,7 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
     CHECK_STATUS_BREAK(*status);
     ffrequency = unit_conversion_Hz(ufrequency);
     if (0.==ffrequency) {
-      SIMPUT_ERROR("unknown units in FREQUENCY column");
+      SIMPUT_ERROR("unknown units of 'FREQUENCY' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -1676,7 +2204,7 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
     CHECK_STATUS_BREAK(*status);
     fpower = unit_conversion_s(upower);
     if (0.==fpower) {
-      SIMPUT_ERROR("unknown units in POWER column");
+      SIMPUT_ERROR("unknown units of 'POWER' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -1685,7 +2213,10 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
 
     // Determine the number of rows in the table.
     fits_get_num_rows(fptr, &psd->nentries, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("could not determine number of entries in PSD");
+      break;
+    }
 
     char msg[SIMPUT_MAXSTR];
     sprintf(msg, "PSD '%s' contains %ld data points\n", 
@@ -1693,23 +2224,31 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
     SIMPUT_INFO(msg);
 
     // Allocate memory for the arrays.
-    psd->frequency= (float*)malloc(psd->nentries*sizeof(float));
+    psd->frequency=(float*)malloc(psd->nentries*sizeof(float));
     CHECK_NULL_BREAK(psd->frequency, *status, 
 		     "memory allocation for PSD failed");
-    psd->power    = (float*)malloc(psd->nentries*sizeof(float));
+    psd->power    =(float*)malloc(psd->nentries*sizeof(float));
     CHECK_NULL_BREAK(psd->power, *status, 
 		     "memory allocation for PSD failed");
 
     // Read the data from the table.
     int anynul=0;
-    // FREQUENC
+    // FREQUENCY
     fits_read_col(fptr, TFLOAT, cfrequency, 1, 1, psd->nentries, 
 		  0, psd->frequency, &anynul, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading 'FREQUENCY' from PSD");
+      break;
+    }
+
     // POWER
     fits_read_col(fptr, TFLOAT, cpower, 1, 1, psd->nentries, 
 		  0, psd->power, &anynul, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading 'POWER' from PSD");
+      break;
+    }
+
     // END of reading the data from the FITS table.
 
   } while(0); // END of error handling loop.
@@ -1750,11 +2289,22 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
     // Check if the specified file exists.
     int exists;
     fits_file_exists(filename, &exists, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "check failed whether file '%s' exists", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     if (1==exists) {
       // If yes, open it.
       fits_open_file(&fptr, filename, READWRITE, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not open file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
 
       // Try to move to the specified extension.
       int status2=EXIT_SUCCESS;
@@ -1774,7 +2324,12 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
     } else {
       // If not, create a new file.
       fits_create_file(&fptr, filename, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not create file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
     }
     // END of check, whether the specified file exists.
 
@@ -1817,25 +2372,47 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
     // Create the table.
     fits_create_tbl(fptr, BINARY_TBL, 0, ncolumns,
         ttype, tform, tunit, extname, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not create binary table for spectrum in file '%s'", 
+	      filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
 
     // Write header keywords.
     fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
     fits_write_key(fptr, TSTRING, "HDUCLAS1", "POWSPEC", "", status);
     fits_write_key(fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "failed writing FITS keywords in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
 
     // Create new rows in the table and store the data of the power 
     // spectrum in it.
     fits_insert_rows(fptr, 0, psd->nentries, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed appending new rows to PSD");
+      break;
+    }
 
     fits_write_col(fptr, TFLOAT, cfreq, 1, 1, psd->nentries,
-       psd->frequency, status);
-    CHECK_STATUS_BREAK(*status);
+		   psd->frequency, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing frequency values to PSD");
+      break;
+    }
+
     fits_write_col(fptr, TFLOAT, cpower, 1, 1, psd->nentries,
-       psd->power, status);
-    CHECK_STATUS_BREAK(*status);
+		   psd->power, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed writing power values to PSD");
+      break;
+    }
 
   } while(0); // END of error handling loop.
 
@@ -1877,50 +2454,76 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
   // String buffer for FITS header.
   char* headerstr=NULL;
 
+  // File pointer.
+  fitsfile* fptr=NULL;
+
   // Get an empty SimputImg data structure.
   SimputImg* img=newSimputImg(status);
   CHECK_STATUS_RET(*status, img);
 
-  // Open the specified FITS file. The filename must uniquely identify
-  // the light curve contained in a binary table via the extended filename 
-  // syntax. Therefore we do not have to care about the HDU number.
-  fitsfile* fptr=NULL;
-  fits_open_image(&fptr, filename, READONLY, status);
-  CHECK_STATUS_RET(*status, img);
-
   do { // Error handling loop.
+
+    // Open the specified FITS file. The filename must uniquely identify
+    // the light curve contained in a binary table via the extended filename 
+    // syntax. Therefore we do not have to care about the HDU number.
+    fits_open_image(&fptr, filename, READONLY, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not open FITS image in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
 
     // Read the WCS header keywords.
     // Read the entire header into the string buffer.
     int nkeys;
     fits_hdr2str(fptr, 1, NULL, 0, &headerstr, &nkeys, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "failed reading FITS header of file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     // Parse the header string and store the data in the wcsprm data
     // structure.
     int nreject, nwcs;
     if (0!=wcspih(headerstr, nkeys, 0, 3, &nreject, &nwcs, &img->wcs)) {
       SIMPUT_ERROR("parsing of WCS header failed");
-      *status = EXIT_FAILURE;
+      *status=EXIT_FAILURE;
       break;
     }
     if (nreject>0) {
       SIMPUT_ERROR("parsing of WCS header failed");
-      *status = EXIT_FAILURE;
+      *status=EXIT_FAILURE;
       break;
     }
 
     // Determine the image dimensions.
     int naxis;
     fits_get_img_dim(fptr, &naxis, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "failed reading image dimensions in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     if (2!=naxis) {
       SIMPUT_ERROR("specified FITS HDU does not contain a 2-dimensional image");
       *status=EXIT_FAILURE;
       break;
     }
+
     long naxes[2];
     fits_get_img_size(fptr, naxis, naxes, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "failed reading image size in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
     img->naxis1 = naxes[0];
     img->naxis2 = naxes[1];
 
@@ -1950,7 +2553,12 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     long inc[2]    = {1, 1};
     fits_read_subset(fptr, TDOUBLE, fpixel, lpixel, inc, &null_value, 
 		     image1d, &anynul, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "failed reading image from file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
     
     // Transfer the image from the 1D input buffer to the 2D pixel array in
     // the data structure and generate a probability distribution function,
@@ -1959,8 +2567,8 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     for(ii=0; ii<img->naxis1; ii++) {
       long jj;
       for(jj=0; jj<img->naxis2; jj++) {
-	sum += image1d[ii+ img->naxis1*jj];
-	img->dist[ii][jj] = sum;
+	sum+=image1d[ii+ img->naxis1*jj];
+	img->dist[ii][jj]=sum;
       }
     }
 
@@ -1973,7 +2581,7 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     if (EXIT_SUCCESS!=opt_status) {
       // FLUXSCAL is not given in the FITS header. Therefore it is 
       // set to the default value of 1.
-      img->fluxscal = 1.;
+      img->fluxscal=1.0;
     }
     fits_clear_errmark();
 
@@ -2023,7 +2631,12 @@ void saveSimputImg(SimputImg* const img,
     if (1==exists) {
       // If yes, open it.
       fits_open_file(&fptr, filename, READWRITE, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "check failed whether file '%s' exists", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
       
       // Try to move to the specified extension.
       int status2=EXIT_SUCCESS;
@@ -2043,14 +2656,19 @@ void saveSimputImg(SimputImg* const img,
     } else {
       // If no, create a new file. 
       fits_create_file(&fptr, filename, status);
-      CHECK_STATUS_BREAK(*status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not create file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
     }
     // END of check, whether the specified file exists.
 
 
     // Allocate memory for the 1-dimensional image buffer 
     // (required for output to FITS file).
-    image1d = (double*)malloc(img->naxis1*img->naxis2*sizeof(double));
+    image1d=(double*)malloc(img->naxis1*img->naxis2*sizeof(double));
     CHECK_NULL_BREAK(image1d, *status, 
 		     "memory allocation for source image buffer failed");
 
@@ -2084,7 +2702,12 @@ void saveSimputImg(SimputImg* const img,
     long naxes[2] = {img->naxis1, img->naxis2};
     fits_create_img(fptr, DOUBLE_IMG, 2, naxes, status);
     //                                |-> naxis
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not create FITS image in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
     // The image has been appended at the end if the FITS file.
 
     // Write header keywords.
@@ -2094,8 +2717,13 @@ void saveSimputImg(SimputImg* const img,
     fits_write_key(fptr, TSTRING, "EXTNAME", extname, "", status);
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
     fits_write_key(fptr, TFLOAT,  "FLUXSCAL", &img->fluxscal, "", status);
-    CHECK_STATUS_BREAK(*status);
-
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "failed writing FITS keywords in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+    
     // Write WCS header keywords.
     int nkeyrec;
     if (0!=wcshdo(0, img->wcs, &nkeyrec, &headerstr)) {
@@ -2120,7 +2748,12 @@ void saveSimputImg(SimputImg* const img,
     // Upper right corner.
     long lpixel[2] = {img->naxis1, img->naxis2}; 
     fits_write_subset(fptr, TDOUBLE, fpixel, lpixel, image1d, status);
-    CHECK_STATUS_BREAK(*status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "failed writing FITS image in file '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
 
   } while(0); // END of error handling loop.
 
@@ -2143,11 +2776,19 @@ SimputPhList* openSimputPhList(const char* const filename,
 
   // Open the photon list.
   fits_open_table(&phl->fptr, filename, mode, status);
-  CHECK_STATUS_RET(*status, phl);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not open FITS table in file '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(phl);
+  }
 
   // Determine the total number of photons.
   fits_get_num_rows(phl->fptr, &phl->nphs, status);
-  CHECK_STATUS_RET(*status, phl);
+  if (EXIT_SUCCESS!=*status) {
+    SIMPUT_ERROR("could not determine number of entries in photon list");
+    return(phl);
+  }
 
   // Determine the reference RA and DEC values from the
   // header keywords.
@@ -2156,14 +2797,14 @@ SimputPhList* openSimputPhList(const char* const filename,
   fits_read_key(phl->fptr, TDOUBLE, "REFRA", &refra, comment, status);
   if (EXIT_SUCCESS!=*status) {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "could not find keyword 'REFRA' in file '%s'", filename);
+    sprintf(msg, "could not read FITS keyword 'REFRA' from photon list '%s'", filename);
     SIMPUT_ERROR(msg);
     return(phl);
   }
   fits_read_key(phl->fptr, TDOUBLE, "REFDEC", &refdec, comment, status);
   if (EXIT_SUCCESS!=*status) {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "could not find keyword 'REFRA' in file '%s'", filename);
+    sprintf(msg, "could not read FITS keyword 'REFRA' from photon list '%s'", filename);
     SIMPUT_ERROR(msg);
     return(phl);
   }
@@ -2176,9 +2817,28 @@ SimputPhList* openSimputPhList(const char* const filename,
 
   // Determine the column numbers.
   fits_get_colnum(phl->fptr, CASEINSEN, "RA", &phl->cra, status);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not find column 'RA' in photon list '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(phl);
+  }
+
   fits_get_colnum(phl->fptr, CASEINSEN, "DEC", &phl->cdec, status);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not find column 'DEC' in photon list '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(phl);
+  }
+
   fits_get_colnum(phl->fptr, CASEINSEN, "ENERGY", &phl->cenergy, status);
-  CHECK_STATUS_RET(*status, phl);
+  if (EXIT_SUCCESS!=*status) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "could not find column 'ENERGY' in photon list '%s'", filename);
+    SIMPUT_ERROR(msg);
+    return(phl);
+  }
 
   // Determine the unit conversion factors.
   char ura[SIMPUT_MAXSTR];
@@ -2186,7 +2846,7 @@ SimputPhList* openSimputPhList(const char* const filename,
   CHECK_STATUS_RET(*status, phl);
   phl->fra=unit_conversion_rad(ura);
   if (0.==phl->fra) {
-    SIMPUT_ERROR("unknown units in RA column");
+    SIMPUT_ERROR("unknown units of 'RA' column");
     *status=EXIT_FAILURE;
     return(phl);
   }
@@ -2196,7 +2856,7 @@ SimputPhList* openSimputPhList(const char* const filename,
   CHECK_STATUS_RET(*status, phl);
   phl->fdec=unit_conversion_rad(udec);
   if (0.==phl->fdec) {
-    SIMPUT_ERROR("unknown units in DEC column");
+    SIMPUT_ERROR("unknown units of 'DEC' column");
     *status=EXIT_FAILURE;
     return(phl);
   }
@@ -2206,7 +2866,7 @@ SimputPhList* openSimputPhList(const char* const filename,
   CHECK_STATUS_RET(*status, phl);
   phl->fenergy=unit_conversion_keV(uenergy);
   if (0.==phl->fenergy) {
-    SIMPUT_ERROR("unknown units in ENERGY column");
+    SIMPUT_ERROR("unknown units of 'ENERGY' column");
     *status=EXIT_FAILURE;
     return(phl);
   }
@@ -2276,7 +2936,7 @@ int getExtType(SimputCtlg* const cat,
   fits_open_file(&fptr, filename, READONLY, status);
   if (EXIT_SUCCESS!=*status) {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "failed opening file '%s'", filename);
+    sprintf(msg, "could not open file '%s'", filename);
     SIMPUT_ERROR(msg);
     return(type);
   }
@@ -2288,7 +2948,7 @@ int getExtType(SimputCtlg* const cat,
   fits_read_key(fptr, TSTRING, "HDUCLAS1", &hduclas1, comment, status);
   if (EXIT_SUCCESS!=*status) {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "failed reading keyword 'HDUCLAS1' from file '%s'", filename);
+    sprintf(msg, "could not read FITS keyword 'HDUCLAS1' from file '%s'", filename);
     SIMPUT_ERROR(msg);
   }
   // (Don't do an error checking here! Otherwise the file
@@ -2359,7 +3019,7 @@ int getExtType(SimputCtlg* const cat,
 
   else {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "extension type '%s' not supported (HDUCLAS1)", hduclas1);
+    sprintf(msg, "extension type '%s' (HDUCLAS1) not supported", hduclas1);
     SIMPUT_ERROR(msg);
     *status=EXIT_FAILURE;
     return(type);
@@ -2388,5 +3048,4 @@ int getExtType(SimputCtlg* const cat,
 
   return(type);
 }
-
 
