@@ -468,35 +468,7 @@ if test "x$with_cfitsio" != xno -o \
     AC_CHECK_LIB([cpgplot], [cpgbeg],    [PGPLOTLIB="-lcpgplot $PGPLOTLIB"],
                  [PGPLOTLIB=], [$PGPLOTLIB $FLIBS $LIBS])
 
-    # Only need the PGPLOT include file to build PGSBOX.
-    if test "x$PGPLOTINC" != x; then
-      SUBDIRS="$SUBDIRS pgsbox"
-      INSTDIR="pgsbox"
-    fi
-
-    # Also need the PGPLOT library to build pgtest and cpgtest.
-    if test "x$PGPLOTLIB" = x; then
-      AC_MSG_WARN([PGPLOT not found, skipping PGPLOT-dependent tests.])
-    else
-      AC_MSG_NOTICE([PGPLOT appears to be available.])
-
-      TSTDIRS="$TSTDIRS pgsbox"
-    fi
   fi
-fi
-
-
-# Utilities are compiled last since they need the libraries.
-# Ways of disabling them:
-#   configure --disable-utils
-#   configure --enable-utils=no
-AC_ARG_ENABLE([utils], [AS_HELP_STRING([--disable-utils],
-            [don't build the WCS utilities])], [])
-if test "x$enable_utils" != xno ; then
-  SUBDIRS="$SUBDIRS utils"
-  INSTDIR="$INSTDIR utils"
-else
-  AC_MSG_WARN([Compilation of WCS utilities disabled])
 fi
 
 
@@ -518,5 +490,5 @@ AC_MSG_NOTICE([End of auxiliary configuration.
 # Do it.
 AC_MSG_NOTICE([Configuring files...])
 AC_CONFIG_FILES([makedefs wcslib.pc])
-AC_CONFIG_HEADERS([wcsconfig.h wcsconfig_f77.h wcsconfig_tests.h wcsconfig_utils.h])
+AC_CONFIG_HEADERS([wcsconfig.h wcsconfig_f77.h wcsconfig_tests.h])
 AC_OUTPUT

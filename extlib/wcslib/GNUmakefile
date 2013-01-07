@@ -37,10 +37,6 @@
 # Get configure settings.
 include makedefs
 
-ifeq "$(CHECK)" "nopgplot"
-  TSTDIRS := $(filter-out pgsbox,$(TSTDIRS))
-endif
-
 .PHONY : build check chmod clean cleaner cleanest distclean install \
          realclean show tests writable
 
@@ -158,7 +154,6 @@ config.status : configure
 
 dist :
 	   $(MAKE) -C doxygen cleanest build
-	   $(MAKE) -C utils man
 	   $(MAKE) distclean
 	-@ echo $(WCSLIBPKG)/C/RCS        >  wcslib.X
 	-@ echo $(WCSLIBPKG)/C/flexed/RCS >> wcslib.X
@@ -168,10 +163,8 @@ dist :
 	-@ echo $(WCSLIBPKG)/Fortran/test/RCS >> wcslib.X
 	-@ echo $(WCSLIBPKG)/makedefs     >> wcslib.X
 	-@ echo $(WCSLIBPKG)/other        >> wcslib.X
-	-@ echo $(WCSLIBPKG)/pgsbox/RCS   >> wcslib.X
 	-@ echo $(WCSLIBPKG)/RCS          >> wcslib.X
 	-@ echo $(WCSLIBPKG)/TODO         >> wcslib.X
-	-@ echo $(WCSLIBPKG)/utils/RCS    >> wcslib.X
 	-@ echo $(WCSLIBPKG)/wcslib.T     >> wcslib.X
 	-@ echo $(WCSLIBPKG)/wcslib.X     >> wcslib.X
 	   rm -f $(WCSLIBPKG).tar.bz2
