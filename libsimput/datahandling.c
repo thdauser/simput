@@ -853,8 +853,10 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
       // Check special cases.
       if ((0==jj) && (spec_emin>cat->arf->LowEnergy[ii])) {
 	if (0==warning_printed) {
-	  SIMPUT_WARNING("the spectrum does not cover the "
-			 "full energy range of the ARF");
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "the spectrum '%s' does not cover the "
+		  "full energy range of the ARF", midpspec->fileref);
+	  SIMPUT_WARNING(msg);
 	  warning_printed=1;
 	}
 	if (spec_emin>cat->arf->HighEnergy[ii]) break;
