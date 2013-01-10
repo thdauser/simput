@@ -1548,23 +1548,22 @@ int getSimputPhotonTime(SimputCtlg* const cat,
   // Determine the average photon rate.
   float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
   CHECK_STATUS_RET(*status, 0);
-
+  
+  // Check if the rate is 0.
+  if (0.==avgrate) {
+    return(1);
+  }
+  assert(avgrate>0.);
+    
   // Check if a timing extension has been specified.
   if (0==strlen(timeref)) {
     // The source has a constant brightness.
-    if (0.==avgrate) {
-      return(1);
-    } else {
-      assert(avgrate>0.);
-      *nexttime=prevtime+ rndexp((double)1./avgrate, status);
-      CHECK_STATUS_RET(*status, 0);
-      return(0);
-    }
+    *nexttime=prevtime+rndexp((double)1./avgrate, status);
+    CHECK_STATUS_RET(*status, 0);
+    return(0);
 
   } else {
     // The source has a time-variable brightness.
-    assert(avgrate>0.);
-  
     int timetype=getExtType(cat, timeref, status);
     CHECK_STATUS_RET(*status, 0);
 
@@ -1611,8 +1610,8 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	getKRLCTime(lc, kk  , nperiods, mjdref);
 
       // Step 2 in the algorithm.
-      double uk = 1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
-			  -lc->b[kk]*(stepwidth-t))*avgrate);
+      double uk=1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
+			-lc->b[kk]*(stepwidth-t))*avgrate);
       // Step 3 in the algorithm.
       if (u<=uk) {
 	if (fabs(lc->a[kk]*stepwidth)>fabs(lc->b[kk]*1.e-6)) { 
