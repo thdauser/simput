@@ -267,8 +267,9 @@ static inline long getLCBin(const SimputLC* const lc,
 	(time>=getLCTime(lc, lc->nentries-1, 0, mjdref))) {
       char msg[SIMPUT_MAXSTR];
       sprintf(msg, "requested time (%lf MJD) is outside the "
-	      "interval covered by the light curve (%lf to %lf MJD)",
+	      "interval covered by the light curve '%s' (%lf to %lf MJD)",
 	      time/24./3600. + mjdref,
+	      lc->fileref,
 	      getLCTime(lc, 0, 0, 0.)/24./3600., 
 	      getLCTime(lc, lc->nentries-1, 0, 0.)/24./3600.);
       SIMPUT_ERROR(msg);
@@ -1033,8 +1034,9 @@ static inline long getKRLCBin(const SimputKRLC* const lc,
 	(time>=getKRLCTime(lc, lc->nentries-1, 0, mjdref))) {
       char msg[SIMPUT_MAXSTR];
       sprintf(msg, "requested time (%lf MJD) is outside the "
-	      "interval covered by the light curve (%lf to %lf MJD)",
+	      "interval covered by the light curve '%s' (%lf to %lf MJD)",
 	      time/24./3600. + mjdref,
+	      lc->fileref,
 	      getKRLCTime(lc, 0, 0, 0.)/24./3600., 
 	      getKRLCTime(lc, lc->nentries-1, 0, 0.)/24./3600.);
       SIMPUT_ERROR(msg);
