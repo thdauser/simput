@@ -221,14 +221,6 @@ static SimputPSD* getSimputPSD(SimputCtlg* const cat,
   CHECK_STATUS_RET(*status, sb->psds[sb->npsds]);
   sb->npsds++;
 
-  // Store the file reference to the PSD for later comparisons.
-  sb->psds[sb->npsds-1]->fileref= 
-    (char*)malloc((strlen(filename)+1)*sizeof(char));
-  CHECK_NULL_RET(sb->psds[sb->npsds-1]->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 sb->psds[sb->npsds-1]);
-  strcpy(sb->psds[sb->npsds-1]->fileref, filename);
-   
   return(sb->psds[sb->npsds-1]);
 }
 
@@ -482,6 +474,14 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       // particular source.
       lc->src_id=src->src_id;
 
+      // Store the file reference to the timing extension for later comparisons.
+      lc->fileref=
+	(char*)malloc((strlen(filename)+1)*sizeof(char));
+      CHECK_NULL_RET(lc->fileref, *status, 
+		 "memory allocation for file reference failed", 
+		 lc);
+      strcpy(lc->fileref, filename);
+
     } while(0); // END of error handling loop.
     
     // Release allocated memory.
@@ -494,14 +494,6 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
   // Store the SimputLC in the internal cache.
   lb->lcs[lb->nlcs]=lc;
   lb->nlcs++;
-
-  // Store the file reference to the timing extension for later comparisons.
-  lb->lcs[lb->nlcs-1]->fileref=
-    (char*)malloc((strlen(filename)+1)*sizeof(char));
-  CHECK_NULL_RET(lb->lcs[lb->nlcs-1]->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 lb->lcs[lb->nlcs-1]);
-  strcpy(lb->lcs[lb->nlcs-1]->fileref, filename);
 
   return(lb->lcs[lb->nlcs-1]);
 }
@@ -730,7 +722,7 @@ static SimputMIdpSpec* getSimputMIdpSpec(SimputCtlg* const cat,
   }
 
   // The required spectrum is not contained in the storage.
-  // Therefore we must load it from the specified location.
+  // Therefore it must be loaded from the specified location.
 
   // Check if there is still space left in the spectral storage buffer.
   if (sb->nspectra<MAXMIDPSPEC) {
@@ -749,14 +741,6 @@ static SimputMIdpSpec* getSimputMIdpSpec(SimputCtlg* const cat,
   // Load the mission-independent spectrum.
   sb->spectra[sb->cspectrum]=loadSimputMIdpSpec(filename, status);
   CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
-
-  // Store the file reference to the spectrum for later comparisons.
-  sb->spectra[sb->cspectrum]->fileref=
-    (char*)malloc((strlen(filename)+1)*sizeof(char));
-  CHECK_NULL_RET(sb->spectra[sb->cspectrum]->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 sb->spectra[sb->cspectrum]);
-  strcpy(sb->spectra[sb->cspectrum]->fileref, filename);
 
   return(sb->spectra[sb->cspectrum]);
 }
@@ -864,8 +848,10 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
 
       } else if (jj==midpspec->nentries) {
 	if (0==warning_printed) {
-	  SIMPUT_WARNING("the spectrum does not cover the "
-			 "full energy range of the ARF");
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "the spectrum '%s' does not cover the "
+		  "full energy range of the ARF", midpspec->fileref);
+	  SIMPUT_WARNING(msg);
 	  warning_printed=1;
 	}
 	break;
@@ -895,6 +881,15 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
       spec->distribution[ii]+=spec->distribution[ii-1];
     }
   } // Loop over all ARF bins.
+
+
+  // Copy the file reference to the spectrum for later comparisons.
+  spec->fileref=
+    (char*)malloc((strlen(midpspec->fileref)+1)*sizeof(char));
+  CHECK_NULL_RET(spec->fileref, *status, 
+		 "memory allocation for file reference failed", 
+		 spec);
+  strcpy(spec->fileref, midpspec->fileref);
 
   return(spec);
 }
@@ -956,24 +951,13 @@ static SimputSpec* getSimputSpec(SimputCtlg* const cat,
   }
 
   // Obtain the mission-independent spectrum.
-  SimputMIdpSpec* midpspec=loadSimputMIdpSpec(filename, status);
+  SimputMIdpSpec* midpspec=getSimputMIdpSpec(cat, filename, status);
   CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
 
   // Convolve it with the ARF.
   sb->spectra[sb->cspectrum]=
     convSimputMIdpSpecWithARF(cat, midpspec, status);
   CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
-
-  // Release the memory of the mission-independent spectrum.
-  freeSimputMIdpSpec(&midpspec);
-
-  // Store the file reference to the spectrum for later comparisons.
-  sb->spectra[sb->cspectrum]->fileref=
-    (char*)malloc((strlen(filename)+1)*sizeof(char));
-  CHECK_NULL_RET(sb->spectra[sb->cspectrum]->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 sb->spectra[sb->cspectrum]);
-  strcpy(sb->spectra[sb->cspectrum]->fileref, filename);
 
   return(sb->spectra[sb->cspectrum]);
 }
@@ -1287,14 +1271,6 @@ static SimputImg* getSimputImg(SimputCtlg* const cat,
   sb->imgs[sb->nimgs]=loadSimputImg(filename, status);
   CHECK_STATUS_RET(*status, sb->imgs[sb->nimgs]);
   sb->nimgs++;
-
-  // Store the file reference to the image for later comparisons.
-  sb->imgs[sb->nimgs-1]->fileref = 
-    (char*)malloc((strlen(filename)+1)*sizeof(char));
-  CHECK_NULL_RET(sb->imgs[sb->nimgs-1]->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 sb->imgs[sb->nimgs-1]);
-  strcpy(sb->imgs[sb->nimgs-1]->fileref, filename);
    
   return(sb->imgs[sb->nimgs-1]);
 }
@@ -1385,14 +1361,6 @@ static SimputPhList* getSimputPhList(SimputCtlg* const cat,
   pb->phls[pb->nphls]=openSimputPhList(filename, READONLY, status);
   CHECK_STATUS_RET(*status, pb->phls[pb->nphls]);
   pb->nphls++;
-
-  // Store the file reference to the photon lists for later use.
-  pb->phls[pb->nphls-1]->fileref=
-    (char*)malloc((strlen(filename)+1)*sizeof(char));
-  CHECK_NULL_RET(pb->phls[pb->nphls-1]->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 pb->phls[pb->nphls-1]);
-  strcpy(pb->phls[pb->nphls-1]->fileref, filename);
    
   return(pb->phls[pb->nphls-1]);
 }

@@ -1046,6 +1046,13 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 		     "memory allocation for name string failed");
     strcpy(spec->name, name[0]);
 
+    // Store the file reference to the spectrum for later comparisons.
+    spec->fileref=
+      (char*)malloc((strlen(filename)+strlen(name[0])+1)*sizeof(char));
+    CHECK_NULL_BREAK(spec->fileref, *status, 
+		     "memory allocation for file reference failed");
+    sprintf(spec->fileref, "%s", filename);
+
   } while(0); // END of error handling loop.
   
   // Release allocated memory.
@@ -1667,7 +1674,8 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     fits_read_key(fptr, TDOUBLE, "MJDREF",   &lc->mjdref,   comment, status);
     if (EXIT_SUCCESS!=*status) {
       char msg[SIMPUT_MAXSTR];
-      sprintf(msg, "could not read FITS keyword 'MJDREF' from light curve '%s'", filename);
+      sprintf(msg, "could not read FITS keyword 'MJDREF' from light curve '%s'", 
+	      filename);
       SIMPUT_ERROR(msg);
       break;
     }
@@ -1675,7 +1683,8 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     fits_read_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, comment, status);
     if (EXIT_SUCCESS!=*status) {
       char msg[SIMPUT_MAXSTR];
-      sprintf(msg, "could not read FITS keyword 'TIMEZERO' from light curve '%s'", filename);
+      sprintf(msg, "could not read FITS keyword 'TIMEZERO' from light curve '%s'", 
+	      filename);
       SIMPUT_ERROR(msg);
       break;
     }
@@ -1685,7 +1694,8 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       fits_read_key(fptr, TDOUBLE, "PHASE0", &lc->phase0, comment, status);
       if (EXIT_SUCCESS!=*status) {
 	char msg[SIMPUT_MAXSTR];
-	sprintf(msg, "could not read FITS keyword 'PHASE0' from light curve '%s'", filename);
+	sprintf(msg, "could not read FITS keyword 'PHASE0' from light curve '%s'", 
+		filename);
 	SIMPUT_ERROR(msg);
 	break;
       }
@@ -1693,7 +1703,8 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       fits_read_key(fptr, TDOUBLE, "PERIOD", &lc->period, comment, status);
       if (EXIT_SUCCESS!=*status) {
 	char msg[SIMPUT_MAXSTR];
-	sprintf(msg, "could not read FITS keyword 'PERIOD' from light curve '%s'", filename);
+	sprintf(msg, "could not read FITS keyword 'PERIOD' from light curve '%s'", 
+		filename);
 	SIMPUT_ERROR(msg);
 	break;
       }
@@ -1839,6 +1850,13 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       CHECK_STATUS_BREAK(*status);
     }
     // END of reading the data from the FITS table.
+
+    // Store the file reference to the timing extension for later comparisons.
+    lc->fileref=
+      (char*)malloc((strlen(filename)+1)*sizeof(char));
+    CHECK_NULL_BREAK(lc->fileref, *status, 
+		     "memory allocation for file reference failed");
+    strcpy(lc->fileref, filename);
 
   } while(0); // END of error handling loop.
   
@@ -2251,6 +2269,13 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status)
 
     // END of reading the data from the FITS table.
 
+    // Store the file reference to the PSD for later comparisons.
+    psd->fileref= 
+      (char*)malloc((strlen(filename)+1)*sizeof(char));
+    CHECK_NULL_BREAK(psd->fileref, *status, 
+		     "memory allocation for file reference failed");
+    strcpy(psd->fileref, filename);
+   
   } while(0); // END of error handling loop.
   
   // Close the file.
@@ -2585,6 +2610,13 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     }
     fits_clear_errmark();
 
+    // Store the file reference to the image for later comparisons.
+    img->fileref= 
+      (char*)malloc((strlen(filename)+1)*sizeof(char));
+    CHECK_NULL_BREAK(img->fileref, *status, 
+		     "memory allocation for file reference failed");
+    strcpy(img->fileref, filename);
+    
   } while(0); // END of error handling loop.
 
   // Release memory for buffer.
@@ -2797,14 +2829,16 @@ SimputPhList* openSimputPhList(const char* const filename,
   fits_read_key(phl->fptr, TDOUBLE, "REFRA", &refra, comment, status);
   if (EXIT_SUCCESS!=*status) {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "could not read FITS keyword 'REFRA' from photon list '%s'", filename);
+    sprintf(msg, "could not read FITS keyword 'REFRA' from photon list '%s'", 
+	    filename);
     SIMPUT_ERROR(msg);
     return(phl);
   }
   fits_read_key(phl->fptr, TDOUBLE, "REFDEC", &refdec, comment, status);
   if (EXIT_SUCCESS!=*status) {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "could not read FITS keyword 'REFRA' from photon list '%s'", filename);
+    sprintf(msg, "could not read FITS keyword 'REFRA' from photon list '%s'", 
+	    filename);
     SIMPUT_ERROR(msg);
     return(phl);
   }
@@ -2870,6 +2904,14 @@ SimputPhList* openSimputPhList(const char* const filename,
     *status=EXIT_FAILURE;
     return(phl);
   }
+
+  // Store the file reference to the photon lists for later use.
+  phl->fileref=
+    (char*)malloc((strlen(filename)+1)*sizeof(char));
+  CHECK_NULL_RET(phl->fileref, *status, 
+		 "memory allocation for file reference failed", 
+		 phl);
+  strcpy(phl->fileref, filename);
 
   return(phl);
 }
