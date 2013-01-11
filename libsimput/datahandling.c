@@ -307,7 +307,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
   SimputLC* lc=NULL;
 
   // Check if the SimputLC is contained in the internal cache.
-  const int maxlcs=200;
+  const int maxlcs=1000;
 
   // Check if the source catalog contains a light curve buffer.
   if (NULL==cat->lcbuff) {
@@ -491,11 +491,24 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
     
   }
 
-  // Store the SimputLC in the internal cache.
-  lb->lcs[lb->nlcs]=lc;
-  lb->nlcs++;
+  // Check if there is still space left in the internal cache.
+  if (lb->nlcs<maxlcs) {
+    lb->clc=lb->nlcs;
+    lb->nlcs++;
+  } else {
+    lb->clc++;
+    if (lb->clc>=maxlcs) {
+      lb->clc=0;
+    }
+    // Release the SimputLC that is currently stored at this place 
+    // in the cache.
+    freeSimputLC(&(lb->lcs[lb->clc]));
+  }
 
-  return(lb->lcs[lb->nlcs-1]);
+  // Store the SimputLC in the internal cache.
+  lb->lcs[lb->clc]=lc;
+
+  return(lb->lcs[lb->clc]);
 }
 
 
@@ -1196,27 +1209,27 @@ static SimputKRLC* getSimputKRLC(SimputCtlg* const cat,
   krlc->a[krlc->nentries-1]=0.;
   krlc->b[krlc->nentries-1]=lc->flux[lc->nentries-1]/lc->fluxscal;
 
-  // Store the K&R lc in the cache.
-  sb->krlcs[sb->ckrlc]=krlc;
-
   // Determine the extension type of the referred HDU.
   int timetype=getExtType(cat, timeref, status);
   CHECK_STATUS_RET(*status, NULL);
   if (EXTTYPE_PSD==timetype) {
     // The new KRLC is assigned to this particular source and 
     // cannot be re-used for others.
-    sb->krlcs[sb->ckrlc]->src_id=src->src_id;
+    krlc->src_id=src->src_id;
   }
 
   // Store the file reference to the timing extension for 
   // later comparisons.
-  sb->krlcs[sb->ckrlc]->fileref= 
+  krlc->fileref= 
     (char*)malloc((strlen(timeref)+1)*sizeof(char));
-  CHECK_NULL_RET(sb->krlcs[sb->ckrlc]->fileref, *status, 
+  CHECK_NULL_RET(krlc->fileref, *status, 
 		 "memory allocation for file reference failed", 
-		 sb->krlcs[sb->ckrlc]);
-  strcpy(sb->krlcs[sb->ckrlc]->fileref, timeref);
+		 krlc);
+  strcpy(krlc->fileref, timeref);
    
+  // Store the K&R lc in the cache.
+  sb->krlcs[sb->ckrlc]=krlc;
+
   return(sb->krlcs[sb->ckrlc]);
 }
 
@@ -1271,7 +1284,7 @@ static SimputImg* getSimputImg(SimputCtlg* const cat,
   sb->imgs[sb->nimgs]=loadSimputImg(filename, status);
   CHECK_STATUS_RET(*status, sb->imgs[sb->nimgs]);
   sb->nimgs++;
-   
+  
   return(sb->imgs[sb->nimgs-1]);
 }
 
