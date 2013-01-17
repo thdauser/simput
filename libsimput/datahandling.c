@@ -7,7 +7,7 @@ static double(*static_rndgen)(int* const)=NULL;
 
 void setSimputARF(SimputCtlg* const cat, struct ARF* const arf)
 {
-  cat->arf = arf;
+  cat->arf=arf;
 }
 
 
@@ -1421,6 +1421,13 @@ float getSimputPhotonRate(SimputCtlg* const cat,
     int spectype=getExtType(cat, specref, status);
     CHECK_STATUS_RET(*status, 0.);
 
+    // Check if the ARF is defined.
+    if (NULL==cat->arf) {
+      *status=EXIT_FAILURE;
+      SIMPUT_ERROR("ARF not found");
+      return(0.);
+    }
+
     if (EXTTYPE_MIDPSPEC==spectype) {
       SimputMIdpSpec* midpspec=getSimputMIdpSpec(cat, specref, status);
       CHECK_STATUS_RET(*status, 0.);
@@ -1449,7 +1456,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       CHECK_STATUS_RET(*status, 0.);
       
       // Determine the flux in the reference energy band.
-      float refband_flux=0.;
+      float refband_flux=0.; // [erg/cm^2]
       const long buffsize=10000;
       float buffer[buffsize];
       long ii;
@@ -1468,33 +1475,23 @@ float getSimputPhotonRate(SimputCtlg* const cat,
 	// reference energy band.
 	long jj;
 	for (jj=0; jj<nphs; jj++) {
-	  if ((buffer[jj]>=src->e_min)&&(buffer[jj]<=src->e_max)) {
-	    refband_flux+=buffer[jj]*phl->fenergy*keV2erg;
+	  float energy=buffer[jj]*phl->fenergy;
+	  if ((energy>=src->e_min)&&(energy<=src->e_max)) {
+	    // Determine the ARF value for this energy.
+	    long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
+	    while (upper>lower) {
+	      mid=(lower+upper)/2;
+	      if (cat->arf->HighEnergy[mid]<energy) {
+		lower=mid+1;
+	      } else {
+		upper=mid;
+	      }
+	    }
+
+	    refband_flux+=energy*keV2erg/cat->arf->EffArea[lower];
 	  }
 	}
       }
-
-      if (0.==phl->refarea) {
-	// Determine the maximum value of the instrument ARF.
-	if (NULL==cat->arf) {
-	  *status=EXIT_FAILURE;
-	  SIMPUT_ERROR("ARF not found");
-	  return(0.);
-	}
-	long kk;
-	float maxarea=0.;
-	for (kk=0; kk<cat->arf->NumberEnergyBins; kk++) {
-	  if (cat->arf->EffArea[kk]>maxarea) {
-	    maxarea=cat->arf->EffArea[kk];
-	  }
-	}
-	phl->refarea=maxarea;
-      }
-
-      // Use the maximum value of the ARF as a reference to determine
-      // the flux.
-      // [erg/s]->[erg/s/cm^2]
-      refband_flux*=1./phl->refarea;
 
       // Store the determined photon rate in the source data structure
       // for later use.
@@ -1553,7 +1550,8 @@ int getSimputPhotonTime(SimputCtlg* const cat,
     // Check if the timing reference points to a photon list.
     if (EXTTYPE_PHLIST==timetype) {
       *status=EXIT_FAILURE;
-      SIMPUT_ERROR("photon lists are currently not supported for timing extensions");
+      SIMPUT_ERROR("photon lists are currently not supported "
+		   "for timing extensions");
       return(0);
     }
 
@@ -1636,12 +1634,22 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
 
 void getSimputPhFromPhList(const SimputCtlg* const cat,
-			   const SimputPhList* const phl, 
+			   SimputPhList* const phl, 
 			   float* const energy, 
 			   double* const ra, 
 			   double* const dec, 
 			   int* const status)
 {
+  // Determine the maximum value of the instrument ARF.
+  if (0.==phl->refarea) {
+    long kk;
+    for (kk=0; kk<cat->arf->NumberEnergyBins; kk++) {
+      if (cat->arf->EffArea[kk]>phl->refarea) {
+	phl->refarea=cat->arf->EffArea[kk];
+      }
+    }
+  }
+  
   while(1) {
     // Determine a random photon within the list.
     long ii=(long)(getRndNum(status)*phl->nphs);
@@ -1655,7 +1663,7 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
       SIMPUT_ERROR("failed reading photon energy from photon list");
       return;
     }
-    *energy *= phl->fenergy;
+    *energy *=phl->fenergy;
 
     // Determine the ARF value for the photon energy.
     long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
@@ -1680,7 +1688,7 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 	SIMPUT_ERROR("failed reading right ascension from photon list");
 	return;
       }
-      *ra *= phl->fra;
+      *ra *=phl->fra;
 
       fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
 		    NULL, dec, &anynul, status);
@@ -1688,7 +1696,7 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 	SIMPUT_ERROR("failed reading declination from photon list");
 	return;
       }
-      *dec*= phl->fdec;
+      *dec *=phl->fdec;
 
       return;
     }
