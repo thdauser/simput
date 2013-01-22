@@ -1458,8 +1458,8 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       // Determine the flux in the reference energy band
       // and the reference number of photons after weighing
       // with the instrument ARF.
-      float refband_flux=0.; // [erg]
-      float refnumber=0.; // [photons]
+      double refband_flux=0.; // [erg]
+      double refnumber=0.; // [photons]
       const long buffsize=10000;
       long ii;
       for (ii=0; ii*buffsize<phl->nphs; ii++) {
