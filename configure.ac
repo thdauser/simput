@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.32],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.33],[christian.schmid@sternwarte.uni-erlangen.de])
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])

@@ -545,8 +545,8 @@ float getSimputSrcBandFlux(SimputCtlg* const cat,
 			   const double mjdref,
 			   int* const status);
 
-/** Determine the energy flux of the spectrum in [erg/s/cm**2] within a
-    certain energy band from emin to emax. */
+/** Determine the energy flux of the spectrum in [erg/s/cm**2] within
+    a certain energy band from emin to emax. */
 float getSimputSpecBandFlux(SimputMIdpSpec* const spec,
 			    const float emin, const float emax,
 			    int* const status);

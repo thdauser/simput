@@ -1455,15 +1455,18 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       SimputPhList* phl=getSimputPhList(cat, specref, status);
       CHECK_STATUS_RET(*status, 0.);
       
-      // Determine the flux in the reference energy band.
-      float refband_flux=0.; // [erg/cm^2]
+      // Determine the flux in the reference energy band
+      // and the reference number of photons after weighing
+      // with the instrument ARF.
+      float refband_flux=0.; // [erg]
+      float refnumber=0.; // [photons]
       const long buffsize=10000;
-      float buffer[buffsize];
       long ii;
       for (ii=0; ii*buffsize<phl->nphs; ii++) {
 	// Read a block of photons.
 	int anynul=0;
 	long nphs=MIN(buffsize, phl->nphs-(ii*buffsize));
+	float buffer[buffsize];
 	fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii*buffsize+1, 
 		      1, nphs, NULL, buffer, &anynul, status);
 	if (EXIT_SUCCESS!=*status) {
@@ -1471,26 +1474,28 @@ float getSimputPhotonRate(SimputCtlg* const cat,
 	  return(0.);
 	}
 
-	// Determine the photons/illuminated energy in the
+	// Determine the illuminated energy in the
 	// reference energy band.
 	long jj;
 	for (jj=0; jj<nphs; jj++) {
 	  float energy=buffer[jj]*phl->fenergy;
 	  if ((energy>=src->e_min)&&(energy<=src->e_max)) {
-	    // Determine the ARF value for this energy.
-	    long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
-	    while (upper>lower) {
-	      mid=(lower+upper)/2;
-	      if (cat->arf->HighEnergy[mid]<energy) {
-		lower=mid+1;
-	      } else {
-		upper=mid;
-	      }
-	    }
-
-	    refband_flux+=energy*keV2erg/cat->arf->EffArea[lower];
+	    refband_flux+=energy*keV2erg;
 	  }
+
+	  // Determine the ARF value for this energy.
+	  long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
+	  while (upper>lower) {
+	    mid=(lower+upper)/2;
+	    if (cat->arf->HighEnergy[mid]<energy) {
+	      lower=mid+1;
+	    } else {
+	      upper=mid;
+	    }
+	  }
+	  refnumber+=cat->arf->EffArea[lower];	  
 	}
+	// END of loop over all photons in the buffer.
       }
 
       // Store the determined photon rate in the source data structure
@@ -1499,7 +1504,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       src->phrate=(float*)malloc(sizeof(float));
       CHECK_NULL_RET(src->phrate, *status,
 		     "memory allocation for photon rate buffer failed", 0.);
-      *(src->phrate)=src->eflux / refband_flux * phl->nphs;
+      *(src->phrate)=src->eflux / refband_flux * refnumber;
 
     } else {
       SIMPUT_ERROR("could not find valid spectrum extension");

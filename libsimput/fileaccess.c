@@ -925,7 +925,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     char uenergy[SIMPUT_MAXSTR];
     read_unit(fptr, cenergy, uenergy, status);
     CHECK_STATUS_BREAK(*status);
-    float fenergy = unit_conversion_keV(uenergy);
+    float fenergy=unit_conversion_keV(uenergy);
     if (0.==fenergy) {
       SIMPUT_ERROR("unknown units of 'ENERGY' column");
       *status=EXIT_FAILURE;
@@ -935,7 +935,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     char uflux[SIMPUT_MAXSTR];
     read_unit(fptr, cflux, uflux, status);
     CHECK_STATUS_BREAK(*status);
-    float fflux = unit_conversion_phpspcm2pkeV(uflux);
+    float fflux=unit_conversion_phpspcm2pkeV(uflux);
     if (0.==fflux) {
       SIMPUT_ERROR("unknown units of 'FLUX' column");
       *status=EXIT_FAILURE;
@@ -1035,8 +1035,8 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     // Multiply with unit scaling factor.
     long ii;
     for (ii=0; ii<spec->nentries; ii++) {
-      spec->energy[ii] *= fenergy;
-      spec->pflux[ii]  *= fflux;
+      spec->energy[ii]*=fenergy;
+      spec->pflux[ii] *=fflux;
     }
 
     // Copy the name (ID) of the spectrum from the string buffer
