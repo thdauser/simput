@@ -476,16 +476,6 @@ void freeSimputMIdpSpec(SimputMIdpSpec** const spec);
 SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 				   int* const status);
 
-/** Load the requested spectrum. Keeps a certain number of spectra in
-    an internal cache. If the requested spectrum is not located in the
-    cache, it is loaded from the given filename. The returned pointer
-    to the SimputMIdpSpec should not be free'd, since the
-    allocated memory is managed by the internal caching mechanism. */
-SimputMIdpSpec* 
-loadCacheSimputMIdpSpec(SimputCtlg* const cat,
-			const char* const filename,
-			int* const status);
-
 /** Loads all spectra from the specified FITS binary table into the
     internal cache. */
 void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
