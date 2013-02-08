@@ -38,6 +38,7 @@
 /** Single entry in the SimputCtlg. Requires about 128 bytes,
     depending on the string lengths. */
 typedef struct {
+
   /** Unique source ID. */
   long src_id;
 
@@ -87,6 +88,7 @@ typedef struct {
     file. The data structure contains basic information about the
     catalog as well as buffers for data extensions. */
 typedef struct {
+
   /** Pointer to the catalog extension. */
   fitsfile* fptr;
 
@@ -146,13 +148,14 @@ typedef struct {
 
 /** Mission-independent spectrum. */
 typedef struct {
+
   /** Number of entries in the spectrum. */
   long nentries;
   
   /** Energy values [keV]. */
   float* energy;
 
-  /** Photon flux distribution [photons/s/cm**2/keV]. */
+  /** Photon flux distribution [photons/cm**2/keV]. */
   float* pflux;
 
   /** Unique case-sensitive designator for an individual spectrum. */
@@ -168,8 +171,9 @@ typedef struct {
 
 /** Spectrum (spectral distribution function). */
 typedef struct {
-  /** Probability distribution normalized to the total photon rate
-      [photons/s]. */
+
+  /** Probability distribution normalized to the total photon number
+      [photons]. */
   double* distribution;
 
   /** Reference to the location of the spectrum given by the extended
@@ -182,6 +186,7 @@ typedef struct {
 
 /** SIMPUT light curve. */
 typedef struct {
+
   /** Number of entries in the light curve. */
   long nentries;
 
@@ -191,7 +196,9 @@ typedef struct {
   /** Phase values (between 0 and 1). */
   double* phase;
 
-  /** Relative flux values (unitless). */
+  /** Relative flux values (unitless). This value in combination with
+      the flux scaling factor determines the variation of the source
+      reference flux given in the catalog table. */
   float* flux;
 
   /** Reference to the storage location of the source spectrum at a
@@ -235,6 +242,7 @@ typedef struct {
 /** SIMPUT light curve converted to the form needed by the Klein &
     Roberts (1984) algorithm. */
 typedef struct {
+
   /** Number of entries in the light curve. */
   long nentries;
 
@@ -280,6 +288,7 @@ typedef struct {
 
 /** SIMPUT power spectral density (PSD). */
 typedef struct {
+
   /** Number of entries in the PSD. */
   long nentries;
 
@@ -300,6 +309,7 @@ typedef struct {
 
 /** SIMPUT source image. */
 typedef struct {
+
   /** Image dimensions. */
   long naxis1, naxis2;
 
@@ -323,6 +333,7 @@ typedef struct {
 
 /** SIMPUT photon list. */
 typedef struct {
+
   /** Pointer to the FITS file HDU. */
   fitsfile* fptr;
 
@@ -507,7 +518,7 @@ SimputMIdpSpec* getSimputSrcMIdpSpec(SimputCtlg* const cat,
 
 /** Determine the energy and flux values of a particular bin in the
     SimputMIdpSpec. The energy is given in [keV], the flux in
-    [photons/s/cm**2/keV]. */
+    [photons/cm**2/keV]. */
 void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  const long row,
 			  float* const energy, 
@@ -526,25 +537,11 @@ void setSimputARF(SimputCtlg* const cat, struct ARF* const arf);
     uniformly distributed numbers in the interval [0,1). */
 void setSimputRndGen(double(*rndgen)(int* const));
 
-/** Determine the energy flux in [erg/s/cm**2] within the reference
-    energy band of the specified source valid a the requested point of
-    time. */
-float getSimputSrcBandFlux(SimputCtlg* const cat,
-			   const SimputSrc* const src,
-			   const double time, 
-			   const double mjdref,
-			   int* const status);
-
-/** Determine the energy flux of the spectrum in [erg/s/cm**2] within
-    a certain energy band from emin to emax. */
-float getSimputSpecBandFlux(SimputMIdpSpec* const spec,
-			    const float emin, const float emax,
-			    int* const status);
-
 /** Return the photon rate of a particular source. The return value is
-    the nominal photon rate given in the source catalog. WARNING: It
-    does not contain any light curve or other time-variable
-    contributions. Specification of instrument ARF required. */
+    the nominal photon rate for the whole spectrum according to the
+    reference flux given in the source catalog. WARNING: It does not
+    contain any light curve or other time-variable contributions. A
+    specification of an instrument ARF required. */
 float getSimputPhotonRate(SimputCtlg* const cat,
 			  SimputSrc* const src,
 			  const double time, 

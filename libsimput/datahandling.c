@@ -889,7 +889,7 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
     } while (0==finished);
 
     // Create the spectral distribution function 
-    // normalized to the total photon rate [photon/s]. 
+    // normalized to the total photon number [photons]. 
     if (ii>0) {
       spec->distribution[ii]+=spec->distribution[ii-1];
     }
@@ -1398,7 +1398,7 @@ float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
     }
   }
 
-  // Convert units of 'flux' from [keV/s/cm^2]->[erg/s/cm^2].
+  // Convert units of 'flux' from [keV/cm^2]->[erg/cm^2].
   flux*=keV2erg;
 
   return(flux);
@@ -1459,7 +1459,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       // and the reference number of photons after weighing
       // with the instrument ARF.
       double refband_flux=0.; // [erg]
-      double refnumber=0.; // [photons]
+      double refnumber=0.; // [photons*cm^2]
       const long buffsize=10000;
       long ii;
       for (ii=0; ii*buffsize<phl->nphs; ii++) {
