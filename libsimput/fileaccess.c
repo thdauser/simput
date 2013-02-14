@@ -345,6 +345,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     fits_get_colnum(cat->fptr, CASEINSEN, "TIMING", &cat->ctiming, &opt_status);
     // For compatibility with SIMPUT version 1.0.0.
     if (EXIT_SUCCESS!=opt_status) {
+      opt_status=EXIT_SUCCESS;
       fits_get_colnum(cat->fptr, CASEINSEN, "LIGHTCUR", &cat->ctiming, &opt_status);
     }
     opt_status=EXIT_SUCCESS;
@@ -2607,6 +2608,7 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
       // FLUXSCAL is not given in the FITS header. Therefore it is 
       // set to the default value of 1.
       img->fluxscal=1.0;
+      opt_status=EXIT_SUCCESS;
     }
     fits_clear_errmark();
 
