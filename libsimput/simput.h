@@ -465,7 +465,12 @@ void appendSimputSrcBlock(SimputCtlg* const cat,
 			  const long nsources,
 			  int* const status);
 
-/** Determine the reference of a source to its spectrum. */
+/** Determine the reference of a source to its spectrum. The spectrum
+    can be either referred to directly in the source catalog or in the
+    optional light curve extension. In the latter case the point of
+    time for which the spectrum is requested, needs to be specified. A
+    negative value of mjdref indicates that the spectrum referred to
+    by the first bin in the light curve should be returned. */
 void getSimputSrcSpecRef(SimputCtlg* const cat,
 			 const SimputSrc* const src,
 			 const double prevtime,

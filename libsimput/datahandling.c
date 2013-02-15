@@ -250,6 +250,13 @@ static inline long getLCBin(const SimputLC* const lc,
 			    long long* nperiods, 
 			    int* const status)
 {
+  // Check if the value of MJDREF is negative. This indicates
+  // that the spectrum referred to in the first bin of the light curve
+  // is requested in order to calculate the source count rate.
+  if (mjdref<0.) {
+    return(0);
+  }
+
   // Check if the light curve is periodic or not.
   if (NULL!=lc->time) {
     // Non-periodic light curve.
@@ -542,17 +549,19 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
       long bin=getLCBin(lc, prevtime, mjdref, &nperiods, status);
       CHECK_STATUS_VOID(*status);
 
-      // Copy the reference to the spectrum.
-      strcpy(specref, lc->spectrum[bin]);
-
-      // Check if a spectrum is defined in this light curve bin.
-      if (0==strlen(specref)) {
+      // Check if this is a valid spectrum is defined.
+      if ((0==strcmp(lc->spectrum[bin], "NULL")) || 
+	  (0==strcmp(lc->spectrum[bin], " ")) ||
+	  (0==strlen(lc->spectrum[bin]))) {
 	SIMPUT_ERROR("in the current implementation light curves "
 		     "must not contain blank entries in a given "
 		     "spectrum column");
 	*status=EXIT_FAILURE;
 	return;
       }
+
+      // Copy the reference to the spectrum.
+      strcpy(specref, lc->spectrum[bin]);
 
       // Determine the relative location with respect to the 
       // location of the light curve.
@@ -566,42 +575,40 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
 	strcpy(lastslash, specref);
 	strcpy(specref, timeref);	
       }
+
+      return;
     }
   }
 
   // If no light curve extension with a spectrum column is given, 
   // determine the spectrum reference directly from the source 
   // description.
-  if (0==strlen(specref)) {
-    if (NULL==src->spectrum) {
-      strcpy(specref, "");
-    } else {
-      strcpy(specref, src->spectrum);
+  if (NULL!=src->spectrum) {   
+    // Check if this is a valid spectrum reference.
+    if ((0==strcmp(src->spectrum, "NULL")) || 
+	(0==strcmp(src->spectrum, " ")) ||
+	(0==strlen(specref))) {
+      return;
     }
-  }
 
-  // Check if this is a valid spectrum reference.
-  if ((0==strcmp(specref, "NULL")) || (0==strcmp(specref, " "))) {
-    strcpy(specref, "");
-  }
-  if (0==strlen(specref)) {
-    return;
-  }
-  
-  // Set path and file name if missing.
-  if ('['==specref[0]) {
-    char buffer[SIMPUT_MAXSTR];
-    strcpy(buffer, cat->filepath);
-    strcat(buffer, cat->filename);
-    strcat(buffer, specref);
-    strcpy(specref, buffer);
-  } else {
-    if ('/'!=specref[0]) {
+    strcpy(specref, src->spectrum);
+    
+    // Set path and file name if missing.
+    if ('['==specref[0]) {
       char buffer[SIMPUT_MAXSTR];
       strcpy(buffer, cat->filepath);
+      strcat(buffer, cat->filename);
       strcat(buffer, specref);
       strcpy(specref, buffer);
-    } 
+    } else {
+      if ('/'!=specref[0]) {
+	char buffer[SIMPUT_MAXSTR];
+	strcpy(buffer, cat->filepath);
+	strcat(buffer, specref);
+	strcpy(specref, buffer);
+	
+      }
+    }
   }
 }
 
