@@ -587,7 +587,7 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
     // Check if this is a valid spectrum reference.
     if ((0==strcmp(src->spectrum, "NULL")) || 
 	(0==strcmp(src->spectrum, " ")) ||
-	(0==strlen(specref))) {
+	(0==strlen(src->spectrum))) {
       return;
     }
 
@@ -606,7 +606,6 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
 	strcpy(buffer, cat->filepath);
 	strcat(buffer, specref);
 	strcpy(specref, buffer);
-	
       }
     }
   }
