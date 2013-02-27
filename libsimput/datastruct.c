@@ -762,15 +762,23 @@ SimputPhList* newSimputPhList(int* const status)
 		 "memory allocation for SimputPhList failed", phl);
 
   // Initialize elements.
-  phl->fptr   =NULL;
-  phl->nphs   =0;
-  phl->cra    =0;
-  phl->cdec   =0;
-  phl->cenergy=0;
-  phl->fra    =0.;
-  phl->fdec   =0.;
-  phl->fenergy=0.;
-  phl->refarea=0.;
+  phl->fptr    =NULL;
+  phl->nphs    =0;
+  phl->cra     =0;
+  phl->cdec    =0;
+  phl->cenergy =0;
+  phl->ctime   =0;
+  phl->fra     =0.;
+  phl->fdec    =0.;
+  phl->fenergy =0.;
+  phl->ftime   =0.;
+  phl->refarea =0.;
+  phl->accrate =0.;
+  phl->mjdref  =0.;
+  phl->timezero=0.;
+  phl->tstart  =0.;
+  phl->tstop   =0.;
+  phl->currrow =0;
   phl->fileref=NULL;
 
   return(phl);

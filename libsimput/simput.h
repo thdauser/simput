@@ -338,17 +338,35 @@ typedef struct {
   fitsfile* fptr;
 
   /** Column numbers. */
-  int cra, cdec, cenergy;
+  int cra, cdec, cenergy, ctime;
 
   /** Unit conversion factors. */
-  float fra, fdec, fenergy;
+  float fra, fdec, fenergy, ftime;
 
   /** Total number of photons in the list. */
   long nphs;
 
+  /** MJD for reference time [d]. */
+  double mjdref;
+
+  /** Zero time [s]. */
+  double timezero;
+
+  /** Start and stop time according to the FITS header keywords. */
+  double tstart, tstop;
+
   /** Reference effective area [cm^2]. This value must be greater or
       equal to the maximum value of the used ARF. */
   float refarea;
+
+  /** Acceptance rate for the photons in the list. This value is
+      needed if the time information is used. */
+  double accrate;
+
+  /** Current row in the photon list. Numbering starts a 1 for the
+      first row. This variable is needed if the time information in
+      the photon list is taken into account. */
+  long currrow;
 
   /** Reference to the location of the photon list given by the
       extended filename syntax. This reference is used to check,

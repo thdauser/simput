@@ -407,7 +407,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       lc->timezero=prevtime;
       long ii;
       for (ii=0; ii<lc->nentries; ii++) {
-	lc->time[ii] = ii*1./(2.*psd->frequency[psd->nentries-1]);
+	lc->time[ii]=ii*1./(2.*psd->frequency[psd->nentries-1]);
       }
 
       // Interpolate the PSD to a uniform frequency grid.
@@ -1531,24 +1531,28 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 			int* const status)
 {
   // Determine the time of the next photon.
+
   // Determine the reference to the timing extension.
   char timeref[SIMPUT_MAXSTR];
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_RET(*status, 0);
-
-  // Determine the average photon rate.
-  float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
-  CHECK_STATUS_RET(*status, 0);
-  
-  // Check if the rate is 0.
-  if (0.==avgrate) {
-    return(1);
-  }
-  assert(avgrate>0.);
     
   // Check if a timing extension has been specified.
   if (0==strlen(timeref)) {
     // The source has a constant brightness.
+
+    // Determine the average photon rate.
+    float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
+    CHECK_STATUS_RET(*status, 0);
+    
+    // Check if the rate is 0.
+    if (0.==avgrate) {
+      return(1);
+    }
+    assert(avgrate>0.);
+
+    // Time intervals between subsequent photons are exponentially 
+    // distributed.
     *nexttime=prevtime+rndexp((double)1./avgrate, status);
     CHECK_STATUS_RET(*status, 0);
     return(0);
@@ -1558,88 +1562,160 @@ int getSimputPhotonTime(SimputCtlg* const cat,
     int timetype=getExtType(cat, timeref, status);
     CHECK_STATUS_RET(*status, 0);
 
-    // Check if the timing reference points to a photon list.
+    // Check if the extension type of the timing reference.
     if (EXTTYPE_PHLIST==timetype) {
+      // The timing reference points to a photon list.
+
+      // Get the photon list.
+      SimputPhList* phl=getSimputPhList(cat, timeref, status);
+      CHECK_STATUS_RET(*status, 0);
+
+      // Determine the acceptance rate for photons.
+      if (0.==phl->accrate) {
+	// Determine the average photon rate.
+	float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
+	CHECK_STATUS_RET(*status, 0);
+	
+	// Check if the rate is 0.
+	if (0.==avgrate) {
+	  return(1);
+	}
+	assert(avgrate>0.);
+
+	// Acceptance rate.
+	assert(phl->nphs>0);
+	phl->accrate=avgrate *(phl->tstop-phl->tstart)/phl->nphs;
+	assert(phl->accrate>0.);
+      }
+
+      // Verify that the time column is present.
+      if (0==phl->ctime) {
+	SIMPUT_ERROR("photon list does not contain a time column");
+	return(0);
+      }
+
+      // Select a photon.
+      double rand;
+      do {
+	phl->currrow++;
+	int anynul=0;
+	fits_read_col(phl->fptr, TDOUBLE, phl->ctime, phl->currrow, 1, 1, 
+		      NULL, nexttime, &anynul, status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading time from photon list");
+	  return(0);
+	}
+	*nexttime *=phl->ftime;
+	
+	// Check if the time lies within the requested interval.
+	if (*nexttime+phl->timezero+(phl->mjdref-mjdref)*24.*3600.<prevtime) {
+	  continue;
+	}
+
+	// Determine a random number in order to apply the acceptance rate.
+	rand=getRndNum(status);
+	CHECK_STATUS_RET(*status, 0);
+
+      } while (rand>=phl->accrate);
+
+      return(1);
+
+    } else if ((EXTTYPE_LC==timetype) || (EXTTYPE_PSD==timetype)) {
+      // The timing reference points either to a light curve
+      // or a PSD.
+
+      // Determine the average photon rate.
+      float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
+      CHECK_STATUS_RET(*status, 0);
+    
+      // Check if the rate is 0.
+      if (0.==avgrate) {
+	return(1);
+      }
+      assert(avgrate>0.);
+
+      // Get the light curve.
+      SimputKRLC* lc=getSimputKRLC(cat, src, timeref, prevtime, mjdref, status);
+      CHECK_STATUS_RET(*status, 0);
+      
+      // Determine the photon time according to the light curve.
+      // The light curve is a piece-wise constant function, so the
+      // general algorithm proposed by Klein & Roberts has to 
+      // be applied.
+      // Step 1 in the algorithm.
+      double u=getRndNum(status);
+      CHECK_STATUS_RET(*status, 0);
+
+      // Determine the respective index kk of the light curve.
+      long long nperiods=0;
+      long kk=getKRLCBin(lc, prevtime, mjdref, &nperiods, status);
+      CHECK_STATUS_RET(*status, 0);
+      
+      while ((kk<lc->nentries-1)||(lc->src_id>0)) {
+	
+	// If the end of the light curve is reached, check if it has
+	// been produced from a PSD. In that case one can create new one.
+	if ((kk>=lc->nentries-1)&&(lc->src_id>0)) {
+	  lc=getSimputKRLC(cat, src, timeref, prevtime, mjdref, status);
+	  CHECK_STATUS_RET(*status, 0);
+	  kk=getKRLCBin(lc, prevtime, mjdref, &nperiods, status);
+	  CHECK_STATUS_RET(*status, 0);
+	}
+
+	// Determine the relative time within the kk-th interval 
+	// (i.e., t=0 lies at the beginning of the kk-th interval).
+	double t        =prevtime-(getKRLCTime(lc, kk, nperiods, mjdref));
+	double stepwidth=
+	  getKRLCTime(lc, kk+1, nperiods, mjdref)-
+	  getKRLCTime(lc, kk  , nperiods, mjdref);
+	
+	// Step 2 in the algorithm.
+	double uk=1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
+			  -lc->b[kk]*(stepwidth-t))*avgrate);
+	// Step 3 in the algorithm.
+	if (u<=uk) {
+	  if (fabs(lc->a[kk]*stepwidth)>fabs(lc->b[kk]*1.e-6)) { 
+	    // Instead of checking if a_kk = 0., check, whether its product 
+	    // with the interval length is a very small number in comparison 
+	    // to b_kk. If a_kk * stepwidth is much smaller than b_kk, the 
+	    // rate in the interval can be assumed to be approximately constant.
+	    *nexttime=
+	      getKRLCTime(lc, kk, nperiods, mjdref) +
+	      (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
+			       2.*lc->a[kk]*lc->b[kk]*t - 
+			       2.*lc->a[kk]*log(1.-u)/avgrate)
+	       )/lc->a[kk];
+	    return(0);
+	    
+	  } else { // a_kk == 0
+	    *nexttime=prevtime-log(1.-u)/(lc->b[kk]*avgrate);
+	    return(0);
+	  }
+	  
+	} else {
+	  // Step 4 (u > u_k).
+	  u=(u-uk)/(1-uk);
+	  kk++;
+	  if ((kk>=lc->nentries-1)&&(NULL!=lc->phase)) {
+	    kk=0;
+	    nperiods++;
+	  }
+	  prevtime=getKRLCTime(lc, kk, nperiods, mjdref);
+	}
+      }
+      // END of while (kk < lc->nentries).
+    
+      // The range of the light curve has been exceeded.
+      // So the routine has failed to determine a photon time.
+      return(1);
+
+    } else {
+      // The timing reference does not point to any of the 
+      // above extension types.
       *status=EXIT_FAILURE;
-      SIMPUT_ERROR("photon lists are currently not supported "
-		   "for timing extensions");
+      SIMPUT_ERROR("invalid timing extension");
       return(0);
     }
-
-    // Get the light curve.
-    SimputKRLC* lc=getSimputKRLC(cat, src, timeref, prevtime, mjdref, status);
-    CHECK_STATUS_RET(*status, 0);
-
-    // Determine the photon time according to the light curve.
-    // The light curve is a piece-wise constant function, so the
-    // general algorithm proposed by Klein & Roberts has to 
-    // be applied.
-    // Step 1 in the algorithm.
-    double u=getRndNum(status);
-    CHECK_STATUS_RET(*status, 0);
-
-    // Determine the respective index kk of the light curve.
-    long long nperiods=0;
-    long kk=getKRLCBin(lc, prevtime, mjdref, &nperiods, status);
-    CHECK_STATUS_RET(*status, 0);
-
-    while ((kk<lc->nentries-1)||(lc->src_id>0)) {
-
-      // If the end of the light curve is reached, check if it has
-      // been produced from a PSD. In that case one can create new one.
-      if ((kk>=lc->nentries-1)&&(lc->src_id>0)) {
-	lc=getSimputKRLC(cat, src, timeref, prevtime, mjdref, status);
-	CHECK_STATUS_RET(*status, 0);
-	kk=getKRLCBin(lc, prevtime, mjdref, &nperiods, status);
-	CHECK_STATUS_RET(*status, 0);
-      }
-
-      // Determine the relative time within the kk-th interval 
-      // (i.e., t=0 lies at the beginning of the kk-th interval).
-      double t        =prevtime-(getKRLCTime(lc, kk, nperiods, mjdref));
-      double stepwidth=
-	getKRLCTime(lc, kk+1, nperiods, mjdref)-
-	getKRLCTime(lc, kk  , nperiods, mjdref);
-
-      // Step 2 in the algorithm.
-      double uk=1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
-			-lc->b[kk]*(stepwidth-t))*avgrate);
-      // Step 3 in the algorithm.
-      if (u<=uk) {
-	if (fabs(lc->a[kk]*stepwidth)>fabs(lc->b[kk]*1.e-6)) { 
-	  // Instead of checking if a_kk = 0., check, whether its product 
-	  // with the interval length is a very small number in comparison 
-	  // to b_kk. If a_kk * stepwidth is much smaller than b_kk, the 
-	  // rate in the interval can be assumed to be approximately constant.
-	  *nexttime=
-	    getKRLCTime(lc, kk, nperiods, mjdref) +
-	    (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
-			     2.*lc->a[kk]*lc->b[kk]*t - 
-			     2.*lc->a[kk]*log(1.-u)/avgrate)
-	     )/lc->a[kk];
-	  return(0);
-	  
-	} else { // a_kk == 0
-	  *nexttime=prevtime-log(1.-u)/(lc->b[kk]*avgrate);
-	  return(0);
-	}
-
-      } else {
-	// Step 4 (u > u_k).
-	u=(u-uk)/(1-uk);
-	kk++;
-	if ((kk>=lc->nentries-1)&&(NULL!=lc->phase)) {
-	  kk=0;
-	  nperiods++;
-	}
-	prevtime=getKRLCTime(lc, kk, nperiods, mjdref);
-      }
-    }
-    // END of while (kk < lc->nentries).
-    
-    // The range of the light curve has been exceeded.
-    // So the routine has failed to determine a photon time.
-    return(1);
   }
 }
 
@@ -1648,68 +1724,103 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 			   SimputPhList* const phl, 
 			   float* const energy, 
 			   double* const ra, 
-			   double* const dec, 
+			   double* const dec,
 			   int* const status)
 {
-  // Determine the maximum value of the instrument ARF.
-  if (0.==phl->refarea) {
-    long kk;
-    for (kk=0; kk<cat->arf->NumberEnergyBins; kk++) {
-      if (cat->arf->EffArea[kk]>phl->refarea) {
-	phl->refarea=cat->arf->EffArea[kk];
-      }
-    }
-  }
-  
-  while(1) {
-    // Determine a random photon within the list.
-    long ii=(long)(getRndNum(status)*phl->nphs);
-    CHECK_STATUS_VOID(*status);
-
-    // Read the photon energy.
+  // Check if we have to read from a particular row in the FITS file,
+  // or if we need to return a randomly selected photon.
+  if (phl->currrow>0) {
+    // Read a photon from a particular row.
     int anynul=0;
-    fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1, 
+    fits_read_col(phl->fptr, TFLOAT, phl->cenergy, phl->currrow, 1, 1, 
 		  NULL, energy, &anynul, status);
     if (EXIT_SUCCESS!=*status) {
-      SIMPUT_ERROR("failed reading photon energy from photon list");
+      SIMPUT_ERROR("failed reading energy from photon list");
       return;
     }
     *energy *=phl->fenergy;
+      
+    fits_read_col(phl->fptr, TDOUBLE, phl->cra, phl->currrow, 1, 1, 
+		  NULL, ra, &anynul, status);      
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading right ascension from photon list");
+      return;
+    }
+    *ra *=phl->fra;
+	
+    fits_read_col(phl->fptr, TDOUBLE, phl->cdec, phl->currrow, 1, 1, 
+		  NULL, dec, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading declination from photon list");
+      return;
+    }
+    *dec *=phl->fdec;
 
-    // Determine the ARF value for the photon energy.
-    long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
-    while (upper>lower) {
-      mid=(lower+upper)/2;
-      if (cat->arf->HighEnergy[mid]<*energy) {
-	lower=mid+1;
-      } else {
-	upper=mid;
+    return;
+
+  } else {
+    // Randomly select a photon from the file.
+
+    // Determine the maximum value of the instrument ARF.
+    if (0.==phl->refarea) {
+      long kk;
+      for (kk=0; kk<cat->arf->NumberEnergyBins; kk++) {
+	if (cat->arf->EffArea[kk]>phl->refarea) {
+	  phl->refarea=cat->arf->EffArea[kk];
+	}
       }
     }
+  
+    while(1) {
+      // Determine a random photon within the list.
+      long ii=(long)(getRndNum(status)*phl->nphs);
+      CHECK_STATUS_VOID(*status);
+      
+      // Read the photon energy.
+      int anynul=0;
+      fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1, 
+		    NULL, energy, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed reading energy from photon list");
+	return;
+      }
+      *energy *=phl->fenergy;
+      
+      // Determine the ARF value for the photon energy.
+      long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
+      while (upper>lower) {
+	mid=(lower+upper)/2;
+	if (cat->arf->HighEnergy[mid]<*energy) {
+	  lower=mid+1;
+	} else {
+	  upper=mid;
+	}
+      }
     
-    // Randomly determine according to the effective area
-    // of the instrument, whether this photon is seen or not.
-    double r=getRndNum(status);
-    CHECK_STATUS_VOID(*status);
-    if (r<cat->arf->EffArea[lower]/phl->refarea) {
-      // Read the position of the photon.
-      fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1, 
-		    NULL, ra, &anynul, status);      
-      if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed reading right ascension from photon list");
+      // Randomly determine according to the effective area
+      // of the instrument, whether this photon is seen or not.
+      double r=getRndNum(status);
+      CHECK_STATUS_VOID(*status);
+      if (r<cat->arf->EffArea[lower]/phl->refarea) {
+	// Read the position of the photon.
+	fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1, 
+		      NULL, ra, &anynul, status);      
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading right ascension from photon list");
+	  return;
+	}
+	*ra *=phl->fra;
+	
+	fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
+		      NULL, dec, &anynul, status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading declination from photon list");
+	  return;
+	}
+	*dec *=phl->fdec;
+	
 	return;
       }
-      *ra *=phl->fra;
-
-      fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
-		    NULL, dec, &anynul, status);
-      if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed reading declination from photon list");
-	return;
-      }
-      *dec *=phl->fdec;
-
-      return;
     }
   }
 }

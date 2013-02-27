@@ -2876,6 +2876,16 @@ SimputPhList* openSimputPhList(const char* const filename,
     return(phl);
   }
 
+  // Determine the index of the optional TIME column.
+  int opt_status=EXIT_SUCCESS;
+  fits_write_errmark();
+  fits_get_colnum(phl->fptr, CASEINSEN, "TIME", &phl->ctime, &opt_status);
+  if (EXIT_SUCCESS!=opt_status) {
+    phl->ctime=0;
+    opt_status=EXIT_SUCCESS;
+  }
+  fits_clear_errmark();
+
   // Determine the unit conversion factors.
   char ura[SIMPUT_MAXSTR];
   read_unit(phl->fptr, phl->cra, ura, status);
@@ -2905,6 +2915,68 @@ SimputPhList* openSimputPhList(const char* const filename,
     SIMPUT_ERROR("unknown units of 'ENERGY' column");
     *status=EXIT_FAILURE;
     return(phl);
+  }
+
+  if (phl->ctime>0) {
+    char utime[SIMPUT_MAXSTR];
+    read_unit(phl->fptr, phl->ctime, utime, status);
+    CHECK_STATUS_RET(*status, phl);
+    phl->ftime=unit_conversion_s(utime);
+    if (0.==phl->ftime) {
+      SIMPUT_ERROR("unknown units of 'TIME' column");
+      *status=EXIT_FAILURE;
+      return(phl);
+    }
+  }
+
+  // Determine timing keywords if TIME column is present.
+  if (phl->ctime>0) {
+    char comment[SIMPUT_MAXSTR];
+    fits_read_key(phl->fptr, TDOUBLE, "MJDREF", &phl->mjdref, comment, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not read FITS keyword 'MJDREF' from photon list '%s'", 
+	      filename);
+      SIMPUT_ERROR(msg);
+      return(phl);
+    }
+
+    fits_read_key(phl->fptr, TDOUBLE, "TIMEZERO", &phl->timezero, comment, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not read FITS keyword 'TIMEZERO' from photon list '%s'", 
+	      filename);
+      SIMPUT_ERROR(msg);
+      return(phl);
+    }
+
+    fits_read_key(phl->fptr, TDOUBLE, "TSTART", &phl->tstart, comment, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not read FITS keyword 'TSTART' from photon list '%s'", 
+	      filename);
+      SIMPUT_ERROR(msg);
+      return(phl);
+    }
+
+    fits_read_key(phl->fptr, TDOUBLE, "TSTOP", &phl->tstop, comment, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not read FITS keyword 'TSTOP' from photon list '%s'", 
+	      filename);
+      SIMPUT_ERROR(msg);
+      return(phl);
+    }
+
+    // Check if the covered interval is > 0.
+    if (phl->tstop<=phl->tstart) {
+      *status=EXIT_FAILURE;
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "TSTART (%e) >= TSTOP (%e) in photon list '%s'", 
+	      phl->tstart, phl->tstop, filename);
+      SIMPUT_ERROR(msg);
+      return(phl);
+    }
   }
 
   // Store the file reference to the photon lists for later use.
