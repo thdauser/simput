@@ -1555,6 +1555,8 @@ int getSimputPhotonTime(SimputCtlg* const cat,
     // distributed.
     *nexttime=prevtime+rndexp((double)1./avgrate, status);
     CHECK_STATUS_RET(*status, 0);
+
+    // Successfully produced a photon.
     return(0);
 
   } else {
@@ -1586,29 +1588,53 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	assert(phl->nphs>0);
 	phl->accrate=avgrate *(phl->tstop-phl->tstart)/phl->nphs;
 	assert(phl->accrate>0.);
+
+	// Check if the rate greater than 1. In that case the rate of
+	// photons in the list is too low to fulfill the requested
+	// source flux.
+	if (phl->accrate>1.0) {
+	  *status=EXIT_FAILURE;
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "required photon rate (%e) higher than provided "
+		  "by photon list (%e)", 
+		  avgrate, phl->nphs/(phl->tstop-phl->tstart));
+	  SIMPUT_ERROR(msg);
+	  return(0);
+	}
       }
 
       // Verify that the time column is present.
       if (0==phl->ctime) {
+	*status=EXIT_FAILURE;
 	SIMPUT_ERROR("photon list does not contain a time column");
 	return(0);
       }
 
       // Select a photon.
       double rand;
+      double newtime;
       do {
+	// Move one row further.
 	phl->currrow++;
+
+	// Check if the end of the list has been reached.
+	if (phl->currrow>phl->nphs) {
+	  // No proper photon could be selected.
+	  return(1);
+	}
+
+	// Read the time from the file.
 	int anynul=0;
 	fits_read_col(phl->fptr, TDOUBLE, phl->ctime, phl->currrow, 1, 1, 
-		      NULL, nexttime, &anynul, status);
+		      NULL, &newtime, &anynul, status);
 	if (EXIT_SUCCESS!=*status) {
 	  SIMPUT_ERROR("failed reading time from photon list");
 	  return(0);
 	}
-	*nexttime *=phl->ftime;
+	newtime*=phl->ftime;
 	
 	// Check if the time lies within the requested interval.
-	if (*nexttime+phl->timezero+(phl->mjdref-mjdref)*24.*3600.<prevtime) {
+	if (newtime+phl->timezero+(phl->mjdref-mjdref)*24.*3600.<prevtime) {
 	  continue;
 	}
 
@@ -1618,7 +1644,9 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
       } while (rand>=phl->accrate);
 
-      return(1);
+      // Successfully produced a photon.
+      *nexttime=newtime;
+      return(0);
 
     } else if ((EXTTYPE_LC==timetype) || (EXTTYPE_PSD==timetype)) {
       // The timing reference points either to a light curve
