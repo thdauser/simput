@@ -1118,7 +1118,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
       break;
     }
 
-    // Determine the number of columns in the table.
+    // Determine the number of rows in the table.
     long nrows;
     fits_get_num_rows(fptr, &nrows, status);
     if (EXIT_SUCCESS!=*status) {
@@ -1199,7 +1199,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     // If the columns are of variable-length data type, the returned repeat
     // value is 1. In that case we have to use another routine to get the
     // number of elements in a particular row.
-    if (1==nenergy) {
+    if ((1==nenergy)&&(1==nflux)) {
       long offset;
       fits_read_descript(fptr, cenergy, 1, &nenergy, &offset, status);
       if (EXIT_SUCCESS!=*status) {
