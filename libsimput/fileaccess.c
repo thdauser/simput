@@ -1632,16 +1632,6 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     opt_status=EXIT_SUCCESS;
     fits_clear_errmark();
 
-    // Print warnings.
-    if (cspectrum>0) {
-      SIMPUT_WARNING("the use of spectral variation via light curves "
-		     "is not fully implemented");
-    }
-    if (cspectrum>0) {
-      SIMPUT_WARNING("the use of spatial variation via light curves "
-		     "is not fully implemented");
-    }
-
     // Check, whether there is either a TIME or a PHASE column (but not both).
     if ((0==ctime)&&(0==cphase)) {
       SIMPUT_ERROR("table extension contains neither 'TIME' nor 'PHASE' column");

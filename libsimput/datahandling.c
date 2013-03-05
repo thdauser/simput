@@ -549,7 +549,7 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
       long bin=getLCBin(lc, prevtime, mjdref, &nperiods, status);
       CHECK_STATUS_VOID(*status);
 
-      // Check if this is a valid spectrum is defined.
+      // Check if a spectrum is defined in this light curve bin.
       if ((0==strcmp(lc->spectrum[bin], "NULL")) || 
 	  (0==strcmp(lc->spectrum[bin], " ")) ||
 	  (0==strlen(lc->spectrum[bin]))) {
@@ -584,7 +584,7 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
   // determine the spectrum reference directly from the source 
   // description.
   if (NULL!=src->spectrum) {   
-    // Check if this is a valid spectrum reference.
+    // Check if this is a valid HDU reference.
     if ((0==strcmp(src->spectrum, "NULL")) || 
 	(0==strcmp(src->spectrum, " ")) ||
 	(0==strlen(src->spectrum))) {
@@ -642,17 +642,19 @@ static void getSrcImagRef(SimputCtlg* const cat,
       long bin=getLCBin(lc, prevtime, mjdref, &nperiods, status);
       CHECK_STATUS_VOID(*status);
 
-      // Copy the reference to the image.
-      strcpy(imagref, lc->image[bin]);
-      
       // Check if an image is defined in this light curve bin.
-      if (0==strlen(imagref)) {
+      if ((0==strcmp(lc->image[bin], "NULL")) ||
+	  (0==strcmp(lc->image[bin], " ")) ||
+	  (0==strlen(lc->image[bin]))) {
 	SIMPUT_ERROR("in the current implementation light curves "
 		     "must not contain blank entries in a given "
 		     "image column");
 	*status=EXIT_FAILURE;
 	return;
       }
+
+      // Copy the reference to the image.
+      strcpy(imagref, lc->image[bin]);
 
       // Determine the relative location with respect to the 
       // location of the light curve.
@@ -666,41 +668,38 @@ static void getSrcImagRef(SimputCtlg* const cat,
 	strcpy(lastslash, imagref);
 	strcpy(imagref, timeref);
       }
+
+      return;
     }
   }
 
   // If no light curve extension with an image column is given, 
   // determine the spectrum reference directly from the source 
   // description.
-  if (0==strlen(imagref)) {
-    if (NULL==src->image) {
-      strcpy(imagref, "");
-    } else {
-      strcpy(imagref, src->image);
+  if (NULL!=src->image) {
+    // Check if this is a valid HDU reference.
+    if ((0==strcmp(src->image, "NULL")) ||
+	(0==strcmp(src->image, " ")) ||
+	(0==strlen(src->image))) {
+      return;
     }
-  }
+    
+    strcpy(imagref, src->image);
 
-  // Check if this is a valid image reference.
-  if ((0==strcmp(src->image, "NULL")) || (0==strcmp(src->image, " "))) {
-    strcpy(imagref, "");
-  }
-  if (0==strlen(imagref)) {
-    return;
-  }
-
-  // Set path and file name if missing.
-  if ('['==imagref[0]) {
-    char buffer[SIMPUT_MAXSTR];
-    strcpy(buffer, cat->filepath);
-    strcat(buffer, cat->filename);
-    strcat(buffer, imagref);
-    strcpy(imagref, buffer);
-  } else {
-    if ('/'!=imagref[0]) {
+    // Set path and file name if missing.
+    if ('['==imagref[0]) {
       char buffer[SIMPUT_MAXSTR];
       strcpy(buffer, cat->filepath);
+      strcat(buffer, cat->filename);
       strcat(buffer, imagref);
       strcpy(imagref, buffer);
+    } else {
+      if ('/'!=imagref[0]) {
+	char buffer[SIMPUT_MAXSTR];
+	strcpy(buffer, cat->filepath);
+	strcat(buffer, imagref);
+	strcpy(imagref, buffer);
+      }
     }
   }
 }
