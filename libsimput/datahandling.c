@@ -178,7 +178,7 @@ static SimputPSD* getSimputPSD(SimputCtlg* const cat,
 			       char* const filename,
 			       int* const status)
 {
-  const int maxpsds=200;
+  const long maxpsds=100;
 
   // Check if the source catalog contains a PSD buffer.
   if (NULL==cat->psdbuff) {
@@ -314,7 +314,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
   SimputLC* lc=NULL;
 
   // Check if the SimputLC is contained in the internal cache.
-  const int maxlcs=1000;
+  const long maxlcs=1;
 
   // Check if the source catalog contains a light curve buffer.
   if (NULL==cat->lcbuff) {
@@ -918,7 +918,7 @@ static SimputSpec* getSimputSpec(SimputCtlg* const cat,
 				 int* const status)
 {
   // Maximum number of spectra in the cache.
-  const int maxspec=30000; 
+  const long maxspec=30000; 
 
   // Check if the source catalog contains a spectrum buffer.
   if (NULL==cat->specbuff) {
@@ -1090,7 +1090,7 @@ static SimputKRLC* getSimputKRLC(SimputCtlg* const cat,
 {
   // Maximum number of Klein & Roberts light curves in the
   // internal storage.
-  const int maxkrlcs=10; 
+  const long maxkrlcs=1000; 
 
   // Check if the source catalog contains a Klein & Robert 
   // light curve buffer.
@@ -1247,7 +1247,7 @@ static SimputImg* getSimputImg(SimputCtlg* const cat,
 			       char* const filename,
 			       int* const status)
 {
-  const int maximgs=200;
+  const long maximgs=200;
 
   // Check if the source catalog contains an image buffer.
   if (NULL==cat->imgbuff) {
@@ -1337,7 +1337,7 @@ static SimputPhList* getSimputPhList(SimputCtlg* const cat,
 				     char* const filename,
 				     int* const status)
 {
-  const int maxphls=200;
+  const long maxphls=100;
 
   // Check if the source catalog contains a photon list buffer.
   if (NULL==cat->phlistbuff) {
