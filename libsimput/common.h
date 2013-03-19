@@ -55,7 +55,7 @@
 
 
 /** Maximum number of mission-independet spectra in the cache. */
-#define MAXMIDPSPEC (30000) 
+#define MAXMIDPSPEC (50000) 
 
 
 /////////////////////////////////////////////////////////////////

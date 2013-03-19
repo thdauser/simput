@@ -255,8 +255,8 @@ SimputCtlg* openSimputCtlg(const char* const filename,
 			"SRC_CAT", status);
 	if (EXIT_SUCCESS!=*status) {
 	  char msg[SIMPUT_MAXSTR];
-	  sprintf(msg, "could not create binary table for source catalog in file '%s'", 
-		  filename);
+	  sprintf(msg, "could not create binary table for source catalog "
+		  "in file '%s'", filename);
 	  SIMPUT_ERROR(msg);
 	  break;
 	}
