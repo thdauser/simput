@@ -12,7 +12,7 @@ dist_pfiles_DATA=labnh.par
 # Include README in the distributed package.
 EXTRA_DIST=README
 
-########### LIBRARIES #################
+########### LIBRARIES ################
 
 # Libraries that are installed in the 'lib' directory.
 lib_LTLIBRARIES=liblabnh.la libposstring.la
