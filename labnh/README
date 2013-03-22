@@ -1,0 +1,10 @@
+* set the environment variable LABNH to point at the file labnh.fit in this
+  distribution
+
+* WARNING: The original 21cm data of the LAB survey as downloaded from MPIfR
+  can be found in 
+  lab.fit.gz  lab250hs.fit.gz  labh.fit.gz
+  Note: These files contain WRONG WCS keywords (e.g., the Galactic
+  Center is located at l=180, b=0), do not use them in conjunction
+  with liblabnh or the labnh program
+

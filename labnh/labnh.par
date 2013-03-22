@@ -1,0 +1,8 @@
+coordsys,s,hl,"J2000",,,"Coordinate system [J2000 or gal]"
+ra,s,ql,"00 00 00",,,"RA (J2000.0) [hh mm ss, hh:mm:ss, or dd.dddd]"
+dec,s,ql,"+00 00 00",,,"DEC (J2000.0) [sdd mm ss, sdd:mm:ss, or sdd.dddd]"
+lii,s,ql,"00 00 00",,,"Lii [sdd mm ss or sdd.dddd]"
+bii,s,ql,"+00 00 00",,,"Bii [sdd mm ss or sdd.dddd]"
+sampling,i,hl,1,0,3,"Sampling Region"
+verbosity,i,hl,1,0,3,"Verbosity [1-3]"
+nh,r,hl,0.,,,"N_H [cm^2]"

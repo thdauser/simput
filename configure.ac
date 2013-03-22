@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.39],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.40],[christian.schmid@sternwarte.uni-erlangen.de])
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -19,7 +19,7 @@ LT_INIT #([disable-shared]) #([shared])
 # "-pg" for the compiler and linker to include information for gprof (Profiler)
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # " -O0" for zero optimization
-CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC"
+CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC -Dg77Fortran"
 LDFLAGS="$LDFLAGS -g -W -Wall"
 # FCFLAGS="-O0"
 
@@ -36,12 +36,29 @@ AM_CONDITIONAL([FORTRAN], [test x$fortran = xtrue])
 AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([No math library found!])], [])
 
 #################################### 
+# ncurses and readline (required by ape library)
+AC_SEARCH_LIBS(beep, ncurses, [], [AC_MSG_ERROR([No ncurses library found!])], [])
+AC_SEARCH_LIBS(readline, readline, [], [AC_MSG_ERROR([No readline library found!])], [])
+#################################### 
 # Check for header files:
 AC_HEADER_STDC
 AC_CHECK_HEADERS([limit.h math.h stdio.h stdlib.h stdarg.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
+
+# PIL parameter files have to be installed to the $PFILES directory.
+AC_ARG_VAR([PFILESDIR], [target directory for .par files])
+if test -z "$PFILESDIR"
+then
+	if test -z "$HEADAS"
+	then
+		AC_MSG_ERROR([Environment variable '\$HEADAS' is not set], [])
+	else
+		PFILESDIR="\${HEADAS}/pfiles"
+	fi
+fi
+AC_SUBST([PFILESDIR])
 
 # The following line tells 'configure' to create a header file 'config.h'
 # that is filled with definitions from this script.
@@ -53,10 +70,18 @@ AC_CONFIG_HEADER([config.h])
 # A Makefile that is not listed here will not be created by 'automake'!
 AC_CONFIG_FILES([Makefile
                  extlib/Makefile
+		 extlib/ape/Makefile
+		 extlib/ape/include/Makefile
+		 extlib/ape/include/ape/Makefile
+		 extlib/ape/src/Makefile
+		 extlib/atFunctions/Makefile
+		 extlib/atFunctions/include/Makefile
+		 extlib/atFunctions/src/Makefile
 		 libsimput/Makefile
 		 sample/Makefile
 		 sample/csample/Makefile
-		 sample/fsample/Makefile])
+		 sample/fsample/Makefile
+		 labnh/Makefile])
 		
 AC_CONFIG_SUBDIRS([extlib/cfitsio extlib/wcslib extlib/fftw])
 

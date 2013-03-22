@@ -19,6 +19,7 @@ pull_n_push.sh
 crab
 fsample
 csample
+labnh
 
 # Autotool stuff:
 aclocal.m4
