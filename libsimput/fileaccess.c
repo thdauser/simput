@@ -1073,6 +1073,8 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 {
   fitsfile* fptr=NULL;
   char* name[1]={NULL};
+  SimputMIdpSpec** sb=NULL; // Buffer for reading in the spectra.
+  long nrows;
 
   do { // Error handling loop.
 
@@ -1081,30 +1083,20 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     int exttype=getExtType(cat, filename, status);
     CHECK_STATUS_BREAK(*status);
 
+    // Only mission-independent spectra can be pre-loaded into 
+    // the cache.
     if (EXTTYPE_MIDPSPEC!=exttype) {
-      // Only mission-independent spectra can be pre-loaded into 
-      // the cache.
       break;
     }
 
-    // Check if the source catalog contains a spectrum buffer.
-    if (NULL==cat->midpspecbuff) {
-      cat->midpspecbuff=newSimputMIdpSpecBuffer(status);
-      CHECK_STATUS_BREAK(*status);
-    }
-
-    // Convert the void* pointer to the spectrum buffer into the right
-    // format.
-    struct SimputMIdpSpecBuffer* sb=
-      (struct SimputMIdpSpecBuffer*)cat->midpspecbuff;
-
-    // In case there are no spectra available at all, allocate 
-    // memory for the array (storage for spectra).
-    if (NULL==sb->spectra) {
-      sb->spectra=
-	(SimputMIdpSpec**)malloc(MAXMIDPSPEC*sizeof(SimputMIdpSpec*));
-      CHECK_NULL_BREAK(sb->spectra, *status, 
-		       "memory allocation for spectra failed");
+    // This routine can only be used if the catalog internal buffer 
+    // is empty.
+    if (NULL!=cat->midpspecbuff) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "for pre-loading all spectra from '%s' "
+	      "the buffer must be empty", filename);
+      SIMPUT_ERROR(msg);
+      break;
     }
 
     // Open the specified FITS file. The filename must uniquely identify
@@ -1119,21 +1111,18 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     }
 
     // Determine the number of rows in the table.
-    long nrows;
     fits_get_num_rows(fptr, &nrows, status);
     if (EXIT_SUCCESS!=*status) {
-      SIMPUT_ERROR("could not determine number of entries in spectrum extension");
+      SIMPUT_ERROR("could not determine number of spectra");
       break;
     }
 
-    // Check if all spectra can be stored in the cache.
-    if (sb->nspectra+nrows>MAXMIDPSPEC) {
-      *status=EXIT_FAILURE;
-      SIMPUT_ERROR("cache too small to store all spectra");
-      break;
-    }
+    // Allocate memory for buffering the spectra
+    sb=(SimputMIdpSpec**)malloc(nrows*sizeof(SimputMIdpSpec*));
+    CHECK_NULL_BREAK(sb, *status, 
+		     "memory allocation for buffer of spectra failed");
 
-    // Get the column names.
+    // Determine the column numbers.
     int cenergy=0, cflux=0, cname=0;
     // Required columns:
     fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
@@ -1190,7 +1179,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
       break;
     }
 
-    fits_get_coltype(fptr, cflux,   &typecode, &nflux,   &width, status);
+    fits_get_coltype(fptr, cflux, &typecode, &nflux, &width, status);
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("could not determine type of column 'FLUX'");
       break;
@@ -1207,7 +1196,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 	break;
       }
 
-      fits_read_descript(fptr, cflux  , 1, &nflux  , &offset, status);
+      fits_read_descript(fptr, cflux, 1, &nflux  , &offset, status);
       if (EXIT_SUCCESS!=*status) {
 	SIMPUT_ERROR("could not determine type of column 'FLUX'");
 	break;
@@ -1297,16 +1286,25 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 		       "memory allocation for file reference failed");
       sprintf(spec->fileref, "%s[NAME=='%s']", filename, name[0]);
 
-      // Add the spectrum to the cache.
-      sb->spectra[sb->nspectra++]=spec;
+      // Add the spectrum to the buffer.
+      sb[jj]=spec;
     }
     CHECK_STATUS_BREAK(*status);
     // END of reading all spectra.
+
+    // Insert the spectra into the binary tree buffer of the 
+    // SimputCtlg data structure.
+    buildSimputMIdpSpecBuffer(&(cat->midpspecbuff), sb, nrows, 0, status);
+    CHECK_STATUS_BREAK(*status);
 
   } while(0); // END of error handling loop.
   
   // Release allocated memory.
   if (NULL!=name[0]) free(name[0]);
+  if (NULL!=sb) free(sb);
+  // Note: Do NOT release the memory of the individual spectra contained
+  // in the buffer! They are now part of the catalog-internal binary tree
+  // buffer.
 
   // Close the file.
   if (NULL!=fptr) fits_close_file(fptr, status);
@@ -2985,66 +2983,42 @@ int getExtType(SimputCtlg* const cat,
 	       const char* const filename, 
 	       int* const status)
 {
-  int type=EXTTYPE_NONE;
-
   // Check if there is any reference at all.
   if (0==strlen(filename)) {
     return(EXTTYPE_NONE);
   }
 
+  // Cut the filename after the first occurence of a ']'.
+  // This is sufficient to specify the extension.
+  // If we did not apply this cut, the extension type for
+  // each individual entry in a spectrum HDU would require
+  // an opening of the file. Therefore this routine would be
+  // much slower.
+  char fileref[SIMPUT_MAXSTR];
+  strcpy(fileref, filename);
+  char* firstbracket=strchr(fileref, ']');
+  if (NULL!=firstbracket) {
+    firstbracket[1]='\0';
+  }
+
   // Keep an internal cache of extension types in order to avoid 
   // continuous re-opening.
 
-  // Maximum number of extensions in the cache.
-  const int maxhdus=100000; 
-
-  // Check if the source catalog contains an extension type buffer.
-  if (NULL==cat->extbuff) {
-    cat->extbuff=newSimputExttypeBuffer(status);
-    CHECK_STATUS_RET(*status, type);
-  }
-
-  // Convert the void* pointer to the extension type buffer 
-  // into the right format.
-  struct SimputExttypeBuffer* eb=
-    (struct SimputExttypeBuffer*)cat->extbuff;
-
-  // In case there are no extensions available at all, allocate 
-  // memory for the array (storage for extension types).
-  if (NULL==eb->hdus) {
-    eb->hdus=(int*)malloc(maxhdus*sizeof(int));
-    CHECK_NULL_RET(eb->hdus, *status, 
-		   "memory allocation for extension types failed", type);
-    eb->filenames=(char**)malloc(maxhdus*sizeof(char*));
-    CHECK_NULL_RET(eb->filenames, *status, 
-		   "memory allocation for extension types failed", type);
-    long ii;
-    for (ii=0; ii<maxhdus; ii++) {
-      eb->hdus[ii]=EXTTYPE_NONE;
-      eb->filenames[ii]=NULL;
-    }
-  }
-
   // Search if the required extension is available in the storage.
-  long ii;
-  for (ii=0; ii<eb->nhdus; ii++) {
-    // Check if the extension is equivalent to the required one.
-    if (0==strcmp(eb->filenames[ii], filename)) {
-      // If yes, return the extension type.
-      return(eb->hdus[ii]);
-    }
+  int type=searchSimputExttypeBuffer(cat->extbuff, fileref);
+  if (EXTTYPE_NONE!=type) {
+    return(type);
   }
-
 
   // The extension is not contained in the cache. Therefore 
-  // we have to open it an check the header keywords.
+  // we have to open it and check the header keywords.
   fitsfile* fptr=NULL;
-  fits_open_file(&fptr, filename, READONLY, status);
+  fits_open_file(&fptr, fileref, READONLY, status);
   if (EXIT_SUCCESS!=*status) {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "could not open file '%s'", filename);
+    sprintf(msg, "could not open file '%s'", fileref);
     SIMPUT_ERROR(msg);
-    return(type);
+    return(EXTTYPE_NONE);
   }
 
   // Read the HDUCLAS1 and HDUCLAS2 header keywords.
@@ -3054,7 +3028,7 @@ int getExtType(SimputCtlg* const cat,
   fits_read_key(fptr, TSTRING, "HDUCLAS1", &hduclas1, comment, status);
   if (EXIT_SUCCESS!=*status) {
     char msg[SIMPUT_MAXSTR];
-    sprintf(msg, "could not read FITS keyword 'HDUCLAS1' from file '%s'", filename);
+    sprintf(msg, "could not read FITS keyword 'HDUCLAS1' from file '%s'", fileref);
     SIMPUT_ERROR(msg);
   }
   // (Don't do an error checking here! Otherwise the file
@@ -3073,7 +3047,7 @@ int getExtType(SimputCtlg* const cat,
   }
   
   fits_close_file(fptr, status);
-  CHECK_STATUS_RET(*status, type);
+  CHECK_STATUS_RET(*status, EXTTYPE_NONE);
 
 
   // Check for the different extension types.
@@ -3128,29 +3102,12 @@ int getExtType(SimputCtlg* const cat,
     sprintf(msg, "extension type '%s' (HDUCLAS1) not supported", hduclas1);
     SIMPUT_ERROR(msg);
     *status=EXIT_FAILURE;
-    return(type);
+    return(EXTTYPE_NONE);
   }
 
   // Store the extension type in the internal cache.
-  // Determine the storage position.
-  if (eb->nhdus<maxhdus) {
-    eb->chdu=eb->nhdus;
-    eb->nhdus++;
-  } else {
-    eb->chdu++;
-    if (eb->chdu>=maxhdus) {
-      eb->chdu=0;
-    }
-    free(eb->filenames[eb->chdu]);
-  }
-  eb->hdus[eb->chdu]=type;
-  eb->filenames[eb->chdu]=
-    (char*)malloc((strlen(filename)+1)*sizeof(char));
-  CHECK_NULL_RET(eb->filenames[eb->chdu], *status, 
-		 "memory allocation for file reference failed", 
-		 eb->hdus[eb->chdu]);
-  strcpy(eb->filenames[eb->chdu], filename);
-
+  insertSimputExttypeBuffer(&(cat->extbuff), fileref, type, status);
+  CHECK_STATUS_RET(*status, EXTTYPE_NONE);
 
   return(type);
 }

@@ -260,10 +260,10 @@ struct SimputExttypeBuffer* newSimputExttypeBuffer(int* const status)
   CHECK_NULL_RET(extbuff, *status, 
 		 "memory allocation for SimputExttypeBuffer failed", extbuff);
     
-  extbuff->nhdus=0;
-  extbuff->chdu =0;
-  extbuff->hdus =NULL;
-  extbuff->filenames=NULL;
+  extbuff->type   =EXTTYPE_NONE;
+  extbuff->fileref=NULL;
+  extbuff->left   =NULL;
+  extbuff->right  =NULL;
 
   return(extbuff);
 }
@@ -272,20 +272,65 @@ struct SimputExttypeBuffer* newSimputExttypeBuffer(int* const status)
 void freeSimputExttypeBuffer(struct SimputExttypeBuffer** eb)
 {
   if (NULL!=*eb) {
-    if (NULL!=(*eb)->hdus) {
-      free((*eb)->hdus);
+    if (NULL!=(*eb)->fileref) {
+      free((*eb)->fileref);
     }
-    if (NULL!=(*eb)->filenames) {
-      long ii;
-      for (ii=0; ii<(*eb)->nhdus; ii++) {
-	if (NULL!=(*eb)->filenames[ii]) {
-	  free((*eb)->filenames[ii]);
-	}
-      }
-      free((*eb)->filenames);
+    if (NULL!=(*eb)->left) {
+      freeSimputExttypeBuffer(&((*eb)->left));
+    }
+    if (NULL!=(*eb)->right) {
+      freeSimputExttypeBuffer(&((*eb)->right));
     }
     free(*eb);
     *eb=NULL;
+  }
+}
+
+
+int searchSimputExttypeBuffer(void* buffer, const char* const filename)
+{
+  struct SimputExttypeBuffer* eb=(struct SimputExttypeBuffer*)buffer;
+
+  // Check if this is a leaf.
+  if (NULL==eb) {
+    return(EXTTYPE_NONE);
+  }
+  
+  // Compare with the current type.
+  int cmp=strcmp(filename, eb->fileref);
+  if (0==cmp) {
+    return(eb->type);
+  } else if (cmp<0) {
+    return(searchSimputExttypeBuffer(eb->left, filename));
+  } else {
+    return(searchSimputExttypeBuffer(eb->right, filename));
+  }
+}
+
+
+void insertSimputExttypeBuffer(void** buffer,
+			       const char* const filename,
+			       const int type,
+			       int* const status)
+{
+  struct SimputExttypeBuffer** eb=(struct SimputExttypeBuffer**)buffer;
+
+  // Check if this is a leaf.
+  if (NULL==*eb) {
+    // Insert the extension type here.
+    *eb=newSimputExttypeBuffer(status);
+    CHECK_STATUS_VOID(*status);
+    (*eb)->fileref=(char*)malloc((strlen(filename)+1)*sizeof(char));
+    CHECK_NULL_VOID((*eb)->fileref, *status, 
+		    "memory allocation for file reference failed");
+    strcpy((*eb)->fileref, filename);
+    (*eb)->type=type;
+  } else if (strcmp(filename, (*eb)->fileref) < 0){
+    insertSimputExttypeBuffer((void**)&((*eb)->left), filename, type, status);
+    CHECK_STATUS_VOID(*status);
+  } else {
+    insertSimputExttypeBuffer((void**)&((*eb)->right), filename, type, status);
+    CHECK_STATUS_VOID(*status);
   }
 }
 
@@ -329,38 +374,6 @@ void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
 }
 
 
-struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status)
-{
-  struct SimputMIdpSpecBuffer *specbuff= 
-    (struct SimputMIdpSpecBuffer*)malloc(sizeof(struct SimputMIdpSpecBuffer));
-
-  CHECK_NULL_RET(specbuff, *status, 
-		 "memory allocation for SimputMIdpSpecBuffer failed", specbuff);
-    
-  specbuff->nspectra  =0;
-  specbuff->cspectrum =0;
-  specbuff->spectra   =NULL;
-
-  return(specbuff);
-}
-
-
-void freeSimputMIdpSpecBuffer(struct SimputMIdpSpecBuffer** sb)
-{
-  if (NULL!=*sb) {
-    if (NULL!=(*sb)->spectra) {
-      long ii;
-      for (ii=0; ii<(*sb)->nspectra; ii++) {
-	freeSimputMIdpSpec(&((*sb)->spectra[ii]));
-      }
-      free((*sb)->spectra);
-    }
-    free(*sb);
-    *sb=NULL;
-  }
-}
-
-
 void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  const long row,
 			  float* const energy, 
@@ -375,6 +388,166 @@ void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 
   *energy=spec->energy[row];
   *pflux =spec->pflux[row];
+}
+
+
+struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status)
+{
+  struct SimputMIdpSpecBuffer *specbuff=
+    (struct SimputMIdpSpecBuffer*)malloc(sizeof(struct SimputMIdpSpecBuffer));
+
+  CHECK_NULL_RET(specbuff, *status, 
+		 "memory allocation for SimputMIdpSpecBuffer failed", specbuff);
+    
+  specbuff->spectrum=NULL;
+  specbuff->left    =NULL;
+  specbuff->right   =NULL;
+
+  return(specbuff);
+}
+
+
+void freeSimputMIdpSpecBuffer(struct SimputMIdpSpecBuffer** sb)
+{
+  if (NULL!=*sb) {
+    if (NULL!=(*sb)->spectrum) {
+      freeSimputMIdpSpec(&((*sb)->spectrum));
+    }
+    if (NULL!=(*sb)->left) {
+      freeSimputMIdpSpecBuffer(&((*sb)->left));
+    }
+    if (NULL!=(*sb)->right) {
+      freeSimputMIdpSpecBuffer(&((*sb)->right));
+    }
+    free(*sb);
+    *sb=NULL;
+  }
+}
+
+
+SimputMIdpSpec* searchSimputMIdpSpecBuffer(void* buffer, 
+					   const char* const filename)
+{
+  struct SimputMIdpSpecBuffer* sb=(struct SimputMIdpSpecBuffer*)buffer;
+
+  // Check if this is a leaf.
+  if (NULL==sb) {
+    return(NULL);
+  }
+  
+  // Compare with the current spectrum.
+  int cmp=strcmp(filename, sb->spectrum->fileref);
+  if (0==cmp) {
+    return(sb->spectrum);
+  } else if (cmp<0) {
+    return(searchSimputMIdpSpecBuffer(sb->left, filename));
+  } else {
+    return(searchSimputMIdpSpecBuffer(sb->right, filename));
+  }
+}
+
+
+void insertSimputMIdpSpecBuffer(void** buffer,
+				SimputMIdpSpec* const spec,
+				int* const status)
+{
+  struct SimputMIdpSpecBuffer** sb=(struct SimputMIdpSpecBuffer**)buffer;
+
+  // Check if this is a leaf.
+  if (NULL==*sb) {
+    *sb=newSimputMIdpSpecBuffer(status);
+    CHECK_STATUS_VOID(*status);
+    (*sb)->spectrum=spec;
+  } else if (strcmp(spec->fileref, (*sb)->spectrum->fileref) < 0){
+    insertSimputMIdpSpecBuffer((void**)&((*sb)->left), spec, status);
+    CHECK_STATUS_VOID(*status);
+  } else {
+    insertSimputMIdpSpecBuffer((void**)&((*sb)->right), spec, status);
+    CHECK_STATUS_VOID(*status);
+  }
+}
+
+
+static long MIdpSpecPartition(SimputMIdpSpec** const spectra, 
+			      const long left, const long right, 
+			      const long pivotIndex)
+{
+  // Move pivot to end.
+  SimputMIdpSpec* buffer;
+  buffer=spectra[pivotIndex];
+  spectra[pivotIndex]=spectra[right];
+  spectra[right]=buffer;
+
+  long storeIndex=left;
+  long ii;
+  for (ii=left; ii<right; ii++) { // left ≤ i < right  
+    if (strcmp(spectra[ii]->fileref, spectra[right]->fileref)<0) {
+      if (ii>storeIndex) {
+	buffer=spectra[storeIndex];
+	spectra[storeIndex]=spectra[ii];
+	spectra[ii]=buffer;
+      }
+      storeIndex++;
+    }
+  }
+
+  // Move pivot to its final place
+  buffer=spectra[storeIndex];
+  spectra[storeIndex]=spectra[right];
+  spectra[right]=buffer;
+
+  return(storeIndex);
+}
+
+
+static void quicksortMIdpSpec(SimputMIdpSpec** const spectra, 
+			      const long left, 
+			      const long right)
+{
+  if (right>left) {
+    // Select a pivot index (e.g. pivotIndex := left+(right-left)/2)
+    int pivotIndex=left+(right-left)/2;
+    int pivotNewIndex=MIdpSpecPartition(spectra, left, right, pivotIndex);
+    quicksortMIdpSpec(spectra, left, pivotNewIndex-1);
+    quicksortMIdpSpec(spectra, pivotNewIndex+1, right);
+  }
+}
+
+
+void buildSimputMIdpSpecBuffer(void** buffer,
+			       SimputMIdpSpec** const spectra,
+			       const long nspectra,
+			       const int sorted,
+			       int* const status)
+{
+  struct SimputMIdpSpecBuffer** sb=(struct SimputMIdpSpecBuffer**)buffer;
+
+  // The binary tree must be empty.
+  assert(*sb==NULL);
+
+  // Sort the spectra according to their fileref's.
+  if (0==sorted) {
+    quicksortMIdpSpec(spectra, 0, nspectra-1);
+  }
+
+  // Determine the median.
+  long median=(long)nspectra/2;
+
+  // Insert the median element at the current node.
+  *sb=newSimputMIdpSpecBuffer(status);
+  CHECK_STATUS_VOID(*status);
+  (*sb)->spectrum=spectra[median];
+
+  if (median>0) {
+    buildSimputMIdpSpecBuffer((void**)&((*sb)->left), spectra, median, 1, status);
+    CHECK_STATUS_VOID(*status);
+  }
+
+  if (median<nspectra-1) {
+    buildSimputMIdpSpecBuffer((void**)&((*sb)->right), &(spectra[median+1]), 
+			      nspectra-1-median, 1, status);
+    CHECK_STATUS_VOID(*status);
+  }
 }
 
 
@@ -409,15 +582,15 @@ void freeSimputSpec(SimputSpec** const spec)
 
 struct SimputSpecBuffer* newSimputSpecBuffer(int* const status)
 {
-  struct SimputSpecBuffer *specbuff = 
+  struct SimputSpecBuffer *specbuff=
     (struct SimputSpecBuffer*)malloc(sizeof(struct SimputSpecBuffer));
 
   CHECK_NULL_RET(specbuff, *status, 
 		 "memory allocation for SimputSpecBuffer failed", specbuff);
     
-  specbuff->nspectra  =0;
-  specbuff->cspectrum =0;
-  specbuff->spectra   =NULL;
+  specbuff->spectrum=NULL;
+  specbuff->left    =NULL;
+  specbuff->right   =NULL;
 
   return(specbuff);
 }
@@ -426,15 +599,60 @@ struct SimputSpecBuffer* newSimputSpecBuffer(int* const status)
 void freeSimputSpecBuffer(struct SimputSpecBuffer** sb)
 {
   if (NULL!=*sb) {
-    if (NULL!=(*sb)->spectra) {
-      long ii;
-      for (ii=0; ii<(*sb)->nspectra; ii++) {
-	freeSimputSpec(&((*sb)->spectra[ii]));
-      }
-      free((*sb)->spectra);
+    if (NULL!=(*sb)->spectrum) {
+      freeSimputSpec(&((*sb)->spectrum));
+    }
+    if (NULL!=(*sb)->left) {
+      freeSimputSpecBuffer(&((*sb)->left));
+    }
+    if (NULL!=(*sb)->right) {
+      freeSimputSpecBuffer(&((*sb)->right));
     }
     free(*sb);
     *sb=NULL;
+  }
+}
+
+
+SimputSpec* searchSimputSpecBuffer(void* buffer, 
+				   const char* const filename)
+{
+  struct SimputSpecBuffer* sb=(struct SimputSpecBuffer*)buffer;
+
+  // Check if this is a leaf.
+  if (NULL==sb) {
+    return(NULL);
+  }
+  
+  // Compare with the current spectrum.
+  int cmp=strcmp(filename, sb->spectrum->fileref);
+  if (0==cmp) {
+    return(sb->spectrum);
+  } else if (cmp<0) {
+    return(searchSimputSpecBuffer(sb->left, filename));
+  } else {
+    return(searchSimputSpecBuffer(sb->right, filename));
+  }
+}
+
+
+void insertSimputSpecBuffer(void** buffer,
+			    SimputSpec* const spec,
+			    int* const status)
+{
+  struct SimputSpecBuffer** sb=(struct SimputSpecBuffer**)buffer;
+
+  // Check if this is a leaf.
+  if (NULL==*sb) {
+    *sb=newSimputSpecBuffer(status);
+    CHECK_STATUS_VOID(*status);
+    (*sb)->spectrum=spec;
+  } else if (strcmp(spec->fileref, (*sb)->spectrum->fileref) < 0){
+    insertSimputSpecBuffer((void**)&((*sb)->left), spec, status);
+    CHECK_STATUS_VOID(*status);
+  } else {
+    insertSimputSpecBuffer((void**)&((*sb)->right), spec, status);
+    CHECK_STATUS_VOID(*status);
   }
 }
 
