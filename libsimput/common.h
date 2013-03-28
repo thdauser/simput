@@ -54,10 +54,6 @@
 #define EXTTYPE_PSD (5)
 
 
-/** Maximum number of mission-independet spectra in the cache. */
-#define MAXMIDPSPEC (50000) 
-
-
 /////////////////////////////////////////////////////////////////
 // Macros.
 /////////////////////////////////////////////////////////////////
@@ -148,24 +144,24 @@ struct SimputSrcBuffer {
 
 
 struct SimputExttypeBuffer {
-  long nhdus;// Current number of extensions in the cache.
-  long chdu; // Index of next position in the cache that will be used.
-  int* hdus; // Cache for the extension types.
-  char** filenames; // Cache for the corresponding file references.
+  int type; // HDU type.
+  char* fileref; // Corresponding file reference.
+  struct SimputExttypeBuffer* left;
+  struct SimputExttypeBuffer* right;
 };
 
 
 struct SimputSpecBuffer {
-  long nspectra;  // Current number of spectra in the cache.
-  long cspectrum; // Index of next position in the cache that will be used.
-  SimputSpec** spectra; // Cache for the spectra.
+  SimputSpec* spectrum; // Cache for the spectrum.
+  struct SimputSpecBuffer* left;
+  struct SimputSpecBuffer* right;
 };
 
 
 struct SimputMIdpSpecBuffer {
-  long nspectra;  // Current number of spectra in the cache.
-  long cspectrum; // Index of next position in the cache that will be used.
-  SimputMIdpSpec** spectra; // Cache for the spectra.
+  SimputMIdpSpec* spectrum; // Cache for the spectrum.
+  struct SimputMIdpSpecBuffer* left;
+  struct SimputMIdpSpecBuffer* right;
 };
 
 
@@ -212,10 +208,25 @@ void freeSimputSrcBuffer(struct SimputSrcBuffer** sb);
 
 struct SimputExttypeBuffer* newSimputExttypeBuffer(int* const status);
 void freeSimputExttypeBuffer(struct SimputExttypeBuffer** eb);
+int searchSimputExttypeBuffer(void* buffer, const char* const filename);
+void insertSimputExttypeBuffer(void** buffer,
+			       const char* const filename,
+			       const int type,
+			       int* const status);
 
 
 struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status);
 void freeSimputMIdpSpecBuffer(struct SimputMIdpSpecBuffer** sb);
+SimputMIdpSpec* searchSimputMIdpSpecBuffer(void* buffer, 
+					   const char* const filename);
+void insertSimputMIdpSpecBuffer(void** buffer,
+				SimputMIdpSpec* const spec,
+				int* const status);
+void buildSimputMIdpSpecBuffer(void** buffer,
+			       SimputMIdpSpec** const spectra,
+			       const long nspectra,
+			       const int sorted,
+			       int* const status);
 
 
 SimputSpec* newSimputSpec(int* const status);
@@ -224,7 +235,11 @@ void freeSimputSpec(SimputSpec** const spec);
 
 struct SimputSpecBuffer* newSimputSpecBuffer(int* const status);
 void freeSimputSpecBuffer(struct SimputSpecBuffer** sb);
-
+SimputSpec* searchSimputSpecBuffer(void* buffer, 
+				   const char* const filename);
+void insertSimputSpecBuffer(void** buffer,
+			    SimputSpec* const spec,
+			    int* const status);
 
 struct SimputLCBuffer* newSimputLCBuffer(int* const status);
 void freeSimputLCBuffer(struct SimputLCBuffer** sb);

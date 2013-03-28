@@ -709,58 +709,25 @@ static SimputMIdpSpec* getSimputMIdpSpec(SimputCtlg* const cat,
 					 const char* const filename,
 					 int* const status)
 {
-  // Check if the source catalog contains an MIdpSpec buffer.
-  if (NULL==cat->midpspecbuff) {
-    cat->midpspecbuff=newSimputMIdpSpecBuffer(status);
-    CHECK_STATUS_RET(*status, NULL);
+  // Search if the spectrum is available in the buffer.
+  SimputMIdpSpec* spec=
+    searchSimputMIdpSpecBuffer(cat->midpspecbuff, filename);
+  if (NULL!=spec) {
+    return(spec);
   }
 
-  // Convert the void* pointer to the spectrum buffer into the right
-  // format.
-  struct SimputMIdpSpecBuffer* sb=
-    (struct SimputMIdpSpecBuffer*)cat->midpspecbuff;
-
-  // In case there are no spectra available at all, allocate 
-  // memory for the array (storage for spectra).
-  if (NULL==sb->spectra) {
-    sb->spectra=
-      (SimputMIdpSpec**)malloc(MAXMIDPSPEC*sizeof(SimputMIdpSpec*));
-    CHECK_NULL_RET(sb->spectra, *status, 
-		   "memory allocation for spectra failed", NULL);
-  }
-
-  // Search if the required spectrum is available in the storage.
-  long ii;
-  for (ii=0; ii<sb->nspectra; ii++) {
-    // Check if the spectrum is equivalent to the required one.
-    if (0==strcmp(sb->spectra[ii]->fileref, filename)) {
-      // If yes, return the spectrum.
-      return(sb->spectra[ii]);
-    }
-  }
-
-  // The required spectrum is not contained in the storage.
+  // The required spectrum is not contained in the buffer.
   // Therefore it must be loaded from the specified location.
 
-  // Check if there is still space left in the spectral storage buffer.
-  if (sb->nspectra<MAXMIDPSPEC) {
-    sb->cspectrum=sb->nspectra;
-    sb->nspectra++;
-  } else {
-    sb->cspectrum++;
-    if (sb->cspectrum>=MAXMIDPSPEC) {
-      sb->cspectrum=0;
-    }
-    // Release the spectrum that is currently stored at this place in the
-    // storage buffer.
-    freeSimputMIdpSpec(&(sb->spectra[sb->cspectrum]));
-  }
-
   // Load the mission-independent spectrum.
-  sb->spectra[sb->cspectrum]=loadSimputMIdpSpec(filename, status);
-  CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
+  spec=loadSimputMIdpSpec(filename, status);
+  CHECK_STATUS_RET(*status, spec);
 
-  return(sb->spectra[sb->cspectrum]);
+  // Insert the spectrum into the buffer.
+  insertSimputMIdpSpecBuffer(&(cat->midpspecbuff), spec, status);
+  CHECK_STATUS_RET(*status, spec);
+
+  return(spec);
 }
 
 
@@ -917,67 +884,29 @@ static SimputSpec* getSimputSpec(SimputCtlg* const cat,
 				 const char* const filename,
 				 int* const status)
 {
-  // Maximum number of spectra in the cache.
-  const long maxspec=30000; 
-
-  // Check if the source catalog contains a spectrum buffer.
-  if (NULL==cat->specbuff) {
-    cat->specbuff=newSimputSpecBuffer(status);
-    CHECK_STATUS_RET(*status, NULL);
+  // Search if the spectrum is available in the buffer.
+  SimputSpec* spec=searchSimputSpecBuffer(cat->specbuff, filename);
+  if (NULL!=spec) {
+    return(spec);
   }
 
-  // Convert the void* pointer to the spectrum buffer into the right
-  // format.
-  struct SimputSpecBuffer* sb=
-    (struct SimputSpecBuffer*)cat->specbuff;
-
-  // In case there are no spectra available at all, allocate 
-  // memory for the array (storage for spectra).
-  if (NULL==sb->spectra) {
-    sb->spectra=
-      (SimputSpec**)malloc(maxspec*sizeof(SimputSpec*));
-    CHECK_NULL_RET(sb->spectra, *status, 
-		   "memory allocation for spectra failed", NULL);
-  }
-
-  // Search if the required spectrum is available in the storage.
-  long ii;
-  for (ii=0; ii<sb->nspectra; ii++) {
-    // Check if the spectrum is equivalent to the required one.
-    if (0==strcmp(sb->spectra[ii]->fileref, filename)) {
-      // If yes, return the spectrum.
-      return(sb->spectra[ii]);
-    }
-  }
-
-  // The required spectrum is not contained in the storage.
+  // The required spectrum is not contained in the buffer.
   // Therefore we must determine it from the referred mission-
-  // independent spectrum.
-
-  // Check if there is still space left in the spectral storage buffer.
-  if (sb->nspectra<maxspec) {
-    sb->cspectrum=sb->nspectra;
-    sb->nspectra++;
-  } else {
-    sb->cspectrum++;
-    if (sb->cspectrum>=maxspec) {
-      sb->cspectrum=0;
-    }
-    // Release the spectrum that is currently stored at this place in the
-    // storage buffer.
-    freeSimputSpec(&(sb->spectra[sb->cspectrum]));
-  }
+  // independent spectrum and store it in the buffer.
 
   // Obtain the mission-independent spectrum.
   SimputMIdpSpec* midpspec=getSimputMIdpSpec(cat, filename, status);
-  CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
+  CHECK_STATUS_RET(*status, NULL);
 
   // Convolve it with the ARF.
-  sb->spectra[sb->cspectrum]=
-    convSimputMIdpSpecWithARF(cat, midpspec, status);
-  CHECK_STATUS_RET(*status, sb->spectra[sb->cspectrum]);
+  spec=convSimputMIdpSpecWithARF(cat, midpspec, status);
+  CHECK_STATUS_RET(*status, spec);
 
-  return(sb->spectra[sb->cspectrum]);
+  // Insert the spectrum into the buffer.
+  insertSimputSpecBuffer(&(cat->specbuff), spec, status);
+  CHECK_STATUS_RET(*status, spec);
+
+  return(spec);
 }
 
 
