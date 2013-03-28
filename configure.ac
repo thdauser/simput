@@ -19,8 +19,8 @@ LT_INIT #([disable-shared]) #([shared])
 # "-pg" for the compiler and linker to include information for gprof (Profiler)
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # " -O0" for zero optimization
-CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC -Dg77Fortran -O0 -pg"
-LDFLAGS="$LDFLAGS -g -W -Wall -O0 -pg"
+CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC -Dg77Fortran"
+LDFLAGS="$LDFLAGS -g -W -Wall"
 # FCFLAGS="-O0"
 
 ####################################
