@@ -1,4 +1,5 @@
-AM_CFLAGS=-I@top_srcdir@/extlib/atFunctions/include
+AM_CFLAGS =-I@top_srcdir@/extlib/atFunctions/include
+AM_CFLAGS+=-I@top_srcdir@/extlib/cfitsio 
 
 ########### LIBRARIES #################
 
