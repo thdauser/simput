@@ -705,9 +705,9 @@ static void getSrcImagRef(SimputCtlg* const cat,
 }
 
 
-static SimputMIdpSpec* getSimputMIdpSpec(SimputCtlg* const cat,
-					 const char* const filename,
-					 int* const status)
+SimputMIdpSpec* getSimputMIdpSpec(SimputCtlg* const cat,
+				  const char* const filename,
+				  int* const status)
 {
   // Search if the spectrum is available in the buffer.
   SimputMIdpSpec* spec=
@@ -1313,9 +1313,9 @@ static SimputPhList* getSimputPhList(SimputCtlg* const cat,
 }
 
 
-float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
-				const float emin, 
-				const float emax)
+static float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
+				       const float emin, 
+				       const float emax)
 {
   // Return value.
   float flux=0.;
