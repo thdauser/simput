@@ -516,12 +516,6 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 				const char* const filename,
 				int* const status);
 
-/** Return a particular SimputMIdpSpec. The catalog data structure
-    contains an internal buffer for spectra. */
-SimputMIdpSpec* getSimputMIdpSpec(SimputCtlg* const cat,
-				  const char* const filename,
-				  int* const status);
-
 /** Save the mission-independent spectrum in the specified extension
     of the given FITS file. If the file does not exist yet, a new file
     is created. If the file exists, but does not contain the specified

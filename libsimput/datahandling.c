@@ -705,9 +705,9 @@ static void getSrcImagRef(SimputCtlg* const cat,
 }
 
 
-SimputMIdpSpec* getSimputMIdpSpec(SimputCtlg* const cat,
-				  const char* const filename,
-				  int* const status)
+static SimputMIdpSpec* getSimputMIdpSpec(SimputCtlg* const cat,
+					 const char* const filename,
+					 int* const status)
 {
   // Search if the spectrum is available in the buffer.
   SimputMIdpSpec* spec=
