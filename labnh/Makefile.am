@@ -15,11 +15,11 @@ EXTRA_DIST=README
 ########### LIBRARIES ################
 
 # Libraries that are installed in the 'lib' directory.
-lib_LTLIBRARIES=liblabnh.la libposstring.la
+lib_LIBRARIES=liblabnh.a libposstring.a
 
 # Sources:
-liblabnh_la_SOURCES=liblabnh.c
-libposstring_la_SOURCES=libposstring.c
+liblabnh_a_SOURCES=liblabnh.c
+libposstring_a_SOURCES=libposstring.c
 
 ############ HEADERS #################
 
@@ -33,8 +33,8 @@ include_HEADERS=labnh.h posstring.h
 bin_PROGRAMS=labnh
 
 labnh_SOURCES=labnh.c labnh.h
-labnh_LDADD  =liblabnh.la libposstring.la
-labnh_LDADD +=@top_builddir@/extlib/ape/src/libape.la
-labnh_LDADD +=@top_builddir@/extlib/atFunctions/src/libatFunctions.la
+labnh_LDADD  =liblabnh.a libposstring.a
+labnh_LDADD +=@top_builddir@/extlib/ape/src/libape.a
+labnh_LDADD +=@top_builddir@/extlib/atFunctions/src/libatFunctions.a
 labnh_LDADD +=@top_builddir@/extlib/cfitsio/libcfitsio.a
 labnh_LDADD +=@top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
