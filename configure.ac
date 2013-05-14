@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.43],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.44],[christian.schmid@sternwarte.uni-erlangen.de])
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -27,7 +27,7 @@ LDFLAGS="$LDFLAGS -g -W -Wall"
 AC_ARG_ENABLE([fortran], 
               [AS_HELP_STRING([--disable-fortran], 
 	                          [disable compilation of Fortran code])],
-	          [fortran=false], [fortran=true])
+	          [fortran=true], [fortran=false])
 AM_CONDITIONAL([FORTRAN], [test x$fortran = xtrue])
 
 ####################################
