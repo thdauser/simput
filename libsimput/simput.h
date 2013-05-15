@@ -528,6 +528,17 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
 			int extver,
 			int* const status);
 
+/** Save the mission-independent spectrum in the specified extension
+    of the given FITS file. If the file does not exist yet, a new file
+    is created. If the file exists, but does not contain the specified
+    extension, an appropriate HDU is created. */
+void saveSimputMIdpSpecBlock(SimputMIdpSpec** const spec,
+			     const long nspec,
+			     const char* const filename,
+			     char* const extname,
+			     int extver,
+			     int* const status);
+
 /** Return the spectrum of the specified SimputSrc for the
     particular point of time. If the required spectrum is already
     located in the internal cache, a pointer to this spectrum will be

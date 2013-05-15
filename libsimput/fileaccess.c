@@ -1375,7 +1375,6 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
 
 
     // Try to move to the specified extension.
-    int cenergy=0, cflux=0, cname=0;
     long nrows=0;
     int status2=EXIT_SUCCESS;
     fits_write_errmark();
@@ -1455,6 +1454,7 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
 
 
     // Determine the column numbers.
+    int cenergy=0, cflux=0, cname=0;
     fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
     if (EXIT_SUCCESS!=*status) {
       char msg[SIMPUT_MAXSTR];
@@ -1520,7 +1520,7 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
     // Create a new row in the table and store the data of the spectrum in it.
     fits_insert_rows(fptr, nrows++, 1, status);
     if (EXIT_SUCCESS!=*status) {
-      SIMPUT_ERROR("failed appending new row to spectrum");
+      SIMPUT_ERROR("failed appending new row to spectrum extension");
       return;
     }
 
@@ -1552,6 +1552,237 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
   // Release allocated memory.
   if (NULL!=name[0]) free(name[0]);
 
+  if (NULL!=ttype) {
+    int ii;
+    for (ii=0; ii<3; ii++) {
+      if (NULL!=ttype[ii]) free(ttype[ii]);
+    }
+    free(ttype);
+  }
+  if (NULL!=tform) {
+    int ii;
+    for (ii=0; ii<3; ii++) {
+      if (NULL!=tform[ii]) free(tform[ii]);
+    }
+    free(tform);
+  }
+  if (NULL!=tunit) {
+    int ii;
+    for (ii=0; ii<3; ii++) {
+      if (NULL!=tunit[ii]) free(tunit[ii]);
+    }
+    free(tunit);
+  }
+
+  // Close the file.
+  if (NULL!=fptr) fits_close_file(fptr, status);
+  CHECK_STATUS_VOID(*status);
+}
+
+
+void saveSimputMIdpSpecBlock(SimputMIdpSpec** const spec,
+			     const long nspec,
+			     const char* const filename,
+			     char* const extname,
+			     int extver,
+			     int* const status)
+{
+  fitsfile* fptr=NULL;
+  
+  // String buffer.
+  char **ttype=NULL;
+  char **tform=NULL;
+  char **tunit=NULL;
+
+  do { // Error handling loop.
+
+    // Check if the EXTNAME has been specified.
+    if (NULL==extname) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+    if (0==strlen(extname)) {
+      SIMPUT_ERROR("EXTNAME not specified");
+      *status=EXIT_FAILURE;
+      break;
+    }
+
+    // Check if the specified file exists.
+    int exists;
+    fits_file_exists(filename, &exists, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "check failed whether file '%s' exists", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
+    if (1==exists) {
+      // If yes, open it.
+      fits_open_file(&fptr, filename, READWRITE, status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not open file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
+
+    } else {
+      // If no, create a new file. 
+      fits_create_file(&fptr, filename, status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not create file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
+    }
+    // END of check, whether the specified file exists.
+
+
+    // Try to move to the specified extension.
+    long nrows=0;
+    int status2=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_movnam_hdu(fptr, BINARY_TBL, extname, extver, &status2);
+    fits_clear_errmark();
+    if (BAD_HDU_NUM==status2) {
+      // If that does not work, create a new binary table.
+      // Allocate memory for the format strings.
+      ttype=(char**)malloc(3*sizeof(char*));
+      tform=(char**)malloc(3*sizeof(char*));
+      tunit=(char**)malloc(3*sizeof(char*));
+      CHECK_NULL_BREAK(ttype, *status, "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(tform, *status, "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(tunit, *status, "memory allocation for string buffer failed");
+      int ii;
+      for (ii=0; ii<3; ii++) {
+	ttype[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+	tform[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+	tunit[ii]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
+	CHECK_NULL_BREAK(ttype[ii], *status, 
+			 "memory allocation for string buffer failed");
+	CHECK_NULL_BREAK(tform[ii], *status, 
+			 "memory allocation for string buffer failed");
+	CHECK_NULL_BREAK(tunit[ii], *status, 
+			 "memory allocation for string buffer failed");
+      }
+      CHECK_STATUS_BREAK(*status);
+
+      // Set up the table format.
+      strcpy(ttype[0], "ENERGY");
+      sprintf(tform[0], "1PE");
+      strcpy(tunit[0], "keV");
+
+      strcpy(ttype[1], "FLUX");
+      sprintf(tform[1], "1PE");
+      strcpy(tunit[1], "photon/s/cm**2/keV");
+
+      strcpy(ttype[2], "NAME");
+      strcpy(tform[2], "48A");
+      strcpy(tunit[2], "");
+
+      // Create the table.
+      fits_create_tbl(fptr, BINARY_TBL, 0, 3, ttype, tform, tunit, extname, status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not create binary table for spectrum in file '%s'", 
+		filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
+
+      // Write header keywords.
+      fits_write_key(fptr, TSTRING, "HDUCLASS", "HEASARC/SIMPUT", "", status);
+      fits_write_key(fptr, TSTRING, "HDUCLAS1", "SPECTRUM", "", status);
+      fits_write_key(fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
+      fits_write_key(fptr, TINT, "EXTVER", &extver, "", status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "failed writing FITS keywords in file '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
+
+      // The new table contains now data up to now.
+      nrows=0;
+
+    } else {
+      // The extension already exists.
+      // Determine the number of contained rows.
+      fits_get_num_rows(fptr, &nrows, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("could not determine number of entries in spectrum");
+	break;
+      }
+    }
+    // END of check, whether the specified extension exists.
+
+
+    // Determine the column numbers.
+    int cenergy=0, cflux=0, cname=0;
+    fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'ENERGY' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
+    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'FLUX' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
+    }
+
+    // Optional name column:
+    int opt_status=EXIT_SUCCESS;
+    fits_write_errmark();
+    fits_get_colnum(fptr, CASEINSEN, "NAME", &cname, &opt_status);
+    opt_status=EXIT_SUCCESS;
+    fits_clear_errmark();
+
+    // Create new rows in the table and store the data of the spectra in them.
+    fits_insert_rows(fptr, nrows, nspec, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed appending new rows to spectrum extension");
+      return;
+    }
+
+    long jj;
+    for (jj=0; jj<nspec; jj++) {
+      nrows++;
+      fits_write_col(fptr, TFLOAT, cenergy, nrows, 1, spec[jj]->nentries, 
+		     spec[jj]->energy, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing energy values to spectrum extension");
+	break;
+      }
+
+      fits_write_col(fptr, TFLOAT, cflux, nrows, 1, spec[jj]->nentries, 
+		     spec[jj]->pflux, status);
+      if (EXIT_SUCCESS!=*status) {
+	SIMPUT_ERROR("failed writing flux values to spectrum extension");
+	break;
+      }
+
+      if ((cname>0) && (NULL!=spec[jj]->name)) {
+	fits_write_col(fptr, TSTRING, cname, nrows, 1, 1, &spec[jj]->name, status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed writing 'NAME' value to spectrum");
+	  break;
+	}
+      }
+      CHECK_STATUS_BREAK(*status);
+    }
+    CHECK_STATUS_BREAK(*status);
+
+  } while(0); // END of error handling loop.
+
+  // Release allocated memory.
   if (NULL!=ttype) {
     int ii;
     for (ii=0; ii<3; ii++) {
