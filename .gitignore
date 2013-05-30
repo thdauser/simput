@@ -20,6 +20,7 @@ crab
 fsample
 csample
 labnh
+galabs
 
 # Autotool stuff:
 aclocal.m4
