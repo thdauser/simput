@@ -1843,7 +1843,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 
       Vector f;
       f.x=p.x*cosra*cosdec - p.y*sinra - p.z*cosra*sindec;
-      f.y=p.x*sinra*cosdec + p.y*sinra - p.z*sinra*sindec;
+      f.y=p.x*sinra*cosdec + p.y*cosra - p.z*sinra*sindec;
       f.z=p.x      *sindec +     0.0   + p.z      *cosdec;
 
       // Determine RA and Dec of the photon.
