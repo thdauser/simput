@@ -1829,8 +1829,25 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       *energy=b_energy;
     }
     if (EXTTYPE_PHLIST==imagtype) {
-      *ra =b_ra;
-      *dec=b_dec;
+      // Shift the photon position according to the 
+      // RA,Dec values defined for this source in the catalog.
+
+      // Get a Carteesian coordinate vector for the photon location.
+      Vector p=unit_vector(b_ra, b_dec);
+
+      // Rotate the vector.
+      double cosra=cos(src->ra);
+      double sinra=sin(src->ra);
+      double cosdec=cos(src->dec);
+      double sindec=sin(src->dec);
+
+      Vector f;
+      f.x=p.x*cosra*cosdec - p.y*sinra - p.z*cosra*sindec;
+      f.y=p.x*sinra*cosdec + p.y*sinra - p.z*sinra*sindec;
+      f.z=p.x      *sindec +     0.0   + p.z      *cosdec;
+
+      // Determine RA and Dec of the photon.
+      calculate_ra_dec(f, ra, dec); 
     }
   }
 

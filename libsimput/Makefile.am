@@ -16,10 +16,10 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/fftw/api
 lib_LIBRARIES=libsimput.a
 
 # Sources:
-libsimput_a_SOURCES=datastruct.c fileaccess.c datahandling.c $(FSRC)
+libsimput_a_SOURCES=datastruct.c fileaccess.c datahandling.c vector.c $(FSRC)
 
 ############ HEADERS #################
 
 # Define the headers that will be installed in $(includedir):
-include_HEADERS=simput.h headas.h headas_utils.h headas_stdio.h heasp.h
+include_HEADERS=simput.h vector.h headas.h headas_utils.h headas_stdio.h heasp.h
 noinst_HEADERS =common.h
