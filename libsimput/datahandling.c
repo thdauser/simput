@@ -1136,9 +1136,13 @@ static SimputKRLC* getSimputKRLC(SimputCtlg* const cat,
       // Periodic light curve.
       dt=(krlc->phase[ii+1]-krlc->phase[ii])*krlc->period;
     }
-    krlc->a[ii] = (lc->flux[ii+1]-lc->flux[ii])	
-      /dt /lc->fluxscal;
-    krlc->b[ii] = lc->flux[ii]/lc->fluxscal; 
+    if (dt==0.0) {
+      krlc->a[ii]=0.0;
+    } else {
+      krlc->a[ii]=(lc->flux[ii+1]-lc->flux[ii])
+	/dt /lc->fluxscal;
+    }
+    krlc->b[ii]=lc->flux[ii]/lc->fluxscal;
   }
   krlc->a[krlc->nentries-1]=0.;
   krlc->b[krlc->nentries-1]=lc->flux[lc->nentries-1]/lc->fluxscal;
