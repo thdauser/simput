@@ -138,6 +138,9 @@ void calculate_ra_dec(const Vector v, double* const ra, double* const dec)
 
   // Determine the right ascension:
   *ra =atan2(v.y, v.x);
+  if (*ra<0.0) {
+    *ra+=2.0*M_PI;
+  }
 }
 
 
