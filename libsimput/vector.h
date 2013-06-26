@@ -63,7 +63,7 @@ Vector interpolateCircleVector(const Vector v1,
     doesn't have to be normalized. */
 void calculate_ra_dec(/** Direction. Does not have to be normalized. */
 		      const Vector v, 
-		      /** Right ascension. Units: [rad], Interval: [-pi;pi]. */ 
+		      /** Right ascension. Units: [rad], Interval: [0;2*pi]. */ 
 		      double* const ra,
 		      /** Declination. Units: [rad], Interval: [-pi/2;pi/2]. */
 		      double* const dec); 
