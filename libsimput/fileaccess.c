@@ -3252,8 +3252,30 @@ int getExtType(SimputCtlg* const cat,
     return(EXTTYPE_NONE);
   }
 
-  // Read the HDUCLAS1 and HDUCLAS2 header keywords.
+  // In case the filename refers to the file only WITHOUT any
+  // explicit specification of the extension, check if the 
+  // primary extension is empty. 
   char comment[SIMPUT_MAXSTR];
+  if (NULL==firstbracket) {
+    int naxis;
+    fits_read_key(fptr, TINT, "HDUCLAS1", &naxis, comment, status);
+    if (EXIT_SUCCESS!=*status) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not read FITS keyword 'NAXIS' from file '%s'", fileref);
+      SIMPUT_ERROR(msg);
+    }
+    // If the primary extension is empty, move to the next HDU.
+    if (0==naxis) {
+      fits_movabs_hdu(fptr, 2, NULL, status);
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "failed moving to 2nd HDU in file '%s'", fileref);
+	SIMPUT_ERROR(msg);
+      }
+    }
+  }
+
+  // Read the HDUCLAS1 and HDUCLAS2 header keywords.
   char hduclas1[SIMPUT_MAXSTR];
   char hduclas2[SIMPUT_MAXSTR];
   fits_read_key(fptr, TSTRING, "HDUCLAS1", &hduclas1, comment, status);
