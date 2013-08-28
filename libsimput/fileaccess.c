@@ -3258,7 +3258,7 @@ int getExtType(SimputCtlg* const cat,
   char comment[SIMPUT_MAXSTR];
   if (NULL==firstbracket) {
     int naxis;
-    fits_read_key(fptr, TINT, "HDUCLAS1", &naxis, comment, status);
+    fits_read_key(fptr, TINT, "NAXIS", &naxis, comment, status);
     if (EXIT_SUCCESS!=*status) {
       char msg[SIMPUT_MAXSTR];
       sprintf(msg, "could not read FITS keyword 'NAXIS' from file '%s'", fileref);
