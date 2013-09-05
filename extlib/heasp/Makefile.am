@@ -1,29 +1,19 @@
-if FORTRAN
-  FSRC=fsimput.f95
-  FFLS=-Df2cFortran 
-else
-  FSRC=
-  FFLS=
-endif
-
 AM_CFLAGS =-I@top_srcdir@/extlib/heainit
 AM_CFLAGS+=-I@top_srcdir@/extlib/heaio
 AM_CFLAGS+=-I@top_srcdir@/extlib/heautils
-AM_CFLAGS+=-I@top_srcdir@/extlib/heasp
 AM_CFLAGS+=-I@top_srcdir@/extlib/cfitsio
-AM_CFLAGS+=-I@top_srcdir@/extlib/wcslib/C $(FFLS)
-AM_CFLAGS+=-I@top_srcdir@/extlib/fftw/api
 
 ########### LIBRARIES #################
 
 # Libraries that are installed in the 'lib' directory.
-lib_LIBRARIES=libsimput.a
+noinst_LIBRARIES=libhdsp.a
 
 # Sources:
-libsimput_a_SOURCES=datastruct.c fileaccess.c datahandling.c vector.c $(FSRC)
+libhdsp_a_SOURCES=WriteRMF.c WritePHA.c WriteARF.c SPutils.c		\
+                  ReturnChannel.c MergeARFRMF.c TransposeRMF.c SPio.c	\
+                  RMF.c ReadRMF.c ReadARF.c ReadPHA.c
 
 ############ HEADERS #################
 
 # Define the headers that will be installed in $(includedir):
-include_HEADERS=simput.h vector.h
-noinst_HEADERS =common.h
+include_HEADERS=heaspio.h heasp.h

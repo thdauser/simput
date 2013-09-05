@@ -1,5 +1,9 @@
-AM_CFLAGS =-I@top_srcdir@/libsimput 
-AM_CFLAGS+=-I@top_srcdir@/extlib/cfitsio 
+AM_CFLAGS =-I@top_srcdir@/libsimput
+AM_CFLAGS+=-I@top_srcdir@/extlib/heainit
+AM_CFLAGS+=-I@top_srcdir@/extlib/heaio
+AM_CFLAGS+=-I@top_srcdir@/extlib/heautils
+AM_CFLAGS+=-I@top_srcdir@/extlib/heasp
+AM_CFLAGS+=-I@top_srcdir@/extlib/cfitsio
 AM_CFLAGS+=-I@top_srcdir@/extlib/wcslib/C
 AM_CFLAGS+=-Wall -Werror
 
