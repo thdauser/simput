@@ -17,6 +17,7 @@
 #include <ctype.h>
 #include <fftw3.h> // FFTW3 library for Fast Fourier Transform.
 
+#include "arf.h"
 #include "simput.h"
 #include "vector.h"
 #include "wcshdr.h"

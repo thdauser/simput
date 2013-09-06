@@ -11,6 +11,12 @@ void setSimputARF(SimputCtlg* const cat, struct ARF* const arf)
 }
 
 
+void loadSimputARF(SimputCtlg* const cat, char* const filename, int* const status)
+{
+  cat->arf=loadARF(filename, status);
+}
+
+
 /** Use the C rand() function to determine a random number between 0
     and 1. */
 static double getCRand(int* const status) 

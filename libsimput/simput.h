@@ -566,6 +566,14 @@ void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
     routines are used. */
 void setSimputARF(SimputCtlg* const cat, struct ARF* const arf);
 
+/** Load and set the instrument ARF containing the effective
+    area. This information is required to obtain a mission-specific
+    spectrum from the mission-independent format. If an error occurs,
+    the status variable is set to EXIT_FAILURE. */
+void loadSimputARF(SimputCtlg* const cat, 
+		   char* const filename, 
+		   int* const status);
+
 /** Set the random number generator, which is used by the simput
     library routines. The generator should return double valued,
     uniformly distributed numbers in the interval [0,1). */
