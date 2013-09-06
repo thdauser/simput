@@ -1,8 +1,6 @@
 #ifndef ARF_H
 #define ARF_H 1
 
-#include "common.h"
-
 #ifndef HEASP_H
 #define HEASP_H 1
 #include "heasp.h"

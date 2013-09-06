@@ -1,4 +1,5 @@
 #include "arf.h"
+#include "common.h"
 
 
 struct ARF* getARF(int* const status)
