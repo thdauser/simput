@@ -298,9 +298,9 @@ typedef struct {
   /** Power spectral density with Miyamoto normalization [Hz^-1]. */
   float* power;
 
-  /** Reference to the location of the light curve given by the
+  /** Reference to the location of the power spectrum given by the
       extended filename syntax. This reference is used to check,
-      whether the light curve is already contained in the internal
+      whether the power spectrum is already contained in the internal
       storage. */
   char* fileref;
 

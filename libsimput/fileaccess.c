@@ -137,7 +137,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
     CHECK_STATUS_BREAK(*status);
 
     // Split rootname into the file path and the file name.
-    char* lastslash = strrchr(rootname, '/');
+    char* lastslash=strrchr(rootname, '/');
     if (NULL==lastslash) {
       cat->filepath=(char*)malloc(sizeof(char));
       CHECK_NULL_BREAK(cat->filepath, *status, 
@@ -222,7 +222,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
 	  CHECK_NULL_BREAK(tform[ii], *status, 
 			   "memory allocation for table parameters failed");
 	}
-	if (EXIT_SUCCESS!=*status) break;
+	CHECK_STATUS_BREAK(*status);
 	strcpy(tform[0], "J");
 	if (0==maxstrlen_src_name) {
 	  strcpy(tform[1], "1PA");

@@ -1549,7 +1549,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
       }
 
       // Select a photon.
-      double rand;
+      double rand=0.0;
       double newtime;
       do {
 	// Move one row further.
