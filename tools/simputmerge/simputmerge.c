@@ -101,7 +101,7 @@ int simputmerge_main()
 	  ids = (long*)realloc(ids, (nids+1)*1000*sizeof(long));
 	  CHECK_NULL_BREAK(ids, status, "memory allocation failed");
 	}
-	ids[nids++] = src_id;
+	ids[nids++]=src_id;
 
 	// Handle spectrum, image, and timing extensions.
 	char spectrum[SIMPUT_MAXSTR];
@@ -179,11 +179,11 @@ int simputmerge_main()
 	    }
 	    if (kk==nimgextrefs[ii]) {
 	      // If not, append it to the list of used references.
-	      imgextrefs[ii] = 
+	      imgextrefs[ii]=
 		(char**)realloc(imgextrefs[ii],
 				(nimgextrefs[ii]+1)*sizeof(char*));
 	      CHECK_NULL_BREAK(imgextrefs[ii], status, "memory allocation failed");
-	      imgextrefs[ii][kk] = 
+	      imgextrefs[ii][kk]=
 	      (char*)malloc((strlen(insrc->image)+1)*sizeof(char));
 	      CHECK_NULL_BREAK(imgextrefs[ii][kk], status, "memory allocation failed");
 	      nimgextrefs[ii]++;
@@ -206,11 +206,11 @@ int simputmerge_main()
 	    }
 	    if (kk==nlcextrefs[ii]) {
 	      // If not, append it to the list of used references.
-	      lcextrefs[ii] = 
+	      lcextrefs[ii]=
 		(char**)realloc(lcextrefs[ii],
 				(nlcextrefs[ii]+1)*sizeof(char*));
 	      CHECK_NULL_BREAK(lcextrefs[ii], status, "memory allocation failed");
-	      lcextrefs[ii][kk] = 
+	      lcextrefs[ii][kk]=
 		(char*)malloc((strlen(insrc->timing)+1)*sizeof(char));
 	      CHECK_NULL_BREAK(lcextrefs[ii][kk], status, "memory allocation failed");
 	      nlcextrefs[ii]++;

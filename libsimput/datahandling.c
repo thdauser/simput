@@ -422,8 +422,20 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       power=(float*)malloc(psdlen*sizeof(float));
       CHECK_NULL_BREAK(power, *status, 
 		       "memory allocation for PSD buffer failed");
-      long jj=0;
+
+      // Check that the PSD is positive.
+      long jj;
+      for (jj=0; jj<psd->nentries; jj++) {
+	if (psd->power[jj]<=0.0) {
+	  SIMPUT_ERROR("PSD may only have positive entries");
+	  *status=EXIT_FAILURE;
+	  break;
+	}
+      }
+      CHECK_STATUS_RET(*status, lc);
+
       float delta_f=psd->frequency[psd->nentries-1]/psdlen;
+      jj=0;
       for (ii=0; ii<psdlen; ii++) {
 	float frequency = (ii+1)*delta_f;
 	while((frequency>psd->frequency[jj]) &&
@@ -475,7 +487,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       
       // Determine the normalized rates from the FFT.
       for (ii=0; ii<lc->nentries; ii++) {
-	lc->flux[ii] = (float)fftw_out[ii] /* *requ_rms/act_rms */;
+	lc->flux[ii]=(float)fftw_out[ii] /* *requ_rms/act_rms */;
 
 	// Avoid negative fluxes (no physical meaning):
 	if (lc->flux[ii]<0.) { 
@@ -487,12 +499,13 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       // particular source.
       lc->src_id=src->src_id;
 
-      // Store the file reference to the timing extension for later comparisons.
+      // Store the file reference to the timing extension for later 
+      // comparisons.
       lc->fileref=
 	(char*)malloc((strlen(filename)+1)*sizeof(char));
       CHECK_NULL_RET(lc->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 lc);
+		     "memory allocation for file reference failed", 
+		     lc);
       strcpy(lc->fileref, filename);
 
     } while(0); // END of error handling loop.
