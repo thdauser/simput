@@ -21,6 +21,8 @@ fsample
 csample
 labnh
 galabs
+simputsrc
+simputpsd
 
 # Autotool stuff:
 aclocal.m4
