@@ -11,8 +11,7 @@
 
 
 struct Parameters {
-  /** File name of the SIMPUT file, where the PSD should be attached
-      to. */
+  /** File name of the SIMPUT file the PSD should be attached to. */
   char Simput[SIMPUT_MAXSTR];
   
   /** File name of the input ASCII PSD. */
