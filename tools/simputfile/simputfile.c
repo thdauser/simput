@@ -1,4 +1,4 @@
-#include "simputsrc.h"
+#include "simputfile.h"
 
 // TODO Re-structure the code and use the tmpfile command.
 
@@ -37,7 +37,7 @@ float getFlux(const float* const energy,
 }
 
 
-int simputsrc_main() 
+int simputfile_main() 
 {
   // Program parameters.
   struct Parameters par;
@@ -68,7 +68,7 @@ int simputsrc_main()
 
 
   // Register HEATOOL
-  set_toolname("simputsrc");
+  set_toolname("simputfile");
   set_toolversion("0.12");
 
 
@@ -77,7 +77,7 @@ int simputsrc_main()
     // ---- Initialization ----
 
     // Read the parameters using PIL.
-    status=simputsrc_getpar(&par);
+    status=simputfile_getpar(&par);
     CHECK_STATUS_BREAK(status);
 
     // Check the input type for the spectrum.
@@ -629,13 +629,13 @@ int simputsrc_main()
 }
 
 
-int simputsrc_getpar(struct Parameters* const par)
+int simputfile_getpar(struct Parameters* const par)
 {
   // String input buffer.
   char* sbuffer=NULL;
 
   // Error status.
-  int status = EXIT_SUCCESS; 
+  int status=EXIT_SUCCESS; 
 
   // Read all parameters via the ape_trad_ routines.
 

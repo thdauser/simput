@@ -1,12 +1,12 @@
-#ifndef SIMPUTSRC_H
-#define SIMPUTSRC_H 1
+#ifndef SIMPUTFILE_H
+#define SIMPUTFILE_H 1
 
 #include "ape/ape_trad.h"
 
 #include "simput.h"
 #include "common.h"
 
-#define TOOLSUB simputsrc_main
+#define TOOLSUB simputfile_main
 #include "headas_main.c"
 
 
@@ -82,8 +82,8 @@ struct Parameters {
 };
 
 
-int simputsrc_getpar(struct Parameters* const par);
+int simputfile_getpar(struct Parameters* const par);
 
 
-#endif /* SIMPUTSRC_H */
+#endif /* SIMPUTFILE_H */
 
