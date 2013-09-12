@@ -23,6 +23,7 @@ labnh
 galabs
 simputsrc
 simputpsd
+simputmerge
 
 # Autotool stuff:
 aclocal.m4

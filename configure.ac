@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.65)
-AC_INIT([simput],[0.49],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.50],[christian.schmid@sternwarte.uni-erlangen.de])
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -101,7 +101,8 @@ AC_CONFIG_FILES([Makefile
 		 tools/labnh/Makefile
 		 tools/galabs/Makefile
 		 tools/simputsrc/Makefile
-		 tools/simputpsd/Makefile])
+		 tools/simputpsd/Makefile
+		 tools/simputmerge/Makefile])
 		
 AC_CONFIG_SUBDIRS([extlib/cfitsio extlib/wcslib extlib/fftw])
 
