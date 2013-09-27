@@ -21,11 +21,12 @@ fsample
 csample
 labnh
 galabs
-simputsrc
+simputfile
 simputlc
 simputpsd
 simputmerge
 simputspec
+simputsrc
 
 # Autotool stuff:
 aclocal.m4
