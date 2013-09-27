@@ -11,6 +11,16 @@
 
 
 struct Parameters {
+  /** File name of the output SIMPUT file. */
+  char Simput[SIMPUT_MAXSTR];
+
+  /** Name of the X-ray source. */
+  char Src_Name[SIMPUT_MAXSTR];
+
+  /** Source position [deg]. */
+  float RA;
+  float Dec;
+
   /** Power law. */
   float plPhoIndex;
   float plFlux;
@@ -32,6 +42,16 @@ struct Parameters {
   /** Reference energy band [keV]. */
   float Emin;
   float Emax;
+
+  /** File name of the input ISIS parameter file containing a spectral
+      model. */
+  char ISISFile[SIMPUT_MAXSTR];
+
+  /** File name of the input ASCII spectrum. */
+  char XSPECFile[SIMPUT_MAXSTR];
+
+  /** File name of the input ASCII light curve. */
+  char LCFile[SIMPUT_MAXSTR];
 
   /** PSD general parameters */
   long PSDnpt;
@@ -60,24 +80,12 @@ struct Parameters {
   float Q3Q;
   float Q3rms;
 
-  /** File name of the input ISIS parameter file containing a spectral
-      model. */
-  char ISISFile[SIMPUT_MAXSTR];
+  /** File name of the input ASCII PSD. */
+  char PSDFile[SIMPUT_MAXSTR];
 
-  /** File name of the input ASCII spectrum. */
-  char XSPECFile[SIMPUT_MAXSTR];
-
-  /** Source position [deg]. */
-  float RA;
-  float Dec;
-
-  /** Name of the X-ray source. */
-  char Src_Name[SIMPUT_MAXSTR];
-
-  /** File name of the output SIMPUT file. */
-  char Simput[SIMPUT_MAXSTR];
-  
+  int chatter;
   char clobber;
+  char history;
 };
 
 

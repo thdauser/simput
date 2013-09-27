@@ -195,6 +195,10 @@ int simputspec_main()
 
     // Read the spectrum from the file(s).
     if ((strlen(par.ISISFile)>0) || (use_components>0)) {
+      
+      // Allocate memory for the buffer.
+      simputspecbuffer=newSimputMIdpSpec(&status);
+      CHECK_STATUS_BREAK(status);
 
       // Loop over the different components of the spectral model.
       long nrows=0;

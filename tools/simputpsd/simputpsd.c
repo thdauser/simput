@@ -56,7 +56,7 @@ int simputpsd_main()
       break;
     }
     if (noptions>1) {
-      SIMPUT_ERROR("specification of multiple PSD models");
+      SIMPUT_ERROR("specification of multiple PSD models not possible");
       status=EXIT_FAILURE;
       break;
     }
