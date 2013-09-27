@@ -11,7 +11,6 @@
 
 
 struct Parameters {
-
   /** Power law. */
   float plPhoIndex;
   float plFlux;

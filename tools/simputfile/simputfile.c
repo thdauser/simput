@@ -389,9 +389,7 @@ int simputfile_main()
       }
 
       // The first 3 lines do not contain data.
-      nlines -= 3;
-
-      printf("*** %ld data lines\n", nlines); // TODO Remove this line.
+      nlines-=3;
 
       // Allocate memory.
       simputspec->nentries=nlines;
@@ -461,7 +459,7 @@ int simputfile_main()
     if((par.LFQ != 0) || (par.HBOQ != 0) || (par.Q1Q != 0) || (par.Q2Q != 0) || (par.Q3Q != 0)) {
       psd=newSimputPSD(&status);
       CHECK_STATUS_BREAK(status);
-      psd->nentries = par.PSDnpt;
+      psd->nentries=par.PSDnpt;
 
       // Generate log-scaled frequency grid
       psd->frequency = (float*) calloc(par.PSDnpt, sizeof(float));

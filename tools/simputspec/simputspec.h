@@ -11,7 +11,6 @@
 
 
 struct Parameters {
-
   /** File name of the output SIMPUT file. */
   char Simput[SIMPUT_MAXSTR];
 

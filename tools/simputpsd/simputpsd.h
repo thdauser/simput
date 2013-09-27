@@ -14,6 +14,33 @@ struct Parameters {
   /** File name of the SIMPUT file the PSD should be attached to. */
   char Simput[SIMPUT_MAXSTR];
   
+  /** PSD general parameters */
+  long PSDnpt;
+  float PSDfmin;
+  float PSDfmax;
+
+  /** PSD: Zero-frequency Lorentzian parameters */
+  float LFQ;
+  float LFrms;
+
+  /** PSD: Horizontal branch Lorentzian parameters */
+  float HBOf;
+  float HBOQ;
+  float HBOrms;
+
+  /** PSD: Quasi-periodic Lorentzian parameters (1-3) */
+  float Q1f;
+  float Q1Q;
+  float Q1rms;
+
+  float Q2f;
+  float Q2Q;
+  float Q2rms;
+
+  float Q3f;
+  float Q3Q;
+  float Q3rms;
+
   /** File name of the input ASCII PSD. */
   char PSDFile[SIMPUT_MAXSTR];
 };
