@@ -133,7 +133,7 @@ int simputpsd_getpar(struct Parameters* const par)
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
-  status=ape_trad_query_string("PSDFile", &sbuffer);
+  status=ape_trad_query_file_name("PSDFile", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the PSD file failed");
     return(status);

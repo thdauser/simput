@@ -133,7 +133,7 @@ int simputlc_getpar(struct Parameters* const par)
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
-  status=ape_trad_query_string("LCFile", &sbuffer);
+  status=ape_trad_query_file_name("LCFile", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the light curve file failed");
     return(status);

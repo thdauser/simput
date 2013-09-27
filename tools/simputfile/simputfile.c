@@ -8,8 +8,7 @@ float getFlux(const float* const energy,
 	      const float emin,
 	      const float emax)
 {
-  // Determine the current flux in the reference band.
-  // Flux in reference energy band.
+  // Determine the flux in the reference band.
   float isflux=0.; 
   long jj;
   for (jj=0; jj<nrows; jj++) {
@@ -277,7 +276,7 @@ int simputfile_main()
           simputspec->energy=(float*)malloc(nrows*sizeof(float));
           CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
           simputspec->pflux=(float*)malloc(nrows*sizeof(float));
-          CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
+          CHECK_NULL_BREAK(simputspec->pflux, status, "memory allocation failed");
           flux=(float*)malloc(nrows*sizeof(float));
           CHECK_NULL_BREAK(flux, status, "memory allocation failed");
 
@@ -550,7 +549,7 @@ int simputfile_main()
     // Insert a point-like source.
     float totalFlux=
         getFlux(simputspec->energy, simputspec->pflux, simputspec->nentries,
-            par.Emin, par.Emax);
+		par.Emin, par.Emax);
 
     if ((0==strcmp(par.Src_Name, "none"))||
 	(0==strcmp(par.Src_Name, "NONE"))) {

@@ -1336,9 +1336,9 @@ static SimputPhList* getSimputPhList(SimputCtlg* const cat,
 }
 
 
-static float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
-				       const float emin, 
-				       const float emax)
+float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
+				const float emin, 
+				const float emax)
 {
   // Return value.
   float flux=0.;

@@ -559,6 +559,12 @@ void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  float* const pflux,
 			  int* const status);
 
+/** Determine the flux in the specified energy band in
+    [erg/cm**2]. */
+float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
+				const float emin, 
+				const float emax);
+
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
     the mission-independent format. The access to the ARF data
