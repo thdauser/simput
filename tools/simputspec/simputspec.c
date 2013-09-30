@@ -7,13 +7,18 @@ int simputspec_main()
   // Program parameters.
   struct Parameters par;
 
+  fitsfile* fitsfile=NULL;
+
   // Temporary files for ISIS interaction.
   FILE* isiscmdfile=NULL;
   char isiscmdfilename[SIMPUT_MAXSTR]="";
-  fitsfile* isisfitsfile=NULL;
 
   // XSPEC iplot file containing a spectrum.
   FILE* xspecfile=NULL;
+
+  // Instrument response.
+  struct ARF* arf=NULL;
+  struct RMF* rmf=NULL;
 
   // Flag, whether the spectrum should be constructed from 
   // different components.
@@ -32,7 +37,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.01");
+  set_toolversion("0.02");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -45,7 +50,7 @@ int simputspec_main()
 
     // Check the input type for the spectrum.
     // Check the specification of an ISIS parameter file, an
-    // XSPEC file, and the individual spectral components.
+    // XSPEC file, a PHA file, and the individual spectral components.
     // Only one of these 3 option may be used. In case multiple of
     // them exist, throw an error message and abort.
 
@@ -53,22 +58,28 @@ int simputspec_main()
 	(0==strcmp(par.ISISFile, "NONE"))) {
       strcpy(par.ISISFile, "");
     }
-
     if ((0==strcmp(par.XSPECFile, "none"))||
 	(0==strcmp(par.XSPECFile, "NONE"))) {
       strcpy(par.XSPECFile, "");
     }
+    if ((0==strcmp(par.PHAFile, "none"))||
+	(0==strcmp(par.PHAFile, "NONE"))) {
+      strcpy(par.PHAFile, "");
+    }
 
     int noptions=0;
+    if ((par.plFlux>0.) || (par.bbFlux>0.) || 
+        (par.flFlux>0.) || (par.rflFlux>0.)) {
+      use_components=1;
+      noptions++;
+    }
     if (strlen(par.ISISFile)>0) {
       noptions++;
     }
     if (strlen(par.XSPECFile)>0) {
       noptions++;
     }
-    if ((par.plFlux>0.) || (par.bbFlux>0.) || 
-        (par.flFlux>0.) || (par.rflFlux>0.)) {
-      use_components=1;
+    if (strlen(par.PHAFile)>0) {
       noptions++;
     }
     if (0==noptions) {
@@ -208,14 +219,14 @@ int simputspec_main()
         // Determine the file name.
         char filename[SIMPUT_MAXSTR];
         sprintf(filename, "%s.spec%d", par.Simput, ii);
-        fits_open_table(&isisfitsfile, filename, READONLY, &status);
+        fits_open_table(&fitsfile, filename, READONLY, &status);
         CHECK_STATUS_BREAK(status);
 
         // Load the data from the file.
         int anynull;
         if (0==ii) {
           // Determine the number of rows.
-          fits_get_num_rows(isisfitsfile, &nrows, &status);
+          fits_get_num_rows(fitsfile, &nrows, &status);
           CHECK_STATUS_BREAK(status);
 
           // Allocate memory.
@@ -232,7 +243,7 @@ int simputspec_main()
           CHECK_NULL_BREAK(simputspecbuffer->pflux, status, "memory allocation failed");
 
           // Read the energy column.
-          fits_read_col(isisfitsfile, TFLOAT, 1, 1, 1, nrows, 0, simputspec->energy,
+          fits_read_col(fitsfile, TFLOAT, 1, 1, 1, nrows, 0, simputspec->energy,
 			&anynull, &status);
           CHECK_STATUS_BREAK(status);
 	  long jj;
@@ -243,7 +254,7 @@ int simputspec_main()
         } else {
           // Check whether the number of entries is
           // consistent with the previous files.
-          fits_get_num_rows(isisfitsfile, &nrows, &status);
+          fits_get_num_rows(fitsfile, &nrows, &status);
           CHECK_STATUS_BREAK(status);
 
           if (nrows!=simputspec->nentries) {
@@ -254,12 +265,12 @@ int simputspec_main()
         }
 
         // Read the flux column.
-        fits_read_col(isisfitsfile, TFLOAT, 2, 1, 1, nrows, 0, 
+        fits_read_col(fitsfile, TFLOAT, 2, 1, 1, nrows, 0, 
 		      simputspecbuffer->pflux, &anynull, &status);
         CHECK_STATUS_BREAK(status);
 
-        fits_close_file(isisfitsfile, &status);
-        isisfitsfile=NULL;
+        fits_close_file(fitsfile, &status);
+        fitsfile=NULL;
         CHECK_STATUS_BREAK(status);
 
         // If the spectrum is given via individual components, they
@@ -321,9 +332,9 @@ int simputspec_main()
       CHECK_STATUS_BREAK(status);
       // END of loop over the different spectral components.
 
-    } else {
-      // The XPSEC spectrum is contained in an ASCII file and has 
-      // to be loaded from there.
+    } else if (strlen(par.XSPECFile)>0) {
+      // The spectrum is contained in an ASCII file produced by XSPEC,
+      // and has to be loaded from there.
 
       // Open the file.
       xspecfile=fopen(par.XSPECFile,"r");
@@ -393,7 +404,125 @@ int simputspec_main()
       fclose(xspecfile);
       xspecfile=NULL;
 
-    } // END of loading the spectrum from an XSPEC file.
+    } else {
+      // The spectrum has to be obtained from a PHA file.
+
+      // Load the spectrum from the PHA file.
+      long nrows;
+      fits_open_table(&fitsfile, par.PHAFile, READONLY, &status);
+      CHECK_STATUS_BREAK(status);
+      fits_get_num_rows(fitsfile, &nrows, &status);
+      CHECK_STATUS_BREAK(status);
+
+      // Allocate memory.
+      simputspec->nentries=nrows;
+      simputspec->energy=(float*)malloc(nrows*sizeof(float));
+      CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
+      simputspec->pflux=(float*)malloc(nrows*sizeof(float));
+      CHECK_NULL_BREAK(simputspec->pflux, status, "memory allocation failed");
+
+      // TODO Need to distinguish whether the file contains counts or rate.
+      char comment[SIMPUT_MAXSTR];
+      char hduclas3[SIMPUT_MAXSTR];
+      fits_read_key(fitsfile, TSTRING, "HDUCLAS3", hduclas3, comment, &status);
+      if (EXIT_SUCCESS!=status) {
+	SIMPUT_ERROR("could not find keyword 'HDUCLAS3' in PHA file");
+	break;
+      }
+
+      if ((0==strcmp(hduclas3, "COUNT"))||(0==strcmp(hduclas3, "count"))) {
+	float exposure;
+	fits_read_key(fitsfile, TFLOAT, "EXPOSURE", &exposure, comment, &status);
+	if (EXIT_SUCCESS!=status) {
+	  SIMPUT_ERROR("could not find keyword 'EXPOSURE' in PHA file");
+	  break;
+	}
+
+	int ccount;
+	fits_get_colnum(fitsfile, CASEINSEN, "COUNT", &ccount, &status);
+	if (EXIT_SUCCESS!=status) {
+	  SIMPUT_ERROR("could not find column 'COUNT' in PHA file");
+	  break;
+	}
+
+	int anynull=0;
+	fits_read_col(fitsfile, TFLOAT, ccount, 1, 1, nrows, 0, simputspec->pflux,
+		      &anynull, &status);
+
+	// Divide by exposure time.
+	long ii;
+	for (ii=0; ii<nrows; ii++) {
+	  simputspec->pflux[ii]*=1./exposure;
+	}
+
+      } else if ((0==strcmp(hduclas3, "RATE"))||(0==strcmp(hduclas3, "rate"))) {
+	int crate;
+	fits_get_colnum(fitsfile, CASEINSEN, "RATE", &crate, &status);
+	if (EXIT_SUCCESS!=status) {
+	  SIMPUT_ERROR("could not find column 'RATE' in PHA file");
+	  break;
+	}
+
+	int anynull=0;
+	fits_read_col(fitsfile, TFLOAT, crate, 1, 1, nrows, 0, simputspec->pflux,
+		      &anynull, &status);
+
+      } else {
+	SIMPUT_ERROR("invalid value for keyword 'HDUCLAS3'");
+	status=EXIT_FAILURE;
+	break;
+      }
+
+
+      // Load the ARF and the RMF.
+      char ancrfile[SIMPUT_MAXSTR];
+      fits_read_key(fitsfile, TSTRING, "ANCRFILE", ancrfile, comment, &status);
+      if (EXIT_SUCCESS!=status) {
+	SIMPUT_ERROR("could not find keyword 'ANCRFILE' in event file");
+	break;
+      }
+      char respfile[SIMPUT_MAXSTR];
+      fits_read_key(fitsfile, TSTRING, "RESPFILE", respfile, comment, &status);
+      if (EXIT_SUCCESS!=status) {
+	SIMPUT_ERROR("could not find keyword 'RESPFILE' in event file");
+	break;
+      }
+      arf=loadARF(ancrfile, &status);
+      CHECK_STATUS_BREAK(status);
+      rmf=loadRMF(respfile, &status);
+      CHECK_STATUS_BREAK(status);
+      loadEbounds(rmf, respfile, &status);
+      CHECK_STATUS_BREAK(status);
+
+      // Check that RMF and ARF have the same number of channels.
+      if (rmf->NumberChannels!=arf->NumberEnergyBins) {
+	SIMPUT_ERROR("ARF and RMF must contain the same number of channels");
+	status=EXIT_FAILURE;
+	break;
+      }
+
+      // Deconvolve the data according to the method presented by Nowak (2005).
+      long ii;
+      for (ii=0; ii<simputspec->nentries; ii++) {
+	// Calculate the integral \int R(h,E)A(E)dE.
+	float area=0.;
+	long kk;
+	for (kk=0; kk<arf->NumberEnergyBins; kk++) {
+	  area+=ReturnRMFElement(rmf, ii, kk)*arf->EffArea[kk];
+	}
+	
+	// Divide by the area.
+	simputspec->pflux[ii]*=1./area;
+	
+	// Store the energy.
+	float lo, hi;
+	getEBOUNDSEnergyLoHi(ii, rmf, &lo, &hi, &status);
+	CHECK_STATUS_BREAK(status);
+	simputspec->energy[ii]=0.5*(lo+hi);
+      }
+      CHECK_STATUS_BREAK(status);
+
+    }
 
     long jj;
     for (jj=0; jj<simputspec->nentries; jj++) {
@@ -439,9 +568,9 @@ int simputspec_main()
     fclose(isiscmdfile);
     isiscmdfile=NULL;
   }
-  if (NULL!=isisfitsfile) {
-    fits_close_file(isisfitsfile, &status);
-    isisfitsfile=NULL;
+  if (NULL!=fitsfile) {
+    fits_close_file(fitsfile, &status);
+    fitsfile=NULL;
   }
   // Remove the temporary files.
   if (strlen(isiscmdfilename)>0) {
@@ -465,6 +594,8 @@ int simputspec_main()
   freeSimputMIdpSpec(&simputspecbuffer);
   freeSimputMIdpSpec(&simputspec);
   freeSimputCtlg(&cat, &status);
+  freeRMF(rmf);
+  freeARF(arf);
 
   if (EXIT_SUCCESS==status) headas_chat(3, "finished successfully!\n\n");
   return(status);
@@ -569,6 +700,14 @@ int simputspec_getpar(struct Parameters* const par)
     return(status);
   }
   strcpy(par->XSPECFile, sbuffer);
+  free(sbuffer);
+
+  status=ape_trad_query_string("PHAFile", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the name of the PHA file failed");
+    return(status);
+  }
+  strcpy(par->PHAFile, sbuffer);
   free(sbuffer);
 
   return(status);

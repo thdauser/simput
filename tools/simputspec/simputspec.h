@@ -5,6 +5,8 @@
 
 #include "simput.h"
 #include "common.h"
+#include "arf.h"
+#include "rmf.h"
 
 #define TOOLSUB simputspec_main
 #include "headas_main.c"
@@ -42,6 +44,9 @@ struct Parameters {
 
   /** File name of the input ASCII spectrum. */
   char XSPECFile[SIMPUT_MAXSTR];
+
+  /** File name of the input PHA spectrum. */
+  char PHAFile[SIMPUT_MAXSTR];
 };
 
 
