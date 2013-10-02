@@ -1,7 +1,7 @@
 #include "simputfile.h"
 
 
-int simputfile_main() 
+int simputfile_main()
 {
   // Program parameters.
   struct Parameters par;
@@ -12,7 +12,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.13");
+  set_toolversion("0.14");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -94,7 +94,8 @@ int simputfile_main()
 	    "flSigma=%e flFlux=%e "
 	    "rflSpin=%f rflFlux=%e "
 	    "NH=%e "
-	    "Emin=%f Emax=%f ISISFile=%s XSPECFile=%s "
+	    "Emin=%f Emax=%f "
+	    "ISISFile=%s XSPECFile=%s PHAFile=%s "
 	    "chatter=%d history=%s",
 	    par.Simput,
 	    par.plPhoIndex, par.plFlux,
@@ -102,7 +103,8 @@ int simputfile_main()
 	    par.flSigma, par.flFlux,
 	    par.rflSpin, par.rflFlux,
 	    par.NH,
-	    par.Emin, par.Emax, par.ISISFile, par.XSPECFile,
+	    par.Emin, par.Emax, 
+	    par.ISISFile, par.XSPECFile, par.PHAFile,
 	    par.chatter, shistory);
     status=system(command);
     CHECK_STATUS_BREAK(status);
@@ -146,8 +148,12 @@ int simputfile_main()
 
   } while(0); // END of error handling loop.
 
-  if (EXIT_SUCCESS==status) headas_chat(3, "finished successfully!\n\n");
-  return(status);
+  if (EXIT_SUCCESS==status) {
+    headas_chat(3, "finished successfully!\n\n");
+    return(EXIT_SUCCESS);
+  } else {
+    return(EXIT_FAILURE);
+  }
 }
 
 
@@ -160,7 +166,6 @@ int simputfile_getpar(struct Parameters* const par)
   int status=EXIT_SUCCESS; 
 
   // Read all parameters via the ape_trad_ routines.
-
   status=ape_trad_query_file_name("Simput", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the output SIMPUT catalog file failed");
@@ -269,6 +274,14 @@ int simputfile_getpar(struct Parameters* const par)
     return(status);
   }
   strcpy(par->XSPECFile, sbuffer);
+  free(sbuffer);
+
+  status=ape_trad_query_string("PHAFile", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the name of the PHA file failed");
+    return(status);
+  }
+  strcpy(par->PHAFile, sbuffer);
   free(sbuffer);
 
   status=ape_trad_query_string("LCFile", &sbuffer);

@@ -1,7 +1,7 @@
 #include "simputsrc.h"
 
 
-int simputsrc_main() 
+int simputsrc_main()
 {
   // Program parameters.
   struct Parameters par;
@@ -77,8 +77,12 @@ int simputsrc_main()
   freeSimputSrc(&src);
   freeSimputCtlg(&cat, &status);
 
-  if (EXIT_SUCCESS==status) headas_chat(3, "finished successfully!\n\n");
-  return(status);
+  if (EXIT_SUCCESS==status) {
+    headas_chat(3, "finished successfully!\n\n");
+    return(EXIT_SUCCESS);
+  } else {
+    return(EXIT_FAILURE);
+  }
 }
 
 
@@ -91,7 +95,6 @@ int simputsrc_getpar(struct Parameters* const par)
   int status=EXIT_SUCCESS; 
 
   // Read all parameters via the ape_trad_ routines.
-
   status=ape_trad_query_file_name("Simput", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the SIMPUT catalog failed");
