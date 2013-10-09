@@ -37,7 +37,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.05");
+  set_toolversion("0.06");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -441,7 +441,7 @@ int simputspec_main()
 	int ccount;
 	fits_get_colnum(fitsfile, CASEINSEN, "COUNTS", &ccount, &status);
 	if (EXIT_SUCCESS!=status) {
-	  SIMPUT_ERROR("could not find column 'COUNT' in PHA file");
+	  SIMPUT_ERROR("could not find column 'COUNTS' in PHA file");
 	  break;
 	}
 
@@ -504,6 +504,12 @@ int simputspec_main()
       // Deconvolve the data according to the method presented by Nowak (2005).
       long ii;
       for (ii=0; ii<simputspec->nentries; ii++) {
+	// Store the energy.
+	float lo, hi;
+	getEBOUNDSEnergyLoHi(ii, rmf, &lo, &hi, &status);
+	CHECK_STATUS_BREAK(status);
+	simputspec->energy[ii]=0.5*(lo+hi);
+
 	// Calculate the integral \int R(h,E)A(E)dE.
 	float area=0.;
 	long kk;
@@ -511,14 +517,8 @@ int simputspec_main()
 	  area+=ReturnRMFElement(rmf, ii, kk)*arf->EffArea[kk];
 	}
 	
-	// Divide by the area.
-	simputspec->pflux[ii]*=1./area;
-	
-	// Store the energy.
-	float lo, hi;
-	getEBOUNDSEnergyLoHi(ii, rmf, &lo, &hi, &status);
-	CHECK_STATUS_BREAK(status);
-	simputspec->energy[ii]=0.5*(lo+hi);
+	// Divide by the area and the width of the energy bin.
+	simputspec->pflux[ii]*=1./area/(hi-lo);	
       }
       CHECK_STATUS_BREAK(status);
 
