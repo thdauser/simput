@@ -37,7 +37,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.04");
+  set_toolversion("0.05");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -495,8 +495,8 @@ int simputspec_main()
       CHECK_STATUS_BREAK(status);
 
       // Check that RMF and ARF have the same number of channels.
-      if (rmf->NumberChannels!=arf->NumberEnergyBins) {
-	SIMPUT_ERROR("ARF and RMF must contain the same number of channels");
+      if (rmf->NumberEnergyBins!=arf->NumberEnergyBins) {
+	SIMPUT_ERROR("ARF and RMF must contain the same number of energy bins");
 	status=EXIT_FAILURE;
 	break;
       }
