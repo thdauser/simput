@@ -12,7 +12,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.14");
+  set_toolversion("0.15");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -79,8 +79,7 @@ int simputfile_main()
 	    "simputsrc Simput=%s Src_Name=%s RA=%f Dec=%f "
 	    "Emin=%f Emax=%f Flux=%e chatter=%d clobber=%s history=%s",
 	    par.Simput, par.Src_Name, par.RA, par.Dec,
-	    par.Emin, par.Emax, 
-	    par.plFlux+par.bbFlux+par.flFlux+par.rflFlux,
+	    par.Emin, par.Emax, par.srcFlux,
 	    par.chatter, sclobber, shistory);
     status=system(command);
     CHECK_STATUS_BREAK(status);
@@ -191,6 +190,12 @@ int simputfile_getpar(struct Parameters* const par)
   status=ape_trad_query_float("Dec", &par->Dec);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the declination failed");
+    return(status);
+  }
+
+  status=ape_trad_query_float("srcFlux", &par->srcFlux);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the srcFlux parameter failed");
     return(status);
   }
 

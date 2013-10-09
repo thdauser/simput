@@ -21,6 +21,10 @@ struct Parameters {
   float RA;
   float Dec;
 
+  /** Source flux [erg/s/cm^2]. If the source flux is not specified
+      (value=0.0), it is set according to the assigned spectrum. */
+  float srcFlux;
+
   /** Power law. */
   float plPhoIndex;
   float plFlux;

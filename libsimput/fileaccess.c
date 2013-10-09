@@ -487,7 +487,8 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
     }
 
     if (cat->csrc_name>0) {
-      fits_read_col_str(cat->fptr, cat->csrc_name, row, 1, 1, "", src_name, &anynul, status);
+      fits_read_col_str(cat->fptr, cat->csrc_name, row, 1, 1, "", 
+			src_name, &anynul, status);
       if (EXIT_SUCCESS!=*status) {
 	SIMPUT_ERROR("failed reading source name from source catalog");
 	break;

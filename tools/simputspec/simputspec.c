@@ -37,7 +37,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.02");
+  set_toolversion("0.03");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -421,7 +421,7 @@ int simputspec_main()
       simputspec->pflux=(float*)malloc(nrows*sizeof(float));
       CHECK_NULL_BREAK(simputspec->pflux, status, "memory allocation failed");
 
-      // TODO Need to distinguish whether the file contains counts or rate.
+      // Need to distinguish whether the file contains counts or rate.
       char comment[SIMPUT_MAXSTR];
       char hduclas3[SIMPUT_MAXSTR];
       fits_read_key(fitsfile, TSTRING, "HDUCLAS3", hduclas3, comment, &status);
@@ -552,6 +552,32 @@ int simputspec_main()
     fits_write_col(cat->fptr, TSTRING, cat->cspectrum, 1, 1, 1,
 		   &specref, &status);
     CHECK_STATUS_BREAK(status);
+
+    // Check if the source flux in the catalog is set. If not (value=0.0),
+    // set the flux according to the spectrum.
+    int anynul=0;
+    float srcflux=0.0;
+    fits_read_col(cat->fptr, TFLOAT, cat->cflux, 1, 1, 1,
+		  &srcflux, &srcflux, &anynul, &status);
+    CHECK_STATUS_BREAK(status);
+
+    if (0.0==srcflux) {
+      // Determine the reference band.
+      float srce_min=0.0, srce_max=0.0;
+      fits_read_col(cat->fptr, TFLOAT, cat->ce_min, 1, 1, 1,
+		    &srce_min, &srce_min, &anynul, &status);
+      fits_read_col(cat->fptr, TFLOAT, cat->ce_max, 1, 1, 1,
+		    &srce_max, &srce_max, &anynul, &status);
+      CHECK_STATUS_BREAK(status);
+      
+      // Determine the flux in the reference band.
+      srcflux=getSimputMIdpSpecBandFlux(simputspec, srce_min, srce_max);
+
+      // Store the flux in the source catalog.
+      fits_write_col(cat->fptr, TFLOAT, cat->cflux, 1, 1, 1,
+		     &srcflux, &status);
+      CHECK_STATUS_BREAK(status);
+    }
 
     // ---- END of Main Part ----
 

@@ -1,4 +1,4 @@
 Simput,fre,lq,"simput.fits",,,"SIMPUT catalog file"
 LCFile,fre,h,"none",,,"ASCII file containing a light curve"
-chatter,i,lh,3,,,"chatter: control verbosity of the program"
-history,b,lh,true,,,"write a history block with program parameters to each FITS file"
+chatter,i,lh,3,,,"verbosity"
+history,b,lh,true,,,"write a history block with program parameters to each FITS file?"
