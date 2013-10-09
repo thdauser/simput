@@ -37,7 +37,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.03");
+  set_toolversion("0.04");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -439,7 +439,7 @@ int simputspec_main()
 	}
 
 	int ccount;
-	fits_get_colnum(fitsfile, CASEINSEN, "COUNT", &ccount, &status);
+	fits_get_colnum(fitsfile, CASEINSEN, "COUNTS", &ccount, &status);
 	if (EXIT_SUCCESS!=status) {
 	  SIMPUT_ERROR("could not find column 'COUNT' in PHA file");
 	  break;
