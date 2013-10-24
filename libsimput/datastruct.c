@@ -674,6 +674,7 @@ SimputLC* newSimputLC(int* const status)
   lc->timezero=0.;
   lc->phase0  =0.;
   lc->period  =0.;
+  lc->dperiod =0.;
   lc->fluxscal=0.;
   lc->src_id  =0;
   lc->fileref =NULL;
@@ -765,12 +766,12 @@ SimputKRLC* newSimputKRLC(int* const status)
   lc->nentries=0;
   lc->time    =NULL;
   lc->phase   =NULL;
-  lc->a       =NULL;
   lc->b       =NULL;
   lc->mjdref  =0.;
   lc->timezero=0.;
   lc->phase0  =0.;
   lc->period  =0.;
+  lc->dperiod =0.;
   lc->src_id  =0;
   lc->fileref =NULL;
 
@@ -786,9 +787,6 @@ void freeSimputKRLC(SimputKRLC** const lc)
     }
     if (NULL!=(*lc)->phase) {
       free((*lc)->phase);
-    }
-    if (NULL!=(*lc)->a) {
-      free((*lc)->a);
     }
     if (NULL!=(*lc)->b) {
       free((*lc)->b);

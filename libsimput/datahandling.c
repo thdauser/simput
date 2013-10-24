@@ -242,14 +242,22 @@ static inline double getLCTime(const SimputLC* const lc,
   } else {
     // Periodic light curve.
     double phase=lc->phase[kk] - lc->phase0 + nperiods;
-    return(phase*lc->period 
+    double phasecorr;
+    if (nperiods>=0) {
+      phasecorr= nperiods*(nperiods-1)*0.5*lc->dperiod;
+    } else {
+      phasecorr=-nperiods*(nperiods+1)*0.5*lc->dperiod;
+    }
+    return((phase+phasecorr)*lc->period 
 	   +lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
   }
 }
 
 
 /** Determine the index of the bin of the light curve that corresponds
-    to the specified time. */
+    to the specified time. For periodic light curves the function
+    stores the number of periods since the specified origin of the
+    light curve in the parameter nperiods. */
 static inline long getLCBin(const SimputLC* const lc, 
 			    const double time, 
 			    const double mjdref,
@@ -266,6 +274,7 @@ static inline long getLCBin(const SimputLC* const lc,
   // Check if the light curve is periodic or not.
   if (NULL!=lc->time) {
     // Non-periodic light curve.
+    *nperiods=0;
 
     // Check if the requested time is within the covered interval.
     if ((time<getLCTime(lc, 0, 0, mjdref)) || 
@@ -281,13 +290,11 @@ static inline long getLCBin(const SimputLC* const lc,
       *status=EXIT_FAILURE;
       return(0);
     }
-    
-    *nperiods=0;
 
   } else {
     // Periodic light curve.
     double dt=time-getLCTime(lc, 0, 0, mjdref);
-    double phase=lc->phase0 + dt/lc->period;
+    double phase=lc->phase0+dt/lc->period*(1.-0.5*dt*lc->dperiod/lc->period);
     (*nperiods)=(long long)phase;
     if (phase<0.) {
       (*nperiods)--;
@@ -961,14 +968,22 @@ static inline double getKRLCTime(const SimputKRLC* const lc,
   } else {
     // Periodic light curve.
     double phase=lc->phase[kk] - lc->phase0 + nperiods;
-    return(phase*lc->period 
+    double phasecorr;
+    if (nperiods>=0) {
+      phasecorr= nperiods*(nperiods-1)*0.5*lc->dperiod;
+    } else {
+      phasecorr=-nperiods*(nperiods+1)*0.5*lc->dperiod;
+    }
+    return((phase+phasecorr)*lc->period
 	   +lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
   }
 }
 
 
 /** Determine the index of the bin of the K&R light curve that
-    corresponds to the specified time. */
+    corresponds to the specified time. For periodic light curves the
+    function stores the number of periods since the specified origin
+    of the light curve in the parameter nperiods. */
 static inline long getKRLCBin(const SimputKRLC* const lc, 
 			      const double time, 
 			      const double mjdref,
@@ -978,6 +993,7 @@ static inline long getKRLCBin(const SimputKRLC* const lc,
   // Check if the light curve is periodic or not.
   if (NULL!=lc->time) {
     // Non-periodic light curve.
+    *nperiods=0;
 
     // Check if the requested time is within the covered interval.
     if ((time<getKRLCTime(lc, 0, 0, mjdref)) || 
@@ -993,13 +1009,11 @@ static inline long getKRLCBin(const SimputKRLC* const lc,
       *status=EXIT_FAILURE;
       return(0);
     }
-    
-    *nperiods=0;
 
   } else {
     // Periodic light curve.
     double dt=time-getKRLCTime(lc, 0, 0, mjdref);
-    double phase=lc->phase0 + dt/lc->period;
+    double phase=lc->phase0+dt/lc->period*(1.-0.5*dt*lc->dperiod/lc->period);
     (*nperiods)=(long long)phase;
     if (phase<0.) {
       (*nperiods)--;
@@ -1124,9 +1138,6 @@ static SimputKRLC* getSimputKRLC(SimputCtlg* const cat,
     CHECK_NULL_RET(krlc->phase, *status, 
 		   "memory allocation for K&R light curve failed", krlc);
   }    
-  krlc->a=(double*)malloc(krlc->nentries*sizeof(double));
-  CHECK_NULL_RET(krlc->a, *status, 
-		 "memory allocation for K&R light curve failed", krlc);
   krlc->b=(double*)malloc(krlc->nentries*sizeof(double));
   CHECK_NULL_RET(krlc->b, *status, 
 		 "memory allocation for K&R light curve failed", krlc);
@@ -1136,6 +1147,7 @@ static SimputKRLC* getSimputKRLC(SimputCtlg* const cat,
   krlc->timezero=lc->timezero;
   krlc->phase0  =lc->phase0;
   krlc->period  =lc->period;
+  krlc->dperiod =lc->dperiod;
   for (ii=0; ii<krlc->nentries; ii++) {
     if (NULL!=lc->time) {
       krlc->time[ii]=lc->time[ii];
@@ -1146,25 +1158,9 @@ static SimputKRLC* getSimputKRLC(SimputCtlg* const cat,
 
   // Determine the auxiliary values for the K&R light curve 
   // (including FLUXSCAL).
-  for (ii=0; ii<krlc->nentries-1; ii++) {
-    double dt;
-    if (NULL!=krlc->time) {
-      // Non-periodic light curve.
-      dt=krlc->time[ii+1]-krlc->time[ii];
-    } else {
-      // Periodic light curve.
-      dt=(krlc->phase[ii+1]-krlc->phase[ii])*krlc->period;
-    }
-    if (dt==0.0) {
-      krlc->a[ii]=0.0;
-    } else {
-      krlc->a[ii]=(lc->flux[ii+1]-lc->flux[ii])
-	/dt /lc->fluxscal;
-    }
+  for (ii=0; ii<krlc->nentries; ii++) {
     krlc->b[ii]=lc->flux[ii]/lc->fluxscal;
   }
-  krlc->a[krlc->nentries-1]=0.;
-  krlc->b[krlc->nentries-1]=lc->flux[lc->nentries-1]/lc->fluxscal;
 
   // Determine the extension type of the referred HDU.
   int timetype=getExtType(cat, timeref, status);
@@ -1643,27 +1639,29 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
 	// Determine the relative time within the kk-th interval 
 	// (i.e., t=0 lies at the beginning of the kk-th interval).
-	double t        =prevtime-(getKRLCTime(lc, kk, nperiods, mjdref));
+	double t_kk=getKRLCTime(lc, kk, nperiods, mjdref);
+	double t   =prevtime-t_kk;
 	double stepwidth=
-	  getKRLCTime(lc, kk+1, nperiods, mjdref)-
-	  getKRLCTime(lc, kk  , nperiods, mjdref);
+	  getKRLCTime(lc, kk+1, nperiods, mjdref)-t_kk;
+	double a_kk=(lc->b[kk+1]-lc->b[kk])/stepwidth;
 	
 	// Step 2 in the algorithm.
-	double uk=1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
+	double uk=1.-exp((-a_kk/2.*(pow(stepwidth,2.)-pow(t,2.))
 			  -lc->b[kk]*(stepwidth-t))*avgrate);
+
 	// Step 3 in the algorithm.
 	if (u<=uk) {
-	  if (fabs(lc->a[kk]*stepwidth)>fabs(lc->b[kk]*1.e-6)) { 
+	  if (fabs(a_kk*stepwidth)>fabs(lc->b[kk]*1.e-6)) { 
 	    // Instead of checking if a_kk = 0., check, whether its product 
 	    // with the interval length is a very small number in comparison 
 	    // to b_kk. If a_kk * stepwidth is much smaller than b_kk, the 
 	    // rate in the interval can be assumed to be approximately constant.
 	    *nexttime=
 	      getKRLCTime(lc, kk, nperiods, mjdref) +
-	      (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
-			       2.*lc->a[kk]*lc->b[kk]*t - 
-			       2.*lc->a[kk]*log(1.-u)/avgrate)
-	       )/lc->a[kk];
+	      (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(a_kk*t,2.) + 
+			       2.*a_kk*lc->b[kk]*t - 
+			       2.*a_kk*log(1.-u)/avgrate)
+	       )/a_kk;
 	    return(0);
 	    
 	  } else { // a_kk == 0

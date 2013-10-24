@@ -1930,9 +1930,42 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 	break;
       }
 
+      // Verify that the specified period is positive.
+      if (lc->period<=0.) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "period of light curve '%s' does not have a positive value", 
+		filename);
+	SIMPUT_ERROR(msg);
+	*status=EXIT_FAILURE;
+	break;
+      }
+
+      int status2=EXIT_SUCCESS;
+      fits_write_errmark();
+      fits_read_key(fptr, TDOUBLE, "DPERIOD", &lc->dperiod, comment, &status2);
+      fits_clear_errmark();
+      if (EXIT_SUCCESS!=status2) {
+	// The keyword 'DPERIOD' does not exist. Therefore we can set
+	// the respective attribute to 0.
+	lc->dperiod=0.;
+      } else {	
+	// Check if dperiod is significantly smaller than period. This 
+	// should be the case because otherwise the Taylor series
+	// that is used for handling the period change, is insufficient.
+	if (fabs(lc->dperiod)>0.001*lc->period) {
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "With the selected values for PERIOD=%e and DPERIOD=%e "
+		  "of the light curve '%s', the implemented algorithms might not "
+		  "work properly. DPERIOD should be much smaller than PERIOD.", 
+		  lc->period, lc->dperiod, filename);
+	  SIMPUT_WARNING(msg);
+	}
+      }
+
     } else {
-      lc->phase0 = 0.;
-      lc->period = 0.;
+      lc->phase0 =0.;
+      lc->period =0.;
+      lc->dperiod=0.;
     }
 
     // Optional keywords.
@@ -1942,7 +1975,7 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     if (EXIT_SUCCESS!=opt_status) {
       // FLUXSCAL is not given in the FITS header. We therefore assume
       // that it has a value of 1.
-      lc->fluxscal = 1.;
+      lc->fluxscal=1.;
       opt_status=EXIT_SUCCESS;
     }
     fits_clear_errmark();
@@ -2274,8 +2307,9 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     if (cphase>0) {
       // Only for periodic light curves.
       periodic=1;
-      fits_write_key(fptr, TDOUBLE, "PHASE0", &lc->phase0, "", status);
-      fits_write_key(fptr, TDOUBLE, "PERIOD", &lc->period, "", status);
+      fits_write_key(fptr, TDOUBLE, "PHASE0" , &lc->phase0 , "", status);
+      fits_write_key(fptr, TDOUBLE, "PERIOD" , &lc->period , "", status);
+      fits_write_key(fptr, TDOUBLE, "DPERIOD", &lc->dperiod, "", status);
     }
     fits_write_key(fptr, TINT,  "PERIODIC", &periodic, "", status);
     if (EXIT_SUCCESS!=*status) {

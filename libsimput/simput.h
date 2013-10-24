@@ -215,11 +215,14 @@ typedef struct {
   /** Zero time [s]. */
   double timezero;
 
-  /** Phase of periodic oscillation at timezero. */
+  /** Phase of periodic signal at timezero. */
   double phase0;
 
-  /** Duration of one oscillation period [s]. */
+  /** Duration of one period [s]. */
   double period;
+
+  /** First derivative of period with respect to time [unitless] */
+  double dperiod;
 
   /** Flux scaling factor. */
   float fluxscal;
@@ -252,12 +255,10 @@ typedef struct {
   /** Phase values (between 0 and 1). */
   double* phase;
 
-  /** Piece-wise linear light curve data points. The value a_k
-      represents the gradient of the light curve between the time t_k
-      and t_{k+1} (slope, [1/s]). The value b_k represents the
-      constant contribution (intercept) at t_k. These values include
-      the FLUXSCAL. */
-  double *a, *b;
+  /** Piece-wise linear light curve data points. The value b_k
+      represents the constant contribution (intercept) at t_k. It
+      includes the FLUXSCAL. */
+  double *b;
 
   /** MJD for reference time [d]. */
   double mjdref;
@@ -265,12 +266,15 @@ typedef struct {
   /** Zero time [s]. */
   double timezero;
 
-  /** Phase of periodic oscillation at timezero. */
+  /** Phase of periodic signal at timezero. */
   double phase0;
 
-  /** Duration of one oscillation period [s]. */
+  /** Duration of one period [s]. */
   double period;
   
+  /** First derivative of period with respect to time [unitless] */
+  double dperiod;
+
   /** If the light curve has been produced from a PSD, it is assigned
       to a particular source and cannot be re-used for different
       sources. In that case the SRC_ID of the respective source is
