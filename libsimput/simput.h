@@ -137,9 +137,6 @@ typedef struct {
   /** Buffer for pre-loaded spectra. */
   void* specbuff;
 
-  /** Buffer for pre-loaded Klein and Robert light curves. */
-  void* krlcbuff;
-
   /** Instrument ARF. */
   struct ARF* arf;
 
@@ -240,54 +237,6 @@ typedef struct {
   char* fileref;
 
 } SimputLC;
-
-
-/** SIMPUT light curve converted to the form needed by the Klein &
-    Roberts (1984) algorithm. */
-typedef struct {
-
-  /** Number of entries in the light curve. */
-  long nentries;
-
-  /** Time values [s]. */
-  double* time;
-
-  /** Phase values (between 0 and 1). */
-  double* phase;
-
-  /** Piece-wise linear light curve data points. The value b_k
-      represents the constant contribution (intercept) at t_k. It
-      includes the FLUXSCAL. */
-  double *b;
-
-  /** MJD for reference time [d]. */
-  double mjdref;
-
-  /** Zero time [s]. */
-  double timezero;
-
-  /** Phase of periodic signal at timezero. */
-  double phase0;
-
-  /** Duration of one period [s]. */
-  double period;
-  
-  /** First derivative of period with respect to time [unitless] */
-  double dperiod;
-
-  /** If the light curve has been produced from a PSD, it is assigned
-      to a particular source and cannot be re-used for different
-      sources. In that case the SRC_ID of the respective source is
-      stored in this variable. Otherwise its value is set to 0. */
-  long src_id;
-
-  /** Reference to the location of the light curve given by the
-      extended filename syntax. This reference is used to check,
-      whether the light curve is already contained in the internal
-      storage. */
-  char* fileref;
-
-} SimputKRLC;
 
 
 /** SIMPUT power spectral density (PSD). */

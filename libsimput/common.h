@@ -174,13 +174,6 @@ struct SimputLCBuffer {
 };
 
 
-struct SimputKRLCBuffer {
-  long nkrlcs; // Current number of K&R light curves in the cache.
-  long ckrlc;  // Index of next position in the cache that will be used.
-  SimputKRLC** krlcs; // Cache for the K&R light curves.
-};
-
-
 struct SimputPSDBuffer {
   long npsds; // Current number of PSDs in the cache.
   SimputPSD** psds; // Cache for the PSDs.
@@ -245,14 +238,6 @@ void insertSimputSpecBuffer(void** buffer,
 
 struct SimputLCBuffer* newSimputLCBuffer(int* const status);
 void freeSimputLCBuffer(struct SimputLCBuffer** sb);
-
-
-SimputKRLC* newSimputKRLC(int* const status);
-void freeSimputKRLC(SimputKRLC** const lc);
-
-
-struct SimputKRLCBuffer* newSimputKRLCBuffer(int* const status);
-void freeSimputKRLCBuffer(struct SimputKRLCBuffer** sb);
 
 
 struct SimputPSDBuffer* newSimputPSDBuffer(int* const status);

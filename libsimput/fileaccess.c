@@ -1949,15 +1949,13 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 	// the respective attribute to 0.
 	lc->dperiod=0.;
       } else {	
-	// Check if dperiod is significantly smaller than period. This 
-	// should be the case because otherwise the Taylor series
-	// that is used for handling the period change, is insufficient.
-	if (fabs(lc->dperiod)>0.001*lc->period) {
+	// Check if dperiod is too small such that the applied formula
+	// that is used for handling the period change, is guaranteed
+	// to work properly.
+	if (fabs(lc->dperiod)<1.e-20) {
 	  char msg[SIMPUT_MAXSTR];
-	  sprintf(msg, "With the selected values for PERIOD=%e and DPERIOD=%e "
-		  "of the light curve '%s', the implemented algorithms might not "
-		  "work properly. DPERIOD should be much smaller than PERIOD.", 
-		  lc->period, lc->dperiod, filename);
+	  sprintf(msg, "value of DPERIOD of the light curve '%s' is too small (%e)", 
+		  filename, lc->dperiod);
 	  SIMPUT_WARNING(msg);
 	}
       }

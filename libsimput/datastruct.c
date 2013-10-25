@@ -192,7 +192,6 @@ SimputCtlg* newSimputCtlg(int* const status)
   cat->psdbuff  =NULL;
   cat->imgbuff  =NULL;
   cat->specbuff =NULL;
-  cat->krlcbuff =NULL;
   cat->extbuff  =NULL;
   cat->arf      =NULL;
 
@@ -233,9 +232,6 @@ void freeSimputCtlg(SimputCtlg** const cat,
     }
     if (NULL!=(*cat)->specbuff) {
       freeSimputSpecBuffer((struct SimputSpecBuffer**)&((*cat)->specbuff));
-    }
-    if (NULL!=(*cat)->krlcbuff) {
-      freeSimputKRLCBuffer((struct SimputKRLCBuffer**)&((*cat)->krlcbuff));
     }
     if (NULL!=(*cat)->extbuff) {
       freeSimputExttypeBuffer((struct SimputExttypeBuffer**)&((*cat)->extbuff));
@@ -749,82 +745,6 @@ void freeSimputLCBuffer(struct SimputLCBuffer** sb)
 	freeSimputLC(&((*sb)->lcs[ii]));
       }
       free((*sb)->lcs);
-    }
-    free(*sb);
-    *sb=NULL;
-  }
-}
-
-
-SimputKRLC* newSimputKRLC(int* const status)
-{
-  SimputKRLC* lc=(SimputKRLC*)malloc(sizeof(SimputKRLC));
-  CHECK_NULL_RET(lc, *status, 
-		 "memory allocation for SimputKRLC failed", lc);
-
-  // Initialize elements.
-  lc->nentries=0;
-  lc->time    =NULL;
-  lc->phase   =NULL;
-  lc->b       =NULL;
-  lc->mjdref  =0.;
-  lc->timezero=0.;
-  lc->phase0  =0.;
-  lc->period  =0.;
-  lc->dperiod =0.;
-  lc->src_id  =0;
-  lc->fileref =NULL;
-
-  return(lc);
-}
-
-
-void freeSimputKRLC(SimputKRLC** const lc)
-{
-  if (NULL!=*lc) {
-    if (NULL!=(*lc)->time) {
-      free((*lc)->time);
-    }
-    if (NULL!=(*lc)->phase) {
-      free((*lc)->phase);
-    }
-    if (NULL!=(*lc)->b) {
-      free((*lc)->b);
-    }
-    if (NULL!=(*lc)->fileref) {
-      free((*lc)->fileref);
-    }
-    free(*lc);
-    *lc=NULL;
-  }
-}
-
-
-struct SimputKRLCBuffer* newSimputKRLCBuffer(int* const status)
-{
-  struct SimputKRLCBuffer *lcbuff= 
-    (struct SimputKRLCBuffer*)malloc(sizeof(struct SimputKRLCBuffer));
-
-  CHECK_NULL_RET(lcbuff, *status, 
-		 "memory allocation for SimputKRLCBuffer failed", lcbuff);
-    
-  lcbuff->nkrlcs=0;
-  lcbuff->ckrlc =0;
-  lcbuff->krlcs =NULL;
-
-  return(lcbuff);
-}
-
-
-void freeSimputKRLCBuffer(struct SimputKRLCBuffer** sb)
-{
-  if (NULL!=*sb) {
-    if (NULL!=(*sb)->krlcs) {
-      long ii;
-      for (ii=0; ii<(*sb)->nkrlcs; ii++) {
-	freeSimputKRLC(&((*sb)->krlcs[ii]));
-      }
-      free((*sb)->krlcs);
     }
     free(*sb);
     *sb=NULL;
