@@ -14,7 +14,9 @@ struct Parameters {
   /** File name of the output SIMPUT file. */
   char Simput[SIMPUT_MAXSTR];
 
-  /** Name of the X-ray source. */
+  /** ID of the source. */
+  int Src_ID;
+  /** Name of the source. */
   char Src_Name[SIMPUT_MAXSTR];
 
   /** Source position [deg]. */

@@ -16,7 +16,7 @@ int simputsrc_main()
 
   // Register HEATOOL
   set_toolname("simputsrc");
-  set_toolversion("0.01");
+  set_toolversion("0.02");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -62,7 +62,7 @@ int simputsrc_main()
     }
 
     // Get a new source entry.
-    src=newSimputSrcV(1, par.Src_Name, par.RA*M_PI/180., par.Dec*M_PI/180.,
+    src=newSimputSrcV(par.Src_ID, par.Src_Name, par.RA*M_PI/180., par.Dec*M_PI/180.,
 		      0., 1., par.Emin, par.Emax, par.Flux,
 		      "NULL", "NULL", "NULL", &status);
     CHECK_STATUS_BREAK(status);
@@ -102,6 +102,12 @@ int simputsrc_getpar(struct Parameters* const par)
   } 
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
+
+  status=ape_trad_query_int("Src_ID", &par->Src_ID);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the source ID failed");
+    return(status);
+  }
 
   status=ape_trad_query_string("Src_Name", &sbuffer);
   if (EXIT_SUCCESS!=status) {

@@ -1956,7 +1956,9 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 	  char msg[SIMPUT_MAXSTR];
 	  sprintf(msg, "value of DPERIOD of the light curve '%s' is too small (%e)", 
 		  filename, lc->dperiod);
-	  SIMPUT_WARNING(msg);
+	  SIMPUT_ERROR(msg);
+	  *status=EXIT_FAILURE;
+	  break;
 	}
       }
 

@@ -75,7 +75,7 @@ int simputmerge_main()
 	// in the output catalog. The SRC_ID entry must be unique.
 	SimputSrc* insrc=getSimputSrc(incat[ii], jj+1, &status);
 	CHECK_STATUS_BREAK(status);
-	long src_id = insrc->src_id;
+	long src_id=insrc->src_id;
 	if (src_id<min_src_id) {
 	  src_id=min_src_id;
 	}
@@ -98,7 +98,7 @@ int simputmerge_main()
 
 	// Insert the new ID in the buffer of all used IDs.
 	if (0==(nids % 1000)) {
-	  ids = (long*)realloc(ids, (nids+1)*1000*sizeof(long));
+	  ids=(long*)realloc(ids, (nids+1)*1000*sizeof(long));
 	  CHECK_NULL_BREAK(ids, status, "memory allocation failed");
 	}
 	ids[nids++]=src_id;
@@ -152,11 +152,11 @@ int simputmerge_main()
 	    }
 	    if (kk==nspecextrefs[ii]) {
 	      // If not, append it to the list of used references.
-	      specextrefs[ii] = 
+	      specextrefs[ii]=
 		(char**)realloc(specextrefs[ii],
 				(nspecextrefs[ii]+1)*sizeof(char*));
 	      CHECK_NULL_BREAK(specextrefs[ii], status, "memory allocation failed");
-	      specextrefs[ii][kk] = 
+	      specextrefs[ii][kk]=
 		(char*)malloc((strlen(insrc->spectrum)+1)*sizeof(char));
 	      CHECK_NULL_BREAK(specextrefs[ii][kk], status, "memory allocation failed");
 	      nspecextrefs[ii]++;
@@ -431,7 +431,6 @@ int simputmerge_main()
 }
 
 
-
 int simputmerge_getpar(struct Parameters* const par)
 {
   // String input buffer.
@@ -480,5 +479,4 @@ int simputmerge_getpar(struct Parameters* const par)
 
   return(status);
 }
-
 

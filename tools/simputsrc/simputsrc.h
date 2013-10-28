@@ -14,16 +14,19 @@ struct Parameters {
   /** File name of the output SIMPUT file. */
   char Simput[SIMPUT_MAXSTR];
 
-  /** Name of the X-ray source. */
+  /** ID of the source. */
+  int Src_ID;
+  /** Name of source. */
   char Src_Name[SIMPUT_MAXSTR];
 
   /** Source position [deg]. */
   float RA;
   float Dec;
 
-  /** Reference energy band [keV] and flux [erg/s/cm^2]. */
+  /** Reference energy band [keV]. */
   float Emin;
   float Emax;
+  /** Reference flux [erg/s/cm^2]. */
   float Flux;
   
   char clobber;

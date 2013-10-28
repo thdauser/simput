@@ -12,7 +12,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.15");
+  set_toolversion("0.16");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -76,9 +76,9 @@ int simputfile_main()
     // Call 'simputsrc' to produce a SIMPUT catalog with a 
     // single point-like source.
     sprintf(command, 
-	    "simputsrc Simput=%s Src_Name=%s RA=%f Dec=%f "
+	    "simputsrc Simput=%s Src_ID=%d Src_Name=%s RA=%f Dec=%f "
 	    "Emin=%f Emax=%f Flux=%e chatter=%d clobber=%s history=%s",
-	    par.Simput, par.Src_Name, par.RA, par.Dec,
+	    par.Simput, par.Src_ID, par.Src_Name, par.RA, par.Dec,
 	    par.Emin, par.Emax, par.srcFlux,
 	    par.chatter, sclobber, shistory);
     status=system(command);
@@ -172,6 +172,12 @@ int simputfile_getpar(struct Parameters* const par)
   } 
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
+
+  status=ape_trad_query_int("Src_ID", &par->Src_ID);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the source ID failed");
+    return(status);
+  }
 
   status=ape_trad_query_string("Src_Name", &sbuffer);
   if (EXIT_SUCCESS!=status) {

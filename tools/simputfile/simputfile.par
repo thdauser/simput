@@ -1,5 +1,6 @@
 Simput,f,lq,"simput.fits",,,"output SIMPUT catalog file"
-Src_Name,s,h,"none",,,"name of the X-ray source"
+Src_ID,i,lh,1,,,"source ID"
+Src_Name,s,h,"none",,,"source name"
 RA,r,h,0.0,0.0,360.0,"right ascension (deg)"
 Dec,r,h,0.0,-90.0,90.0,"declination (deg)"
 srcFlux,r,h,0.0,0.0,,"source flux (erg/s/cm^2)"
