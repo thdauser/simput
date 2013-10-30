@@ -1,6 +1,5 @@
 #include "simputspec.h"
 
-// TODO Re-structure the code and use the tmpfile command.
 
 int simputspec_main() 
 {
@@ -11,7 +10,7 @@ int simputspec_main()
 
   // Temporary files for ISIS interaction.
   FILE* isiscmdfile=NULL;
-  char isiscmdfilename[SIMPUT_MAXSTR]="";
+  char isiscmdfilename[L_tmpnam]="";
 
   // XSPEC iplot file containing a spectrum.
   FILE* xspecfile=NULL;
@@ -37,7 +36,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.07");
+  set_toolversion("0.08");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -106,7 +105,11 @@ int simputspec_main()
     if ((strlen(par.ISISFile)>0) || (use_components>0)) {
 
       // Open the ISIS command file.
-      sprintf(isiscmdfilename, "%s.isis", par.Simput);
+      if (NULL==tmpnam(isiscmdfilename)) {
+	SIMPUT_ERROR("failed getting temporary filename for ISIS command file");
+	status=EXIT_FAILURE;
+	break;
+      }
       isiscmdfile=fopen(isiscmdfilename,"w");
       CHECK_NULL_BREAK(isiscmdfile, status, "opening temporary file failed");
 
