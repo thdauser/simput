@@ -37,7 +37,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.06");
+  set_toolversion("0.07");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -537,7 +537,7 @@ int simputspec_main()
       }
     }
     CHECK_STATUS_BREAK(status);
-    saveSimputMIdpSpec(simputspec, par.Simput, "SPECTRUM", 1, &status);
+    saveSimputMIdpSpec(simputspec, par.Simput, par.Extname, par.Extver, &status);
     CHECK_STATUS_BREAK(status);
 
 
@@ -546,9 +546,26 @@ int simputspec_main()
     CHECK_STATUS_BREAK(status);
 
     // Set the spectrum reference in the source catalog.
+    if (strlen(par.Extname)==0) {
+      SIMPUT_ERROR("no EXTNAME specified");
+      status=EXIT_FAILURE;
+      break;
+    }
+    if (strlen(par.Extname)>24) {
+      SIMPUT_ERROR("EXTNAME too long");
+      status=EXIT_FAILURE;
+      break;
+    }
+    if ((par.Extver<=0) || (par.Extver>9999)) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "value for EXTVER outside of allowed limit (%d)", par.Extver);
+      SIMPUT_ERROR(msg);
+      status=EXIT_FAILURE;
+      break;
+    }
     char* specref=(char*)malloc(32*sizeof(char));
     CHECK_NULL_BREAK(specref, status, "memory allocation failed");
-    strcpy(specref, "[SPECTRUM,1]");
+    sprintf(specref, "[%s,%d]", par.Extname, par.Extver);
     fits_write_col(cat->fptr, TSTRING, cat->cspectrum, 1, 1, 1,
 		   &specref, &status);
     CHECK_STATUS_BREAK(status);
@@ -640,7 +657,6 @@ int simputspec_getpar(struct Parameters* const par)
   // Error status.
   int status=EXIT_SUCCESS; 
 
-  // Read all parameters via the ape_trad_ routines.
   status=ape_trad_query_file_name("Simput", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the SIMPUT catalog failed");
@@ -648,6 +664,20 @@ int simputspec_getpar(struct Parameters* const par)
   } 
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
+
+  status=ape_trad_query_string("Extname", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the EXTNAME of the generated HDU failed");
+    return(status);
+  }
+  strcpy(par->Extname, sbuffer);
+  free(sbuffer);
+
+  status=ape_trad_query_int("Extver", &par->Extver);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the EXTVER of the generated HDU failed");
+    return(status);
+  }
 
   status=ape_trad_query_float("plPhoIndex", &par->plPhoIndex);
   if (EXIT_SUCCESS!=status) {

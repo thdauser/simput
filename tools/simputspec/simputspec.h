@@ -16,6 +16,11 @@ struct Parameters {
   /** File name of the output SIMPUT file. */
   char Simput[SIMPUT_MAXSTR];
 
+  /** EXTNAME of the generated HDU. */
+  char Extname[SIMPUT_MAXSTR];
+  /** EXTVER of the generated HDU. */
+  int Extver;
+
   /** Power law. */
   float plPhoIndex;
   float plFlux;

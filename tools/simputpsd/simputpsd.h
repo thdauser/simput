@@ -14,6 +14,11 @@ struct Parameters {
   /** File name of the SIMPUT file the PSD should be attached to. */
   char Simput[SIMPUT_MAXSTR];
   
+  /** EXTNAME of the generated HDU. */
+  char Extname[SIMPUT_MAXSTR];
+  /** EXTVER of the generated HDU. */
+  int Extver;
+
   /** PSD general parameters */
   long PSDnpt;
   float PSDfmin;

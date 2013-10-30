@@ -37,7 +37,7 @@ int simputmerge_main()
 
   // Register HEATOOL
   set_toolname("simputmerge");
-  set_toolversion("0.01");
+  set_toolversion("0.02");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -128,7 +128,7 @@ int simputmerge_main()
 	  } else {
 	    strcpy(image, insrc->image);
 	  }
-	  // Light curve.
+	  // Timing.
 	  if ('['==insrc->timing[0]) {
 	    strcpy(timing, infilenames[ii]);
 	    strcat(timing, insrc->timing);
@@ -259,8 +259,7 @@ int simputmerge_main()
     // Copy the used extensions to the new output file.
     if (0!=par.FetchExtensions) {
 
-      // Spectra.
-      // Check for duplicates.
+      // Spectra: check for duplicates.
       for (ii=0; ii<2; ii++) {
 	long jj;
 	for (jj=0; jj<nspecextrefs[ii]; jj++) {
@@ -270,20 +269,26 @@ int simputmerge_main()
 	      long ll;
 	      for (ll=0; ll<nspecextrefs[kk]; ll++) {
 		if (0==strcmp(specextrefs[ii][jj], specextrefs[kk][ll])) {
-		  headas_printf("Warning: reference to spectrum '%s' might "
-				"not be unique!\n (used in '%s' and '%s')\n",
-				specextrefs[ii][jj],
-				infilenames[ii], infilenames[kk]);
-		  strcpy(specextrefs[ii][jj], "");
+		  char msg[SIMPUT_MAXSTR];
+		  sprintf(msg, "reference to spectrum '%s' is "
+			  "ambiguous (used in '%s' and '%s')",
+			  specextrefs[ii][jj],
+			  infilenames[ii], infilenames[kk]);
+		  SIMPUT_ERROR(msg);
+		  status=EXIT_FAILURE;
+		  break;
 		}
 	      }
+	      CHECK_STATUS_BREAK(status);
 	    }
+	    CHECK_STATUS_BREAK(status);
 	  }
 	}
+	CHECK_STATUS_BREAK(status);
       }
+      CHECK_STATUS_BREAK(status);
 
-      // Images.
-      // Check for duplicates.
+      // Images: check for duplicates.
       for (ii=0; ii<2; ii++) {
 	long jj;
 	for (jj=0; jj<nimgextrefs[ii]; jj++) {
@@ -293,20 +298,26 @@ int simputmerge_main()
 	      long ll;
 	      for (ll=0; ll<nimgextrefs[kk]; ll++) {
 		if (0==strcmp(imgextrefs[ii][jj], imgextrefs[kk][ll])) {
-		  headas_printf("Warning: reference to image '%s' might "
-				"not be unique!\n (used in '%s' and '%s')\n",
-				imgextrefs[ii][jj],
-				infilenames[ii], infilenames[kk]);
-		  strcpy(imgextrefs[ii][jj], "");
+		  char msg[SIMPUT_MAXSTR];
+		  sprintf(msg, "reference to image '%s' is "
+			  "ambiguous (used in '%s' and '%s')",
+			  imgextrefs[ii][jj],
+			  infilenames[ii], infilenames[kk]);
+		  SIMPUT_ERROR(msg);
+		  status=EXIT_FAILURE;
+		  break;
 		}
 	      }
+	      CHECK_STATUS_BREAK(status);
 	    }
+	    CHECK_STATUS_BREAK(status);
 	  }
 	}
+	CHECK_STATUS_BREAK(status);
       }
+      CHECK_STATUS_BREAK(status);
 
-      // Light curves.
-      // Check for duplicates.
+      // Timing extensions: check for duplicates.
       for (ii=0; ii<2; ii++) {
 	long jj;
 	for (jj=0; jj<nlcextrefs[ii]; jj++) {
@@ -316,17 +327,24 @@ int simputmerge_main()
 	      long ll;
 	      for (ll=0; ll<nlcextrefs[kk]; ll++) {
 		if (0==strcmp(lcextrefs[ii][jj], lcextrefs[kk][ll])) {
-		  headas_printf("Warning: reference to light curve '%s' might "
-				"not be unique!\n (used in '%s' and '%s')\n",
-				lcextrefs[ii][jj],
-				infilenames[ii], infilenames[kk]);
-		  strcpy(lcextrefs[ii][jj], "");
+		  char msg[SIMPUT_MAXSTR];
+		  sprintf(msg, "reference to timing extension '%s' is "
+			  "ambiguous (used in '%s' and '%s')",
+			  lcextrefs[ii][jj],
+			  infilenames[ii], infilenames[kk]);
+		  SIMPUT_ERROR(msg);
+		  status=EXIT_FAILURE;
+		  break;
 		}
 	      }
+	      CHECK_STATUS_BREAK(status);
 	    }
+	    CHECK_STATUS_BREAK(status);
 	  }
 	}
+	CHECK_STATUS_BREAK(status);
       }
+      CHECK_STATUS_BREAK(status);
 
       // Go through the lists and, load the HDU data, and store it
       // in the new output file.
@@ -343,32 +361,69 @@ int simputmerge_main()
 	      strcpy(filename, specextrefs[ii][jj]);
 	    }
 
-	    // Load the spectrum.
-	    spec=loadSimputMIdpSpec(filename, &status);
-	    CHECK_STATUS_BREAK(status);
-	    
-	    // Determine the EXTNAME and EXTVER.
-	    char extname[SIMPUT_MAXSTR];
-	    int extver;
+	    // Copy the HDU.
 	    fitsfile* fptr=NULL;
 	    fits_open_file(&fptr, filename, READONLY, &status);
-	    fits_read_key(fptr, TSTRING, "EXTNAME", extname, NULL, &status);
-	    fits_read_key(fptr, TINT, "EXTVER", &extver, NULL, &status);
+	    fits_copy_hdu(fptr, outcat->fptr, 0, &status);
 	    fits_close_file(fptr, &status);
-	    CHECK_STATUS_BREAK(status);
-
-	    // Store it in the output file.
-	    saveSimputMIdpSpec(spec, par.Outfile, extname, extver, &status);
 	    CHECK_STATUS_BREAK(status);
 	  }
 	}
 	CHECK_STATUS_BREAK(status);
       }
       CHECK_STATUS_BREAK(status);
+
+      // Images.
+      for (ii=0; ii<2; ii++) {
+	long jj;
+	for (jj=0; jj<nimgextrefs[ii]; jj++) {
+	  if (strlen(imgextrefs[ii][jj])>0) {
+	    char filename[SIMPUT_MAXSTR];
+	    if ('['==imgextrefs[ii][jj][0]) {
+	      strcpy(filename, infilenames[ii]);
+	      strcat(filename, imgextrefs[ii][jj]);
+	    } else {
+	      strcpy(filename, imgextrefs[ii][jj]);
+	    }
+
+	    // Copy the HDU.
+	    fitsfile* fptr=NULL;
+	    fits_open_file(&fptr, filename, READONLY, &status);
+	    fits_copy_hdu(fptr, outcat->fptr, 0, &status);
+	    fits_close_file(fptr, &status);
+	    CHECK_STATUS_BREAK(status);
+	  }
+	}
+	CHECK_STATUS_BREAK(status);
+      }
+      CHECK_STATUS_BREAK(status);
+
+      // Timing extensions.
+      for (ii=0; ii<2; ii++) {
+	long jj;
+	for (jj=0; jj<nlcextrefs[ii]; jj++) {
+	  if (strlen(lcextrefs[ii][jj])>0) {
+	    char filename[SIMPUT_MAXSTR];
+	    if ('['==lcextrefs[ii][jj][0]) {
+	      strcpy(filename, infilenames[ii]);
+	      strcat(filename, lcextrefs[ii][jj]);
+	    } else {
+	      strcpy(filename, lcextrefs[ii][jj]);
+	    }
+
+	    // Copy the HDU.
+	    fitsfile* fptr=NULL;
+	    fits_open_file(&fptr, filename, READONLY, &status);
+	    fits_copy_hdu(fptr, outcat->fptr, 0, &status);
+	    fits_close_file(fptr, &status);
+	    CHECK_STATUS_BREAK(status);
+	  }
+	}
+	CHECK_STATUS_BREAK(status);
+      }
+      CHECK_STATUS_BREAK(status);
+
     }
-
-    // TODO Images and LCs.
-
     // END of copy extensions to the new output file.
 
   } while(0); // END of ERROR HANDLING Loop.

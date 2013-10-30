@@ -15,6 +15,11 @@ struct Parameters {
       to. */
   char Simput[SIMPUT_MAXSTR];
   
+  /** EXTNAME of the generated HDU. */
+  char Extname[SIMPUT_MAXSTR];
+  /** EXTVER of the generated HDU. */
+  int Extver;
+
   /** File name of the input ASCII light curve. */
   char LCFile[SIMPUT_MAXSTR];
 };

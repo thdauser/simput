@@ -1,4 +1,6 @@
 Simput,fre,lq,"simput.fits",,,"SIMPUT catalog file"
+Extname,s,h,"SPECTRUM",,,"EXTNAME of the generated HDU"
+Extver,i,h,1,1,9999,"EXTVER of the generated HDU"
 PSDnpt,i,h,10000,1,,"number of frequency bins in PSD"
 PSDfmin,r,h,1e-8,1e-8,,"minimum frequency in PSD"
 PSDfmax,r,h,1e4,0.1,,"maximum frequency in PSD"
