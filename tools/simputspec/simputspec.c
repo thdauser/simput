@@ -250,8 +250,8 @@ int simputspec_main()
 			   "memory allocation failed");
 
           // Read the energy column.
-          fits_read_col(fitsfile, TFLOAT, 1, 1, 1, nrows, 0, simputspec->energy,
-			&anynull, &status);
+          fits_read_col(fitsfile, TFLOAT, 1, 1, 1, nrows, 0,
+			simputspec->energy, &anynull, &status);
           CHECK_STATUS_BREAK(status);
 	  long jj;
 	  for (jj=0; jj<nrows; jj++) {
