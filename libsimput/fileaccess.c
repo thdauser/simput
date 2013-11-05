@@ -908,13 +908,20 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
       break;
     }
 
+    fits_write_errmark();
     fits_get_colnum(fptr, CASEINSEN, "FLUXDENSITY", &cfluxdensity, status);
     if (EXIT_SUCCESS!=*status) {
-      char msg[SIMPUT_MAXSTR];
-      sprintf(msg, "could not find column 'FLUXDENSITY' in spectrum '%s'", filename);
-      SIMPUT_ERROR(msg);
-      break;
+      // For compatibility with SIMPUT version 1.0.0.
+      *status=EXIT_SUCCESS;
+      fits_get_colnum(fptr, CASEINSEN, "FLUX", &cfluxdensity, status);      
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not find column 'FLUXDENSITY' in spectrum '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
     }
+    fits_clear_errmark();
 
     // Optional columnes:
     int opt_status=EXIT_SUCCESS;
@@ -1134,13 +1141,20 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
       break;
     }
 
+    fits_write_errmark();
     fits_get_colnum(fptr, CASEINSEN, "FLUXDENSITY", &cfluxdensity, status);
     if (EXIT_SUCCESS!=*status) {
-      char msg[SIMPUT_MAXSTR];
-      sprintf(msg, "could not find column 'FLUXDENSITY' in spectrum '%s'", filename);
-      SIMPUT_ERROR(msg);
-      break;
+      // For compatibility with SIMPUT version 1.0.0.
+      *status=EXIT_SUCCESS;
+      fits_get_colnum(fptr, CASEINSEN, "FLUX", &cfluxdensity, status);      
+      if (EXIT_SUCCESS!=*status) {
+	char msg[SIMPUT_MAXSTR];
+	sprintf(msg, "could not find column 'FLUXDENSITY' in spectrum '%s'", filename);
+	SIMPUT_ERROR(msg);
+	break;
+      }
     }
+    fits_clear_errmark();
 
     // Optional columns:
     int opt_status=EXIT_SUCCESS;
