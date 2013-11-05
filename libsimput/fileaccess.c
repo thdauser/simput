@@ -910,15 +910,10 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
     fits_get_colnum(fptr, CASEINSEN, "FLUXDENSITY", &cfluxdensity, status);
     if (EXIT_SUCCESS!=*status) {
-      // For compatibility with SIMPUT version 1.0.0.
-      int opt_status=EXIT_SUCCESS;
-      fits_get_colnum(fptr, CASEINSEN, "FLUX", &cfluxdensity, &opt_status);
-      if (EXIT_SUCCESS!=opt_status) {
-	char msg[SIMPUT_MAXSTR];
-	sprintf(msg, "could not find column 'FLUXDENSITY' in spectrum '%s'", filename);
-	SIMPUT_ERROR(msg);
-	break;
-      }
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "could not find column 'FLUXDENSITY' in spectrum '%s'", filename);
+      SIMPUT_ERROR(msg);
+      break;
     }
 
     // Optional columnes:
