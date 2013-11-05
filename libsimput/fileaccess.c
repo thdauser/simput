@@ -944,7 +944,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     CHECK_STATUS_BREAK(*status);
     float fflux=unit_conversion_phpspcm2pkeV(uflux);
     if (0.==fflux) {
-      SIMPUT_ERROR("unknown units of 'FLUX' column");
+      SIMPUT_ERROR("unknown units of 'FLUXDENSITY' column");
       *status=EXIT_FAILURE;
       break;
     }
@@ -952,16 +952,16 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
     // Determine the number of entries in the 2 vector columns.
     int typecode;
-    long nenergy, nflux, width;
+    long nenergy, nfluxdensity, width;
     fits_get_coltype(fptr, cenergy, &typecode, &nenergy, &width, status);
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("could not determine type of column 'ENERGY'");
       break;
     }
     
-    fits_get_coltype(fptr, cfluxdensity, &typecode, &nflux,   &width, status);
+    fits_get_coltype(fptr, cfluxdensity, &typecode, &nfluxdensity, &width, status);
     if (EXIT_SUCCESS!=*status) {
-      SIMPUT_ERROR("could not determine type of column 'FLUX'");
+      SIMPUT_ERROR("could not determine type of column 'FLUXDENSITY'");
       break;
     }
 
@@ -976,15 +976,15 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 	break;
       }
 
-      fits_read_descript(fptr, cfluxdensity, 1, &nflux  , &offset, status);
+      fits_read_descript(fptr, cfluxdensity, 1, &nfluxdensity, &offset, status);
       if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("could not determine type of column 'FLUX'");
+	SIMPUT_ERROR("could not determine type of column 'FLUXDENSITY'");
 	break;
       }
     }
 
     // The number of energy bins and of flux entries must be identical.
-    if (nenergy!=nflux) {
+    if (nenergy!=nfluxdensity) {
       char msg[SIMPUT_MAXSTR];
       sprintf(msg, "number of energy and flux entries in spectrum '%s' is "
 	      "not equivalent", filename);
@@ -1142,7 +1142,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     fits_get_colnum(fptr, CASEINSEN, "FLUXDENSITY", &cfluxdensity, status);
     if (EXIT_SUCCESS!=*status) {
       char msg[SIMPUT_MAXSTR];
-      sprintf(msg, "could not find column 'FLUX' in spectrum '%s'", filename);
+      sprintf(msg, "could not find column 'FLUXDENSITY' in spectrum '%s'", filename);
       SIMPUT_ERROR(msg);
       break;
     }
@@ -1165,11 +1165,11 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
       break;
     }
 
-    char uflux[SIMPUT_MAXSTR];
-    read_unit(fptr, cfluxdensity, uflux, status);
+    char ufluxdensity[SIMPUT_MAXSTR];
+    read_unit(fptr, cfluxdensity, ufluxdensity, status);
     CHECK_STATUS_BREAK(*status);
-    float fflux=unit_conversion_phpspcm2pkeV(uflux);
-    if (0.==fflux) {
+    float ffluxdensity=unit_conversion_phpspcm2pkeV(ufluxdensity);
+    if (0.==ffluxdensity) {
       SIMPUT_ERROR("unknown units of 'FLUXDENSITY' column");
       *status=EXIT_FAILURE;
       break;
@@ -1178,14 +1178,14 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 
     // Determine the number of entries in the 2 vector columns.
     int typecode;
-    long nenergy, nflux, width;
+    long nenergy, nfluxdensity, width;
     fits_get_coltype(fptr, cenergy, &typecode, &nenergy, &width, status);
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("could not determine type of column 'ENERGY'");
       break;
     }
 
-    fits_get_coltype(fptr, cfluxdensity, &typecode, &nflux, &width, status);
+    fits_get_coltype(fptr, cfluxdensity, &typecode, &nfluxdensity, &width, status);
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("could not determine type of column 'FLUXDENSITY'");
       break;
@@ -1194,7 +1194,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     // If the columns are of variable-length data type, the returned repeat
     // value is 1. In that case we have to use another routine to get the
     // number of elements in a particular row.
-    if ((1==nenergy)&&(1==nflux)) {
+    if ((1==nenergy)&&(1==nfluxdensity)) {
       long offset;
       fits_read_descript(fptr, cenergy, 1, &nenergy, &offset, status);
       if (EXIT_SUCCESS!=*status) {
@@ -1202,7 +1202,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 	break;
       }
 
-      fits_read_descript(fptr, cfluxdensity, 1, &nflux, &offset, status);
+      fits_read_descript(fptr, cfluxdensity, 1, &nfluxdensity, &offset, status);
       if (EXIT_SUCCESS!=*status) {
 	SIMPUT_ERROR("could not determine type of column 'FLUXDENSITY'");
 	break;
@@ -1210,8 +1210,8 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
     }
 
     // The number of energy bins and of flux entries must be identical.
-    if (nenergy!=nflux) {
-      SIMPUT_ERROR("number of energy and flux entries in spectrum is "
+    if (nenergy!=nfluxdensity) {
+      SIMPUT_ERROR("number of energy and flux density entries in spectrum is "
 		   "not equivalent");
       *status=EXIT_FAILURE;
       break;
@@ -1275,7 +1275,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
       long ii;
       for (ii=0; ii<spec->nentries; ii++) {
 	spec->energy[ii]*=fenergy;
-	spec->fluxdensity[ii]*=fflux;
+	spec->fluxdensity[ii]*=ffluxdensity;
       }
 
       // Copy the name (ID) of the spectrum from the string buffer
@@ -1681,7 +1681,7 @@ void saveSimputMIdpSpecBlock(SimputMIdpSpec** const spec,
       sprintf(tform[0], "1PE");
       strcpy(tunit[0], "keV");
 
-      strcpy(ttype[1], "FLUX");
+      strcpy(ttype[1], "FLUXDENSITY");
       sprintf(tform[1], "1PE");
       strcpy(tunit[1], "photon/s/cm**2/keV");
 
@@ -1727,7 +1727,7 @@ void saveSimputMIdpSpecBlock(SimputMIdpSpec** const spec,
 
 
     // Determine the column numbers.
-    int cenergy=0, cflux=0, cname=0;
+    int cenergy=0, cfluxdensity=0, cname=0;
     fits_get_colnum(fptr, CASEINSEN, "ENERGY", &cenergy, status);
     if (EXIT_SUCCESS!=*status) {
       char msg[SIMPUT_MAXSTR];
@@ -1736,10 +1736,10 @@ void saveSimputMIdpSpecBlock(SimputMIdpSpec** const spec,
       break;
     }
 
-    fits_get_colnum(fptr, CASEINSEN, "FLUX", &cflux, status);
+    fits_get_colnum(fptr, CASEINSEN, "FLUXDENSITY", &cfluxdensity, status);
     if (EXIT_SUCCESS!=*status) {
       char msg[SIMPUT_MAXSTR];
-      sprintf(msg, "could not find column 'FLUX' in spectrum '%s'", filename);
+      sprintf(msg, "could not find column 'FLUXDENSITY' in spectrum '%s'", filename);
       SIMPUT_ERROR(msg);
       break;
     }
@@ -1768,10 +1768,10 @@ void saveSimputMIdpSpecBlock(SimputMIdpSpec** const spec,
 	break;
       }
 
-      fits_write_col(fptr, TFLOAT, cflux, nrows, 1, spec[jj]->nentries, 
+      fits_write_col(fptr, TFLOAT, cfluxdensity, nrows, 1, spec[jj]->nentries, 
 		     spec[jj]->fluxdensity, status);
       if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed writing flux values to spectrum extension");
+	SIMPUT_ERROR("failed writing flux density values to spectrum extension");
 	break;
       }
 
