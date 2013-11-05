@@ -31,6 +31,20 @@
 
 
 /////////////////////////////////////////////////////////////////
+// Constants.
+/////////////////////////////////////////////////////////////////
+
+
+/** Different types of extensions in SIMPUT FITS files. */
+#define EXTTYPE_NONE (0)
+#define EXTTYPE_MIDPSPEC (1)
+#define EXTTYPE_IMAGE (2)
+#define EXTTYPE_PHLIST (3)
+#define EXTTYPE_LC (4)
+#define EXTTYPE_PSD (5)
+
+
+/////////////////////////////////////////////////////////////////
 // Type Declarations.
 /////////////////////////////////////////////////////////////////
 
@@ -152,8 +166,8 @@ typedef struct {
   /** Energy values [keV]. */
   float* energy;
 
-  /** Photon flux distribution [photons/cm**2/keV]. */
-  float* pflux;
+  /** Photon flux density [photons/cm**2/keV]. */
+  float* fluxdensity;
 
   /** Unique case-sensitive designator for an individual spectrum. */
   char* name;
@@ -685,6 +699,12 @@ int getSimputPhoton(SimputCtlg* const cat,
 		    /** [rad]. */
 		    double* const dec,
 		    int* const status);
+
+
+/** Determine the extension type of a particular FITS file HDU. */
+int getSimputExtType(SimputCtlg* const cat, 
+		     const char* const filename, 
+		     int* const status);
 
 
 #endif /* SIMPUT_H */

@@ -339,11 +339,11 @@ SimputMIdpSpec* newSimputMIdpSpec(int* const status)
 		 "memory allocation for SimputMIdpSpec failed", spec);
 
   // Initialize elements.
-  spec->nentries=0;
-  spec->energy  =NULL;
-  spec->pflux   =NULL;
-  spec->name    =NULL;
-  spec->fileref =NULL;
+  spec->nentries   =0;
+  spec->energy     =NULL;
+  spec->fluxdensity=NULL;
+  spec->name       =NULL;
+  spec->fileref    =NULL;
 
   return(spec);  
 }
@@ -355,8 +355,8 @@ void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
     if (NULL!=(*spec)->energy) {
       free((*spec)->energy);
     }
-    if (NULL!=(*spec)->pflux) {
-      free((*spec)->pflux);
+    if (NULL!=(*spec)->fluxdensity) {
+      free((*spec)->fluxdensity);
     }
     if (NULL!=(*spec)->name) {
       free((*spec)->name);
@@ -373,7 +373,7 @@ void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
 void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  const long row,
 			  float* const energy, 
-			  float* const pflux,
+			  float* const fluxdensity,
 			  int* const status)
 {
   if (row>=spec->nentries) {
@@ -382,8 +382,8 @@ void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
     return;
   }
 
-  *energy=spec->energy[row];
-  *pflux =spec->pflux[row];
+  *energy     =spec->energy[row];
+  *fluxdensity=spec->fluxdensity[row];
 }
 
 

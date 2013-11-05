@@ -18,11 +18,6 @@ int simputmerge_main()
   // Number of already used IDs.
   long nids=0;
 
-  // Simput data structures (used as buffers).
-  SimputMIdpSpec* spec=NULL;
-  SimputImg*      img =NULL;
-  SimputLC*       lc  =NULL;
-
   // HDU extension references used in the catalog.
   char** specextrefs[2]={NULL, NULL};
   long  nspecextrefs[2]={   0,    0};
@@ -437,10 +432,6 @@ int simputmerge_main()
   freeSimputCtlg(&incat[0], &status);
   freeSimputCtlg(&incat[1], &status);
   freeSimputCtlg(&outcat, &status);
-
-  freeSimputMIdpSpec(&spec);
-  freeSimputImg(&img);
-  freeSimputLC(&lc);
 
   int ii;
   for (ii=0; ii<2; ii++) {

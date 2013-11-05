@@ -94,15 +94,15 @@ int main(int argc, char **argv)
       spec->nentries=2;
       spec->energy=(float*)malloc(2*sizeof(float));
       CHECK_NULL_BREAK(spec->energy, status, "memory allocation failed!\n");
-      spec->pflux =(float*)malloc(2*sizeof(float));
-      CHECK_NULL_BREAK(spec->pflux, status, "memory allocation failed!\n");
-      spec->name  =(char*)malloc(1024*sizeof(char));
+      spec->fluxdensity=(float*)malloc(2*sizeof(float));
+      CHECK_NULL_BREAK(spec->fluxdensity, status, "memory allocation failed!\n");
+      spec->name=(char*)malloc(1024*sizeof(char));
       CHECK_NULL_BREAK(spec->name, status, "memory allocation failed!\n");
 
       spec->energy[0]=1.0;
-      spec->pflux[0] =0.8;
+      spec->fluxdensity[0]=0.8;
       spec->energy[1]=2.0;
-      spec->pflux[1] =0.6;
+      spec->fluxdensity[1]=0.6;
       strcpy(spec->name, "spec1");
 
       saveSimputMIdpSpec(spec, filename, "SPEC", 1, &status);
@@ -116,17 +116,17 @@ int main(int argc, char **argv)
       spec2->nentries=3;
       spec2->energy=(float*)malloc(3*sizeof(float));
       CHECK_NULL_BREAK(spec2->energy, status, "memory allocation failed!\n");
-      spec2->pflux =(float*)malloc(3*sizeof(float));
-      CHECK_NULL_BREAK(spec2->pflux, status, "memory allocation failed!\n");
-      spec2->name  =(char*)malloc(1024*sizeof(char));
+      spec2->fluxdensity=(float*)malloc(3*sizeof(float));
+      CHECK_NULL_BREAK(spec2->fluxdensity, status, "memory allocation failed!\n");
+      spec2->name=(char*)malloc(1024*sizeof(char));
       CHECK_NULL_BREAK(spec2->name, status, "memory allocation failed!\n");
 
       spec2->energy[0]=1.5;
-      spec2->pflux[0] =0.75;
+      spec2->fluxdensity[0]=0.75;
       spec2->energy[1]=2.5;
-      spec2->pflux[1] =0.65;
+      spec2->fluxdensity[1]=0.65;
       spec2->energy[2]=3.5;
-      spec2->pflux[2] =0.55;
+      spec2->fluxdensity[2]=0.55;
       strcpy(spec2->name, "spec2");
 
       saveSimputMIdpSpec(spec2, filename, "SPEC", 1, &status);

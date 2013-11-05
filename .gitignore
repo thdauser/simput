@@ -27,6 +27,7 @@ simputpsd
 simputmerge
 simputspec
 simputsrc
+simputverify
 
 # Autotool stuff:
 aclocal.m4

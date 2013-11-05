@@ -383,7 +383,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 
   // If the LC is not contained in the cache, load it either from 
   // a file or create it from a SimputPSD.
-  int timetype=getExtType(cat, filename, status);
+  int timetype=getSimputExtType(cat, filename, status);
   CHECK_STATUS_RET(*status, lc);
 
   if (EXTTYPE_LC==timetype) {
@@ -567,7 +567,7 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_VOID(*status);
 
-  int timetype=getExtType(cat, timeref, status);
+  int timetype=getSimputExtType(cat, timeref, status);
   CHECK_STATUS_VOID(*status);
 
   if (EXTTYPE_LC==timetype) {
@@ -660,7 +660,7 @@ static void getSrcImagRef(SimputCtlg* const cat,
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_VOID(*status);
 
-  int timetype=getExtType(cat, timeref, status);
+  int timetype=getSimputExtType(cat, timeref, status);
   CHECK_STATUS_VOID(*status);
 
   if (EXTTYPE_LC==timetype) {
@@ -774,7 +774,7 @@ SimputMIdpSpec* getSimputSrcMIdpSpec(SimputCtlg* const cat,
   getSimputSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
   CHECK_STATUS_RET(*status, 0);
 
-  int spectype=getExtType(cat, specref, status);
+  int spectype=getSimputExtType(cat, specref, status);
   CHECK_STATUS_RET(*status, 0);
 
   if (EXTTYPE_MIDPSPEC==spectype) {
@@ -886,7 +886,7 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
 
       // Add to the spectral probability density.
       spec->distribution[ii]+=
-	(hi-lo)*cat->arf->EffArea[ii]*midpspec->pflux[jj];
+	(hi-lo)*cat->arf->EffArea[ii]*midpspec->fluxdensity[jj];
       
       // Increase the lower boundary.
       lo=hi;
@@ -1118,7 +1118,7 @@ float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
       float min=MAX(binmin, emin);
       float max=MIN(binmax, emax);
       assert(max>min);
-      flux+=(max-min)*spec->pflux[ii]*spec->energy[ii];
+      flux+=(max-min)*spec->fluxdensity[ii]*spec->energy[ii];
     }
   }
 
@@ -1142,7 +1142,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
     getSimputSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
     CHECK_STATUS_RET(*status, 0.);
 
-    int spectype=getExtType(cat, specref, status);
+    int spectype=getSimputExtType(cat, specref, status);
     CHECK_STATUS_RET(*status, 0.);
 
     // Check if the ARF is defined.
@@ -1279,7 +1279,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
   } else {
     // The source has a time-variable brightness.
-    int timetype=getExtType(cat, timeref, status);
+    int timetype=getSimputExtType(cat, timeref, status);
     CHECK_STATUS_RET(*status, 0);
 
     // Check if the extension type of the timing reference.
@@ -1592,9 +1592,9 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   
   // Determine the extension type of the spectrum and the image
   // reference.
-  int spectype=getExtType(cat, specref, status);
+  int spectype=getSimputExtType(cat, specref, status);
   CHECK_STATUS_VOID(*status);
-  int imagtype=getExtType(cat, imagref, status);
+  int imagtype=getSimputExtType(cat, imagref, status);
   CHECK_STATUS_VOID(*status);
 
 
@@ -1848,7 +1848,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
     char imagref[SIMPUT_MAXSTR];
     getSrcImagRef(cat, src, prevtime, mjdref, imagref, status);
     CHECK_STATUS_BREAK(*status);
-    int imagtype=getExtType(cat, imagref, status);
+    int imagtype=getSimputExtType(cat, imagref, status);
     CHECK_STATUS_RET(*status, 0);
 
     // Check if it is a point-like or an extended source.

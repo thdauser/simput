@@ -47,15 +47,6 @@
 #endif
 
 
-/** Different types of extensions in SIMPUT FITS files. */
-#define EXTTYPE_NONE (0)
-#define EXTTYPE_MIDPSPEC (1)
-#define EXTTYPE_IMAGE (2)
-#define EXTTYPE_PHLIST (3)
-#define EXTTYPE_LC (4)
-#define EXTTYPE_PSD (5)
-
-
 /////////////////////////////////////////////////////////////////
 // Macros.
 /////////////////////////////////////////////////////////////////
@@ -250,12 +241,6 @@ void freeSimputImgBuffer(struct SimputImgBuffer** sb);
 
 struct SimputPhListBuffer* newSimputPhListBuffer(int* const status);
 void freeSimputPhListBuffer(struct SimputPhListBuffer** pb, int* const status);
-
-
-/** Determine the extension type of a particular FITS file HDU. */
-int getExtType(SimputCtlg* const cat, 
-	       const char* const filename, 
-	       int* const status);
 
 
 #endif /* COMMON_H */

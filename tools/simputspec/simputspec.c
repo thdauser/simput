@@ -121,7 +121,7 @@ int simputspec_main()
       // Define the energy grid.
       fprintf(isiscmdfile, "variable lo=[0.05:100.0:0.01];\n");
       fprintf(isiscmdfile, "variable hi=make_hi_grid(lo);\n");
-      fprintf(isiscmdfile, "variable flux;\n");
+      fprintf(isiscmdfile, "variable fluxdensity;\n");
       fprintf(isiscmdfile, "variable spec;\n");
 
       // Distinguish whether the individual spectral components or
@@ -164,8 +164,8 @@ int simputspec_main()
 
           // Evaluate the spectral model and store the data in a temporary
           // FITS file.
-          fprintf(isiscmdfile, "flux=eval_fun_keV(lo, hi)/(hi-lo);\n");
-          fprintf(isiscmdfile, "spec=struct{ENERGY=0.5*(lo+hi), FLUX=flux};\n");
+          fprintf(isiscmdfile, "fluxdensity=eval_fun_keV(lo, hi)/(hi-lo);\n");
+          fprintf(isiscmdfile, "spec=struct{ENERGY=0.5*(lo+hi), FLUXDENSITY=fluxdensity};\n");
           fprintf(isiscmdfile,
 		  "fits_write_binary_table(\"%s.spec%d\",\"SPECTRUM\", spec);\n",
 		  par.Simput, ii);
@@ -177,8 +177,8 @@ int simputspec_main()
         // An ISIS parameter file with an explizit spectral
         // model is given.
         fprintf(isiscmdfile, "load_par(\"%s\");\n", par.ISISFile);
-        fprintf(isiscmdfile, "flux=eval_fun_keV(lo, hi)/(hi-lo);\n");
-        fprintf(isiscmdfile, "spec=struct{ENERGY=0.5*(lo+hi), FLUX=flux};\n");
+        fprintf(isiscmdfile, "fluxdensity=eval_fun_keV(lo, hi)/(hi-lo);\n");
+        fprintf(isiscmdfile, "spec=struct{ENERGY=0.5*(lo+hi), FLUXDENSITY=fluxdensity};\n");
         fprintf(isiscmdfile,
 		"fits_write_binary_table(\"%s.spec0\",\"SPECTRUM\", spec);\n",
 		par.Simput);
@@ -235,15 +235,19 @@ int simputspec_main()
           // Allocate memory.
           simputspec->nentries=nrows;
           simputspec->energy=(float*)malloc(nrows*sizeof(float));
-          CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
-          simputspec->pflux=(float*)malloc(nrows*sizeof(float));
-          CHECK_NULL_BREAK(simputspec->pflux, status, "memory allocation failed");
+          CHECK_NULL_BREAK(simputspec->energy, status, 
+			   "memory allocation failed");
+          simputspec->fluxdensity=(float*)malloc(nrows*sizeof(float));
+          CHECK_NULL_BREAK(simputspec->fluxdensity, status, 
+			   "memory allocation failed");
 
 	  simputspecbuffer->nentries=nrows;
           simputspecbuffer->energy=(float*)malloc(nrows*sizeof(float));
-          CHECK_NULL_BREAK(simputspecbuffer->energy, status, "memory allocation failed");
-          simputspecbuffer->pflux=(float*)malloc(nrows*sizeof(float));
-          CHECK_NULL_BREAK(simputspecbuffer->pflux, status, "memory allocation failed");
+          CHECK_NULL_BREAK(simputspecbuffer->energy, status, 
+			   "memory allocation failed");
+          simputspecbuffer->fluxdensity=(float*)malloc(nrows*sizeof(float));
+          CHECK_NULL_BREAK(simputspecbuffer->fluxdensity, status, 
+			   "memory allocation failed");
 
           // Read the energy column.
           fits_read_col(fitsfile, TFLOAT, 1, 1, 1, nrows, 0, simputspec->energy,
@@ -269,7 +273,7 @@ int simputspec_main()
 
         // Read the flux column.
         fits_read_col(fitsfile, TFLOAT, 2, 1, 1, nrows, 0, 
-		      simputspecbuffer->pflux, &anynull, &status);
+		      simputspecbuffer->fluxdensity, &anynull, &status);
         CHECK_STATUS_BREAK(status);
 
         fits_close_file(fitsfile, &status);
@@ -314,7 +318,7 @@ int simputspec_main()
           if (factor>0.) {
             long jj;
             for (jj=0; jj<nrows; jj++) {
-              simputspec->pflux[jj]+=simputspecbuffer->pflux[jj]*factor;
+              simputspec->fluxdensity[jj]+=simputspecbuffer->fluxdensity[jj]*factor;
             }
           }
 
@@ -324,7 +328,7 @@ int simputspec_main()
           // add it to the SIMPUT spectrum.
           long jj;
           for (jj=0; jj<nrows; jj++) {
-            simputspec->pflux[jj]=simputspecbuffer->pflux[jj];
+            simputspec->fluxdensity[jj]=simputspecbuffer->fluxdensity[jj];
           }
 
           // Since there are no further components, we can skip
@@ -364,7 +368,7 @@ int simputspec_main()
       simputspec->nentries=nlines;
       simputspec->energy=(float*)malloc(nlines*sizeof(float));
       CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
-      simputspec->pflux=(float*)malloc(nlines*sizeof(float));
+      simputspec->fluxdensity=(float*)malloc(nlines*sizeof(float));
       CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
 
       // Reset the file pointer, read the data, and store them in
@@ -395,7 +399,7 @@ int simputspec_main()
         if (fscanf(xspecfile, "%f %f %f\n",
 		   &(simputspec->energy[ii]), 
 		   &fbuffer, 
-		   &(simputspec->pflux[ii]))<3) {
+		   &(simputspec->fluxdensity[ii]))<3) {
 	  SIMPUT_ERROR("failed reading data from ASCII file");
 	  status=EXIT_FAILURE;
 	  break;
@@ -421,8 +425,8 @@ int simputspec_main()
       simputspec->nentries=nrows;
       simputspec->energy=(float*)malloc(nrows*sizeof(float));
       CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
-      simputspec->pflux=(float*)malloc(nrows*sizeof(float));
-      CHECK_NULL_BREAK(simputspec->pflux, status, "memory allocation failed");
+      simputspec->fluxdensity=(float*)malloc(nrows*sizeof(float));
+      CHECK_NULL_BREAK(simputspec->fluxdensity, status, "memory allocation failed");
 
       // Need to distinguish whether the file contains counts or rate.
       char comment[SIMPUT_MAXSTR];
@@ -449,13 +453,13 @@ int simputspec_main()
 	}
 
 	int anynull=0;
-	fits_read_col(fitsfile, TFLOAT, ccount, 1, 1, nrows, 0, simputspec->pflux,
+	fits_read_col(fitsfile, TFLOAT, ccount, 1, 1, nrows, 0, simputspec->fluxdensity,
 		      &anynull, &status);
 
 	// Divide by exposure time.
 	long ii;
 	for (ii=0; ii<nrows; ii++) {
-	  simputspec->pflux[ii]*=1./exposure;
+	  simputspec->fluxdensity[ii]*=1./exposure;
 	}
 
       } else if ((0==strcmp(hduclas3, "RATE"))||(0==strcmp(hduclas3, "rate"))) {
@@ -467,7 +471,7 @@ int simputspec_main()
 	}
 
 	int anynull=0;
-	fits_read_col(fitsfile, TFLOAT, crate, 1, 1, nrows, 0, simputspec->pflux,
+	fits_read_col(fitsfile, TFLOAT, crate, 1, 1, nrows, 0, simputspec->fluxdensity,
 		      &anynull, &status);
 
       } else {
@@ -521,7 +525,7 @@ int simputspec_main()
 	}
 	
 	// Divide by the area and the width of the energy bin.
-	simputspec->pflux[ii]*=1./area/(hi-lo);	
+	simputspec->fluxdensity[ii]*=1./area/(hi-lo);	
       }
       CHECK_STATUS_BREAK(status);
 
@@ -530,10 +534,10 @@ int simputspec_main()
     long jj;
     for (jj=0; jj<simputspec->nentries; jj++) {
       // Check if the flux has a physically reasonable value.
-      if ((simputspec->pflux[jj]<0.)||(simputspec->pflux[jj]>1.e12)) {
+      if ((simputspec->fluxdensity[jj]<0.)||(simputspec->fluxdensity[jj]>1.e12)) {
 	char msg[SIMPUT_MAXSTR];
 	sprintf(msg, "flux (%e photons/cm**2/keV) out of boundaries", 
-		simputspec->pflux[jj]);
+		simputspec->fluxdensity[jj]);
         SIMPUT_ERROR(msg);
         status=EXIT_FAILURE;
 	break;
