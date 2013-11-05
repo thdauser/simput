@@ -272,7 +272,7 @@ int simputspec_main()
         }
 
         // Read the flux column.
-        fits_read_col(fitsfile, TFLOAT, 2, 1, 1, nrows, 0, 
+        fits_read_col(fitsfile, TFLOAT, 2, 1, 1, nrows, 0,
 		      simputspecbuffer->fluxdensity, &anynull, &status);
         CHECK_STATUS_BREAK(status);
 
@@ -453,8 +453,8 @@ int simputspec_main()
 	}
 
 	int anynull=0;
-	fits_read_col(fitsfile, TFLOAT, ccount, 1, 1, nrows, 0, simputspec->fluxdensity,
-		      &anynull, &status);
+	fits_read_col(fitsfile, TFLOAT, ccount, 1, 1, nrows, 0,
+		      simputspec->fluxdensity, &anynull, &status);
 
 	// Divide by exposure time.
 	long ii;
@@ -471,8 +471,8 @@ int simputspec_main()
 	}
 
 	int anynull=0;
-	fits_read_col(fitsfile, TFLOAT, crate, 1, 1, nrows, 0, simputspec->fluxdensity,
-		      &anynull, &status);
+	fits_read_col(fitsfile, TFLOAT, crate, 1, 1, nrows, 0, 
+		      simputspec->fluxdensity, &anynull, &status);
 
       } else {
 	SIMPUT_ERROR("invalid value for keyword 'HDUCLAS3'");

@@ -1409,7 +1409,7 @@ void saveSimputMIdpSpec(SimputMIdpSpec* const spec,
       sprintf(tform[0], "1PE");
       strcpy(tunit[0], "keV");
 
-      strcpy(ttype[1], "FLUX");
+      strcpy(ttype[1], "FLUXDENSITY");
       sprintf(tform[1], "1PE");
       strcpy(tunit[1], "photon/s/cm**2/keV");
 
