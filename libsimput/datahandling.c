@@ -245,7 +245,8 @@ static inline double getLCTime(const SimputLC* const lc,
     if (fabs(lc->dperiod)<1.e-20) {
       return(phase*lc->period);
     } else {
-      return((double)((exp(phase*lc->dperiod)-1.0)*lc->period/lc->dperiod));
+      return((double)((expl(phase*lc->dperiod)-1.0)*lc->period/lc->dperiod
+		      +lc->timezero+(lc->mjdref-mjdref)*24.*3600.));
     }
   }
 }
@@ -1416,7 +1417,17 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	  getLCTime(lc, kk+1, nperiods, mjdref)-tk;
 	double ak=(lc->flux[kk+1]-lc->flux[kk])/lc->fluxscal/stepwidth;
 	double bk=lc->flux[kk]/lc->fluxscal;
-	
+
+	// Make sure that stepwidth is positive.
+	if (stepwidth<=0.0) {
+	  *status=EXIT_FAILURE;
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "encountered nonpositive step width (%es) in light curve '%s'",
+		  stepwidth, lc->fileref);
+	  SIMPUT_ERROR(msg);
+	  return(0);
+	}
+
 	// Step 2 in the algorithm.
 	double uk=1.-exp((-ak/2.*(pow(stepwidth,2.)-pow(t,2.))
 			  -bk*(stepwidth-t))*avgrate);
