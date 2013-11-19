@@ -1633,19 +1633,30 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Shift the photon position according to the 
       // RA,Dec values defined for this source in the catalog.
 
+      // Apply IMGSCAL.
+      b_ra *=1./src->imgscal*cos(b_dec)/cos(b_dec/src->imgscal);
+      b_dec*=1./src->imgscal;
+
       // Get a Carteesian coordinate vector for the photon location.
       Vector p=unit_vector(b_ra, b_dec);
 
-      // Rotate the vector.
+      // Apply IMGROTA by rotation around the x-axis.
+      double cosimgrota=cos(src->imgrota);
+      double sinimgrota=sin(src->imgrota);
+      Vector r;
+      r.x=p.x;
+      r.y= cosimgrota*p.y + sinimgrota*p.z;
+      r.z=-sinimgrota*p.y + cosimgrota*p.z;
+
+      // Rotate the vector towards the source position.
       double cosra=cos(src->ra);
       double sinra=sin(src->ra);
       double cosdec=cos(src->dec);
       double sindec=sin(src->dec);
-
       Vector f;
-      f.x=p.x*cosra*cosdec - p.y*sinra - p.z*cosra*sindec;
-      f.y=p.x*sinra*cosdec + p.y*cosra - p.z*sinra*sindec;
-      f.z=p.x      *sindec +     0.0   + p.z      *cosdec;
+      f.x=r.x*cosra*cosdec - r.y*sinra - r.z*cosra*sindec;
+      f.y=r.x*sinra*cosdec + r.y*cosra - r.z*sinra*sindec;
+      f.z=r.x      *sindec +     0.0   + r.z      *cosdec;
 
       // Determine RA and Dec of the photon.
       calculate_ra_dec(f, ra, dec); 
@@ -1755,10 +1766,10 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Set the position to the origin and assign the correct scaling.
       // TODO: This assumes that the image WCS is equivalent to the 
       // coordinate system used in the catalog!!
-      wcs.crval[0] = src->ra *180./M_PI; // Units (CUNITn) must be [deg]!
-      wcs.crval[1] = src->dec*180./M_PI;
-      wcs.cdelt[0]*= 1./src->imgscal;
-      wcs.cdelt[1]*= 1./src->imgscal;
+      wcs.crval[0] =src->ra *180./M_PI;
+      wcs.crval[1] =src->dec*180./M_PI;
+      wcs.cdelt[0]*=1./src->imgscal;
+      wcs.cdelt[1]*=1./src->imgscal;
       wcs.flag=0;
 
       // Check that CUNIT is set to "deg". Otherwise there will be a conflict
