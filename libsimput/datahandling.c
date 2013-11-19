@@ -427,8 +427,9 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       // Set the time bins of the light curve.
       lc->timezero=prevtime;
       long ii;
+      double dt=1./(2.*psd->frequency[psd->nentries-1]);
       for (ii=0; ii<lc->nentries; ii++) {
-	lc->time[ii]=ii*1./(2.*psd->frequency[psd->nentries-1]);
+	lc->time[ii]=ii*dt;
       }
 
       // Interpolate the PSD to a uniform frequency grid.
@@ -452,7 +453,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       float delta_f=psd->frequency[psd->nentries-1]/psdlen;
       jj=0;
       for (ii=0; ii<psdlen; ii++) {
-	float frequency = (ii+1)*delta_f;
+	float frequency=(ii+1)*delta_f;
 	while((frequency>psd->frequency[jj]) &&
 	      (jj<psd->nentries-1)) {
 	  jj++;
@@ -461,13 +462,13 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 	  power[ii]=0.;
 	  /* frequency/psd->frequency[jj]* 
 	     psd->power[jj]* 
-	     delta_f;*/
+	     delta_f; */
 	} else {
 	  power[ii]=
-	    (psd->power[jj-1] + 
+	    (psd->power[jj-1]+
 	     (frequency-psd->frequency[jj-1])/
 	     (psd->frequency[jj]-psd->frequency[jj-1])*
-	     (psd->power[jj]-psd->power[jj-1])) *
+	     (psd->power[jj]-psd->power[jj-1]))*
 	    delta_f;
 	}
       }
