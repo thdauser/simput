@@ -296,7 +296,7 @@ void getEBOUNDSEnergyLoHi(const long channel,
   if ((mchannel<0) || (mchannel>=rmf->NumberChannels)) {
     char msg[SIMPUT_MAXSTR];
     sprintf(msg, "channel %ld is outside allowed range (%ld-%ld) ",
-	    channel, rmf->FirstChannel, rmf->FirstChannel+rmf->NumberChannels);
+	    channel, rmf->FirstChannel, rmf->FirstChannel+rmf->NumberChannels-1);
     SIMPUT_ERROR(msg);
     *status=EXIT_FAILURE;
     return;
