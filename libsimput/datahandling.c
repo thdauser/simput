@@ -1644,7 +1644,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       double cosimgrota=cos(src->imgrota);
       double sinimgrota=sin(src->imgrota);
       Vector r;
-      r.x=p.x;
+      r.x= p.x;
       r.y= cosimgrota*p.y + sinimgrota*p.z;
       r.z=-sinimgrota*p.y + cosimgrota*p.z;
 

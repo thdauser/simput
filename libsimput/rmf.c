@@ -285,21 +285,25 @@ long getEBOUNDSChannel(const float energy, const struct RMF* const rmf)
 }
 
 
-void getEBOUNDSEnergyLoHi(long channel, 
+void getEBOUNDSEnergyLoHi(const long channel, 
 			  const struct RMF* const rmf, 
 			  float* const lo,
 			  float* const hi,
 			  int* const status)
 {
   // Subtract the channel offset (EBOUNDS may either start at 0 or at 1).
-  channel-=rmf->FirstChannel;
-  if ((channel<0) || (channel>=rmf->NumberChannels)) {
+  long mchannel=channel-rmf->FirstChannel;
+  if ((mchannel<0) || (mchannel>=rmf->NumberChannels)) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "channel %ld is outside allowed range (%ld-%ld) ",
+	    channel, rmf->FirstChannel, rmf->FirstChannel+rmf->NumberChannels);
+    SIMPUT_ERROR(msg);
     *status=EXIT_FAILURE;
     return;
   }
 
   // Return the lower and upper energy value of the specified PHA 
   // channel according to the EBOUNDS table.
-  *lo=rmf->ChannelLowEnergy[channel];
-  *hi=rmf->ChannelHighEnergy[channel];
+  *lo=rmf->ChannelLowEnergy[mchannel];
+  *hi=rmf->ChannelHighEnergy[mchannel];
 }

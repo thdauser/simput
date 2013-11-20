@@ -69,7 +69,7 @@ long getEBOUNDSChannel(const float energy, const struct RMF* const rmf);
     first channel has the number 0, the numbering starts at 0.  The
     returned energy is given in the same units as the EBOUNDS,
     (usually [keV]). */
-void getEBOUNDSEnergyLoHi(long channel,
+void getEBOUNDSEnergyLoHi(const long channel,
 			  const struct RMF* const rmf, 
 			  float* const lo,
 			  float* const hi,
