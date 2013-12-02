@@ -313,6 +313,15 @@ typedef struct {
   /** Total number of photons in the list. */
   long nphs;
 
+  /** Number of photons randomly drawn from the list. Note that there
+      is not recording of which photons from the list have already
+      been used. Therefore it is possible that one and the same photon
+      is drawn multiple times in a single simulation. This counter is
+      used to print warnings when the number of photons already
+      returned by the corresponding routine exceeds one fifth of the
+      total number of available photons (nphs). */
+  long nrphs;
+
   /** MJD for reference time [d]. */
   double mjdref;
 

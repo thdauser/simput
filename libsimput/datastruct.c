@@ -900,6 +900,7 @@ SimputPhList* newSimputPhList(int* const status)
   // Initialize elements.
   phl->fptr    =NULL;
   phl->nphs    =0;
+  phl->nrphs   =0;
   phl->cra     =0;
   phl->cdec    =0;
   phl->cenergy =0;
