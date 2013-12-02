@@ -1579,12 +1579,17 @@ static void getSimputPhFromPhList(const SimputCtlg* const cat,
 	// Increase the counter of the number of returned photons and
 	// check if it exceeds one fifth of the total number of available
 	// photons.
-	if (0==phl->nphs % (++phl->nrphs/5)) {
+	if (0==(++phl->nrphs) % (phl->nphs/5)) {
 	  char msg[SIMPUT_MAXSTR];
+	  float ratio=phl->nrphs*1./phl->nphs;
 	  sprintf(msg, "ratio of the number of randomly drawn photons (%ld) "
-		  "versus total number of photons (%ld) exceeds %.0lf%%! Note "
-		  "that individual photons might be used multiple times",
-		  phl->nrphs, phl->nphs, phl->nrphs*100./phl->nphs);
+		  "versus total number of photons (%ld) exceeds %.0lf%%! ",
+		  phl->nrphs, phl->nphs, ratio*100.);
+	  if (ratio<1.) {
+	    strcat(msg, "Individual photons might be used multiple times");
+	  } else {
+	    strcat(msg, "Individual photons are used multiple times");
+	  }
 	  SIMPUT_WARNING(msg);
 	}
       
