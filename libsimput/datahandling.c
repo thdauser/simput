@@ -1484,82 +1484,112 @@ static void getSimputPhFromPhList(const SimputCtlg* const cat,
 				  double* const dec,
 				  int* const status)
 {
-  // This routine should not be called with currrow>0.
-  assert(phl->currrow==0);
-
-  // Randomly select a photon from the file.
-
-  // Determine the maximum value of the instrument ARF.
-  if (0.==phl->refarea) {
-    long kk;
-    for (kk=0; kk<cat->arf->NumberEnergyBins; kk++) {
-      if (cat->arf->EffArea[kk]>phl->refarea) {
-	phl->refarea=cat->arf->EffArea[kk];
-      }
-    }
-  }
-  
-  while(1) {
-    // Determine a random photon within the list.
-    long ii=(long)(getRndNum(status)*phl->nphs);
-    CHECK_STATUS_VOID(*status);
-    
-    // Read the photon energy.
+  // Check if we have to read from a particular row in the FITS file,
+  // or if we need to return a randomly selected photon.
+  if (phl->currrow>0) {
+    // Read a photon from a particular row.
     int anynul=0;
-    fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1, 
+    fits_read_col(phl->fptr, TFLOAT, phl->cenergy, phl->currrow, 1, 1,
 		  NULL, energy, &anynul, status);
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("failed reading energy from photon list");
       return;
     }
     *energy *=phl->fenergy;
-      
-    // Determine the ARF value for the photon energy.
-    long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
-    while (upper>lower) {
-      mid=(lower+upper)/2;
-      if (cat->arf->HighEnergy[mid]<*energy) {
-	lower=mid+1;
-      } else {
-	upper=mid;
+    
+    fits_read_col(phl->fptr, TDOUBLE, phl->cra, phl->currrow, 1, 1, 
+		  NULL, ra, &anynul, status);      
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading right ascension from photon list");
+      return;
+    }
+    *ra *=phl->fra;
+	
+    fits_read_col(phl->fptr, TDOUBLE, phl->cdec, phl->currrow, 1, 1, 
+		  NULL, dec, &anynul, status);
+    if (EXIT_SUCCESS!=*status) {
+      SIMPUT_ERROR("failed reading declination from photon list");
+      return;
+    }
+    *dec *=phl->fdec;
+
+    return;
+
+  } else {
+    // Randomly select a photon from the file.
+    
+    // Determine the maximum value of the instrument ARF.
+    if (0.==phl->refarea) {
+      long kk;
+      for (kk=0; kk<cat->arf->NumberEnergyBins; kk++) {
+	if (cat->arf->EffArea[kk]>phl->refarea) {
+	  phl->refarea=cat->arf->EffArea[kk];
+	}
       }
     }
     
-    // Randomly determine according to the effective area
-    // of the instrument, whether this photon is seen or not.
-    double r=getRndNum(status);
-    CHECK_STATUS_VOID(*status);
-    if (r<cat->arf->EffArea[lower]/phl->refarea) {
-      // Read the position of the photon.
-      fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1, 
-		    NULL, ra, &anynul, status);      
+    while(1) {
+      // Determine a random photon within the list.
+      long ii=(long)(getRndNum(status)*phl->nphs);
+      CHECK_STATUS_VOID(*status);
+      
+      // Read the photon energy.
+      int anynul=0;
+      fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1, 
+		    NULL, energy, &anynul, status);
       if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed reading right ascension from photon list");
+	SIMPUT_ERROR("failed reading energy from photon list");
 	return;
       }
-      *ra *=phl->fra;
-	
-      fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
-		    NULL, dec, &anynul, status);
-      if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed reading declination from photon list");
-	return;
-      }
-      *dec *=phl->fdec;
-     
-      // Increase the counter of the number of returned photons and
-      // check if it exceeds one fifth of the total number of available
-      // photons.
-      if (0==phl->nphs % (++phl->nrphs/5)) {
-	char msg[SIMPUT_MAXSTR];
-	sprintf(msg, "ratio of the number of randomly drawn photons (%ld) "
-		"versus total number of photons (%ld) exceeds %.0lf%%! Note "
-		"that individual photons might be used multiple times",
-		phl->nrphs, phl->nphs, phl->nrphs*100./phl->nphs);
-	SIMPUT_WARNING(msg);
+      *energy *=phl->fenergy;
+      
+      // Determine the ARF value for the photon energy.
+      long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
+      while (upper>lower) {
+	mid=(lower+upper)/2;
+	if (cat->arf->HighEnergy[mid]<*energy) {
+	  lower=mid+1;
+	} else {
+	  upper=mid;
+	}
       }
       
-      return;
+      // Randomly determine according to the effective area
+      // of the instrument, whether this photon is seen or not.
+      double r=getRndNum(status);
+      CHECK_STATUS_VOID(*status);
+      if (r<cat->arf->EffArea[lower]/phl->refarea) {
+	// Read the position of the photon.
+	fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1, 
+		      NULL, ra, &anynul, status);      
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading right ascension from photon list");
+	  return;
+	}
+	*ra *=phl->fra;
+	
+	fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
+		      NULL, dec, &anynul, status);
+	if (EXIT_SUCCESS!=*status) {
+	  SIMPUT_ERROR("failed reading declination from photon list");
+	  return;
+	}
+	*dec *=phl->fdec;
+     
+	// Increase the counter of the number of returned photons and
+	// check if it exceeds one fifth of the total number of available
+	// photons.
+	if (0==phl->nphs % (++phl->nrphs/5)) {
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "ratio of the number of randomly drawn photons (%ld) "
+		  "versus total number of photons (%ld) exceeds %.0lf%%! Note "
+		  "that individual photons might be used multiple times",
+		  phl->nrphs, phl->nphs, phl->nrphs*100./phl->nphs);
+	  SIMPUT_WARNING(msg);
+	}
+      
+	return;
+      }
     }
   }
 }
