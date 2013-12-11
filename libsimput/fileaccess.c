@@ -2866,20 +2866,6 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
       }
     }
 
-    // Read the optional FLUXSCAL header keyword.
-    char comment[SIMPUT_MAXSTR];
-    int opt_status=EXIT_SUCCESS;
-    fits_write_errmark();
-    fits_read_key(fptr, TFLOAT, "FLUXSCAL", &img->fluxscal, 
-		  comment, &opt_status);
-    if (EXIT_SUCCESS!=opt_status) {
-      // FLUXSCAL is not given in the FITS header. Therefore it is 
-      // set to the default value of 1.
-      img->fluxscal=1.0;
-      opt_status=EXIT_SUCCESS;
-    }
-    fits_clear_errmark();
-
     // Store the file reference to the image for later comparisons.
     img->fileref= 
       (char*)malloc((strlen(filename)+1)*sizeof(char));
@@ -3018,7 +3004,6 @@ void saveSimputImg(SimputImg* const img,
     fits_write_key(fptr, TSTRING, "HDUVERS", "1.1.0", "", status);
     fits_write_key(fptr, TSTRING, "EXTNAME", extname, "", status);
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
-    fits_write_key(fptr, TFLOAT,  "FLUXSCAL", &img->fluxscal, "", status);
     if (EXIT_SUCCESS!=*status) {
       char msg[SIMPUT_MAXSTR];
       sprintf(msg, "failed writing FITS keywords in file '%s'", filename);

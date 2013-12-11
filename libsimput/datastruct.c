@@ -827,7 +827,6 @@ SimputImg* newSimputImg(int* const status)
   img->naxis1  =0;
   img->naxis2  =0;
   img->dist    =NULL;
-  img->fluxscal=0.;
   img->fileref =NULL;
   img->wcs     =NULL;
 

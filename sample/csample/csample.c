@@ -36,7 +36,7 @@ void printSimputSource(SimputSrc* sse) {
 
 int main(int argc, char **argv)
 {
-  const char filename[] = "simput.fits";
+  const char filename[]="simput.fits";
 
   SimputCtlg* cat=NULL;
   SimputMIdpSpec* spec =NULL;
@@ -72,13 +72,13 @@ int main(int argc, char **argv)
 
       SimputSrc* src=
 	newSimputSrcV(1, "", -1.*M_PI/180., 2.5*M_PI/180., 0., 1., 
-		      1., 10., 5.e-12, "[SPEC,1][#row==1]", "", "", &status);
+		      1., 10., 5.e-12, "[SPEC,1][#row==1]", "[IMG1,1]", "", &status);
       CHECK_STATUS_BREAK(status);
       appendSimputSrc(cat, src, &status);
       CHECK_STATUS_BREAK(status);
 
       src=newSimputSrcV(2, "", -1.8*M_PI/180., 2.3*M_PI/180., 30.*M_PI/180., 1.2,
-			0.5, 15., 8.e-13, "[SPEC,1][#row==1]", "", "", &status);
+			0.5, 15., 8.e-13, "[SPEC,1][#row==2]", "", "", &status);
       CHECK_STATUS_BREAK(status);
       appendSimputSrc(cat, src, &status);
       CHECK_STATUS_BREAK(status);
@@ -136,22 +136,45 @@ int main(int argc, char **argv)
       // Create a source image and append it to the file with the source catalog.
       img=newSimputImg(&status);
       CHECK_STATUS_BREAK(status);
-      img->dist = (double**)malloc(3*sizeof(double*));
+      img->dist=(double**)malloc(3*sizeof(double*));
       CHECK_NULL_BREAK(img->dist, status, "memory allocation failed!\n");
       long ii;
       for (ii=0; ii<3; ii++) {
-	img->dist[ii] = (double*)malloc(sizeof(double));
+	img->dist[ii]=(double*)malloc(sizeof(double));
 	CHECK_NULL_BREAK(img->dist[ii], status, "memory allocation failed!\n");
       }
       CHECK_STATUS_BREAK(status);
-      img->naxis1   = 3;
-      img->naxis2   = 1;
-      img->dist[0][0] = 0.6;
-      img->dist[1][0] = 1.6;
-      img->dist[2][0] = 2.0;
-      img->fluxscal = 2.0;
+      img->naxis1=3;
+      img->naxis2=1;
+      img->dist[0][0]=0.6;
+      img->dist[1][0]=1.6;
+      img->dist[2][0]=2.0;
 
-      //      saveSimputImg(img, filename, "IMG1", 0, &status);
+      img->wcs=(struct wcsprm*)malloc(sizeof(struct wcsprm));
+      if (NULL==img->wcs) {
+	printf("error: memory allocation for WCS data structure failed!\n");
+	status=EXIT_FAILURE;
+	break;
+      }
+      img->wcs->flag=-1;
+      if (0!=wcsini(1, 2, img->wcs)) {
+	printf("error: initalization of WCS data structure failed!\n");
+	status=EXIT_FAILURE;
+	break;
+      }
+      img->wcs->naxis=2;
+      strcpy(img->wcs->ctype[0], "RA---TAN");
+      strcpy(img->wcs->ctype[1], "DEC--TAN");
+      strcpy(img->wcs->cunit[0], "deg");
+      strcpy(img->wcs->cunit[1], "deg");
+      img->wcs->crval[0]=0.0;
+      img->wcs->crval[1]=0.0;
+      img->wcs->crpix[0]=2.0;
+      img->wcs->crpix[1]=1.0;
+      img->wcs->cdelt[0]=0.01;
+      img->wcs->cdelt[1]=0.01;
+
+      saveSimputImg(img, filename, "IMG1", 0, &status);
       CHECK_STATUS_BREAK(status);
       // END of create a source image.
     }

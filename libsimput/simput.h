@@ -283,9 +283,6 @@ typedef struct {
   /** Pixel value distribution function. */
   double** dist;
 
-  /** Flux scaling factor. */
-  float fluxscal;
-
   /** WCS data used by wcslib. */
   struct wcsprm* wcs;
 
