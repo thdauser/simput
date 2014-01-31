@@ -2,6 +2,7 @@ AM_CFLAGS =-I@top_srcdir@/extlib/cfitsio
 AM_CFLAGS+=-I@top_srcdir@/extlib/wcslib/C
 AM_CFLAGS+=-I@top_srcdir@/extlib/ape/include
 AM_CFLAGS+=-I@top_srcdir@/extlib/atFunctions/include
+AM_CFLAGS+=-I@top_srcdir@/extlib/fftw/api
 
 ########## DIRECTORIES ###############
 

@@ -6,6 +6,7 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/heainit
 AM_CFLAGS+=-I@top_srcdir@/extlib/heaio
 AM_CFLAGS+=-I@top_srcdir@/extlib/heautils
 AM_CFLAGS+=-I@top_srcdir@/extlib/heasp
+AM_CFLAGS+=-I@top_srcdir@/extlib/fftw/api
 AM_CFLAGS+=-Wall 
 
 ########## DIRECTORIES ###############
