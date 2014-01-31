@@ -1,4 +1,4 @@
-*~
+cd*~
 simput*.tar.gz
 *.o
 *.a
@@ -19,13 +19,6 @@ fsample
 csample
 labnh
 galabs
-simputfile
-simputlc
-simputpsd
-simputmerge
-simputspec
-simputsrc
-simputverify
 
 # Autotool stuff:
 aclocal.m4
