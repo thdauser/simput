@@ -92,6 +92,9 @@ struct Parameters {
   /** File name of the input ASCII PSD. */
   char PSDFile[SIMPUT_MAXSTR];
 
+  /** File name of the input FITS image. */
+  char ImageFile[SIMPUT_MAXSTR];
+
   int chatter;
   char clobber;
   char history;

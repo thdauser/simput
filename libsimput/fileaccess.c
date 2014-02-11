@@ -2818,11 +2818,11 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
       break;
     }
 
-    img->naxis1 = naxes[0];
-    img->naxis2 = naxes[1];
+    img->naxis1=naxes[0];
+    img->naxis2=naxes[1];
 
     // Allocate memory for the image.
-    img->dist = (double**)malloc(img->naxis1*sizeof(double*));
+    img->dist=(double**)malloc(img->naxis1*sizeof(double*));
     CHECK_NULL_BREAK(img->dist, *status, 
 		     "memory allocation for source image failed");
     long ii;
@@ -2841,10 +2841,10 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     // Read the image from the file.
     int anynul;
     double null_value=0.;
-    long fpixel[2] = {1, 1};   // Lower left corner.
-    //                |--|--> FITS coordinates start at (1,1).
-    long lpixel[2] = {img->naxis1, img->naxis2}; // Upper right corner.
-    long inc[2]    = {1, 1};
+    long fpixel[2]={1, 1};   // Lower left corner.
+    //              |--|--> FITS coordinates start at (1,1).
+    long lpixel[2]={img->naxis1, img->naxis2}; // Upper right corner.
+    long inc[2]   ={1, 1};
     fits_read_subset(fptr, TDOUBLE, fpixel, lpixel, inc, &null_value, 
 		     image1d, &anynul, status);
     if (EXIT_SUCCESS!=*status) {
@@ -2867,9 +2867,9 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     }
 
     // Store the file reference to the image for later comparisons.
-    img->fileref= 
+    img->fileref=
       (char*)malloc((strlen(filename)+1)*sizeof(char));
-    CHECK_NULL_BREAK(img->fileref, *status, 
+    CHECK_NULL_BREAK(img->fileref, *status,
 		     "memory allocation for file reference failed");
     strcpy(img->fileref, filename);
     
