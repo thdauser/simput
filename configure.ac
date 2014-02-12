@@ -103,6 +103,7 @@ AC_CONFIG_FILES([Makefile
 		 tools/simputfile/Makefile
 		 tools/simputlc/Makefile
 		 tools/simputpsd/Makefile
+		 tools/simputimg/Makefile
 		 tools/simputmerge/Makefile
 		 tools/simputspec/Makefile
 		 tools/simputsrc/Makefile

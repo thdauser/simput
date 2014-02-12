@@ -12,7 +12,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.16");
+  set_toolversion("0.17");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -23,11 +23,6 @@ int simputfile_main()
     status=simputfile_getpar(&par);
     CHECK_STATUS_BREAK(status);
 
-    // Check the input type for the power spectrum: individual 
-    // components or and ASCII file. Only one of these two option 
-    // may be used. In case multiple of them exist, throw an error 
-    // message and abort.
-
     if ((0==strcmp(par.LCFile, "none"))||
 	(0==strcmp(par.LCFile, "NONE"))) {
       strcpy(par.LCFile, "");
@@ -36,6 +31,15 @@ int simputfile_main()
 	(0==strcmp(par.PSDFile, "NONE"))) {
       strcpy(par.PSDFile, "");
     }
+    if ((0==strcmp(par.ImageFile, "none"))||
+	(0==strcmp(par.ImageFile, "NONE"))) {
+      strcpy(par.ImageFile, "");
+    }
+
+    // Check the input type for the power spectrum: individual 
+    // components or an ASCII file. Only one of these two option 
+    // may be used. In case multiple of them exist, throw an error 
+    // message and abort.
 
     int ntoptions=0;
     if (strlen(par.LCFile)>0) {
@@ -139,6 +143,17 @@ int simputfile_main()
 	      par.Q2f, par.Q2Q, par.Q2rms,
 	      par.Q3f, par.Q3Q, par.Q3rms,
 	      par.PSDFile, par.chatter, shistory);
+      status=system(command);
+      CHECK_STATUS_BREAK(status);
+    }
+
+    // Call 'simputimg' to assign an image to the source.
+    if (strlen(par.ImageFile)>0) {
+      sprintf(command, 
+	      "simputimg Simput=%s "
+	      "ImageFile=%s chatter=%d history=%s",
+	      par.Simput, 
+	      par.ImageFile, par.chatter, shistory);
       status=system(command);
       CHECK_STATUS_BREAK(status);
     }
@@ -411,6 +426,14 @@ int simputfile_getpar(struct Parameters* const par)
     return(status);
   }
   strcpy(par->PSDFile, sbuffer);
+  free(sbuffer);
+
+  status=ape_trad_query_string("ImageFile", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the name of the image file failed");
+    return(status);
+  }
+  strcpy(par->ImageFile, sbuffer);
   free(sbuffer);
 
   status=ape_trad_query_int("chatter", &par->chatter);

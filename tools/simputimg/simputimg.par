@@ -1,0 +1,6 @@
+Simput,fre,lq,"simput.fits",,,"SIMPUT catalog file"
+Extname,s,h,"IMAGE",,,"EXTNAME of the generated HDU"
+Extver,i,h,1,1,9999,"EXTVER of the generated HDU"
+ImageFile,s,h,"none",,,"FITS file containing an image of the spatial flux distribution"
+chatter,i,lh,3,,,"verbosity"
+history,b,lh,true,,,"write a history block with program parameters to each FITS file?"
