@@ -12,7 +12,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.17");
+  set_toolversion("0.18");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -296,7 +296,7 @@ int simputfile_getpar(struct Parameters* const par)
 
   status=ape_trad_query_string("XSPECFile", &sbuffer);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the name of the XSPEC spectrum file failed");
+    SIMPUT_ERROR("reading the name of the XSPEC spectral model file failed");
     return(status);
   }
   strcpy(par->XSPECFile, sbuffer);

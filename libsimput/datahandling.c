@@ -1818,11 +1818,11 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 
       // Rotate the image (pixel coordinates) by IMGROTA around the 
       // reference point.
-      double xdrot= 
-	(xd-wcs.crpix[0])*cos(src->imgrota) + 
+      double xdrot=
+	(xd-wcs.crpix[0])*cos(src->imgrota) +
 	(yd-wcs.crpix[1])*sin(src->imgrota) + wcs.crpix[0];
       double ydrot=
-	-(xd-wcs.crpix[0])*sin(src->imgrota) + 
+	-(xd-wcs.crpix[0])*sin(src->imgrota) +
 	 (yd-wcs.crpix[1])*cos(src->imgrota) + wcs.crpix[1];
       
       // Convert the long-valued pixel coordinates to double values,
