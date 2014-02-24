@@ -1,3 +1,23 @@
+/*
+   This file is part of SIMPUT.
+
+   SIMPUT is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIMPUT is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2007-2014 Christian Schmid, FAU
+*/
+
 #ifndef SIMPUT_H
 #define SIMPUT_H (1)
 
@@ -8,26 +28,6 @@
 #define HEASP_H 1
 #include "heasp.h"
 #endif
-
-
-/*
-  simput.h
-
-  Version  Date       Author                
-  -------------------------------------------------------------------- 
-  0.1  2011/04/02   Christian Schmid      initial 
-  0.2  2011/09/08   Christian Schmid      updated
-
-  0.11 2012/01/26   Christian Schmid      updated
-  0.12 2012/02/21   Christian Schmid      updated
-
-  0.25 2012/08/31   Christian Schmid      renewed interface
-  -------------------------------------------------------------------- 
-
-   This is the header file of the SIMPUT library. The library provides
-   basic routines to create a SIMPUT source catalog file according to
-   the standard defined in the SIMPUT format document (reference ???).
-*/
 
 
 /////////////////////////////////////////////////////////////////
