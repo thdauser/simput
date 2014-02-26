@@ -1,3 +1,23 @@
+/*
+   This file is part of SIMPUT.
+
+   SIMPUT is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIMPUT is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2007-2014 Christian Schmid, FAU
+*/
+
 #include "simputfile.h"
 
 
@@ -12,7 +32,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.17");
+  set_toolversion("0.18");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -296,7 +316,7 @@ int simputfile_getpar(struct Parameters* const par)
 
   status=ape_trad_query_string("XSPECFile", &sbuffer);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the name of the XSPEC spectrum file failed");
+    SIMPUT_ERROR("reading the name of the XSPEC spectral model file failed");
     return(status);
   }
   strcpy(par->XSPECFile, sbuffer);

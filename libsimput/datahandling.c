@@ -1,3 +1,23 @@
+/*
+   This file is part of SIMPUT.
+
+   SIMPUT is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIMPUT is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2007-2014 Christian Schmid, FAU
+*/
+
 #include "common.h"
 
 
@@ -1818,11 +1838,11 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 
       // Rotate the image (pixel coordinates) by IMGROTA around the 
       // reference point.
-      double xdrot= 
-	(xd-wcs.crpix[0])*cos(src->imgrota) + 
+      double xdrot=
+	(xd-wcs.crpix[0])*cos(src->imgrota) +
 	(yd-wcs.crpix[1])*sin(src->imgrota) + wcs.crpix[0];
       double ydrot=
-	-(xd-wcs.crpix[0])*sin(src->imgrota) + 
+	-(xd-wcs.crpix[0])*sin(src->imgrota) +
 	 (yd-wcs.crpix[1])*cos(src->imgrota) + wcs.crpix[1];
       
       // Convert the long-valued pixel coordinates to double values,
