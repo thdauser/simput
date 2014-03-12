@@ -691,7 +691,7 @@ SimputLC* newSimputLC(int* const status)
   lc->phase0  =0.;
   lc->period  =0.;
   lc->dperiod =0.;
-  lc->fluxscal=0.;
+  lc->fluxscal=1.;
   lc->src_id  =0;
   lc->fileref =NULL;
 

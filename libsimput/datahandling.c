@@ -1436,6 +1436,10 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	double t =prevtime-tk;
 	double stepwidth=
 	  getLCTime(lc, kk+1, nperiods, mjdref)-tk;
+
+	// Make sure that FLUXSCAL and stepwidth are positive.
+	assert(lc->fluxscal>0.0);
+	assert(stepwidth>0.0);
 	double ak=(lc->flux[kk+1]-lc->flux[kk])/lc->fluxscal/stepwidth;
 	double bk=lc->flux[kk]/lc->fluxscal;
 

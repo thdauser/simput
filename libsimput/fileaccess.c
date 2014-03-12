@@ -2014,6 +2014,16 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     }
     fits_clear_errmark();
 
+    // Make sure that FLUXSCAL is positive.
+    if (lc->fluxscal<=0.0) {
+      char msg[SIMPUT_MAXSTR];
+      sprintf(msg, "light curve '%s' has zero or negative value of keyword 'FLUXSCAL'", 
+	      filename);
+      SIMPUT_ERROR(msg);
+      *status=EXIT_FAILURE;
+      break;
+    }
+
 
     // Determine the number of rows in the table.
     fits_get_num_rows(fptr, &lc->nentries, status);
