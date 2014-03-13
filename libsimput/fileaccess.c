@@ -2346,7 +2346,11 @@ void saveSimputLC(SimputLC* const lc, const char* const filename,
     fits_write_key(fptr, TINT,    "EXTVER", &extver, "", status);
     fits_write_key(fptr, TDOUBLE, "MJDREF", &lc->mjdref, "", status);
     fits_write_key(fptr, TDOUBLE, "TIMEZERO", &lc->timezero, "", status);
-    fits_write_key(fptr, TFLOAT,  "FLUXSCAL", &lc->fluxscal, "", status);
+    // The keyword FLUXSCAL is deprecated. Therefore it is only stored in the
+    // output file if its value is different from 1.
+    if (fabs(lc->fluxscal-1.0)>1.0e-6) {
+      fits_write_key(fptr, TFLOAT,  "FLUXSCAL", &lc->fluxscal, "", status);
+    }
     int periodic=0;
     if (cphase>0) {
       // Only for periodic light curves.

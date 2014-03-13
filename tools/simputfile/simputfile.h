@@ -81,6 +81,7 @@ struct Parameters {
 
   /** File name of the input ASCII light curve. */
   char LCFile[SIMPUT_MAXSTR];
+  double MJDREF;
 
   /** PSD general parameters */
   long PSDnpt;

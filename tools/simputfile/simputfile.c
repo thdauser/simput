@@ -32,7 +32,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.18");
+  set_toolversion("0.19");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -136,8 +136,8 @@ int simputfile_main()
     // to the source.
     if (strlen(par.LCFile)>0) {
       sprintf(command, 
-	      "simputlc Simput=%s LCFile=%s chatter=%d history=%s",
-	      par.Simput, par.LCFile, par.chatter, shistory);
+	      "simputlc Simput=%s LCFile=%s MJDREF=%.10lf chatter=%d history=%s",
+	      par.Simput, par.LCFile, par.MJDREF, par.chatter, shistory);
       status=system(command);
       CHECK_STATUS_BREAK(status);
     }
@@ -338,105 +338,111 @@ int simputfile_getpar(struct Parameters* const par)
   strcpy(par->LCFile, sbuffer);
   free(sbuffer);
 
+  status=ape_trad_query_double("MJDREF", &par->MJDREF);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the parameter MJDREF failed");
+    return(status);
+  }
+
   status=ape_trad_query_long("PSDnpt", &par->PSDnpt);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the PSDnpt parameter failed");
+    SIMPUT_ERROR("reading the parameter PSDnpt failed");
     return(status);
   }
 
   status=ape_trad_query_float("PSDfmin", &par->PSDfmin);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the PSDfmin parameter failed");
+    SIMPUT_ERROR("reading the parameter PSDfmin failed");
     return(status);
   }
 
   status=ape_trad_query_float("PSDfmax", &par->PSDfmax);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the PSDfmax parameter failed");
+    SIMPUT_ERROR("reading the parameter PSDfmax failed");
     return(status);
   }
 
   status=ape_trad_query_float("LFQ", &par->LFQ);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the LFQ parameter failed");
+    SIMPUT_ERROR("reading the parameter LFQ failed");
     return(status);
   }
 
   status=ape_trad_query_float("LFrms", &par->LFrms);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the LFrms parameter failed");
+    SIMPUT_ERROR("reading the parameter LFrms failed");
     return(status);
   }
 
   status=ape_trad_query_float("HBOf", &par->HBOf);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the HBOf parameter failed");
+    SIMPUT_ERROR("reading the parameter HBOf failed");
     return(status);
   }
 
   status=ape_trad_query_float("HBOQ", &par->HBOQ);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the HBOQ parameter failed");
+    SIMPUT_ERROR("reading the parameter HBOQ failed");
     return(status);
   }
 
   status=ape_trad_query_float("HBOrms", &par->HBOrms);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the HBOrms parameter failed");
+    SIMPUT_ERROR("reading the parameter HBOrms failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q1f", &par->Q1f);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q1f parameter failed");
+    SIMPUT_ERROR("reading the parameter Q1f failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q1Q", &par->Q1Q);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q1Q parameter failed");
+    SIMPUT_ERROR("reading the parameter Q1Q failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q1rms", &par->Q1rms);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q1rms parameter failed");
+    SIMPUT_ERROR("reading the parameter Q1rms failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q2f", &par->Q2f);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q2f parameter failed");
+    SIMPUT_ERROR("reading the parameter Q2f failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q2Q", &par->Q2Q);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q2Q parameter failed");
+    SIMPUT_ERROR("reading the parameter Q2Q failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q2rms", &par->Q2rms);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q2rms parameter failed");
+    SIMPUT_ERROR("reading the parameter Q2rms failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q3f", &par->Q3f);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q3f parameter failed");
+    SIMPUT_ERROR("reading the parameter Q3f failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q3Q", &par->Q3Q);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q3Q parameter failed");
+    SIMPUT_ERROR("reading the parameter Q3Q failed");
     return(status);
   }
 
   status=ape_trad_query_float("Q3rms", &par->Q3rms);
   if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("reading the Q3rms parameter failed");
+    SIMPUT_ERROR("reading the parameter Q3rms failed");
     return(status);
   }
 

@@ -41,7 +41,7 @@ int simputlc_main()
 
   // Register HEATOOL
   set_toolname("simputlc");
-  set_toolversion("0.02");
+  set_toolversion("0.03");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -83,6 +83,7 @@ int simputlc_main()
     CHECK_NULL_BREAK(simputlc->time, status, "memory allocation failed");
     simputlc->flux=(float*)malloc(nlines*sizeof(float));
     CHECK_NULL_BREAK(simputlc->flux, status, "memory allocation failed");
+    simputlc->mjdref=par.MJDREF;
 
     // Reset the file pointer, read the data and store them in
     // the SimputLC data structure.
@@ -194,6 +195,12 @@ int simputlc_getpar(struct Parameters* const par)
   }
   strcpy(par->LCFile, sbuffer);
   free(sbuffer);
+
+  status=ape_trad_query_double("MJDREF", &par->MJDREF);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the parameter MJDREF failed");
+    return(status);
+  }
 
   return(status);
 }

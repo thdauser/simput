@@ -40,6 +40,8 @@ struct Parameters {
   /** EXTVER of the generated HDU. */
   int Extver;
 
+  double MJDREF;
+
   /** File name of the input ASCII light curve. */
   char LCFile[SIMPUT_MAXSTR];
 };
