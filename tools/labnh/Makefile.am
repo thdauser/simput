@@ -7,7 +7,7 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/fftw/api
 ########## DIRECTORIES ###############
 
 # Directory where to install the PIL parameter files.
-pfilesdir=@PFILESDIR@
+pfilesdir=$(pkgdatadir)/pfiles
 dist_pfiles_DATA=labnh.par
 
 # Include README in the distributed package.

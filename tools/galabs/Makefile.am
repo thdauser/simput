@@ -11,7 +11,7 @@ AM_LDFLAGS =-L${HEADAS}/lib
 ########## DIRECTORIES ###############
 
 # Directory where to install the PIL parameter files.
-pfilesdir=@PFILESDIR@
+pfilesdir=$(pkgdatadir)/pfiles
 
 ############ BINARIES #################
 

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([simput],[0.72],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.73],[christian.schmid@sternwarte.uni-erlangen.de])
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
@@ -58,19 +58,6 @@ AC_CHECK_HEADERS([limit.h math.h stdio.h stdlib.h stdarg.h string.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
-
-# PIL parameter files have to be installed to the $PFILES directory.
-AC_ARG_VAR([PFILESDIR], [target directory for .par files])
-if test -z "$PFILESDIR"
-then
-	if test -z "$HEADAS"
-	then
-		AC_MSG_ERROR([Environment variable '\$HEADAS' is not set], [])
-	else
-		PFILESDIR="\${HEADAS}/pfiles"
-	fi
-fi
-AC_SUBST([PFILESDIR])
 
 # The following line tells 'configure' to create a header file 'config.h'
 # that is filled with definitions from this script.
