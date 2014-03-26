@@ -9,6 +9,7 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
 AC_PROG_FC # Search for a Fortran compiler.
 AC_PROG_RANLIB
+AM_PROG_AR
 AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
 
 # Compiler and Linker Flags:

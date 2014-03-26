@@ -1,8 +1,5 @@
-
 #include "labnh.h"
 #include "posstring.h"
-
-#include <malloc.h>
 
 #include <math.h>
 #include <err.h>
