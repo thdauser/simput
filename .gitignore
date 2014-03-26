@@ -21,6 +21,7 @@ depcomp
 install-sh
 ltmain.sh
 missing
+ar-lib
 configure
 Makefile
 Makefile.in
