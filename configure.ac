@@ -2,15 +2,18 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ(2.59)
-AC_INIT([simput],[0.73],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[0.75],[christian.schmid@sternwarte.uni-erlangen.de])
+
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
+
+# Check for programs:
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
 AC_PROG_FC # Search for a Fortran compiler.
 AC_PROG_RANLIB
 AM_PROG_AR
-AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
 
 # Compiler and Linker Flags:
 # "-g -W -Wall -O0" for the compiler for debugging
