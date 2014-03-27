@@ -56,7 +56,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.09");
+  set_toolversion("0.10");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -66,6 +66,24 @@ int simputspec_main()
     // Read the parameters using PIL.
     status=simputspec_getpar(&par);
     CHECK_STATUS_BREAK(status);
+
+    // Check if the specified energy ranges are reasonable.
+    if (par.Elow>par.Emin) {
+      SIMPUT_ERROR("parameter 'Emin' must be higher than 'Elow'");
+      status=EXIT_FAILURE;
+      break;
+    }
+    if (par.Eup<par.Emax) {
+      SIMPUT_ERROR("parameter 'Emax' may not exceed 'Eup'");
+      status=EXIT_FAILURE;
+      break;
+    }
+    if (par.Estep>par.Eup-par.Elow) {
+      SIMPUT_ERROR("parameter 'Estep' may not exceed difference "
+		   "between 'Eup' and 'Elow'");
+      status=EXIT_FAILURE;
+      break;
+    }
 
     // Check the input type for the spectrum.
     // Check the specification of an ISIS parameter file, an
@@ -139,7 +157,7 @@ int simputspec_main()
       fprintf(cmdfile, "use_localmodel(\"relline\");\n");
 
       // Define the energy grid.
-      fprintf(cmdfile, "variable lo=[0.05:100.0:0.01];\n");
+      fprintf(cmdfile, "variable lo=[%f:%f:%f];\n", par.Elow, par.Eup, par.Estep);
       fprintf(cmdfile, "variable hi=make_hi_grid(lo);\n");
       fprintf(cmdfile, "variable fluxdensity;\n");
       fprintf(cmdfile, "variable spec;\n");
@@ -239,7 +257,8 @@ int simputspec_main()
 
       // Write the header.
       fprintf(cmdfile, "@%s\n", par.XSPECFile);
-      fprintf(cmdfile, "dummyrsp 0.1 100.0 10000 log\n");
+      fprintf(cmdfile, "dummyrsp %f %f %d log\n", 
+	      par.Elow, par.Eup, (int)((par.Eup-par.Elow)/par.Estep));
       fprintf(cmdfile, "setplot device /null\n");
       fprintf(cmdfile, "setplot command wdata %s.qdp\n", par.Simput);
       fprintf(cmdfile, "plot model\n");
@@ -747,6 +766,24 @@ int simputspec_getpar(struct Parameters* const par)
   status=ape_trad_query_int("Extver", &par->Extver);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the EXTVER of the generated HDU failed");
+    return(status);
+  }
+
+  status=ape_trad_query_float("Elow", &par->Elow);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the Elow parameter failed");
+    return(status);
+  }
+
+  status=ape_trad_query_float("Eup", &par->Eup);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the Eup parameter failed");
+    return(status);
+  }
+
+  status=ape_trad_query_float("Estep", &par->Estep);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the Estep parameter failed");
     return(status);
   }
 

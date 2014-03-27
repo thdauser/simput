@@ -41,6 +41,11 @@ struct Parameters {
   /** EXTVER of the generated HDU. */
   int Extver;
 
+  /** Lower and upper boundary of the generated spectrum [keV]. */
+  float Elow;
+  float Eup;
+  float Estep;
+
   /** Power law. */
   float plPhoIndex;
   float plFlux;

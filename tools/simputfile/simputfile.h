@@ -47,6 +47,11 @@ struct Parameters {
       (value=0.0), it is set according to the assigned spectrum. */
   float srcFlux;
 
+  /** Lower and upper boundary of the generated spectrum [keV]. */
+  float Elow;
+  float Eup;
+  float Estep;
+
   /** Power law. */
   float plPhoIndex;
   float plFlux;

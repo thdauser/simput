@@ -32,7 +32,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.19");
+  set_toolversion("0.20");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -112,6 +112,7 @@ int simputfile_main()
     // to the source.
     sprintf(command, 
 	    "simputspec Simput=%s "
+	    "Elow=%f Eup=%f Estep=%f "
 	    "plPhoIndex=%f plFlux=%e "
 	    "bbkT=%f bbFlux=%e "
 	    "flSigma=%e flFlux=%e "
@@ -121,6 +122,7 @@ int simputfile_main()
 	    "ISISFile=%s XSPECFile=%s PHAFile=%s "
 	    "chatter=%d history=%s",
 	    par.Simput,
+	    par.Elow, par.Eup, par.Estep,
 	    par.plPhoIndex, par.plFlux,
 	    par.bbkT, par.bbFlux,
 	    par.flSigma, par.flFlux,
@@ -237,6 +239,24 @@ int simputfile_getpar(struct Parameters* const par)
   status=ape_trad_query_float("srcFlux", &par->srcFlux);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the srcFlux parameter failed");
+    return(status);
+  }
+
+  status=ape_trad_query_float("Elow", &par->Elow);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the Elow parameter failed");
+    return(status);
+  }
+
+  status=ape_trad_query_float("Eup", &par->Eup);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the Eup parameter failed");
+    return(status);
+  }
+
+  status=ape_trad_query_float("Estep", &par->Estep);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the Estep parameter failed");
     return(status);
   }
 
