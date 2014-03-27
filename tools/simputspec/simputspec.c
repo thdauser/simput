@@ -56,7 +56,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.10");
+  set_toolversion("0.11");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -308,7 +308,7 @@ int simputspec_main()
           fits_get_num_rows(fptr, &nrows, &status);
           CHECK_STATUS_BREAK(status);
 
-          // Allocate memory.
+          // Allocate memory and initialize.
           simputspec->nentries=nrows;
           simputspec->energy=(float*)malloc(nrows*sizeof(float));
           CHECK_NULL_BREAK(simputspec->energy, status, 
@@ -316,6 +316,11 @@ int simputspec_main()
           simputspec->fluxdensity=(float*)malloc(nrows*sizeof(float));
           CHECK_NULL_BREAK(simputspec->fluxdensity, status, 
 			   "memory allocation failed");
+	  long jj;
+	  for (jj=0; jj<nrows; jj++) {
+	    simputspec->energy[jj]=0.;
+	    simputspec->fluxdensity[jj]=0.;
+	  }
 
 	  simputspecbuffer->nentries=nrows;
           simputspecbuffer->energy=(float*)malloc(nrows*sizeof(float));
@@ -324,12 +329,15 @@ int simputspec_main()
           simputspecbuffer->fluxdensity=(float*)malloc(nrows*sizeof(float));
           CHECK_NULL_BREAK(simputspecbuffer->fluxdensity, status, 
 			   "memory allocation failed");
+	  for (jj=0; jj<nrows; jj++) {
+	    simputspecbuffer->energy[jj]=0.;
+	    simputspecbuffer->fluxdensity[jj]=0.;
+	  }
 
           // Read the energy column.
           fits_read_col(fptr, TFLOAT, 1, 1, 1, nrows, 0,
 			simputspec->energy, &anynull, &status);
           CHECK_STATUS_BREAK(status);
-	  long jj;
 	  for (jj=0; jj<nrows; jj++) {
 	    simputspecbuffer->energy[jj]=simputspec->energy[jj];
 	  }
@@ -614,7 +622,7 @@ int simputspec_main()
       // Check if the flux has a physically reasonable value.
       if ((simputspec->fluxdensity[jj]<0.)||(simputspec->fluxdensity[jj]>1.e12)) {
 	char msg[SIMPUT_MAXSTR];
-	sprintf(msg, "flux (%e photons/cm**2/keV) out of boundaries", 
+	sprintf(msg, "flux (%e photons/cm**2/keV) out of limits", 
 		simputspec->fluxdensity[jj]);
         SIMPUT_ERROR(msg);
         status=EXIT_FAILURE;
