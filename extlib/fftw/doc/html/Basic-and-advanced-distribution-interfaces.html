@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Basic and advanced distribution interfaces - FFTW 3.3.2</title>
+<title>Basic and advanced distribution interfaces - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="MPI-Data-Distribution.html#MPI-Data-Distribution" title="MPI Data Distribution">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -71,7 +71,7 @@ interface:
 <pre class="example">     ptrdiff_t fftw_mpi_local_size_2d(ptrdiff_t n0, ptrdiff_t n1, MPI_Comm comm,
                                       ptrdiff_t *local_n0, ptrdiff_t *local_0_start);
 </pre>
-   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f2d-370"></a>
+   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f2d-373"></a>
 Given the total size of the data to be transformed (here, <code>n0 =
 100</code> and <code>n1 = 200</code>) and an MPI communicator (<code>comm</code>), this
 function provides three numbers.
@@ -86,7 +86,7 @@ store the rows <code>local_0_start</code> to
 only a single MPI process, that process will store the entire array:
 <code>local_0_start</code> will be zero and <code>local_n0</code> will be
 <code>n0</code>.  See <a href="Row_002dmajor-Format.html#Row_002dmajor-Format">Row-major Format</a>. 
-<a name="index-row_002dmajor-371"></a>
+<a name="index-row_002dmajor-374"></a>
 
    <p>Second, the return value is the total number of data elements (e.g.,
 complex numbers for a complex DFT) that should be allocated for the
@@ -98,9 +98,9 @@ distributed FFT algorithms require data redistributions at
 intermediate stages of the transform, and in some circumstances this
 may require slightly larger local storage.  This is discussed in more
 detail below, under <a href="Load-balancing.html#Load-balancing">Load balancing</a>. 
-<a name="index-fftw_005fmalloc-372"></a><a name="index-fftw_005falloc_005fcomplex-373"></a>
+<a name="index-fftw_005fmalloc-375"></a><a name="index-fftw_005falloc_005fcomplex-376"></a>
 
-   <p><a name="index-advanced-interface-374"></a>The advanced-interface &lsquo;<samp><span class="samp">local_size</span></samp>&rsquo; function for multidimensional
+   <p><a name="index-advanced-interface-377"></a>The advanced-interface &lsquo;<samp><span class="samp">local_size</span></samp>&rsquo; function for multidimensional
 transforms returns the same three things (<code>local_n0</code>,
 <code>local_0_start</code>, and the total number of elements to allocate),
 but takes more inputs:
@@ -112,7 +112,7 @@ but takes more inputs:
                                         ptrdiff_t *local_n0,
                                         ptrdiff_t *local_0_start);
 </pre>
-   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany-375"></a>
+   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany-378"></a>
 The two-dimensional case above corresponds to <code>rnk = 2</code> and an
 array <code>n</code> of length 2 with <code>n[0] = n0</code> and <code>n[1] = n1</code>. 
 This routine is for any <code>rnk &gt; 1</code>; one-dimensional transforms
@@ -133,7 +133,7 @@ return <code>local_n0</code> equal to <code>n0 - block0 * (P / block0)</code> on
 the next process, and <code>local_n0</code> equal to zero on any remaining
 processes.  In general, we recommend using the default block size
 (which corresponds to <code>n0 / P</code>, rounded up). 
-<a name="index-FFTW_005fMPI_005fDEFAULT_005fBLOCK-376"></a><a name="index-block-distribution-377"></a>
+<a name="index-FFTW_005fMPI_005fDEFAULT_005fBLOCK-379"></a><a name="index-block-distribution-380"></a>
 
    <p>For example, suppose you have <code>P = 4</code> processes and <code>n0 =
 21</code>.  The default will be a block size of <code>6</code>, which will give

@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Avoiding MPI Deadlocks - FFTW 3.3.2</title>
+<title>Avoiding MPI Deadlocks - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Distributed_002dmemory-FFTW-with-MPI.html#Distributed_002dmemory-FFTW-with-MPI" title="Distributed-memory FFTW with MPI">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -56,7 +56,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Distributed_002dmemory-FFTW-with-MPI.ht
 
 <h3 class="section">6.9 Avoiding MPI Deadlocks</h3>
 
-<p><a name="index-deadlock-417"></a>
+<p><a name="index-deadlock-420"></a>
 An MPI program can <em>deadlock</em> if one process is waiting for a
 message from another process that never gets sent.  To avoid deadlocks
 when using FFTW's MPI routines, it is important to know which
@@ -64,7 +64,7 @@ functions are <em>collective</em>: that is, which functions must
 <em>always</em> be called in the <em>same order</em> from <em>every</em>
 process in a given communicator.  (For example, <code>MPI_Barrier</code> is
 the canonical example of a collective function in the MPI standard.) 
-<a name="index-collective-function-418"></a><a name="index-MPI_005fBarrier-419"></a>
+<a name="index-collective-function-421"></a><a name="index-MPI_005fBarrier-422"></a>
 
    <p>The functions in FFTW that are <em>always</em> collective are: every
 function beginning with &lsquo;<samp><span class="samp">fftw_mpi_plan</span></samp>&rsquo;, as well as
@@ -73,7 +73,7 @@ Also, the following functions from the ordinary FFTW interface are
 collective when they are applied to a plan created by an
 &lsquo;<samp><span class="samp">fftw_mpi_plan</span></samp>&rsquo; function: <code>fftw_execute</code>,
 <code>fftw_destroy_plan</code>, and <code>fftw_flops</code>. 
-<a name="index-fftw_005fexecute-420"></a><a name="index-fftw_005fdestroy_005fplan-421"></a><a name="index-fftw_005fflops-422"></a>
+<a name="index-fftw_005fexecute-423"></a><a name="index-fftw_005fdestroy_005fplan-424"></a><a name="index-fftw_005fflops-425"></a>
 <!--  -->
 
    </body></html>

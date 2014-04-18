@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Other Multi-dimensional Real-data MPI Transforms - FFTW 3.3.2</title>
+<title>Other Multi-dimensional Real-data MPI Transforms - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Distributed_002dmemory-FFTW-with-MPI.html#Distributed_002dmemory-FFTW-with-MPI" title="Distributed-memory FFTW with MPI">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -57,13 +57,13 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Distributed_002dmemory-FFTW-with-MPI.ht
 
 <h3 class="section">6.6 Other multi-dimensional Real-Data MPI Transforms</h3>
 
-<p><a name="index-r2r-393"></a>FFTW's MPI interface also supports multi-dimensional &lsquo;<samp><span class="samp">r2r</span></samp>&rsquo;
+<p><a name="index-r2r-396"></a>FFTW's MPI interface also supports multi-dimensional &lsquo;<samp><span class="samp">r2r</span></samp>&rsquo;
 transforms of all kinds supported by the serial interface
 (e.g. discrete cosine and sine transforms, discrete Hartley
 transforms, etc.).  Only multi-dimensional &lsquo;<samp><span class="samp">r2r</span></samp>&rsquo; transforms, not
 one-dimensional transforms, are currently parallelized.
 
-   <p><a name="index-fftw_005fr2r_005fkind-394"></a>These are used much like the multidimensional complex DFTs discussed
+   <p><a name="index-fftw_005fr2r_005fkind-397"></a>These are used much like the multidimensional complex DFTs discussed
 above, except that the data is real rather than complex, and one needs
 to pass an r2r transform kind (<code>fftw_r2r_kind</code>) for each
 dimension as in the serial FFTW (see <a href="More-DFTs-of-Real-Data.html#More-DFTs-of-Real-Data">More DFTs of Real Data</a>).
@@ -95,7 +95,7 @@ the second dimension with code like:
      
          fftw_destroy_plan(plan);
 </pre>
-   <p><a name="index-fftw_005falloc_005freal-395"></a>Notice that we use the same &lsquo;<samp><span class="samp">local_size</span></samp>&rsquo; functions as we did for
+   <p><a name="index-fftw_005falloc_005freal-398"></a>Notice that we use the same &lsquo;<samp><span class="samp">local_size</span></samp>&rsquo; functions as we did for
 complex data, only now we interpret the sizes in terms of real rather
 than complex values, and correspondingly use <code>fftw_alloc_real</code>.
 

@@ -1,3 +1,32 @@
+FFTW 3.3.4
+
+* New functions fftw_alignment_of (to check whether two arrays are
+  equally aligned for the purposes of applying a plan) and fftw_sprint_plan
+  (to output a description of plan to a string).
+
+* Bugfix in fftw-wisdom-to-conf; thanks to Florian Oppermann for the
+  bug report.
+
+* Fixed manual to work with texinfo-5.
+
+* Increased timing interval on x86_64 to reduce timing errors.
+
+* Default to Win32 threads, not pthreads, if both are present.
+
+* Various build-script fixes.
+
+FFTW 3.3.3
+
+* Fix deadlock bug in MPI transforms (thanks to Michael Pippig for the
+  bug report and patch, and to Graham Dennis for the bug report).
+
+* Use 128-bit ARM NEON instructions instead of 64-bits.  This change
+  appears to speed up even ARM processors with a 64-bit NEON pipe.
+
+* Speed improvements for single-precision AVX.
+
+* Speed up planner on machines without "official" cycle counters, such as ARM.
+
 FFTW 3.3.2
 
 * Removed an archaic stack-alignment hack that was failing with
@@ -234,6 +263,28 @@ FFTW 3.2alpha2
 
 * Fixed missing return value from dfftw_init_threads in Fortran;
   thanks to Markus Wetzstein for the bug report.
+
+FFTW 3.1.3
+
+* Bug fix: FFTW computes incorrect results when the user plans both
+  REDFT11 and RODFT11 transforms of certain sizes.  The bug is caused
+  by incorrect sharing of twiddle-factor tables between the two
+  transforms, and only occurs when both are used.  Thanks to Paul
+  A. Valiant for the bug report.
+
+FFTW 3.1.2
+
+* Correct bug in configure script: --enable-portable-binary option was ignored!
+  Thanks to Andrew Salamon for the bug report.
+
+* Threads compilation fix on AIX: prefer xlc_r to cc_r, and don't use
+  either if we are using gcc.  Thanks to Guy Moebs for the bug report.
+
+* Updated FAQ to note that Apple gcc 4.0.1 on MacOS/Intel is broken,
+  and suggest a workaround.  configure script now detects Core/Duo arch.
+
+* Use -maltivec when checking for altivec.h.  Fixes Gentoo bug #129304,
+  thanks to Markus Dittrich.
 
 FFTW 3.1.1
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:05:06 EDT 2012 */
+/* Generated on Tue Mar  4 13:51:49 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -46,7 +46,7 @@ static void hc2cfdftv_32(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT 
      DVK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 62)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 62), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 62)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 62), MAKE_VOLATILE_STRIDE(128, rs)) {
 	       V T2m, T2b, T2c, T2d, T2v, T2r, T20, T2i, T2n, T2e, T2o, T2u, T2j, T2f, T2t;
 	       V T2s, T2x, T2w, T2l, T2k, T2h, T2g;
 	       {
@@ -464,7 +464,7 @@ static void hc2cfdftv_32(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT 
      DVK(KP500000000, +0.500000000000000000000000000000000000000000000);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 62)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 62), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 62)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 62), MAKE_VOLATILE_STRIDE(128, rs)) {
 	       V Ta, T2m, Tx, T2h, T3R, T4h, T3q, T4g, T3B, T4n, T3E, T4o, T1B, T2S, T1O;
 	       V T2R, TV, T2p, T1i, T2o, T3L, T4q, T3I, T4r, T3w, T4k, T3t, T4j, T26, T2V;
 	       V T2d, T2U;

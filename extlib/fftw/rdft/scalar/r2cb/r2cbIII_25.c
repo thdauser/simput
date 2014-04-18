@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:04:29 EDT 2012 */
+/* Generated on Tue Mar  4 13:50:36 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -82,7 +82,7 @@ static void r2cbIII_25(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride
      DK(KP618033988, +0.618033988749894848204586834365638117720309180);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(100, rs), MAKE_VOLATILE_STRIDE(100, csr), MAKE_VOLATILE_STRIDE(100, csi)) {
 	       E T1P, T2c, T2a, T24, T26, T25, T27, T2b;
 	       {
 		    E T1O, TS, T5, T1N, TP, Te, TA, T2i, T1V, T17, T1B, T2h, T1S, T10, T1C;
@@ -365,7 +365,7 @@ static void r2cbIII_25(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride
      DK(KP1_902113032, +1.902113032590307144232878666758764286811397268);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(100, rs), MAKE_VOLATILE_STRIDE(100, csr), MAKE_VOLATILE_STRIDE(100, csi)) {
 	       E TS, T1O, T5, TP, T1N, TI, TH, Te, T17, T2h, T1y, T1V, T10, T2g, T1x;
 	       E T1S, Tz, Ty, Tn, T1m, T2e, T1B, T22, T1f, T2d, T1A, T1Z, TQ, TR;
 	       TQ = Ci[WS(csi, 2)];

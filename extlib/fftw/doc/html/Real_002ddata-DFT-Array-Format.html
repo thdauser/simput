@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Real-data DFT Array Format - FFTW 3.3.2</title>
+<title>Real-data DFT Array Format - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Basic-Interface.html#Basic-Interface" title="Basic Interface">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -57,7 +57,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Basic-Interface.html#Basic-Interface">B
 
 <h4 class="subsection">4.3.4 Real-data DFT Array Format</h4>
 
-<p><a name="index-r2c_002fc2r-multi_002ddimensional-array-format-199"></a>
+<p><a name="index-r2c_002fc2r-multi_002ddimensional-array-format-201"></a>
 The output of a DFT of real data (r2c) contains symmetries that, in
 principle, make half of the outputs redundant (see <a href="What-FFTW-Really-Computes.html#What-FFTW-Really-Computes">What FFTW Really Computes</a>).  (Similarly for the input of an inverse c2r transform.)  In
 practice, it is not possible to entirely realize these savings in an
@@ -78,10 +78,10 @@ the ordinary complex transform.  (We could have instead taken half of
 any other dimension, but implementation turns out to be simpler if the
 last, contiguous, dimension is used.)
 
-   <p><a name="index-out_002dof_002dplace-200"></a>For an out-of-place transform, the real data is simply an array with
+   <p><a name="index-out_002dof_002dplace-202"></a>For an out-of-place transform, the real data is simply an array with
 physical dimensions n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;n<sub>d-1</sub> in row-major order.
 
-   <p><a name="index-in_002dplace-201"></a><a name="index-padding-202"></a>For an in-place transform, some complications arise since the complex data
+   <p><a name="index-in_002dplace-203"></a><a name="index-padding-204"></a>For an in-place transform, some complications arise since the complex data
 is slightly larger than the real data.  In this case, the final
 dimension of the real data must be <em>padded</em> with extra values to
 accommodate the size of the complex data&mdash;two extra if the last

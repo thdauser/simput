@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>FFTW MPI Wisdom - FFTW 3.3.2</title>
+<title>FFTW MPI Wisdom - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Distributed_002dmemory-FFTW-with-MPI.html#Distributed_002dmemory-FFTW-with-MPI" title="Distributed-memory FFTW with MPI">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -56,12 +56,12 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Distributed_002dmemory-FFTW-with-MPI.ht
 
 <h3 class="section">6.8 FFTW MPI Wisdom</h3>
 
-<p><a name="index-wisdom-410"></a><a name="index-saving-plans-to-disk-411"></a>
+<p><a name="index-wisdom-413"></a><a name="index-saving-plans-to-disk-414"></a>
 FFTW's &ldquo;wisdom&rdquo; facility (see <a href="Words-of-Wisdom_002dSaving-Plans.html#Words-of-Wisdom_002dSaving-Plans">Words of Wisdom-Saving Plans</a>) can
 be used to save MPI plans as well as to save uniprocessor plans. 
 However, for MPI there are several unavoidable complications.
 
-   <p><a name="index-MPI-I_002fO-412"></a>First, the MPI standard does not guarantee that every process can
+   <p><a name="index-MPI-I_002fO-415"></a>First, the MPI standard does not guarantee that every process can
 perform file I/O (at least, not using C stdio routines)&mdash;in general,
 we may only assume that process 0 is capable of I/O.<a rel="footnote" href="#fn-1" name="fnd-1"><sup>1</sup></a> So, if we
 want to export the wisdom from a single process to a file, we must
@@ -80,7 +80,7 @@ functions:
 <pre class="example">     void fftw_mpi_broadcast_wisdom(MPI_Comm comm);
      void fftw_mpi_gather_wisdom(MPI_Comm comm);
 </pre>
-   <p><a name="index-fftw_005fmpi_005fgather_005fwisdom-413"></a><a name="index-fftw_005fmpi_005fbroadcast_005fwisdom-414"></a>
+   <p><a name="index-fftw_005fmpi_005fgather_005fwisdom-416"></a><a name="index-fftw_005fmpi_005fbroadcast_005fwisdom-417"></a>
 Given a communicator <code>comm</code>, <code>fftw_mpi_broadcast_wisdom</code>
 will broadcast the wisdom from process 0 to all other processes. 
 Conversely, <code>fftw_mpi_gather_wisdom</code> will collect wisdom from all
@@ -91,7 +91,7 @@ may result in suboptimal plans for different processes if the
 processes are running on non-identical hardware.  Both of these
 functions are <em>collective</em> calls, which means that they must be
 executed by all processes in the communicator. 
-<a name="index-collective-function-415"></a>
+<a name="index-collective-function-418"></a>
 
    <p>So, for example, a typical code snippet to import wisdom from a file
 and use it on all processes would be:
@@ -108,7 +108,7 @@ and use it on all processes would be:
    <p>(Note that we must call <code>fftw_mpi_init</code> before importing any
 wisdom that might contain MPI plans.)  Similarly, a typical code
 snippet to export wisdom from all processes to a file is:
-<a name="index-fftw_005fmpi_005finit-416"></a>
+<a name="index-fftw_005fmpi_005finit-419"></a>
 <pre class="example">     {
          int rank;
      

@@ -1,10 +1,22 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT(fftw, 3.3.2, fftw@fftw.org)
+
+dnl Define the fftw version number as M4 macros, so that we can enforce
+dnl the invariant that the minor version number in FFTW-X.Y.MINOR is the same
+dnl as the revision number in SHARED_VERSION_INFO.
+define(FFTW_MAJOR_VERSION, 3.3)dnl
+define(FFTW_MINOR_VERSION, 4)dnl
+
+dnl Version number of the FFTW source package.
+AC_INIT(fftw, FFTW_MAJOR_VERSION.FFTW_MINOR_VERSION, fftw@fftw.org)
 AC_CONFIG_SRCDIR(kernel/ifftw.h)
-# fftw-3.1.x was 4:X:1
-# fftw-3.2.x was 5:X:2
-# fftw-3.3.x was 6:X:3
-SHARED_VERSION_INFO="6:2:3" # CURRENT:REVISION:AGE
+
+dnl Version number for libtool shared libraries.  Libtool wants a string
+dnl of the form CURRENT:REVISION:AGE.  We adopt the convention that
+dnl REVISION is the same as the FFTW minor version number.
+dnl fftw-3.1.x was 4:x:1
+dnl fftw-3.2.x was 5:x:2
+dnl fftw-3.3.x was 6:x:3 for x < 4 and 7:x:4 for x >= 4
+SHARED_VERSION_INFO="7:FFTW_MINOR_VERSION:4" # CURRENT:REVISION:AGE
 
 AM_INIT_AUTOMAKE(1.7)
 AM_CONFIG_HEADER(config.h)
@@ -390,7 +402,12 @@ fi
 AC_SUBST(LIBQUADMATH)
 
 AC_CHECK_FUNCS([BSDgettimeofday gettimeofday gethrtime read_real_time time_base_to_time drand48 sqrt memset posix_memalign memalign _mm_malloc _mm_free clock_gettime mach_absolute_time sysctl abort sinl cosl snprintf])
-AC_CHECK_DECLS([drand48, srand48, memalign, posix_memalign, sinl, cosl, sinq, cosq])
+AC_CHECK_DECLS([sinl, cosl, sinq, cosq],,,[#include <math.h>])
+AC_CHECK_DECLS([memalign],,,[
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif])
+AC_CHECK_DECLS([drand48, srand48, posix_memalign]) dnl in stdlib.h
 
 dnl Cray UNICOS _rtc() (real-time clock) intrinsic
 AC_MSG_CHECKING([for _rtc intrinsic])
@@ -496,19 +513,20 @@ fi
 dnl Check for threads library...
 THREADLIBS=""
 if test "$enable_threads" = "yes"; then
-	# POSIX threads, the default choice:
-	if test -z "$THREADLIBS"; then
-		ACX_PTHREAD([THREADLIBS="$PTHREAD_LIBS "
-	                     CC="$PTHREAD_CC"
-	                     AC_DEFINE(USING_POSIX_THREADS, 1, [Define if we have and are using POSIX threads.])])
-	fi
-
+        # Win32 threads are the default on Windows:
 	if test -z "$THREADLIBS"; then
 		AC_MSG_CHECKING([for Win32 threads])
 		AC_TRY_LINK([#include <windows.h>],
 			[_beginthreadex(0,0,0,0,0,0);],
 			[THREADLIBS=" "; AC_MSG_RESULT(yes)],
 			[AC_MSG_RESULT(no)])
+	fi
+
+	# POSIX threads, the default choice everywhere else:
+	if test -z "$THREADLIBS"; then
+		ACX_PTHREAD([THREADLIBS="$PTHREAD_LIBS "
+	                     CC="$PTHREAD_CC"
+	                     AC_DEFINE(USING_POSIX_THREADS, 1, [Define if we have and are using POSIX threads.])])
 	fi
 
 	if test -z "$THREADLIBS"; then

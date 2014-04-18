@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>MPI Plan Creation - FFTW 3.3.2</title>
+<title>MPI Plan Creation - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="FFTW-MPI-Reference.html#FFTW-MPI-Reference" title="FFTW MPI Reference">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -60,7 +60,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="FFTW-MPI-Reference.html#FFTW-MPI-Refere
 
 <p>Plans for complex-data DFTs (see <a href="2d-MPI-example.html#g_t2d-MPI-example">2d MPI example</a>) are created by:
 
-   <p><a name="index-fftw_005fmpi_005fplan_005fdft_005f1d-461"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005f2d-462"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005f3d-463"></a><a name="index-fftw_005fmpi_005fplan_005fdft-464"></a><a name="index-fftw_005fmpi_005fplan_005fmany_005fdft-465"></a>
+   <p><a name="index-fftw_005fmpi_005fplan_005fdft_005f1d-464"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005f2d-465"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005f3d-466"></a><a name="index-fftw_005fmpi_005fplan_005fdft-467"></a><a name="index-fftw_005fmpi_005fplan_005fmany_005fdft-468"></a>
 <pre class="example">     fftw_plan fftw_mpi_plan_dft_1d(ptrdiff_t n0, fftw_complex *in, fftw_complex *out,
                                     MPI_Comm comm, int sign, unsigned flags);
      fftw_plan fftw_mpi_plan_dft_2d(ptrdiff_t n0, ptrdiff_t n1,
@@ -77,7 +77,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="FFTW-MPI-Reference.html#FFTW-MPI-Refere
                                       fftw_complex *in, fftw_complex *out,
                                       MPI_Comm comm, int sign, unsigned flags);
 </pre>
-   <p><a name="index-MPI-communicator-466"></a><a name="index-collective-function-467"></a>These are similar to their serial counterparts (see <a href="Complex-DFTs.html#Complex-DFTs">Complex DFTs</a>)
+   <p><a name="index-MPI-communicator-469"></a><a name="index-collective-function-470"></a>These are similar to their serial counterparts (see <a href="Complex-DFTs.html#Complex-DFTs">Complex DFTs</a>)
 in specifying the dimensions, sign, and flags of the transform.  The
 <code>comm</code> argument gives an MPI communicator that specifies the set
 of processes to participate in the transform; plan creation is a
@@ -94,7 +94,7 @@ FFTW).  Requesting an unsupported transform size will yield a
 <code>NULL</code> plan.  (As in the serial interface, highly composite sizes
 generally yield the best performance.)
 
-   <p><a name="index-advanced-interface-468"></a><a name="index-FFTW_005fMPI_005fDEFAULT_005fBLOCK-469"></a><a name="index-stride-470"></a>The advanced-interface <code>fftw_mpi_plan_many_dft</code> additionally
+   <p><a name="index-advanced-interface-471"></a><a name="index-FFTW_005fMPI_005fDEFAULT_005fBLOCK-472"></a><a name="index-stride-473"></a>The advanced-interface <code>fftw_mpi_plan_many_dft</code> additionally
 allows you to specify the block sizes for the first dimension
 (<code>block</code>) of the n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;n<sub>d-1</sub> input data and the first dimension
 (<code>tblock</code>) of the n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&hellip;&times;&nbsp;n<sub>d-1</sub> transposed data (at intermediate
@@ -117,14 +117,14 @@ the following MPI-specific flags, which improve performance at the
 cost of changing the output or input data formats.
 
      <ul>
-<li><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fOUT-471"></a><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fIN-472"></a><code>FFTW_MPI_SCRAMBLED_OUT</code>, <code>FFTW_MPI_SCRAMBLED_IN</code>: valid for
+<li><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fOUT-474"></a><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fIN-475"></a><code>FFTW_MPI_SCRAMBLED_OUT</code>, <code>FFTW_MPI_SCRAMBLED_IN</code>: valid for
 1d transforms only, these flags indicate that the output/input of the
 transform are in an undocumented &ldquo;scrambled&rdquo; order.  A forward
 <code>FFTW_MPI_SCRAMBLED_OUT</code> transform can be inverted by a backward
 <code>FFTW_MPI_SCRAMBLED_IN</code> (times the usual 1/<i>N</i> normalization). 
 See <a href="One_002ddimensional-distributions.html#One_002ddimensional-distributions">One-dimensional distributions</a>.
 
-     <li><a name="index-FFTW_005fMPI_005fTRANSPOSED_005fOUT-473"></a><a name="index-FFTW_005fMPI_005fTRANSPOSED_005fIN-474"></a><code>FFTW_MPI_TRANSPOSED_OUT</code>, <code>FFTW_MPI_TRANSPOSED_IN</code>: valid
+     <li><a name="index-FFTW_005fMPI_005fTRANSPOSED_005fOUT-476"></a><a name="index-FFTW_005fMPI_005fTRANSPOSED_005fIN-477"></a><code>FFTW_MPI_TRANSPOSED_OUT</code>, <code>FFTW_MPI_TRANSPOSED_IN</code>: valid
 for multidimensional (<code>rnk &gt; 1</code>) transforms only, these flags
 specify that the output or input of an n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;n<sub>d-1</sub> transform is
 transposed to n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&hellip;&times;&nbsp;n<sub>d-1</sub>.  See <a href="Transposed-distributions.html#Transposed-distributions">Transposed distributions</a>.
@@ -133,9 +133,9 @@ transposed to n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>0</sub>&nbsp;&times;&nbsp;n<
 
 <h5 class="subsubheading">Real-data MPI DFTs</h5>
 
-<p><a name="index-r2c-475"></a>Plans for real-input/output (r2c/c2r) DFTs (see <a href="Multi_002ddimensional-MPI-DFTs-of-Real-Data.html#Multi_002ddimensional-MPI-DFTs-of-Real-Data">Multi-dimensional MPI DFTs of Real Data</a>) are created by:
+<p><a name="index-r2c-478"></a>Plans for real-input/output (r2c/c2r) DFTs (see <a href="Multi_002ddimensional-MPI-DFTs-of-Real-Data.html#Multi_002ddimensional-MPI-DFTs-of-Real-Data">Multi-dimensional MPI DFTs of Real Data</a>) are created by:
 
-   <p><a name="index-fftw_005fmpi_005fplan_005fdft_005fr2c_005f2d-476"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fr2c_005f2d-477"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fr2c_005f3d-478"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fr2c-479"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fc2r_005f2d-480"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fc2r_005f2d-481"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fc2r_005f3d-482"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fc2r-483"></a>
+   <p><a name="index-fftw_005fmpi_005fplan_005fdft_005fr2c_005f2d-479"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fr2c_005f2d-480"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fr2c_005f3d-481"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fr2c-482"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fc2r_005f2d-483"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fc2r_005f2d-484"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fc2r_005f3d-485"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005fc2r-486"></a>
 <pre class="example">     fftw_plan fftw_mpi_plan_dft_r2c_2d(ptrdiff_t n0, ptrdiff_t n1,
                                         double *in, fftw_complex *out,
                                         MPI_Comm comm, unsigned flags);
@@ -182,7 +182,7 @@ except in <code>FFTW_ESTIMATE</code> mode.
 allows you to manually specify block sizes and to transform contiguous
 <code>howmany</code>-tuples of real/complex numbers:
 
-   <p><a name="index-fftw_005fmpi_005fplan_005fmany_005fdft_005fr2c-484"></a><a name="index-fftw_005fmpi_005fplan_005fmany_005fdft_005fc2r-485"></a>
+   <p><a name="index-fftw_005fmpi_005fplan_005fmany_005fdft_005fr2c-487"></a><a name="index-fftw_005fmpi_005fplan_005fmany_005fdft_005fc2r-488"></a>
 <pre class="example">     fftw_plan fftw_mpi_plan_many_dft_r2c
                    (int rnk, const ptrdiff_t *n, ptrdiff_t howmany,
                     ptrdiff_t iblock, ptrdiff_t oblock,
@@ -196,7 +196,7 @@ allows you to manually specify block sizes and to transform contiguous
 </pre>
    <h5 class="subsubheading">MPI r2r transforms</h5>
 
-<p><a name="index-r2r-486"></a>There are corresponding plan-creation routines for r2r
+<p><a name="index-r2r-489"></a>There are corresponding plan-creation routines for r2r
 transforms (see <a href="More-DFTs-of-Real-Data.html#More-DFTs-of-Real-Data">More DFTs of Real Data</a>), currently supporting
 multidimensional (<code>rnk &gt; 1</code>) transforms only (<code>rnk = 1</code> will
 yield a <code>NULL</code> plan):
@@ -230,13 +230,13 @@ serial interface (see <a href="Real_002dto_002dReal-Transform-Kinds.html#Real_00
 
 <h5 class="subsubheading">MPI transposition</h5>
 
-<p><a name="index-transpose-487"></a>
+<p><a name="index-transpose-490"></a>
 FFTW also provides routines to plan a transpose of a distributed
 <code>n0</code> by <code>n1</code> array of real numbers, or an array of
 <code>howmany</code>-tuples of real numbers with specified block sizes
 (see <a href="FFTW-MPI-Transposes.html#FFTW-MPI-Transposes">FFTW MPI Transposes</a>):
 
-   <p><a name="index-fftw_005fmpi_005fplan_005ftranspose-488"></a><a name="index-fftw_005fmpi_005fplan_005fmany_005ftranspose-489"></a>
+   <p><a name="index-fftw_005fmpi_005fplan_005ftranspose-491"></a><a name="index-fftw_005fmpi_005fplan_005fmany_005ftranspose-492"></a>
 <pre class="example">     fftw_plan fftw_mpi_plan_transpose(ptrdiff_t n0, ptrdiff_t n1,
                                        double *in, double *out,
                                        MPI_Comm comm, unsigned flags);
@@ -245,7 +245,7 @@ FFTW also provides routines to plan a transpose of a distributed
                       ptrdiff_t block0, ptrdiff_t block1,
                       double *in, double *out, MPI_Comm comm, unsigned flags);
 </pre>
-   <p><a name="index-new_002darray-execution-490"></a><a name="index-fftw_005fmpi_005fexecute_005fr2r-491"></a>These plans are used with the <code>fftw_mpi_execute_r2r</code> new-array
+   <p><a name="index-new_002darray-execution-493"></a><a name="index-fftw_005fmpi_005fexecute_005fr2r-494"></a>These plans are used with the <code>fftw_mpi_execute_r2r</code> new-array
 execute function (see <a href="Using-MPI-Plans.html#Using-MPI-Plans">Using MPI Plans</a>), since they count as (rank
 zero) r2r plans from FFTW's perspective.
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:05:07 EDT 2012 */
+/* Generated on Tue Mar  4 13:51:49 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -40,7 +40,7 @@ static void hc2cbdftv_12(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT 
      DVK(KP500000000, +0.500000000000000000000000000000000000000000000);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 22)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 22), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 22)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 22), MAKE_VOLATILE_STRIDE(48, rs)) {
 	       V Tz, TT, T1, T1j, TN, TF, TP, TL, Tx, T15, TJ, T1b, T1g, T1l, T18;
 	       V T12, TO, TC, TK, Tl, T16, TQ, TU, TG, T1c, TM, T1k, Ty, T19, T1a;
 	       V T13, T14, T1h, T1i, TS, TR, T1m, T1n, TI, TH;
@@ -188,7 +188,7 @@ static void hc2cbdftv_12(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT 
      DVK(KP500000000, +0.500000000000000000000000000000000000000000000);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 22)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 22), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 22)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 22), MAKE_VOLATILE_STRIDE(48, rs)) {
 	       V TY, TZ, Tf, TC, Tq, TG, Tm, TF, Ty, TD, T13, T1h, T2, T9, T3;
 	       V T5, T6, Tc, Tb, Td, T8, T4, Ta, T7, Te, To, Tp, Tr, Tv, Ti;
 	       V Ts, Tl, Tw, Tu, Tg, Th, Tj, Tk, Tt, Tx, T11, T12;

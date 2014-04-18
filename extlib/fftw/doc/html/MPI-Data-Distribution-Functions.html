@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>MPI Data Distribution Functions - FFTW 3.3.2</title>
+<title>MPI Data Distribution Functions - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="FFTW-MPI-Reference.html#FFTW-MPI-Reference" title="FFTW MPI Reference">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -56,7 +56,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="FFTW-MPI-Reference.html#FFTW-MPI-Refere
 
 <h4 class="subsection">6.12.4 MPI Data Distribution Functions</h4>
 
-<p><a name="index-data-distribution-447"></a>As described above (see <a href="MPI-Data-Distribution.html#MPI-Data-Distribution">MPI Data Distribution</a>), in order to
+<p><a name="index-data-distribution-450"></a>As described above (see <a href="MPI-Data-Distribution.html#MPI-Data-Distribution">MPI Data Distribution</a>), in order to
 allocate your arrays, <em>before</em> creating a plan, you must first
 call one of the following routines to determine the required
 allocation size and the portion of the array locally stored on a given
@@ -66,7 +66,7 @@ equivalent to the communicator used below for plan creation.
    <p>The basic interface for multidimensional transforms consists of the
 functions:
 
-   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f2d-448"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005f3d-449"></a><a name="index-fftw_005fmpi_005flocal_005fsize-450"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005f2d_005ftransposed-451"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005f3d_005ftransposed-452"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005ftransposed-453"></a>
+   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f2d-451"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005f3d-452"></a><a name="index-fftw_005fmpi_005flocal_005fsize-453"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005f2d_005ftransposed-454"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005f3d_005ftransposed-455"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005ftransposed-456"></a>
 <pre class="example">     ptrdiff_t fftw_mpi_local_size_2d(ptrdiff_t n0, ptrdiff_t n1, MPI_Comm comm,
                                       ptrdiff_t *local_n0, ptrdiff_t *local_0_start);
      ptrdiff_t fftw_mpi_local_size_3d(ptrdiff_t n0, ptrdiff_t n1, ptrdiff_t n2,
@@ -94,10 +94,11 @@ first dimension of an n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;
 process.  See <a href="Basic-and-advanced-distribution-interfaces.html#Basic-and-advanced-distribution-interfaces">Basic and advanced distribution interfaces</a>.  For
 <code>FFTW_MPI_TRANSPOSED_OUT</code> plans, the &lsquo;<samp><span class="samp">_transposed</span></samp>&rsquo; variants
 are useful in order to also return the local portion of the first
-dimension in the n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&hellip;&times;&nbsp;n<sub>d-1</sub> transposed output.  See <a href="Transposed-distributions.html#Transposed-distributions">Transposed distributions</a>.  The advanced interface for multidimensional
-transforms is:
+dimension in the n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&hellip;&times;&nbsp;n<sub>d-1</sub> transposed output. 
+See <a href="Transposed-distributions.html#Transposed-distributions">Transposed distributions</a>. 
+The advanced interface for multidimensional transforms is:
 
-   <p><a name="index-advanced-interface-454"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany-455"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany_005ftransposed-456"></a>
+   <p><a name="index-advanced-interface-457"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany-458"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany_005ftransposed-459"></a>
 <pre class="example">     ptrdiff_t fftw_mpi_local_size_many(int rnk, const ptrdiff_t *n, ptrdiff_t howmany,
                                         ptrdiff_t block0, MPI_Comm comm,
                                         ptrdiff_t *local_n0, ptrdiff_t *local_0_start);
@@ -118,7 +119,7 @@ transforms of contiguous <code>howmany</code>-tuples of numbers
    <p>The corresponding basic and advanced routines for one-dimensional
 transforms (currently only complex DFTs) are:
 
-   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f1d-457"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany_005f1d-458"></a>
+   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f1d-460"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany_005f1d-461"></a>
 <pre class="example">     ptrdiff_t fftw_mpi_local_size_1d(
                   ptrdiff_t n0, MPI_Comm comm, int sign, unsigned flags,
                   ptrdiff_t *local_ni, ptrdiff_t *local_i_start,
@@ -129,7 +130,7 @@ transforms (currently only complex DFTs) are:
                   ptrdiff_t *local_ni, ptrdiff_t *local_i_start,
                   ptrdiff_t *local_no, ptrdiff_t *local_o_start);
 </pre>
-   <p><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fOUT-459"></a><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fIN-460"></a>As above, the return value is the number of elements to allocate
+   <p><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fOUT-462"></a><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fIN-463"></a>As above, the return value is the number of elements to allocate
 (complex numbers, for complex DFTs).  The <code>local_ni</code> and
 <code>local_i_start</code> arguments return the portion
 (<code>local_i_start</code> to <code>local_i_start + local_ni - 1</code>) of the

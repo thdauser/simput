@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:05:04 EDT 2012 */
+/* Generated on Tue Mar  4 13:51:48 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -46,7 +46,7 @@ static void e01_8(const R *I, R *O, stride is, stride os, INT v, INT ivs, INT ov
      DK(KP1_414213562, +1.414213562373095048801688724209698078569671875);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, I = I + ivs, O = O + ovs, MAKE_VOLATILE_STRIDE(is), MAKE_VOLATILE_STRIDE(os)) {
+	  for (i = v; i > 0; i = i - 1, I = I + ivs, O = O + ovs, MAKE_VOLATILE_STRIDE(16, is), MAKE_VOLATILE_STRIDE(16, os)) {
 	       E T8, Td, Th, T7, Tp, Tl, Te, Tb;
 	       {
 		    E Tj, T3, Tk, T6, T9, Ta;
@@ -127,7 +127,7 @@ static void e01_8(const R *I, R *O, stride is, stride os, INT v, INT ivs, INT ov
      DK(KP1_847759065, +1.847759065022573512256366378793576573644833252);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, I = I + ivs, O = O + ovs, MAKE_VOLATILE_STRIDE(is), MAKE_VOLATILE_STRIDE(os)) {
+	  for (i = v; i > 0; i = i - 1, I = I + ivs, O = O + ovs, MAKE_VOLATILE_STRIDE(16, is), MAKE_VOLATILE_STRIDE(16, os)) {
 	       E T7, Tl, T4, Tk, Td, To, Tg, Tn;
 	       {
 		    E T5, T6, T1, T3, T2;

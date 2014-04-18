@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Wisdom Import - FFTW 3.3.2</title>
+<title>Wisdom Import - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Wisdom.html#Wisdom" title="Wisdom">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -61,7 +61,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Wisdom.html#Wisdom">Wisdom</a>
      int fftw_import_wisdom_from_string(const char *input_string);
      int fftw_import_wisdom(int (*read_char)(void *), void *data);
 </pre>
-   <p><a name="index-fftw_005fimport_005fwisdom-282"></a><a name="index-fftw_005fimport_005fsystem_005fwisdom-283"></a><a name="index-fftw_005fimport_005fwisdom_005ffrom_005ffilename-284"></a><a name="index-fftw_005fimport_005fwisdom_005ffrom_005ffile-285"></a><a name="index-fftw_005fimport_005fwisdom_005ffrom_005fstring-286"></a>
+   <p><a name="index-fftw_005fimport_005fwisdom-285"></a><a name="index-fftw_005fimport_005fsystem_005fwisdom-286"></a><a name="index-fftw_005fimport_005fwisdom_005ffrom_005ffilename-287"></a><a name="index-fftw_005fimport_005fwisdom_005ffrom_005ffile-288"></a><a name="index-fftw_005fimport_005fwisdom_005ffrom_005fstring-289"></a>
 These functions import wisdom into a program from data stored by the
 <code>fftw_export_wisdom</code> functions above. (See <a href="Words-of-Wisdom_002dSaving-Plans.html#Words-of-Wisdom_002dSaving-Plans">Words of Wisdom-Saving Plans</a>.)  The imported wisdom replaces any wisdom
 already accumulated by the running program.
@@ -89,7 +89,7 @@ open, but the position of the read pointer is unspecified.
    <p><code>fftw_import_system_wisdom</code> reads wisdom from an
 implementation-defined standard file (<code>/etc/fftw/wisdom</code> on Unix
 and GNU systems). 
-<a name="index-wisdom_002c-system_002dwide-287"></a>
+<a name="index-wisdom_002c-system_002dwide-290"></a>
 
    <p>The return value of these import routines is <code>1</code> if the wisdom was
 read successfully and <code>0</code> otherwise. Note that, in all of these

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,7 +77,7 @@ static double elapsed_since(crude_time t0)
      return elapsed_sec(t1, t0);
 }
 
-#  define TIME_MIN_SEC 1.0e-2 /* from fftw2 */
+#  define TIME_MIN_SEC 1.0e-3
 
 #else /* !HAVE_GETTIMEOFDAY */
 

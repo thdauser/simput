@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>The 1d Discrete Fourier Transform (DFT) - FFTW 3.3.2</title>
+<title>The 1d Discrete Fourier Transform (DFT) - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="What-FFTW-Really-Computes.html#What-FFTW-Really-Computes" title="What FFTW Really Computes">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -57,18 +57,18 @@ Up:&nbsp;<a rel="up" accesskey="u" href="What-FFTW-Really-Computes.html#What-FFT
 
 <h4 class="subsection">4.8.1 The 1d Discrete Fourier Transform (DFT)</h4>
 
-<p><a name="index-discrete-Fourier-transform-292"></a><a name="index-DFT-293"></a>The forward (<code>FFTW_FORWARD</code>) discrete Fourier transform (DFT) of a
+<p><a name="index-discrete-Fourier-transform-295"></a><a name="index-DFT-296"></a>The forward (<code>FFTW_FORWARD</code>) discrete Fourier transform (DFT) of a
 1d complex array X of size n computes an array Y,
 where:
 <center><img src="equation-dft.png" align="top">.</center>The backward (<code>FFTW_BACKWARD</code>) DFT computes:
 <center><img src="equation-idft.png" align="top">.</center>
 
-   <p><a name="index-normalization-294"></a>FFTW computes an unnormalized transform, in that there is no coefficient
+   <p><a name="index-normalization-297"></a>FFTW computes an unnormalized transform, in that there is no coefficient
 in front of the summation in the DFT.  In other words, applying the
 forward and then the backward transform will multiply the input by
 n.
 
-   <p><a name="index-frequency-295"></a>From above, an <code>FFTW_FORWARD</code> transform corresponds to a sign of
+   <p><a name="index-frequency-298"></a>From above, an <code>FFTW_FORWARD</code> transform corresponds to a sign of
 -1 in the exponent of the DFT.  Note also that we use the
 standard &ldquo;in-order&rdquo; output ordering&mdash;the k-th output
 corresponds to the frequency k/n (or k/T, where T

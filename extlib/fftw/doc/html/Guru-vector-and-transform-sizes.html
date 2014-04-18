@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Guru vector and transform sizes - FFTW 3.3.2</title>
+<title>Guru vector and transform sizes - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Guru-Interface.html#Guru-Interface" title="Guru Interface">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -66,7 +66,7 @@ multi-dimensional transforms and vectors:
           int os;
      } fftw_iodim;
 </pre>
-   <p><a name="index-fftw_005fiodim-243"></a>
+   <p><a name="index-fftw_005fiodim-245"></a>
 Here, <code>n</code> is the size of the dimension, and <code>is</code> and <code>os</code>
 are the strides of that dimension for the input and output arrays.  (The
 stride is the separation of consecutive elements along this dimension.)
@@ -82,7 +82,7 @@ language.  An interleaved array is denoted by a pointer <code>p</code> to
 number.  Split arrays are denoted by pointers to <code>double</code>, in
 which case pointer arithmetic operates in units of
 <code>sizeof(double)</code>. 
-<a name="index-stride-244"></a>
+<a name="index-stride-246"></a>
 
    <p>The guru planner interfaces all take a (<code>rank</code>, <code>dims[rank]</code>)
 pair describing the transform size, and a (<code>howmany_rank</code>,
@@ -94,7 +94,7 @@ multi-dimensional loop of transforms to perform), where <code>dims</code> and
 interface corresponds to <code>howmany_rank</code> = 1,
 <code>howmany_dims[0].n</code> = <code>howmany</code>, <code>howmany_dims[0].is</code> =
 <code>idist</code>, and <code>howmany_dims[0].os</code> = <code>odist</code>. 
-<a name="index-howmany-loop-245"></a><a name="index-dist-246"></a>(To compute a single transform, you can just use <code>howmany_rank</code> = 0.)
+<a name="index-howmany-loop-247"></a><a name="index-dist-248"></a>(To compute a single transform, you can just use <code>howmany_rank</code> = 0.)
 
    <p>A row-major multidimensional array with dimensions <code>n[rank]</code>
 (see <a href="Row_002dmajor-Format.html#Row_002dmajor-Format">Row-major Format</a>) corresponds to <code>dims[i].n</code> =
@@ -104,7 +104,7 @@ dims[i+1].is</code> (similarly for <code>os</code>).  The stride of the last
 e.g. to be equivalent to the advanced complex-DFT interface, you would
 have <code>dims[rank-1].is</code> = <code>istride</code> and
 <code>dims[rank-1].os</code> = <code>ostride</code>. 
-<a name="index-row_002dmajor-247"></a>
+<a name="index-row_002dmajor-249"></a>
 
    <p>In general, we only guarantee FFTW to return a non-<code>NULL</code> plan if
 the vector and transform dimensions correspond to a set of distinct

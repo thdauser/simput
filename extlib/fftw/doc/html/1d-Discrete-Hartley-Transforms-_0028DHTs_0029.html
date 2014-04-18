@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>1d Discrete Hartley Transforms (DHTs) - FFTW 3.3.2</title>
+<title>1d Discrete Hartley Transforms (DHTs) - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="What-FFTW-Really-Computes.html#What-FFTW-Really-Computes" title="What FFTW Really Computes">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -57,11 +57,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="What-FFTW-Really-Computes.html#What-FFT
 
 <h4 class="subsection">4.8.5 1d Discrete Hartley Transforms (DHTs)</h4>
 
-<p><a name="index-discrete-Hartley-transform-322"></a><a name="index-DHT-323"></a>The discrete Hartley transform (DHT) of a 1d real array X of size
+<p><a name="index-discrete-Hartley-transform-325"></a><a name="index-DHT-326"></a>The discrete Hartley transform (DHT) of a 1d real array X of size
 n computes a real array Y of the same size, where:
 <center><img src="equation-dht.png" align="top">.</center>
 
-   <p><a name="index-normalization-324"></a>FFTW computes an unnormalized transform, in that there is no coefficient
+   <p><a name="index-normalization-327"></a>FFTW computes an unnormalized transform, in that there is no coefficient
 in front of the summation in the DHT.  In other words, applying the
 transform twice (the DHT is its own inverse) will multiply the input by
 n.

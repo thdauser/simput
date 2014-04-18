@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Fortran-interface routines - FFTW 3.3.2</title>
+<title>Fortran-interface routines - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Calling-FFTW-from-Legacy-Fortran.html#Calling-FFTW-from-Legacy-Fortran" title="Calling FFTW from Legacy Fortran">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -75,12 +75,12 @@ with the following exceptions:
 must be declared as a type that is at least as big as a pointer
 (address) on your machine.  We recommend using <code>integer*8</code> everywhere,
 since this should always be big enough. 
-<a name="index-portability-578"></a>
+<a name="index-portability-581"></a>
 <li>Any function that returns a value (e.g. <code>fftw_plan_dft</code>) is
 converted into a <em>subroutine</em>.  The return value is converted into
 an additional <em>first</em> parameter of this subroutine.<a rel="footnote" href="#fn-2" name="fnd-2"><sup>2</sup></a>
 
-     <li><a name="index-column_002dmajor-579"></a>The Fortran routines expect multi-dimensional arrays to be in
+     <li><a name="index-column_002dmajor-582"></a>The Fortran routines expect multi-dimensional arrays to be in
 <em>column-major</em> order, which is the ordinary format of Fortran
 arrays (see <a href="Multi_002ddimensional-Array-Format.html#Multi_002ddimensional-Array-Format">Multi-dimensional Array Format</a>).  They do this
 transparently and costlessly simply by reversing the order of the
@@ -95,7 +95,7 @@ If you want to exploit the SIMD FFTW (see <a href="SIMD-alignment-and-fftw_005fm
 need to figure out some other way to ensure that your arrays are at
 least 16-byte aligned.
 
-     <li><a name="index-fftw_005fiodim-580"></a><a name="index-guru-interface-581"></a>Since Fortran 77 does not have data structures, the <code>fftw_iodim</code>
+     <li><a name="index-fftw_005fiodim-583"></a><a name="index-guru-interface-584"></a>Since Fortran 77 does not have data structures, the <code>fftw_iodim</code>
 structure from the guru interface (see <a href="Guru-vector-and-transform-sizes.html#Guru-vector-and-transform-sizes">Guru vector and transform sizes</a>) must be split into separate arguments.  In particular, any
 <code>fftw_iodim</code> array arguments in the C guru interface become three
 integer array arguments (<code>n</code>, <code>is</code>, and <code>os</code>) in the
@@ -121,7 +121,7 @@ corresponds to <code>float</code>, etcetera).  The native Fortran
 double/single-precision complex type should be compatible with
 <code>fftw_complex</code>/<code>fftwf_complex</code>.  Such simple correspondences
 are assumed in the examples below. 
-<a name="index-portability-582"></a>
+<a name="index-portability-585"></a>
 <!--  -->
 
    <div class="footnote">

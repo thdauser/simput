@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>2d MPI example - FFTW 3.3.2</title>
+<title>2d MPI example - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Distributed_002dmemory-FFTW-with-MPI.html#Distributed_002dmemory-FFTW-with-MPI" title="Distributed-memory FFTW with MPI">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -101,7 +101,7 @@ of &lsquo;<samp><span class="samp">fftw_</span></samp>&rsquo;.  There are a few 
    <p>First, we must call <code>fftw_mpi_init()</code> after calling
 <code>MPI_Init</code> (required in all MPI programs) and before calling any
 other &lsquo;<samp><span class="samp">fftw_mpi_</span></samp>&rsquo; routine. 
-<a name="index-MPI_005fInit-357"></a><a name="index-fftw_005fmpi_005finit-358"></a>
+<a name="index-MPI_005fInit-360"></a><a name="index-fftw_005fmpi_005finit-361"></a>
 
    <p>Second, when we create the plan with <code>fftw_mpi_plan_dft_2d</code>,
 analogous to <code>fftw_plan_dft_2d</code>, we pass an additional argument:
@@ -114,7 +114,7 @@ in the communicator for that transform.  (That is, these are
 uses the standard <code>fftw_execute</code> and <code>fftw_destroy</code> routines
 (on the other hand, there are MPI-specific new-array execute functions
 documented below). 
-<a name="index-collective-function-359"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005f2d-360"></a><a name="index-MPI_005fCOMM_005fWORLD-361"></a>
+<a name="index-collective-function-362"></a><a name="index-fftw_005fmpi_005fplan_005fdft_005f2d-363"></a><a name="index-MPI_005fCOMM_005fWORLD-364"></a>
 
    <p>Third, all of the FFTW MPI routines take <code>ptrdiff_t</code> arguments
 instead of <code>int</code> as for the serial FFTW.  <code>ptrdiff_t</code> is a
@@ -123,7 +123,7 @@ machine and 64 bits wide on a 64-bit machine.  This is to make it easy
 to specify very large parallel transforms on a 64-bit machine.  (You
 can specify 64-bit transform sizes in the serial FFTW, too, but only
 by using the &lsquo;<samp><span class="samp">guru64</span></samp>&rsquo; planner interface.  See <a href="64_002dbit-Guru-Interface.html#g_t64_002dbit-Guru-Interface">64-bit Guru Interface</a>.) 
-<a name="index-ptrdiff_005ft-362"></a><a name="index-g_t64_002dbit-architecture-363"></a>
+<a name="index-ptrdiff_005ft-365"></a><a name="index-g_t64_002dbit-architecture-366"></a>
 
    <p>Fourth, and most importantly, you don't allocate the entire
 two-dimensional array on each process.  Instead, you call
@@ -137,7 +137,7 @@ to allocate is given by the <code>alloc_local</code> return value, which
 intermediate calculations require additional storage).  The data
 distribution in FFTW's MPI interface is described in more detail by
 the next section. 
-<a name="index-fftw_005fmpi_005flocal_005fsize_005f2d-364"></a><a name="index-data-distribution-365"></a>
+<a name="index-fftw_005fmpi_005flocal_005fsize_005f2d-367"></a><a name="index-data-distribution-368"></a>
 
    <p>Given the portion of the array that resides on the local process, it
 is straightforward to initialize the data (here to a function
@@ -147,7 +147,7 @@ synchronizing this output is up to you and is beyond the scope of this
 manual.  (One good way to output a large multi-dimensional distributed
 array in MPI to a portable binary file is to use the free HDF5
 library; see the <a href="http://www.hdfgroup.org/">HDF home page</a>.) 
-<a name="index-HDF5-366"></a><a name="index-MPI-I_002fO-367"></a>
+<a name="index-HDF5-369"></a><a name="index-MPI-I_002fO-370"></a>
 <!--  -->
 
    </body></html>

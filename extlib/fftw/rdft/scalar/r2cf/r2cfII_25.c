@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:03:16 EDT 2012 */
+/* Generated on Tue Mar  4 13:49:21 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -105,7 +105,7 @@ static void r2cfII_25(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride 
      DK(KP618033988, +0.618033988749894848204586834365638117720309180);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(100, rs), MAKE_VOLATILE_STRIDE(100, csr), MAKE_VOLATILE_STRIDE(100, csi)) {
 	       E T2R, T2T, T2D, T2C, T2H, T2G, T2B, T2P, T2S;
 	       {
 		    E T2A, TJ, T1K, T3l, T2z, TB, T2d, T2l, T1N, T21, T15, T1g, T1s, T1D, T9;
@@ -489,7 +489,7 @@ static void r2cfII_25(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride 
      DK(KP559016994, +0.559016994374947424102293417182819058860154590);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(100, rs), MAKE_VOLATILE_STRIDE(100, csr), MAKE_VOLATILE_STRIDE(100, csi)) {
 	       E TE, TR, T2i, T1z, TL, TS, TB, T2d, T1l, T1i, T2c, T9, T23, TZ, TW;
 	       E T22, Ti, T26, T16, T13, T25, Ts, T2a, T1e, T1b, T29, TP, TQ;
 	       {

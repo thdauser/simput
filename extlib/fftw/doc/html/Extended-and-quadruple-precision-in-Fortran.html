@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Extended and quadruple precision in Fortran - FFTW 3.3.2</title>
+<title>Extended and quadruple precision in Fortran - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Overview-of-Fortran-interface.html#Overview-of-Fortran-interface" title="Overview of Fortran interface">
@@ -10,7 +10,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -54,7 +54,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Overview-of-Fortran-interface.html#Over
 
 <h4 class="subsection">7.1.1 Extended and quadruple precision in Fortran</h4>
 
-<p><a name="index-precision-515"></a>
+<p><a name="index-precision-518"></a>
 If FFTW is compiled in <code>long double</code> (extended) precision
 (see <a href="Installation-and-Customization.html#Installation-and-Customization">Installation and Customization</a>), you may be able to call the
 resulting <code>fftwl_</code> routines (see <a href="Precision.html#Precision">Precision</a>) from Fortran if
@@ -66,7 +66,7 @@ segregated into a separate interface file <code>fftw3l.f03</code>, which you
 should include <em>in addition</em> to <code>fftw3.f03</code> (which declares
 precision-independent &lsquo;<samp><span class="samp">FFTW_</span></samp>&rsquo; constants):
 
-   <p><a name="index-iso_005fc_005fbinding-516"></a>
+   <p><a name="index-iso_005fc_005fbinding-519"></a>
 <pre class="example">       use, intrinsic :: iso_c_binding
        include 'fftw3.f03'
        include 'fftw3l.f03'

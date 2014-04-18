@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>FFTW Execution in Fortran - FFTW 3.3.2</title>
+<title>FFTW Execution in Fortran - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Calling-FFTW-from-Legacy-Fortran.html#Calling-FFTW-from-Legacy-Fortran" title="Calling FFTW from Legacy Fortran">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -62,7 +62,7 @@ arrays passed when the plan was created (see <a href="Using-Plans.html#Using-Pla
 corresponding subroutine call in legacy Fortran is:
 <pre class="example">             call dfftw_execute(plan)
 </pre>
-   <p><a name="index-dfftw_005fexecute-584"></a>
+   <p><a name="index-dfftw_005fexecute-587"></a>
 However, we have had reports that this causes problems with some
 recent optimizing Fortran compilers.  The problem is, because the
 input/output arrays are not passed as explicit arguments to
@@ -80,7 +80,7 @@ plan is for a complex-data DFT and was created for the arrays
 <code>in</code> and <code>out</code>, you would do:
 <pre class="example">             call dfftw_execute_dft(plan, in, out)
 </pre>
-   <p><a name="index-dfftw_005fexecute_005fdft-585"></a>
+   <p><a name="index-dfftw_005fexecute_005fdft-588"></a>
 There are a few things to be careful of, however:
 
      <ul>
@@ -104,7 +104,7 @@ can, of course, use the <code>FFTW_UNALIGNED</code> flag when creating the
 plan, in which case the plan does not depend on the alignment, but
 this may sacrifice substantial performance on architectures (like x86)
 with SIMD instructions (see <a href="SIMD-alignment-and-fftw_005fmalloc.html#SIMD-alignment-and-fftw_005fmalloc">SIMD alignment and fftw_malloc</a>). 
-<a name="index-FFTW_005fUNALIGNED-586"></a>
+<a name="index-FFTW_005fUNALIGNED-589"></a>
 </ul>
 
 <!--  -->

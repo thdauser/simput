@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:04:22 EDT 2012 */
+/* Generated on Tue Mar  4 13:50:35 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -74,7 +74,7 @@ static void r2cbIII_64(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride
      DK(KP414213562, +0.414213562373095048801688724209698078569671875);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(256, rs), MAKE_VOLATILE_STRIDE(256, csr), MAKE_VOLATILE_STRIDE(256, csi)) {
 	       E T43, T4b, T49, T4e, T3T, T46, T40, T4a;
 	       {
 		    E T3t, T15, T2E, T3U, T6b, Tf, T6Q, T6u, T5J, T4L, T3V, T1g, T5U, T5q, T3u;
@@ -814,7 +814,7 @@ static void r2cbIII_64(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride
      DK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(256, rs), MAKE_VOLATILE_STRIDE(256, csr), MAKE_VOLATILE_STRIDE(256, csi)) {
 	       E T15, T3t, T3U, T2N, Tf, T6b, T6u, T6R, T4L, T5J, T1g, T3V, T5q, T5U, T2I;
 	       E T3u, Tu, T6v, T4V, T5s, T6e, T6Q, T1s, T2D, T1D, T2E, T3B, T3Y, T4Q, T5r;
 	       E T3y, T3X, TK, T6g, T57, T5N, T6j, T6N, T1W, T34, T25, T35, T3J, T4j, T52;

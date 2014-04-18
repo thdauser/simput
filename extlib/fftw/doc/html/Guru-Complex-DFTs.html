@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Guru Complex DFTs - FFTW 3.3.2</title>
+<title>Guru Complex DFTs - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Guru-Interface.html#Guru-Interface" title="Guru Interface">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -68,7 +68,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Guru-Interface.html#Guru-Interface">Gur
           double *ri, double *ii, double *ro, double *io,
           unsigned flags);
 </pre>
-   <p><a name="index-fftw_005fplan_005fguru_005fdft-248"></a><a name="index-fftw_005fplan_005fguru_005fsplit_005fdft-249"></a>
+   <p><a name="index-fftw_005fplan_005fguru_005fdft-250"></a><a name="index-fftw_005fplan_005fguru_005fsplit_005fdft-251"></a>
 These two functions plan a complex-data, multi-dimensional DFT
 for the interleaved and split format, respectively. 
 Transform dimensions are given by (<code>rank</code>, <code>dims</code>) over a
@@ -77,7 +77,7 @@ multi-dimensional vector (loop) of dimensions (<code>howmany_rank</code>,
 to <code>fftw_iodim</code> arrays of length <code>rank</code> and
 <code>howmany_rank</code>, respectively.
 
-   <p><a name="index-flags-250"></a><code>flags</code> is a bitwise OR (&lsquo;<samp><span class="samp">|</span></samp>&rsquo;) of zero or more planner flags,
+   <p><a name="index-flags-252"></a><code>flags</code> is a bitwise OR (&lsquo;<samp><span class="samp">|</span></samp>&rsquo;) of zero or more planner flags,
 as defined in <a href="Planner-Flags.html#Planner-Flags">Planner Flags</a>.
 
    <p>In the <code>fftw_plan_guru_dft</code> function, the pointers <code>in</code> and

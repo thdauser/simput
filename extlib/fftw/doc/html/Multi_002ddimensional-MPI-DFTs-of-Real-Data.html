@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Multi-dimensional MPI DFTs of Real Data - FFTW 3.3.2</title>
+<title>Multi-dimensional MPI DFTs of Real Data - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Distributed_002dmemory-FFTW-with-MPI.html#Distributed_002dmemory-FFTW-with-MPI" title="Distributed-memory FFTW with MPI">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -73,7 +73,7 @@ complex data is cut in half (rounded down), plus one.  As for the
 serial transforms, the sizes you pass to the &lsquo;<samp><span class="samp">plan_dft_r2c</span></samp>&rsquo; and
 &lsquo;<samp><span class="samp">plan_dft_c2r</span></samp>&rsquo; are the n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;n<sub>d-1</sub> dimensions of the real data.
 
-     <li><a name="index-padding-386"></a>Although the real data is <em>conceptually</em> n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;n<sub>d-1</sub>, it is
+     <li><a name="index-padding-389"></a>Although the real data is <em>conceptually</em> n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;n<sub>d-1</sub>, it is
 <em>physically</em> stored as an n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;[2&nbsp;(n<sub>d-1</sub>/2 + 1)] array, where the last
 dimension has been <em>padded</em> to make it the same size as the
 complex output.  This is much like the in-place serial r2c/c2r
@@ -83,7 +83,7 @@ padding numbers are ignored by FFTW (they are <em>not</em> like
 zero-padding the transform to a larger size); they are only used to
 determine the data layout.
 
-     <li><a name="index-data-distribution-387"></a>The data distribution in MPI for <em>both</em> the real and complex data
+     <li><a name="index-data-distribution-390"></a>The data distribution in MPI for <em>both</em> the real and complex data
 is determined by the shape of the <em>complex</em> data.  That is, you
 call the appropriate &lsquo;<samp><span class="samp">local size</span></samp>&rsquo; function for the n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;(n<sub>d-1</sub>/2 + 1)
 
@@ -135,7 +135,7 @@ example in <a href="2d-MPI-example.html#g_t2d-MPI-example">2d MPI example</a>, w
          MPI_Finalize();
      }
 </pre>
-   <p><a name="index-fftw_005falloc_005freal-388"></a><a name="index-row_002dmajor-389"></a>Note that we allocated <code>rin</code> using <code>fftw_alloc_real</code> with an
+   <p><a name="index-fftw_005falloc_005freal-391"></a><a name="index-row_002dmajor-392"></a>Note that we allocated <code>rin</code> using <code>fftw_alloc_real</code> with an
 argument of <code>2 * alloc_local</code>: since <code>alloc_local</code> is the
 number of <em>complex</em> values to allocate, the number of <em>real</em>
 values is twice as many.  The <code>rin</code> array is then
@@ -143,7 +143,7 @@ local_n0&nbsp;&times;&nbsp;M&nbsp;&times;&nbsp;2(N/2+1) in row-major order, so i
 <code>(i,j,k)</code> element is at the index <code>(i*M + j) * (2*(N/2+1)) +
 k</code> (see <a href="Multi_002ddimensional-Array-Format.html#Multi_002ddimensional-Array-Format">Multi-dimensional Array Format</a>).
 
-   <p><a name="index-transpose-390"></a><a name="index-FFTW_005fTRANSPOSED_005fOUT-391"></a><a name="index-FFTW_005fTRANSPOSED_005fIN-392"></a>As for the complex transforms, improved performance can be obtained by
+   <p><a name="index-transpose-393"></a><a name="index-FFTW_005fTRANSPOSED_005fOUT-394"></a><a name="index-FFTW_005fTRANSPOSED_005fIN-395"></a>As for the complex transforms, improved performance can be obtained by
 specifying that the output is the transpose of the input or vice versa
 (see <a href="Transposed-distributions.html#Transposed-distributions">Transposed distributions</a>).  In our L&nbsp;&times;&nbsp;M&nbsp;&times;&nbsp;N r2c
 example, including <code>FFTW_TRANSPOSED_OUT</code> in the flags means that

@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>The 1d Real-data DFT - FFTW 3.3.2</title>
+<title>The 1d Real-data DFT - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="What-FFTW-Really-Computes.html#What-FFTW-Really-Computes" title="What FFTW Really Computes">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -62,7 +62,7 @@ Y of the size <code>n</code> real array X, exactly as defined
 above, i.e. 
 <center><img src="equation-dft.png" align="top">.</center>This output array Y can easily be shown to possess the
 &ldquo;Hermitian&rdquo; symmetry
-<a name="index-Hermitian-296"></a><i>Y<sub>k</sub> = Y<sub>n-k</sub></i><sup>*</sup>,where we take Y to be periodic so that
+<a name="index-Hermitian-299"></a><i>Y<sub>k</sub> = Y<sub>n-k</sub></i><sup>*</sup>,where we take Y to be periodic so that
 <i>Y<sub>n</sub> = Y</i><sub>0</sub>.
 
    <p>As a result of this symmetry, half of the output Y is redundant
@@ -75,7 +75,7 @@ rounded down.
 <i>Y</i><sub>0</sub>and, if n is even, the
 <i>Y</i><sub><i>n</i>/2</sub>element, are purely real.  So, for the <code>R2HC</code> r2r transform, these
 elements are not stored in the halfcomplex output format. 
-<a name="index-r2r-297"></a><a name="index-R2HC-298"></a><a name="index-halfcomplex-format-299"></a>
+<a name="index-r2r-300"></a><a name="index-R2HC-301"></a><a name="index-halfcomplex-format-302"></a>
 
    <p>The c2r and <code>H2RC</code> r2r transforms compute the backward DFT of the
 <em>complex</em> array X with Hermitian symmetry, stored in the
@@ -84,7 +84,7 @@ transform is defined exactly as for the complex case:
 <center><img src="equation-idft.png" align="top">.</center>The outputs <code>Y</code> of this transform can easily be seen to be purely
 real, and are stored as an array of real numbers.
 
-   <p><a name="index-normalization-300"></a>Like FFTW's complex DFT, these transforms are unnormalized.  In other
+   <p><a name="index-normalization-303"></a>Like FFTW's complex DFT, these transforms are unnormalized.  In other
 words, applying the real-to-complex (forward) and then the
 complex-to-real (backward) transform will multiply the input by
 n.

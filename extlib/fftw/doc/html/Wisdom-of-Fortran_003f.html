@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Wisdom of Fortran? - FFTW 3.3.2</title>
+<title>Wisdom of Fortran? - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Calling-FFTW-from-Legacy-Fortran.html#Calling-FFTW-from-Legacy-Fortran" title="Calling FFTW from Legacy Fortran">
@@ -10,7 +10,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -59,14 +59,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Calling-FFTW-from-Legacy-Fortran.html#C
 (saved plans) to/from a Fortran program; we assume that the reader is
 already familiar with wisdom, as described in <a href="Words-of-Wisdom_002dSaving-Plans.html#Words-of-Wisdom_002dSaving-Plans">Words of Wisdom-Saving Plans</a>.
 
-   <p><a name="index-portability-598"></a>The basic problem is that is difficult to (portably) pass files and
+   <p><a name="index-portability-601"></a>The basic problem is that is difficult to (portably) pass files and
 strings between Fortran and C, so we cannot provide a direct Fortran
 equivalent to the <code>fftw_export_wisdom_to_file</code>, etcetera,
 functions.  Fortran interfaces <em>are</em> provided for the functions
 that do not take file/string arguments, however:
 <code>dfftw_import_system_wisdom</code>, <code>dfftw_import_wisdom</code>,
 <code>dfftw_export_wisdom</code>, and <code>dfftw_forget_wisdom</code>. 
-<a name="index-dfftw_005fimport_005fsystem_005fwisdom-599"></a><a name="index-dfftw_005fimport_005fwisdom-600"></a><a name="index-dfftw_005fexport_005fwisdom-601"></a><a name="index-dfftw_005fforget_005fwisdom-602"></a>
+<a name="index-dfftw_005fimport_005fsystem_005fwisdom-602"></a><a name="index-dfftw_005fimport_005fwisdom-603"></a><a name="index-dfftw_005fexport_005fwisdom-604"></a><a name="index-dfftw_005fforget_005fwisdom-605"></a>
 
    <p>So, for example, to import the system-wide wisdom, you would do:
 

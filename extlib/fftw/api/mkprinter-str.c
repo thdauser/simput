@@ -20,30 +20,42 @@
 
 #include "api.h"
 
-static planner *plnr = 0;
+typedef struct {
+     printer super;
+     int *cnt;
+} P_cnt;
 
-/* create the planner for the rest of the API */
-planner *X(the_planner)(void)
+static void putchr_cnt(printer * p_, char c)
 {
-     if (!plnr) {
-          plnr = X(mkplanner)();
-          X(configure_planner)(plnr);
-     }
-
-     return plnr;
+     P_cnt *p = (P_cnt *) p_;
+     UNUSED(c);
+     ++*p->cnt;
 }
 
-void X(cleanup)(void)
+printer *X(mkprinter_cnt)(int *cnt)
 {
-     if (plnr) {
-          X(planner_destroy)(plnr);
-          plnr = 0;
-     }
+     P_cnt *p = (P_cnt *) X(mkprinter)(sizeof(P_cnt), putchr_cnt, 0);
+     p->cnt = cnt;
+     *cnt = 0;
+     return &p->super;
 }
 
-void X(set_timelimit)(double tlim) 
+typedef struct {
+     printer super;
+     char *s;
+} P_str;
+
+static void putchr_str(printer * p_, char c)
 {
-     /* PLNR is not necessarily initialized when this function is
-	called, so use X(the_planner)() */
-     X(the_planner)()->timelimit = tlim; 
+     P_str *p = (P_str *) p_;
+     *p->s++ = c;
+     *p->s = 0;
+}
+
+printer *X(mkprinter_str)(char *s)
+{
+     P_str *p = (P_str *) X(mkprinter)(sizeof(P_str), putchr_str, 0);
+     p->s = s;
+     *s = 0;
+     return &p->super;
 }
