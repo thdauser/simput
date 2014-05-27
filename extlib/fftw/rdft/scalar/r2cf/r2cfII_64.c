@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:03:09 EDT 2012 */
+/* Generated on Tue Mar  4 13:49:20 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -69,7 +69,7 @@ static void r2cfII_64(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride 
      DK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(256, rs), MAKE_VOLATILE_STRIDE(256, csr), MAKE_VOLATILE_STRIDE(256, csi)) {
 	       E T5b, T6q, T6p, T5e;
 	       {
 		    E T5h, T3Z, T35, Tm, T5g, T3W, T34, Tv, T5f, T3T, T6N, T6z, T6j, T65, T33;
@@ -816,7 +816,7 @@ static void r2cfII_64(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride 
      DK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(256, rs), MAKE_VOLATILE_STRIDE(256, csr), MAKE_VOLATILE_STRIDE(256, csi)) {
 	       E Tm, T34, T3Z, T5g, Tv, T35, T3W, T5h, Td, T33, T6B, T6Q, T3T, T5f, T68;
 	       E T6m, T2b, T3n, T4O, T5D, T2F, T3r, T4K, T5z, TK, T3c, T47, T5n, TR, T3b;
 	       E T44, T5o, T15, T38, T4e, T5l, T1c, T39, T4b, T5k, T1s, T3g, T4v, T5w, T1W;

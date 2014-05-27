@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:02:40 EDT 2012 */
+/* Generated on Tue Mar  4 13:49:08 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -53,7 +53,7 @@ static void r2cf_64(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride cs
      DK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(256, rs), MAKE_VOLATILE_STRIDE(256, csr), MAKE_VOLATILE_STRIDE(256, csi)) {
 	       E T5n, T5o;
 	       {
 		    E T11, T2j, T4P, T5P, T3D, T5p, T3d, Tf, T1k, T1H, T5D, T4l, T5A, T4a, T3i;
@@ -710,7 +710,7 @@ static void r2cf_64(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride cs
      DK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(256, rs), MAKE_VOLATILE_STRIDE(256, csr), MAKE_VOLATILE_STRIDE(256, csi)) {
 	       E T4l, T5a, T15, T3n, T2T, T3Q, T7, Te, Tf, T4A, T4L, T1X, T3B, T23, T3y;
 	       E T5I, T66, T4R, T52, T2j, T3F, T2H, T3I, T5P, T69, T1i, T3t, T1l, T3u, TZ;
 	       E T63, T4v, T58, T1r, T3r, T1u, T3q, TK, T62, T4s, T57, Tm, Tt, Tu, T4o;

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:00:50 EDT 2012 */
+/* Generated on Tue Mar  4 13:47:03 EST 2014 */
 
 #include "codelet-dft.h"
 
@@ -38,7 +38,7 @@ static void n2sv_4(const R *ri, const R *ii, R *ro, R *io, stride is, stride os,
 {
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - (2 * VL), ri = ri + ((2 * VL) * ivs), ii = ii + ((2 * VL) * ivs), ro = ro + ((2 * VL) * ovs), io = io + ((2 * VL) * ovs), MAKE_VOLATILE_STRIDE(is), MAKE_VOLATILE_STRIDE(os)) {
+	  for (i = v; i > 0; i = i - (2 * VL), ri = ri + ((2 * VL) * ivs), ii = ii + ((2 * VL) * ivs), ro = ro + ((2 * VL) * ovs), io = io + ((2 * VL) * ovs), MAKE_VOLATILE_STRIDE(16, is), MAKE_VOLATILE_STRIDE(16, os)) {
 	       V T1, T2, T7, T8, T4, T5, Tc, Td;
 	       T1 = LD(&(ri[0]), ivs, &(ri[0]));
 	       T2 = LD(&(ri[WS(is, 2)]), ivs, &(ri[0]));
@@ -109,7 +109,7 @@ static void n2sv_4(const R *ri, const R *ii, R *ro, R *io, stride is, stride os,
 {
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - (2 * VL), ri = ri + ((2 * VL) * ivs), ii = ii + ((2 * VL) * ivs), ro = ro + ((2 * VL) * ovs), io = io + ((2 * VL) * ovs), MAKE_VOLATILE_STRIDE(is), MAKE_VOLATILE_STRIDE(os)) {
+	  for (i = v; i > 0; i = i - (2 * VL), ri = ri + ((2 * VL) * ivs), ii = ii + ((2 * VL) * ivs), ro = ro + ((2 * VL) * ovs), io = io + ((2 * VL) * ovs), MAKE_VOLATILE_STRIDE(16, is), MAKE_VOLATILE_STRIDE(16, os)) {
 	       V T3, Tb, T9, Tf, T6, Ta, Te, Tg;
 	       {
 		    V T1, T2, T7, T8;

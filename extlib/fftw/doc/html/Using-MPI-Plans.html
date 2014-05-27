@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Using MPI Plans - FFTW 3.3.2</title>
+<title>Using MPI Plans - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="FFTW-MPI-Reference.html#FFTW-MPI-Reference" title="FFTW MPI Reference">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -60,21 +60,21 @@ Up:&nbsp;<a rel="up" accesskey="u" href="FFTW-MPI-Reference.html#FFTW-MPI-Refere
 <code>fftw_execute</code>, <code>fftw_destroy_plan</code>, and the other functions
 in the serial interface that operate on generic plans (see <a href="Using-Plans.html#Using-Plans">Using Plans</a>).
 
-   <p><a name="index-collective-function-438"></a><a name="index-MPI-communicator-439"></a>The <code>fftw_execute</code> and <code>fftw_destroy_plan</code> functions, applied to
+   <p><a name="index-collective-function-441"></a><a name="index-MPI-communicator-442"></a>The <code>fftw_execute</code> and <code>fftw_destroy_plan</code> functions, applied to
 MPI plans, are <em>collective</em> calls: they must be called for all processes
 in the communicator that was used to create the plan.
 
-   <p><a name="index-new_002darray-execution-440"></a>You must <em>not</em> use the serial new-array plan-execution functions
+   <p><a name="index-new_002darray-execution-443"></a>You must <em>not</em> use the serial new-array plan-execution functions
 <code>fftw_execute_dft</code> and so on (see <a href="New_002darray-Execute-Functions.html#New_002darray-Execute-Functions">New-array Execute Functions</a>) with MPI plans.  Such functions are specialized to the
 problem type, and there are specific new-array execute functions for MPI plans:
 
-   <p><a name="index-fftw_005fmpi_005fexecute_005fdft-441"></a><a name="index-fftw_005fmpi_005fexecute_005fdft_005fr2c-442"></a><a name="index-fftw_005fmpi_005fexecute_005fdft_005fc2r-443"></a><a name="index-fftw_005fmpi_005fexecute_005fr2r-444"></a>
+   <p><a name="index-fftw_005fmpi_005fexecute_005fdft-444"></a><a name="index-fftw_005fmpi_005fexecute_005fdft_005fr2c-445"></a><a name="index-fftw_005fmpi_005fexecute_005fdft_005fc2r-446"></a><a name="index-fftw_005fmpi_005fexecute_005fr2r-447"></a>
 <pre class="example">     void fftw_mpi_execute_dft(fftw_plan p, fftw_complex *in, fftw_complex *out);
      void fftw_mpi_execute_dft_r2c(fftw_plan p, double *in, fftw_complex *out);
      void fftw_mpi_execute_dft_c2r(fftw_plan p, fftw_complex *in, double *out);
      void fftw_mpi_execute_r2r(fftw_plan p, double *in, double *out);
 </pre>
-   <p><a name="index-alignment-445"></a><a name="index-fftw_005fmalloc-446"></a>These functions have the same restrictions as those of the serial
+   <p><a name="index-alignment-448"></a><a name="index-fftw_005fmalloc-449"></a>These functions have the same restrictions as those of the serial
 new-array execute functions.  They are <em>always</em> safe to apply to
 the <em>same</em> <code>in</code> and <code>out</code> arrays that were used to
 create the plan.  They can only be applied to new arrarys if those

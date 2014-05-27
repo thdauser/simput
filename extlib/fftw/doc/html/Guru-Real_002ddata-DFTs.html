@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Guru Real-data DFTs - FFTW 3.3.2</title>
+<title>Guru Real-data DFTs - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Guru-Interface.html#Guru-Interface" title="Guru Interface">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -81,7 +81,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Guru-Interface.html#Guru-Interface">Gur
           double *ri, double *ii, double *out,
           unsigned flags);
 </pre>
-   <p><a name="index-fftw_005fplan_005fguru_005fdft_005fr2c-251"></a><a name="index-fftw_005fplan_005fguru_005fsplit_005fdft_005fr2c-252"></a><a name="index-fftw_005fplan_005fguru_005fdft_005fc2r-253"></a><a name="index-fftw_005fplan_005fguru_005fsplit_005fdft_005fc2r-254"></a>
+   <p><a name="index-fftw_005fplan_005fguru_005fdft_005fr2c-253"></a><a name="index-fftw_005fplan_005fguru_005fsplit_005fdft_005fr2c-254"></a><a name="index-fftw_005fplan_005fguru_005fdft_005fc2r-255"></a><a name="index-fftw_005fplan_005fguru_005fsplit_005fdft_005fc2r-256"></a>
 Plan a real-input (r2c) or real-output (c2r), multi-dimensional DFT with
 transform dimensions given by (<code>rank</code>, <code>dims</code>) over a
 multi-dimensional vector (loop) of dimensions (<code>howmany_rank</code>,
@@ -101,7 +101,7 @@ guarantee that the planner will succeed (return non-<code>NULL</code>) for
 any dimensions other than those described in <a href="Real_002ddata-DFT-Array-Format.html#Real_002ddata-DFT-Array-Format">Real-data DFT Array Format</a> and generalized in <a href="Advanced-Real_002ddata-DFTs.html#Advanced-Real_002ddata-DFTs">Advanced Real-data DFTs</a>.  (That is,
 for an in-place transform, each individual dimension should be able to
 operate in place.) 
-<a name="index-in_002dplace-255"></a>
+<a name="index-in_002dplace-257"></a>
 
    <p><code>in</code> and <code>out</code> point to the input and output arrays for r2c
 and c2r transforms, respectively.  For split arrays, <code>ri</code> and
@@ -112,13 +112,13 @@ output arrays for an r2c transform.  <code>in</code> and <code>ro</code> or
 transform.   (In-place transforms where <code>in</code> and <code>io</code> or
 <code>ii</code> and <code>out</code> are the same are not currently supported.)
 
-   <p><a name="index-flags-256"></a><code>flags</code> is a bitwise OR (&lsquo;<samp><span class="samp">|</span></samp>&rsquo;) of zero or more planner flags,
+   <p><a name="index-flags-258"></a><code>flags</code> is a bitwise OR (&lsquo;<samp><span class="samp">|</span></samp>&rsquo;) of zero or more planner flags,
 as defined in <a href="Planner-Flags.html#Planner-Flags">Planner Flags</a>.
 
    <p>In-place transforms of rank greater than 1 are currently only
 supported for interleaved arrays.  For split arrays, the planner will
 return <code>NULL</code>. 
-<a name="index-in_002dplace-257"></a>
+<a name="index-in_002dplace-259"></a>
 <!-- =========> -->
 
    </body></html>

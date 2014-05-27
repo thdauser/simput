@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Wisdom Generic Export/Import from Fortran - FFTW 3.3.2</title>
+<title>Wisdom Generic Export/Import from Fortran - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Accessing-the-wisdom-API-from-Fortran.html#Accessing-the-wisdom-API-from-Fortran" title="Accessing the wisdom API from Fortran">
@@ -10,7 +10,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -61,7 +61,7 @@ in any way you want.  However, your callback function must be written
 in a special way, using the <code>bind(C)</code> attribute to be passed to a
 C interface.
 
-   <p><a name="index-fftw_005fexport_005fwisdom-572"></a>In particular, to call the generic wisdom export function
+   <p><a name="index-fftw_005fexport_005fwisdom-575"></a>In particular, to call the generic wisdom export function
 <code>fftw_export_wisdom</code>, you would write a callback subroutine of the form:
 
 <pre class="example">       subroutine my_write_char(c, p) bind(C)
@@ -73,10 +73,10 @@ C interface.
 </pre>
    <p>Given such a subroutine (along with the corresponding interface definition), you could then export wisdom using:
 
-   <p><a name="index-c_005ffunloc-573"></a>
+   <p><a name="index-c_005ffunloc-576"></a>
 <pre class="example">       call fftw_export_wisdom(c_funloc(my_write_char), p)
 </pre>
-   <p><a name="index-c_005floc-574"></a><a name="index-c_005ff_005fpointer-575"></a>The standard <code>c_funloc</code> intrinsic converts a Fortran
+   <p><a name="index-c_005floc-577"></a><a name="index-c_005ff_005fpointer-578"></a>The standard <code>c_funloc</code> intrinsic converts a Fortran
 <code>bind(C)</code> subroutine into a C function pointer.  The parameter
 <code>p</code> is a <code>type(C_PTR)</code> to any arbitrary data that you want
 to pass to <code>my_write_char</code> (or <code>C_NULL_PTR</code> if none).  (Note
@@ -87,7 +87,7 @@ that you can get a C pointer to Fortran data using the intrinsic
    <p>Similarly, to use the generic <code>fftw_import_wisdom</code>, you would
 define a callback function of the form:
 
-   <p><a name="index-fftw_005fimport_005fwisdom-576"></a>
+   <p><a name="index-fftw_005fimport_005fwisdom-579"></a>
 <pre class="example">       integer(C_INT) function my_read_char(p) bind(C)
          use, intrinsic :: iso_c_binding
          type(C_PTR), value :: p

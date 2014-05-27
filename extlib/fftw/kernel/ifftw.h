@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -741,6 +741,7 @@ struct planner_s {
      double (*cost_hook)(const problem *p, double t, cost_kind k);
      int (*wisdom_ok_hook)(const problem *p, flags_t flags);
      void (*nowisdom_hook)(const problem *p);
+     wisdom_state_t (*bogosity_hook)(wisdom_state_t state, const problem *p);
 
      /* solver descriptors */
      slvdesc *slvdescs;
@@ -827,7 +828,7 @@ extern stride X(mkstride)(INT n, INT s);
 void X(stride_destroy)(stride p);
 /* hackery to prevent the compiler from copying the strides array
    onto the stack */
-#define MAKE_VOLATILE_STRIDE(x) (x) = (x) + X(an_INT_guaranteed_to_be_zero)
+#define MAKE_VOLATILE_STRIDE(nptr, x) (x) = (x) + X(an_INT_guaranteed_to_be_zero)
 #else
 
 typedef INT stride;
@@ -840,9 +841,26 @@ typedef INT stride;
 #define fftwl_stride_destroy(p) ((void) p)
 
 /* hackery to prevent the compiler from ``optimizing'' induction
-   variables in codelet loops. */
-#define MAKE_VOLATILE_STRIDE(x) (x) = (x) ^ X(an_INT_guaranteed_to_be_zero)
+   variables in codelet loops.  The problem is that for each K and for
+   each expression of the form P[I + STRIDE * K] in a loop, most
+   compilers will try to lift an induction variable PK := &P[I + STRIDE * K].
+   For large values of K this behavior overflows the
+   register set, which is likely worse than doing the index computation
+   in the first place.
 
+   If we guess that there are more than
+   ESTIMATED_AVAILABLE_INDEX_REGISTERS such pointers, we deliberately confuse
+   the compiler by setting STRIDE ^= ZERO, where ZERO is a value guaranteed to
+   be 0, but the compiler does not know this. 
+
+   16 registers ought to be enough for anybody, or so the amd64 and ARM ISA's
+   seem to imply.
+*/
+#define ESTIMATED_AVAILABLE_INDEX_REGISTERS 16
+#define MAKE_VOLATILE_STRIDE(nptr, x)                   \
+     (nptr <= ESTIMATED_AVAILABLE_INDEX_REGISTERS ?     \
+        0 :                                             \
+      ((x) = (x) ^ X(an_INT_guaranteed_to_be_zero)))
 #endif /* PRECOMPUTE_ARRAY_INDICES */
 
 /*-----------------------------------------------------------------------*/
@@ -1008,7 +1026,7 @@ extern unsigned X(random_estimate_seed);
 
 double X(measure_execution_time)(const planner *plnr, 
 				 plan *pln, const problem *p);
-int X(alignment_of)(R *p);
+IFFTW_EXTERN int X(alignment_of)(R *p);
 unsigned X(hash)(const char *s);
 INT X(nbuf)(INT n, INT vl, INT maxnbuf);
 int X(nbuf_redundant)(INT n, INT vl, int which, 

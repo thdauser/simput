@@ -1,3 +1,23 @@
+/*
+   This file is part of SIMPUT.
+
+   SIMPUT is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIMPUT is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2007-2014 Christian Schmid, FAU
+*/
+
 #ifndef COMMON_H
 #define COMMON_H 1
 
@@ -45,15 +65,6 @@
 #ifndef DCHATTY
 #define DCHATTY 1
 #endif
-
-
-/** Different types of extensions in SIMPUT FITS files. */
-#define EXTTYPE_NONE (0)
-#define EXTTYPE_MIDPSPEC (1)
-#define EXTTYPE_IMAGE (2)
-#define EXTTYPE_PHLIST (3)
-#define EXTTYPE_LC (4)
-#define EXTTYPE_PSD (5)
 
 
 /////////////////////////////////////////////////////////////////
@@ -174,13 +185,6 @@ struct SimputLCBuffer {
 };
 
 
-struct SimputKRLCBuffer {
-  long nkrlcs; // Current number of K&R light curves in the cache.
-  long ckrlc;  // Index of next position in the cache that will be used.
-  SimputKRLC** krlcs; // Cache for the K&R light curves.
-};
-
-
 struct SimputPSDBuffer {
   long npsds; // Current number of PSDs in the cache.
   SimputPSD** psds; // Cache for the PSDs.
@@ -247,14 +251,6 @@ struct SimputLCBuffer* newSimputLCBuffer(int* const status);
 void freeSimputLCBuffer(struct SimputLCBuffer** sb);
 
 
-SimputKRLC* newSimputKRLC(int* const status);
-void freeSimputKRLC(SimputKRLC** const lc);
-
-
-struct SimputKRLCBuffer* newSimputKRLCBuffer(int* const status);
-void freeSimputKRLCBuffer(struct SimputKRLCBuffer** sb);
-
-
 struct SimputPSDBuffer* newSimputPSDBuffer(int* const status);
 void freeSimputPSDBuffer(struct SimputPSDBuffer** sb);
 
@@ -265,12 +261,6 @@ void freeSimputImgBuffer(struct SimputImgBuffer** sb);
 
 struct SimputPhListBuffer* newSimputPhListBuffer(int* const status);
 void freeSimputPhListBuffer(struct SimputPhListBuffer** pb, int* const status);
-
-
-/** Determine the extension type of a particular FITS file HDU. */
-int getExtType(SimputCtlg* const cat, 
-	       const char* const filename, 
-	       int* const status);
 
 
 #endif /* COMMON_H */

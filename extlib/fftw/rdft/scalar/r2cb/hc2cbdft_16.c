@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:04:47 EDT 2012 */
+/* Generated on Tue Mar  4 13:50:45 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -41,7 +41,7 @@ static void hc2cbdft_16(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT m
      DK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * 30); m < me; m = m + 1, Rp = Rp + ms, Ip = Ip + ms, Rm = Rm - ms, Im = Im - ms, W = W + 30, MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * 30); m < me; m = m + 1, Rp = Rp + ms, Ip = Ip + ms, Rm = Rm - ms, Im = Im - ms, W = W + 30, MAKE_VOLATILE_STRIDE(64, rs)) {
 	       E T3w, T3z, T2Y, T3D, T3x, T3m, T3u, T3C, T3y, T3o, T3k, T3E, T3A;
 	       {
 		    E T20, Tf, T3Q, T32, T3V, T3f, T2a, TN, T2f, T1m, T3G, T2G, T3L, T2T, T26;
@@ -469,7 +469,7 @@ static void hc2cbdft_16(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT m
      DK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * 30); m < me; m = m + 1, Rp = Rp + ms, Ip = Ip + ms, Rm = Rm - ms, Im = Im - ms, W = W + 30, MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * 30); m < me; m = m + 1, Rp = Rp + ms, Ip = Ip + ms, Rm = Rm - ms, Im = Im - ms, W = W + 30, MAKE_VOLATILE_STRIDE(64, rs)) {
 	       E TB, T2L, T30, T1n, Tf, T1U, T2H, T3p, T1E, T1Z, TM, T31, T2s, T3k, T1i;
 	       E T2M, Tu, T1Y, T2Q, T2X, T2T, T2Y, TY, T1d, T19, T1e, T2v, T2C, T2y, T2D;
 	       E T1x, T1V;

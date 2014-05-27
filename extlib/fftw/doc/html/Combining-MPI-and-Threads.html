@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Combining MPI and Threads - FFTW 3.3.2</title>
+<title>Combining MPI and Threads - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Distributed_002dmemory-FFTW-with-MPI.html#Distributed_002dmemory-FFTW-with-MPI" title="Distributed-memory FFTW with MPI">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -56,7 +56,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Distributed_002dmemory-FFTW-with-MPI.ht
 
 <h3 class="section">6.11 Combining MPI and Threads</h3>
 
-<p><a name="index-threads-427"></a>
+<p><a name="index-threads-430"></a>
 In certain cases, it may be advantageous to combine MPI
 (distributed-memory) and threads (shared-memory) parallelization. 
 FFTW supports this, with certain caveats.  For example, if you have a
@@ -86,7 +86,7 @@ which should look something like this:
          MPI_Finalize();
      }
 </pre>
-   <p><a name="index-fftw_005fmpi_005finit-428"></a><a name="index-fftw_005finit_005fthreads-429"></a><a name="index-fftw_005fplan_005fwith_005fnthreads-430"></a>
+   <p><a name="index-fftw_005fmpi_005finit-431"></a><a name="index-fftw_005finit_005fthreads-432"></a><a name="index-fftw_005fplan_005fwith_005fnthreads-433"></a>
 First, note that instead of calling <code>MPI_Init</code>, you should call
 <code>MPI_Init_threads</code>, which is the initialization routine defined
 by the MPI-2 standard to indicate to MPI that your program will be
@@ -105,7 +105,7 @@ the FFTW threads routines, so we define a global variable
 <code>threads_ok</code> is true.  For more information on thread safety in
 MPI, see the
 <a href="http://www.mpi-forum.org/docs/mpi-20-html/node162.htm">MPI and Threads</a> section of the MPI-2 standard. 
-<a name="index-thread-safety-431"></a>
+<a name="index-thread-safety-434"></a>
 
    <p>Second, we must call <code>fftw_init_threads</code> <em>before</em>
 <code>fftw_mpi_init</code>.  This is critical for technical reasons having
@@ -128,7 +128,7 @@ place will not benefit from parallelization within the node.
 Moreover, many MPI implementations already have optimizations to
 exploit shared memory when it is available, so adding the
 multithreaded FFTW on top of this may be superfluous. 
-<a name="index-transpose-432"></a>
+<a name="index-transpose-435"></a>
 <!--  -->
 
    </body></html>

@@ -4,13 +4,14 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/cfitsio
 AM_CFLAGS+=-I@top_srcdir@/extlib/wcslib/C
 AM_CFLAGS+=-I@top_srcdir@/extlib/ape/include
 AM_CFLAGS+=-I@top_srcdir@/extlib/atFunctions/include
+AM_CFLAGS+=-I@top_srcdir@/extlib/fftw/api
 AM_CFLAGS+=-I${HEADAS}/include
 AM_LDFLAGS =-L${HEADAS}/lib 
 
 ########## DIRECTORIES ###############
 
 # Directory where to install the PIL parameter files.
-pfilesdir=@PFILESDIR@
+pfilesdir=$(pkgdatadir)/pfiles
 
 ############ BINARIES #################
 

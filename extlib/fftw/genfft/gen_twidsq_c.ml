@@ -1,7 +1,7 @@
 (*
  * Copyright (c) 1997-1999 Massachusetts Institute of Technology
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,8 +133,8 @@ let generate n =
 						byvl (CVar sms)]);
 	     Expr_assign (CVar twarray, CPlus [CVar twarray; 
 					       bytwvl (Integer nt)]);
-	     make_volatile_stride (CVar rs);
-	     make_volatile_stride (CVar vs)
+	     make_volatile_stride (2*n) (CVar rs);
+	     make_volatile_stride (2*n) (CVar vs)
 	   ],
 	  Asch annot)]) in
 

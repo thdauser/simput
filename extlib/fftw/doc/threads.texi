@@ -26,10 +26,10 @@ threads if your problem is sufficiently large.
 @cindex threads
 
 @menu
-* Installation and Supported Hardware/Software::  
-* Usage of Multi-threaded FFTW::  
-* How Many Threads to Use?::    
-* Thread safety::               
+* Installation and Supported Hardware/Software::
+* Usage of Multi-threaded FFTW::
+* How Many Threads to Use?::
+* Thread safety::
 @end menu
 
 @c ------------------------------------------------------------
@@ -123,7 +123,7 @@ disabled for subsequent plans.
 With OpenMP, to configure FFTW to use all of the currently running
 OpenMP threads (set by @code{omp_set_num_threads(nthreads)} or by the
 @code{OMP_NUM_THREADS} environment variable), you can do:
-@code{fftw_plan_with_nthreads(omp_get_num_threads())}. (The @samp{omp_}
+@code{fftw_plan_with_nthreads(omp_get_max_threads())}. (The @samp{omp_}
 OpenMP functions are declared via @code{#include <omp.h>}.)
 
 @cindex thread safety

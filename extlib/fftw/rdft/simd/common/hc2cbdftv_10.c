@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:05:07 EDT 2012 */
+/* Generated on Tue Mar  4 13:51:49 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -42,7 +42,7 @@ static void hc2cbdftv_10(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT 
      DVK(KP951056516, +0.951056516295153572116439333379382143405698634);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 18)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 18), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 18)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 18), MAKE_VOLATILE_STRIDE(40, rs)) {
 	       V Ts, T4, TR, T1, TZ, TD, Ty, Tn, Ti, TT, T11, TJ, T15, Tr, TN;
 	       V TE, Tv, To, Tb, T8, Tw, Te, Tx, Th, Tt, T7, T9, T2, T3, Tc;
 	       V Td, Tf, Tg, T5, T6, Tu, Ta;
@@ -174,7 +174,7 @@ static void hc2cbdftv_10(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT 
      DVK(KP559016994, +0.559016994374947424102293417182819058860154590);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 18)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 18), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 18)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 18), MAKE_VOLATILE_STRIDE(40, rs)) {
 	       V T5, TE, Ts, Tt, TC, Tz, TH, TJ, To, Tq, T2, T4, T3, T9, Tx;
 	       V Tm, TB, Td, Ty, Ti, TA, T6, T8, T7, Tl, Tk, Tj, Tc, Tb, Ta;
 	       V Tf, Th, Tg, TF, TG, Te, Tn;

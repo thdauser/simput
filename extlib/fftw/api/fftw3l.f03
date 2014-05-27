@@ -554,6 +554,11 @@
       type(C_PTR), value :: p
     end subroutine fftwl_print_plan
     
+    type(C_PTR) function fftwl_sprint_plan(p) bind(C, name='fftwl_sprint_plan')
+      import
+      type(C_PTR), value :: p
+    end function fftwl_sprint_plan
+    
     type(C_PTR) function fftwl_malloc(n) bind(C, name='fftwl_malloc')
       import
       integer(C_SIZE_T), value :: n
@@ -591,5 +596,10 @@
       import
       type(C_PTR), value :: p
     end function fftwl_cost
+    
+    integer(C_INT) function fftwl_alignment_of(p) bind(C, name='fftwl_alignment_of')
+      import
+      real(C_LONG_DOUBLE), dimension(*), intent(out) :: p
+    end function fftwl_alignment_of
     
   end interface

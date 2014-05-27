@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Plan execution in Fortran - FFTW 3.3.2</title>
+<title>Plan execution in Fortran - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Calling-FFTW-from-Modern-Fortran.html#Calling-FFTW-from-Modern-Fortran" title="Calling FFTW from Modern Fortran">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -62,7 +62,7 @@ arrays passed when the plan was created (see <a href="Using-Plans.html#Using-Pla
 corresponding subroutine call in modern Fortran is:
 <pre class="example">      call fftw_execute(plan)
 </pre>
-   <p><a name="index-fftw_005fexecute-554"></a>
+   <p><a name="index-fftw_005fexecute-557"></a>
 However, we have had reports that this causes problems with some
 recent optimizing Fortran compilers.  The problem is, because the
 input/output arrays are not passed as explicit arguments to
@@ -80,11 +80,11 @@ plan is for a complex-data DFT and was created for the arrays
 <code>in</code> and <code>out</code>, you would do:
 <pre class="example">      call fftw_execute_dft(plan, in, out)
 </pre>
-   <p><a name="index-fftw_005fexecute_005fdft-555"></a>
+   <p><a name="index-fftw_005fexecute_005fdft-558"></a>
 There are a few things to be careful of, however:
 
      <ul>
-<li><a name="index-fftw_005fexecute_005fdft_005fr2c-556"></a><a name="index-fftw_005fexecute_005fdft_005fc2r-557"></a><a name="index-fftw_005fexecute_005fr2r-558"></a>You must use the correct type of execute function, matching the way
+<li><a name="index-fftw_005fexecute_005fdft_005fr2c-559"></a><a name="index-fftw_005fexecute_005fdft_005fc2r-560"></a><a name="index-fftw_005fexecute_005fr2r-561"></a>You must use the correct type of execute function, matching the way
 the plan was created.  Complex DFT plans should use
 <code>fftw_execute_dft</code>, Real-input (r2c) DFT plans should use use
 <code>fftw_execute_dft_r2c</code>, and real-output (c2r) DFT plans should
@@ -105,7 +105,7 @@ use the <code>FFTW_UNALIGNED</code> flag when creating the
 plan, in which case the plan does not depend on the alignment, but
 this may sacrifice substantial performance on architectures (like x86)
 with SIMD instructions (see <a href="SIMD-alignment-and-fftw_005fmalloc.html#SIMD-alignment-and-fftw_005fmalloc">SIMD alignment and fftw_malloc</a>). 
-<a name="index-FFTW_005fUNALIGNED-559"></a>
+<a name="index-FFTW_005fUNALIGNED-562"></a>
 </ul>
 
 <!--  -->

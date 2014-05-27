@@ -21,10 +21,10 @@ lib_LIBRARIES=libsimput.a
 
 # Sources:
 libsimput_a_SOURCES=datastruct.c fileaccess.c datahandling.c vector.c	\
-                    arf.c $(FSRC)
+                    arf.c rmf.c $(FSRC)
 
 ############ HEADERS #################
 
 # Define the headers that will be installed in $(includedir):
-include_HEADERS=simput.h vector.h arf.h
-noinst_HEADERS =common.h
+include_HEADERS=simput.h
+noinst_HEADERS =common.h vector.h arf.h rmf.h

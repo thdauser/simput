@@ -1,6 +1,5 @@
 #include "posstring.h"
 
-#include <malloc.h>
 #include <math.h>
 #include <err.h>
 #include <stdio.h>

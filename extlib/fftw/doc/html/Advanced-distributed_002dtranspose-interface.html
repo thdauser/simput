@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Advanced distributed-transpose interface - FFTW 3.3.2</title>
+<title>Advanced distributed-transpose interface - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="FFTW-MPI-Transposes.html#FFTW-MPI-Transposes" title="FFTW MPI Transposes">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -67,7 +67,7 @@ user-specified block sizes for the input and output:
                       ptrdiff_t block0, ptrdiff_t block1,
                       double *in, double *out, MPI_Comm comm, unsigned flags);
 </pre>
-   <p><a name="index-fftw_005fmpi_005fplan_005fmany_005ftranspose-403"></a>
+   <p><a name="index-fftw_005fmpi_005fplan_005fmany_005ftranspose-406"></a>
 In this case, one is transposing an <code>n0</code> by <code>n1</code> matrix of
 <code>howmany</code>-tuples (e.g. <code>howmany = 2</code> for complex numbers). 
 The input is distributed along the <code>n0</code> dimension with block size
@@ -76,7 +76,7 @@ along the <code>n1</code> dimension with block size <code>block1</code>.  If
 <code>FFTW_MPI_DEFAULT_BLOCK</code> (0) is passed for a block size then FFTW
 uses its default block size.  To get the local size of the data on
 each process, you should then call <code>fftw_mpi_local_size_many_transposed</code>. 
-<a name="index-FFTW_005fMPI_005fDEFAULT_005fBLOCK-404"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany_005ftransposed-405"></a>
+<a name="index-FFTW_005fMPI_005fDEFAULT_005fBLOCK-407"></a><a name="index-fftw_005fmpi_005flocal_005fsize_005fmany_005ftransposed-408"></a>
 
    </body></html>
 

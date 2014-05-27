@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:03:54 EDT 2012 */
+/* Generated on Tue Mar  4 13:50:24 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -56,7 +56,7 @@ static void r2cb_64(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride cs
      DK(KP2_000000000, +2.000000000000000000000000000000000000000000000);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(256, rs), MAKE_VOLATILE_STRIDE(256, csr), MAKE_VOLATILE_STRIDE(256, csi)) {
 	       E T3d, T32, T37, T2Z, T3f, T3b, T3c, T35;
 	       {
 		    E T5H, T9, T5j, T4p, T2T, T1b, T3Z, T3j, Tg, T5I, T5k, T4u, T40, T3m, T2U;
@@ -727,7 +727,7 @@ static void r2cb_64(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride cs
      DK(KP2_000000000, +2.000000000000000000000000000000000000000000000);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ovs, R1 = R1 + ovs, Cr = Cr + ivs, Ci = Ci + ivs, MAKE_VOLATILE_STRIDE(256, rs), MAKE_VOLATILE_STRIDE(256, csr), MAKE_VOLATILE_STRIDE(256, csi)) {
 	       E Ta, T2S, T18, T2u, T3F, T4V, T5l, T61, Th, T2T, T1h, T2v, T3M, T4W, T5o;
 	       E T62, T3Q, T5q, T5u, T44, Tp, Tw, T2V, T2W, T2X, T2Y, T3X, T5t, T1r, T2x;
 	       E T41, T5r, T1A, T2y, T4a, T5y, T5N, T4H, TN, T31, T4E, T5z, T39, T3q, T1L;

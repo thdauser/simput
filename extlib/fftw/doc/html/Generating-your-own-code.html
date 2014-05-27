@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Generating your own code - FFTW 3.3.2</title>
+<title>Generating your own code - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Installation-and-Customization.html#Installation-and-Customization" title="Installation and Customization">
@@ -10,7 +10,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -54,16 +54,16 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Installation-and-Customization.html#Ins
 
 <h3 class="section">10.4 Generating your own code</h3>
 
-<p><a name="index-code-generator-622"></a>
+<p><a name="index-code-generator-625"></a>
 The directory <code>genfft</code> contains the programs that were used to
 generate FFTW's &ldquo;codelets,&rdquo; which are hard-coded transforms of small
 sizes. 
-<a name="index-codelet-623"></a>We do not expect casual users to employ the generator, which is a rather
+<a name="index-codelet-626"></a>We do not expect casual users to employ the generator, which is a rather
 sophisticated program that generates directed acyclic graphs of FFT
 algorithms and performs algebraic simplifications on them.  It was
 written in Objective Caml, a dialect of ML, which is available at
 <a href="http://caml.inria.fr/ocaml/index.en.html">http://caml.inria.fr/ocaml/index.en.html</a>. 
-<a name="index-Caml-624"></a>
+<a name="index-Caml-627"></a>
 
    <p>If you have Objective Caml installed (along with recent versions of
 GNU <code>autoconf</code>, <code>automake</code>, and <code>libtool</code>), then you
@@ -72,7 +72,7 @@ generation options.  The set of generated codelets is specified by the
 <code>{dft,rdft}/{codelets,simd}/*/Makefile.am</code> files.  For example, you can add
 efficient REDFT codelets of small sizes by modifying
 <code>rdft/codelets/r2r/Makefile.am</code>. 
-<a name="index-REDFT-625"></a>After you modify any <code>Makefile.am</code> files, you can type <code>sh
+<a name="index-REDFT-628"></a>After you modify any <code>Makefile.am</code> files, you can type <code>sh
 bootstrap.sh</code> in the top-level directory followed by <code>make</code> to
 re-generate the files.
 
@@ -81,7 +81,7 @@ we do not expect that most users will need to generate their own code.
 However, feel free to contact us at <a href="mailto:fftw@fftw.org">fftw@fftw.org</a> if
 you are interested in the subject.
 
-   <p><a name="index-monadic-programming-626"></a>You might find it interesting to learn Caml and/or some modern
+   <p><a name="index-monadic-programming-629"></a>You might find it interesting to learn Caml and/or some modern
 programming techniques that we used in the generator (including monadic
 programming), especially if you heard the rumor that Java and
 object-oriented programming are the latest advancement in the field. 

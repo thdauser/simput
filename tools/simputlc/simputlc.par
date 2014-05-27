@@ -1,0 +1,7 @@
+Simput,fre,lq,"simput.fits",,,"SIMPUT catalog file"
+Extname,s,h,"TIMING",,,"EXTNAME of the generated HDU"
+Extver,i,h,1,1,9999,"EXTVER of the generated HDU"
+LCFile,fre,h,"none",,,"ASCII file containing a light curve"
+MJDREF,r,h,55000.0,,,"reference Modified Julian Date"
+chatter,i,lh,3,,,"verbosity"
+history,b,lh,true,,,"write a history block with program parameters to each FITS file?"

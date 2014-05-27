@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>FFTW MPI Performance Tips - FFTW 3.3.2</title>
+<title>FFTW MPI Performance Tips - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Distributed_002dmemory-FFTW-with-MPI.html#Distributed_002dmemory-FFTW-with-MPI" title="Distributed-memory FFTW with MPI">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -64,18 +64,18 @@ currently limited by the size of the first dimension.
 (Multidimensional block distributions may be supported by a future
 version.) More generally, you should ideally arrange the dimensions so
 that FFTW can divide them equally among the processes. See <a href="Load-balancing.html#Load-balancing">Load balancing</a>. 
-<a name="index-block-distribution-423"></a><a name="index-load-balancing-424"></a>
+<a name="index-block-distribution-426"></a><a name="index-load-balancing-427"></a>
 
    <p>Second, if it is not too inconvenient, you should consider working
 with transposed output for multidimensional plans, as this saves a
 considerable amount of communications.  See <a href="Transposed-distributions.html#Transposed-distributions">Transposed distributions</a>. 
-<a name="index-transpose-425"></a>
+<a name="index-transpose-428"></a>
 
    <p>Third, the fastest choices are generally either an in-place transform
 or an out-of-place transform with the <code>FFTW_DESTROY_INPUT</code> flag
 (which allows the input array to be used as scratch space).  In-place
 is especially beneficial if the amount of data per process is large. 
-<a name="index-FFTW_005fDESTROY_005fINPUT-426"></a>
+<a name="index-FFTW_005fDESTROY_005fINPUT-429"></a>
 
    <p>Fourth, if you have multiple arrays to transform at once, rather than
 calling FFTW's MPI transforms several times it usually seems to be

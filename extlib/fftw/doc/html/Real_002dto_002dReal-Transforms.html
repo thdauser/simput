@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Real-to-Real Transforms - FFTW 3.3.2</title>
+<title>Real-to-Real Transforms - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Basic-Interface.html#Basic-Interface" title="Basic Interface">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -57,7 +57,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Basic-Interface.html#Basic-Interface">B
 
 <h4 class="subsection">4.3.5 Real-to-Real Transforms</h4>
 
-<p><a name="index-r2r-203"></a>
+<p><a name="index-r2r-205"></a>
 <pre class="example">     fftw_plan fftw_plan_r2r_1d(int n, double *in, double *out,
                                 fftw_r2r_kind kind, unsigned flags);
      fftw_plan fftw_plan_r2r_2d(int n0, int n1, double *in, double *out,
@@ -72,7 +72,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Basic-Interface.html#Basic-Interface">B
      fftw_plan fftw_plan_r2r(int rank, const int *n, double *in, double *out,
                              const fftw_r2r_kind *kind, unsigned flags);
 </pre>
-   <p><a name="index-fftw_005fplan_005fr2r_005f1d-204"></a><a name="index-fftw_005fplan_005fr2r_005f2d-205"></a><a name="index-fftw_005fplan_005fr2r_005f3d-206"></a><a name="index-fftw_005fplan_005fr2r-207"></a>
+   <p><a name="index-fftw_005fplan_005fr2r_005f1d-206"></a><a name="index-fftw_005fplan_005fr2r_005f2d-207"></a><a name="index-fftw_005fplan_005fr2r_005f3d-208"></a><a name="index-fftw_005fplan_005fr2r-209"></a>
 Plan a real input/output (r2r) transform of various kinds in zero or
 more dimensions, returning an <code>fftw_plan</code> (see <a href="Using-Plans.html#Using-Plans">Using Plans</a>).
 
@@ -86,7 +86,7 @@ non-<code>NULL</code> plan is always returned by the basic interface unless
 you are using a customized FFTW configuration supporting a restricted
 set of transforms, or for size-1 <code>FFTW_REDFT00</code> kinds (which are
 not defined). 
-<a name="index-FFTW_005fREDFT00-208"></a>
+<a name="index-FFTW_005fREDFT00-210"></a>
 
 <h5 class="subsubheading">Arguments</h5>
 
@@ -103,7 +103,7 @@ respectively, gives the (physical) size of the transform dimensions.
 They can be any positive integer.
 
           <ul>
-<li><a name="index-row_002dmajor-209"></a>Multi-dimensional arrays are stored in row-major order with dimensions:
+<li><a name="index-row_002dmajor-211"></a>Multi-dimensional arrays are stored in row-major order with dimensions:
 <code>n0</code> x <code>n1</code>; or <code>n0</code> x <code>n1</code> x <code>n2</code>; or
 <code>n[0]</code> x <code>n[1]</code> x ... x <code>n[rank-1]</code>. 
 See <a href="Multi_002ddimensional-Array-Format.html#Multi_002ddimensional-Array-Format">Multi-dimensional Array Format</a>. 
@@ -121,7 +121,7 @@ should be factorizable in the above form.
 
      <li><code>in</code> and <code>out</code> point to the input and output arrays of the
 transform, which may be the same (yielding an in-place transform). 
-<a name="index-in_002dplace-210"></a>These arrays are overwritten during planning, unless
+<a name="index-in_002dplace-212"></a>These arrays are overwritten during planning, unless
 <code>FFTW_ESTIMATE</code> is used in the flags.  (The arrays need not be
 initialized, but they must be allocated.)
 
@@ -133,7 +133,7 @@ what is computed is the separable product formed by taking each
 transform kind along the corresponding dimension, one dimension after
 another.
 
-     <li><a name="index-flags-211"></a><code>flags</code> is a bitwise OR (&lsquo;<samp><span class="samp">|</span></samp>&rsquo;) of zero or more planner flags,
+     <li><a name="index-flags-213"></a><code>flags</code> is a bitwise OR (&lsquo;<samp><span class="samp">|</span></samp>&rsquo;) of zero or more planner flags,
 as defined in <a href="Planner-Flags.html#Planner-Flags">Planner Flags</a>.
 
 </ul>

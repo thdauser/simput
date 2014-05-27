@@ -1,3 +1,23 @@
+/*
+   This file is part of SIMPUT.
+
+   SIMPUT is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIMPUT is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2007-2014 Christian Schmid, FAU
+*/
+
 #include "common.h"
 
 
@@ -231,25 +251,31 @@ static SimputPSD* getSimputPSD(SimputCtlg* const cat,
 }
 
 
-static inline double getLCTime(const SimputLC* const lc, 
+static inline double getLCTime(const SimputLC* const lc,
 			       const long kk, 
 			       const long long nperiods,
 			       const double mjdref)
 {
   if (NULL!=lc->time) {
     // Non-periodic light curve.
-    return(lc->time[kk] + lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
+    return(lc->time[kk]+lc->timezero+(lc->mjdref-mjdref)*24.*3600.);
   } else {
     // Periodic light curve.
-    double phase=lc->phase[kk] - lc->phase0 + nperiods;
-    return(phase*lc->period 
-	   +lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
+    long double phase=lc->phase[kk]-lc->phase0+nperiods;
+    if (fabs(lc->dperiod)<1.e-20) {
+      return(phase*lc->period);
+    } else {
+      return((double)((expl(phase*lc->dperiod)-1.0)*lc->period/lc->dperiod
+		      +lc->timezero+(lc->mjdref-mjdref)*24.*3600.));
+    }
   }
 }
 
 
 /** Determine the index of the bin of the light curve that corresponds
-    to the specified time. */
+    to the specified time. For periodic light curves the function
+    stores the number of periods since the specified origin of the
+    light curve in the parameter nperiods. */
 static inline long getLCBin(const SimputLC* const lc, 
 			    const double time, 
 			    const double mjdref,
@@ -266,36 +292,45 @@ static inline long getLCBin(const SimputLC* const lc,
   // Check if the light curve is periodic or not.
   if (NULL!=lc->time) {
     // Non-periodic light curve.
+    *nperiods=0;
 
     // Check if the requested time is within the covered interval.
-    if ((time<getLCTime(lc, 0, 0, mjdref)) || 
-	(time>=getLCTime(lc, lc->nentries-1, 0, mjdref))) {
+    double t0=getLCTime(lc, 0, 0, mjdref);
+    double t1=getLCTime(lc, lc->nentries-1, 0, mjdref);
+    if ((time<t0) || (time>=t1)) {
       char msg[SIMPUT_MAXSTR];
       sprintf(msg, "requested time (%lf MJD) is outside the "
 	      "interval covered by the light curve '%s' (%lf to %lf MJD)",
-	      time/24./3600. + mjdref,
-	      lc->fileref,
-	      getLCTime(lc, 0, 0, 0.)/24./3600., 
-	      getLCTime(lc, lc->nentries-1, 0, 0.)/24./3600.);
+	      time/24./3600.+mjdref, lc->fileref, t0/24./3600., t1/24./3600.);
       SIMPUT_ERROR(msg);
       *status=EXIT_FAILURE;
       return(0);
     }
-    
-    *nperiods=0;
 
   } else {
     // Periodic light curve.
+    // Make a first guess on the number of passed periods.
     double dt=time-getLCTime(lc, 0, 0, mjdref);
-    double phase=lc->phase0 + dt/lc->period;
-    (*nperiods)=(long long)phase;
-    if (phase<0.) {
+    double phase;
+    if (fabs(lc->dperiod)<1.e-20) {
+      phase=lc->phase0+dt/lc->period;
+    } else {
+      phase=lc->phase0+log(1.+dt*lc->dperiod/lc->period)/lc->dperiod;
+    }
+    *nperiods=(long long)phase;
+
+    // Correct the first guess such that the requested time lies within the
+    // covered period. Deviations with respect to the first guess can 
+    // introduced by a \dot{P} (DPERIOD).
+    while (getLCTime(lc, 0, (*nperiods)+1, mjdref) <= time) {
+      (*nperiods)++;
+    }
+    while (getLCTime(lc, 0, *nperiods, mjdref) > time) {
       (*nperiods)--;
-    }     
+    }
   }
 
-  // Determine the respective index kk of the light curve (using
-  // binary search).
+  // Determine the index of the light curve bin (using binary search).
   long lower=0, upper=lc->nentries-2, mid;
   while (upper>lower) {
     mid=(lower+upper)/2;
@@ -305,7 +340,7 @@ static inline long getLCBin(const SimputLC* const lc,
       upper=mid;
     }
   }
-  
+
   return(lower);
 }
 
@@ -369,7 +404,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 
   // If the LC is not contained in the cache, load it either from 
   // a file or create it from a SimputPSD.
-  int timetype=getExtType(cat, filename, status);
+  int timetype=getSimputExtType(cat, filename, status);
   CHECK_STATUS_RET(*status, lc);
 
   if (EXTTYPE_LC==timetype) {
@@ -412,8 +447,9 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       // Set the time bins of the light curve.
       lc->timezero=prevtime;
       long ii;
+      double dt=1./(2.*psd->frequency[psd->nentries-1]);
       for (ii=0; ii<lc->nentries; ii++) {
-	lc->time[ii]=ii*1./(2.*psd->frequency[psd->nentries-1]);
+	lc->time[ii]=ii*dt;
       }
 
       // Interpolate the PSD to a uniform frequency grid.
@@ -422,10 +458,22 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       power=(float*)malloc(psdlen*sizeof(float));
       CHECK_NULL_BREAK(power, *status, 
 		       "memory allocation for PSD buffer failed");
-      long jj=0;
+
+      // Check that the PSD is positive.
+      long jj;
+      for (jj=0; jj<psd->nentries; jj++) {
+	if (psd->power[jj]<=0.0) {
+	  SIMPUT_ERROR("PSD may only have positive entries");
+	  *status=EXIT_FAILURE;
+	  break;
+	}
+      }
+      CHECK_STATUS_RET(*status, lc);
+
       float delta_f=psd->frequency[psd->nentries-1]/psdlen;
+      jj=0;
       for (ii=0; ii<psdlen; ii++) {
-	float frequency = (ii+1)*delta_f;
+	float frequency=(ii+1)*delta_f;
 	while((frequency>psd->frequency[jj]) &&
 	      (jj<psd->nentries-1)) {
 	  jj++;
@@ -434,13 +482,13 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 	  power[ii]=0.;
 	  /* frequency/psd->frequency[jj]* 
 	     psd->power[jj]* 
-	     delta_f;*/
+	     delta_f; */
 	} else {
 	  power[ii]=
-	    (psd->power[jj-1] + 
+	    (psd->power[jj-1]+
 	     (frequency-psd->frequency[jj-1])/
 	     (psd->frequency[jj]-psd->frequency[jj-1])*
-	     (psd->power[jj]-psd->power[jj-1])) *
+	     (psd->power[jj]-psd->power[jj-1]))*
 	    delta_f;
 	}
       }
@@ -475,7 +523,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       
       // Determine the normalized rates from the FFT.
       for (ii=0; ii<lc->nentries; ii++) {
-	lc->flux[ii] = (float)fftw_out[ii] /* *requ_rms/act_rms */;
+	lc->flux[ii]=(float)fftw_out[ii] /* *requ_rms/act_rms */;
 
 	// Avoid negative fluxes (no physical meaning):
 	if (lc->flux[ii]<0.) { 
@@ -487,12 +535,13 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       // particular source.
       lc->src_id=src->src_id;
 
-      // Store the file reference to the timing extension for later comparisons.
+      // Store the file reference to the timing extension for later 
+      // comparisons.
       lc->fileref=
 	(char*)malloc((strlen(filename)+1)*sizeof(char));
       CHECK_NULL_RET(lc->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 lc);
+		     "memory allocation for file reference failed", 
+		     lc);
       strcpy(lc->fileref, filename);
 
     } while(0); // END of error handling loop.
@@ -540,7 +589,7 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_VOID(*status);
 
-  int timetype=getExtType(cat, timeref, status);
+  int timetype=getSimputExtType(cat, timeref, status);
   CHECK_STATUS_VOID(*status);
 
   if (EXTTYPE_LC==timetype) {
@@ -633,7 +682,7 @@ static void getSrcImagRef(SimputCtlg* const cat,
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_VOID(*status);
 
-  int timetype=getExtType(cat, timeref, status);
+  int timetype=getSimputExtType(cat, timeref, status);
   CHECK_STATUS_VOID(*status);
 
   if (EXTTYPE_LC==timetype) {
@@ -747,7 +796,7 @@ SimputMIdpSpec* getSimputSrcMIdpSpec(SimputCtlg* const cat,
   getSimputSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
   CHECK_STATUS_RET(*status, 0);
 
-  int spectype=getExtType(cat, specref, status);
+  int spectype=getSimputExtType(cat, specref, status);
   CHECK_STATUS_RET(*status, 0);
 
   if (EXTTYPE_MIDPSPEC==spectype) {
@@ -859,7 +908,7 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
 
       // Add to the spectral probability density.
       spec->distribution[ii]+=
-	(hi-lo)*cat->arf->EffArea[ii]*midpspec->pflux[jj];
+	(hi-lo)*cat->arf->EffArea[ii]*midpspec->fluxdensity[jj];
       
       // Increase the lower boundary.
       lo=hi;
@@ -928,253 +977,6 @@ static inline double rndexp(const double avgdist, int* const status)
   } while (rand==0.);
 
   return(-log(rand)*avgdist);
-}
-
-
-/** Determine the time corresponding to a particular light curve bin
-    [s]. The function takes into account, whether the light curve is
-    periodic or not. For periodic light curves the specified number of
-    periods is added to the time value. For non-periodic light curves
-    the nperiod parameter is neglected. The returned value includes
-    the MJDREF and TIMEZERO contributions. */
-static inline double getKRLCTime(const SimputKRLC* const lc, 
-				 const long kk, 
-				 const long long nperiods,
-				 const double mjdref)
-{
-  if (NULL!=lc->time) {
-    // Non-periodic light curve.
-    return(lc->time[kk] + lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
-  } else {
-    // Periodic light curve.
-    double phase=lc->phase[kk] - lc->phase0 + nperiods;
-    return(phase*lc->period 
-	   +lc->timezero + (lc->mjdref-mjdref)*24.*3600.);
-  }
-}
-
-
-/** Determine the index of the bin of the K&R light curve that
-    corresponds to the specified time. */
-static inline long getKRLCBin(const SimputKRLC* const lc, 
-			      const double time, 
-			      const double mjdref,
-			      long long* nperiods, 
-			      int* const status)
-{
-  // Check if the light curve is periodic or not.
-  if (NULL!=lc->time) {
-    // Non-periodic light curve.
-
-    // Check if the requested time is within the covered interval.
-    if ((time<getKRLCTime(lc, 0, 0, mjdref)) || 
-	(time>=getKRLCTime(lc, lc->nentries-1, 0, mjdref))) {
-      char msg[SIMPUT_MAXSTR];
-      sprintf(msg, "requested time (%lf MJD) is outside the "
-	      "interval covered by the light curve '%s' (%lf to %lf MJD)",
-	      time/24./3600. + mjdref,
-	      lc->fileref,
-	      getKRLCTime(lc, 0, 0, 0.)/24./3600., 
-	      getKRLCTime(lc, lc->nentries-1, 0, 0.)/24./3600.);
-      SIMPUT_ERROR(msg);
-      *status=EXIT_FAILURE;
-      return(0);
-    }
-    
-    *nperiods=0;
-
-  } else {
-    // Periodic light curve.
-    double dt=time-getKRLCTime(lc, 0, 0, mjdref);
-    double phase=lc->phase0 + dt/lc->period;
-    (*nperiods)=(long long)phase;
-    if (phase<0.) {
-      (*nperiods)--;
-    }     
-  }
-
-  // Determine the respective index kk of the light curve (using
-  // binary search).
-  long lower=0, upper=lc->nentries-2, mid;
-  while (upper>lower) {
-    mid=(lower+upper)/2;
-    if (getKRLCTime(lc, mid+1, *nperiods, mjdref) < time) {
-      lower=mid+1;
-    } else {
-      upper=mid;
-    }
-  }
-  
-  return(lower);
-}
-
-
-/** Return the requested Klein & Roberts light curve. Keeps a certain
-    number of them in an internal storage. If the requested Klein &
-    Roberts light curve is not located in the internal storage, it is
-    obtained from the light curve/PSD referred to by the timing
-    reference of the source. If the the source does not refer to a
-    timing extension (i.e. it is a source with constant brightness)
-    the function return value is NULL. */
-static SimputKRLC* getSimputKRLC(SimputCtlg* const cat, 
-				 const SimputSrc* const src,
-				 char* const timeref,
-				 const double time, 
-				 const double mjdref,
-				 int* const status)
-{
-  // Maximum number of Klein & Roberts light curves in the
-  // internal storage.
-  const long maxkrlcs=1000; 
-
-  // Check if the source catalog contains a Klein & Robert 
-  // light curve buffer.
-  if (NULL==cat->krlcbuff) {
-    cat->krlcbuff=newSimputKRLCBuffer(status);
-    CHECK_STATUS_RET(*status, NULL);
-  }
-
-  // Convert the void* pointer to the Klein & Roberts light curve 
-  // buffer into the right format.
-  struct SimputKRLCBuffer* sb=(struct SimputKRLCBuffer*)cat->krlcbuff;
-
-  // In case there are no Klein & Roberts light curves available at all, 
-  // allocate memory for the array (storage for light curves).
-  if (NULL==sb->krlcs) {
-    sb->krlcs=(SimputKRLC**)malloc(maxkrlcs*sizeof(SimputKRLC*));
-    CHECK_NULL_RET(sb->krlcs, *status, 
-		   "memory allocation for Klein & Roberts light curve "
-		   "cache failed", NULL);
-  }
-
-  // Check if the requested K&R light curve is available in the storage.
-  long ii;
-  for (ii=0; ii<sb->nkrlcs; ii++) {
-    // Check if the light curve is equivalent to the requested one.
-    if (0==strcmp(sb->krlcs[ii]->fileref, timeref)) {
-      // For a K&R light curve created from a PSD, we also have to check,
-      // whether this is the source associated to this light curve.
-      if (sb->krlcs[ii]->src_id>0) {
-	// Check if the SRC_IDs agree.
-	if (sb->krlcs[ii]->src_id==src->src_id) {
-	  // We have a K&R light curve which has been produced from a PSD.
-	  // Check if the requested time is covered by the K&R light curve.
-	  if (time<getKRLCTime(sb->krlcs[ii], sb->krlcs[ii]->nentries-1, 
-			       0, mjdref)) {
-	    return(sb->krlcs[ii]);
-	  }
-	  // If not, we have to produce a new K&R light curve from the PSD.
-	}
-      } else {
-	// This K&R light curve is loaded from a file and can be re-used
-	// for different sources.
-	return(sb->krlcs[ii]);
-      }
-    }
-  }
-
-  // The requested K&R light curve is not contained in the storage.
-  // Therefore we must load it from the specified reference.
-
-  // Check if there is still space left in the light curve storage.
-  if (sb->nkrlcs<maxkrlcs) {
-    sb->ckrlc = sb->nkrlcs;
-    sb->nkrlcs++;
-  } else {
-    sb->ckrlc++;
-    if (sb->ckrlc>=maxkrlcs) {
-      sb->ckrlc=0;
-    }
-    // Release the light curve that is currently stored at this place
-    // in the cache.
-    freeSimputKRLC(&(sb->krlcs[sb->ckrlc]));
-  }
-
-  // Obtain the K&R light curve from the fundamental data structure.
-
-  // Get the underlying light curve.
-  SimputLC* lc=getSimputLC(cat, src, timeref, time, mjdref, status);
-  CHECK_STATUS_RET(*status, NULL);
-
-  // Memory allocation.
-  SimputKRLC* krlc=newSimputKRLC(status);
-  CHECK_STATUS_RET(*status, krlc);
-
-  krlc->nentries=lc->nentries;
-
-  if (NULL!=lc->time) {
-    krlc->time=(double*)malloc(krlc->nentries*sizeof(double));
-    CHECK_NULL_RET(krlc->time, *status, 
-		   "memory allocation for K&R light curve failed", krlc);
-  } else {
-    krlc->phase=(double*)malloc(krlc->nentries*sizeof(double));
-    CHECK_NULL_RET(krlc->phase, *status, 
-		   "memory allocation for K&R light curve failed", krlc);
-  }    
-  krlc->a=(double*)malloc(krlc->nentries*sizeof(double));
-  CHECK_NULL_RET(krlc->a, *status, 
-		 "memory allocation for K&R light curve failed", krlc);
-  krlc->b=(double*)malloc(krlc->nentries*sizeof(double));
-  CHECK_NULL_RET(krlc->b, *status, 
-		 "memory allocation for K&R light curve failed", krlc);
-
-  // Copy values.
-  krlc->mjdref  =lc->mjdref;
-  krlc->timezero=lc->timezero;
-  krlc->phase0  =lc->phase0;
-  krlc->period  =lc->period;
-  for (ii=0; ii<krlc->nentries; ii++) {
-    if (NULL!=lc->time) {
-      krlc->time[ii]=lc->time[ii];
-    } else {
-      krlc->phase[ii]=lc->phase[ii];
-    }
-  }
-
-  // Determine the auxiliary values for the K&R light curve 
-  // (including FLUXSCAL).
-  for (ii=0; ii<krlc->nentries-1; ii++) {
-    double dt;
-    if (NULL!=krlc->time) {
-      // Non-periodic light curve.
-      dt=krlc->time[ii+1]-krlc->time[ii];
-    } else {
-      // Periodic light curve.
-      dt=(krlc->phase[ii+1]-krlc->phase[ii])*krlc->period;
-    }
-    if (dt==0.0) {
-      krlc->a[ii]=0.0;
-    } else {
-      krlc->a[ii]=(lc->flux[ii+1]-lc->flux[ii])
-	/dt /lc->fluxscal;
-    }
-    krlc->b[ii]=lc->flux[ii]/lc->fluxscal;
-  }
-  krlc->a[krlc->nentries-1]=0.;
-  krlc->b[krlc->nentries-1]=lc->flux[lc->nentries-1]/lc->fluxscal;
-
-  // Determine the extension type of the referred HDU.
-  int timetype=getExtType(cat, timeref, status);
-  CHECK_STATUS_RET(*status, NULL);
-  if (EXTTYPE_PSD==timetype) {
-    // The new KRLC is assigned to this particular source and 
-    // cannot be re-used for others.
-    krlc->src_id=src->src_id;
-  }
-
-  // Store the file reference to the timing extension for 
-  // later comparisons.
-  krlc->fileref= 
-    (char*)malloc((strlen(timeref)+1)*sizeof(char));
-  CHECK_NULL_RET(krlc->fileref, *status, 
-		 "memory allocation for file reference failed", 
-		 krlc);
-  strcpy(krlc->fileref, timeref);
-   
-  // Store the K&R lc in the cache.
-  sb->krlcs[sb->ckrlc]=krlc;
-
-  return(sb->krlcs[sb->ckrlc]);
 }
 
 
@@ -1323,9 +1125,9 @@ static SimputPhList* getSimputPhList(SimputCtlg* const cat,
 }
 
 
-static float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
-				       const float emin, 
-				       const float emax)
+float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
+				const float emin, 
+				const float emax)
 {
   // Return value.
   float flux=0.;
@@ -1338,7 +1140,7 @@ static float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
       float min=MAX(binmin, emin);
       float max=MIN(binmax, emax);
       assert(max>min);
-      flux+=(max-min)*spec->pflux[ii]*spec->energy[ii];
+      flux+=(max-min)*spec->fluxdensity[ii]*spec->energy[ii];
     }
   }
 
@@ -1362,7 +1164,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
     getSimputSrcSpecRef(cat, src, prevtime, mjdref, specref, status);
     CHECK_STATUS_RET(*status, 0.);
 
-    int spectype=getExtType(cat, specref, status);
+    int spectype=getSimputExtType(cat, specref, status);
     CHECK_STATUS_RET(*status, 0.);
 
     // Check if the ARF is defined.
@@ -1499,7 +1301,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
   } else {
     // The source has a time-variable brightness.
-    int timetype=getExtType(cat, timeref, status);
+    int timetype=getSimputExtType(cat, timeref, status);
     CHECK_STATUS_RET(*status, 0);
 
     // Check if the extension type of the timing reference.
@@ -1549,7 +1351,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
       }
 
       // Select a photon.
-      double rand;
+      double rand=0.0;
       double newtime;
       do {
 	// Move one row further.
@@ -1557,7 +1359,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
 	// Check if the end of the list has been reached.
 	if (phl->currrow>phl->nphs) {
-	  // No proper photon could be selected.
+	  // No valid photon could be selected.
 	  return(1);
 	}
 
@@ -1601,7 +1403,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
       assert(avgrate>0.);
 
       // Get the light curve.
-      SimputKRLC* lc=getSimputKRLC(cat, src, timeref, prevtime, mjdref, status);
+      SimputLC* lc=getSimputLC(cat, src, timeref, prevtime, mjdref, status);
       CHECK_STATUS_RET(*status, 0);
       
       // Determine the photon time according to the light curve.
@@ -1614,7 +1416,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
       // Determine the respective index kk of the light curve.
       long long nperiods=0;
-      long kk=getKRLCBin(lc, prevtime, mjdref, &nperiods, status);
+      long kk=getLCBin(lc, prevtime, mjdref, &nperiods, status);
       CHECK_STATUS_RET(*status, 0);
       
       while ((kk<lc->nentries-1)||(lc->src_id>0)) {
@@ -1622,39 +1424,52 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	// If the end of the light curve is reached, check if it has
 	// been produced from a PSD. In that case one can create new one.
 	if ((kk>=lc->nentries-1)&&(lc->src_id>0)) {
-	  lc=getSimputKRLC(cat, src, timeref, prevtime, mjdref, status);
+	  lc=getSimputLC(cat, src, timeref, prevtime, mjdref, status);
 	  CHECK_STATUS_RET(*status, 0);
-	  kk=getKRLCBin(lc, prevtime, mjdref, &nperiods, status);
+	  kk=getLCBin(lc, prevtime, mjdref, &nperiods, status);
 	  CHECK_STATUS_RET(*status, 0);
 	}
 
 	// Determine the relative time within the kk-th interval 
 	// (i.e., t=0 lies at the beginning of the kk-th interval).
-	double t        =prevtime-(getKRLCTime(lc, kk, nperiods, mjdref));
+	double tk=getLCTime(lc, kk, nperiods, mjdref);
+	double t =prevtime-tk;
 	double stepwidth=
-	  getKRLCTime(lc, kk+1, nperiods, mjdref)-
-	  getKRLCTime(lc, kk  , nperiods, mjdref);
-	
+	  getLCTime(lc, kk+1, nperiods, mjdref)-tk;
+
+	// Make sure that FLUXSCAL and stepwidth are positive.
+	assert(lc->fluxscal>0.0);
+	assert(stepwidth>0.0);
+	double ak=(lc->flux[kk+1]-lc->flux[kk])/lc->fluxscal/stepwidth;
+	double bk=lc->flux[kk]/lc->fluxscal;
+
+	// Make sure that stepwidth is positive.
+	if (stepwidth<=0.0) {
+	  *status=EXIT_FAILURE;
+	  char msg[SIMPUT_MAXSTR];
+	  sprintf(msg, "encountered nonpositive step width (%es) in light curve '%s'",
+		  stepwidth, lc->fileref);
+	  SIMPUT_ERROR(msg);
+	  return(0);
+	}
+
 	// Step 2 in the algorithm.
-	double uk=1.-exp((-lc->a[kk]/2.*(pow(stepwidth,2.)-pow(t,2.))
-			  -lc->b[kk]*(stepwidth-t))*avgrate);
+	double uk=1.-exp((-ak/2.*(pow(stepwidth,2.)-pow(t,2.))
+			  -bk*(stepwidth-t))*avgrate);
+
 	// Step 3 in the algorithm.
 	if (u<=uk) {
-	  if (fabs(lc->a[kk]*stepwidth)>fabs(lc->b[kk]*1.e-6)) { 
-	    // Instead of checking if a_kk = 0., check, whether its product 
+	  if (fabs(ak*stepwidth)>fabs(bk*1.e-6)) { 
+	    // Instead of checking if ak = 0., check, whether its product 
 	    // with the interval length is a very small number in comparison 
-	    // to b_kk. If a_kk * stepwidth is much smaller than b_kk, the 
+	    // to b_kk. If ak * stepwidth is much smaller than b_kk, the 
 	    // rate in the interval can be assumed to be approximately constant.
-	    *nexttime=
-	      getKRLCTime(lc, kk, nperiods, mjdref) +
-	      (-lc->b[kk]+sqrt(pow(lc->b[kk],2.) + pow(lc->a[kk]*t,2.) + 
-			       2.*lc->a[kk]*lc->b[kk]*t - 
-			       2.*lc->a[kk]*log(1.-u)/avgrate)
-	       )/lc->a[kk];
+	    *nexttime=tk+
+	      (-bk+sqrt(pow(bk,2.)+pow(ak*t,2.)+2.*ak*t*bk-2.*ak*log(1.-u)/avgrate))/ak;
 	    return(0);
 	    
-	  } else { // a_kk == 0
-	    *nexttime=prevtime-log(1.-u)/(lc->b[kk]*avgrate);
+	  } else { // ak == 0
+	    *nexttime=prevtime-log(1.-u)/(avgrate*bk);
 	    return(0);
 	  }
 	  
@@ -1666,7 +1481,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	    kk=0;
 	    nperiods++;
 	  }
-	  prevtime=getKRLCTime(lc, kk, nperiods, mjdref);
+	  prevtime=getLCTime(lc, kk, nperiods, mjdref);
 	}
       }
       // END of while (kk < lc->nentries).
@@ -1686,26 +1501,26 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 }
 
 
-void getSimputPhFromPhList(const SimputCtlg* const cat,
-			   SimputPhList* const phl, 
-			   float* const energy, 
-			   double* const ra, 
-			   double* const dec,
-			   int* const status)
+static void getSimputPhFromPhList(const SimputCtlg* const cat,
+				  SimputPhList* const phl, 
+				  float* const energy, 
+				  double* const ra, 
+				  double* const dec,
+				  int* const status)
 {
   // Check if we have to read from a particular row in the FITS file,
   // or if we need to return a randomly selected photon.
   if (phl->currrow>0) {
     // Read a photon from a particular row.
     int anynul=0;
-    fits_read_col(phl->fptr, TFLOAT, phl->cenergy, phl->currrow, 1, 1, 
+    fits_read_col(phl->fptr, TFLOAT, phl->cenergy, phl->currrow, 1, 1,
 		  NULL, energy, &anynul, status);
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("failed reading energy from photon list");
       return;
     }
     *energy *=phl->fenergy;
-      
+    
     fits_read_col(phl->fptr, TDOUBLE, phl->cra, phl->currrow, 1, 1, 
 		  NULL, ra, &anynul, status);      
     if (EXIT_SUCCESS!=*status) {
@@ -1726,7 +1541,7 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 
   } else {
     // Randomly select a photon from the file.
-
+    
     // Determine the maximum value of the instrument ARF.
     if (0.==phl->refarea) {
       long kk;
@@ -1736,7 +1551,7 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 	}
       }
     }
-  
+    
     while(1) {
       // Determine a random photon within the list.
       long ii=(long)(getRndNum(status)*phl->nphs);
@@ -1762,7 +1577,7 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 	  upper=mid;
 	}
       }
-    
+      
       // Randomly determine according to the effective area
       // of the instrument, whether this photon is seen or not.
       double r=getRndNum(status);
@@ -1784,7 +1599,24 @@ void getSimputPhFromPhList(const SimputCtlg* const cat,
 	  return;
 	}
 	*dec *=phl->fdec;
-	
+     
+	// Increase the counter of the number of returned photons and
+	// check if it exceeds one fifth of the total number of available
+	// photons.
+	if (0==(++phl->nrphs) % (phl->nphs/5)) {
+	  char msg[SIMPUT_MAXSTR];
+	  float ratio=phl->nrphs*1./phl->nphs;
+	  sprintf(msg, "ratio of the number of randomly drawn photons (%ld) "
+		  "versus total number of photons (%ld) exceeds %.0lf%%! ",
+		  phl->nrphs, phl->nphs, ratio*100.);
+	  if (ratio<1.) {
+	    strcat(msg, "Individual photons might be used multiple times");
+	  } else {
+	    strcat(msg, "Individual photons are used multiple times");
+	  }
+	  SIMPUT_WARNING(msg);
+	}
+      
 	return;
       }
     }
@@ -1813,9 +1645,9 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   
   // Determine the extension type of the spectrum and the image
   // reference.
-  int spectype=getExtType(cat, specref, status);
+  int spectype=getSimputExtType(cat, specref, status);
   CHECK_STATUS_VOID(*status);
-  int imagtype=getExtType(cat, imagref, status);
+  int imagtype=getSimputExtType(cat, imagref, status);
   CHECK_STATUS_VOID(*status);
 
 
@@ -1842,19 +1674,30 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Shift the photon position according to the 
       // RA,Dec values defined for this source in the catalog.
 
+      // Apply IMGSCAL.
+      b_ra *=1./src->imgscal*cos(b_dec)/cos(b_dec/src->imgscal);
+      b_dec*=1./src->imgscal;
+
       // Get a Carteesian coordinate vector for the photon location.
       Vector p=unit_vector(b_ra, b_dec);
 
-      // Rotate the vector.
+      // Apply IMGROTA by rotation around the x-axis.
+      double cosimgrota=cos(src->imgrota);
+      double sinimgrota=sin(src->imgrota);
+      Vector r;
+      r.x= p.x;
+      r.y= cosimgrota*p.y + sinimgrota*p.z;
+      r.z=-sinimgrota*p.y + cosimgrota*p.z;
+
+      // Rotate the vector towards the source position.
       double cosra=cos(src->ra);
       double sinra=sin(src->ra);
       double cosdec=cos(src->dec);
       double sindec=sin(src->dec);
-
       Vector f;
-      f.x=p.x*cosra*cosdec - p.y*sinra - p.z*cosra*sindec;
-      f.y=p.x*sinra*cosdec + p.y*cosra - p.z*sinra*sindec;
-      f.z=p.x      *sindec +     0.0   + p.z      *cosdec;
+      f.x=r.x*cosra*cosdec - r.y*sinra - r.z*cosra*sindec;
+      f.y=r.x*sinra*cosdec + r.y*cosra - r.z*sinra*sindec;
+      f.z=r.x      *sindec +     0.0   + r.z      *cosdec;
 
       // Determine RA and Dec of the photon.
       calculate_ra_dec(f, ra, dec); 
@@ -1964,19 +1807,23 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Set the position to the origin and assign the correct scaling.
       // TODO: This assumes that the image WCS is equivalent to the 
       // coordinate system used in the catalog!!
-      wcs.crval[0] = src->ra *180./M_PI; // Units (CUNITn) must be [deg]!
-      wcs.crval[1] = src->dec*180./M_PI;
-      wcs.cdelt[0]*= 1./src->imgscal;
-      wcs.cdelt[1]*= 1./src->imgscal;
+      wcs.crval[0] =src->ra *180./M_PI;
+      wcs.crval[1] =src->dec*180./M_PI;
+      wcs.cdelt[0]*=1./src->imgscal;
+      wcs.cdelt[1]*=1./src->imgscal;
       wcs.flag=0;
 
       // Check that CUNIT is set to "deg". Otherwise there will be a conflict
       // between CRVAL [deg] and CDELT [different unit]. 
       // TODO This is not required by the standard.
-      if (((0!=strcmp(wcs.cunit[0], "deg     ")) && 
-	   (0!=strcmp(wcs.cunit[0], "degree  "))) || 
+      if (((0!=strcmp(wcs.cunit[0], "deg     ")) &&
+	   (0!=strcmp(wcs.cunit[0], "degree  ")) &&
+	   (0!=strcmp(wcs.cunit[0], "deg")) &&
+	   (0!=strcmp(wcs.cunit[0], "degree"))) ||
 	  ((0!=strcmp(wcs.cunit[1], "deg     ")) &&
-	   (0!=strcmp(wcs.cunit[1], "degree  ")))) {
+	   (0!=strcmp(wcs.cunit[1], "degree  ")) &&
+	   (0!=strcmp(wcs.cunit[1], "deg")) &&
+	   (0!=strcmp(wcs.cunit[1], "degree")))) {
 	*status=EXIT_FAILURE;
 	char msg[SIMPUT_MAXSTR];
 	sprintf(msg, "units of image coordinates are '%s' and '%s' "
@@ -1995,11 +1842,11 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 
       // Rotate the image (pixel coordinates) by IMGROTA around the 
       // reference point.
-      double xdrot= 
-	(xd-wcs.crpix[0])*cos(src->imgrota) + 
+      double xdrot=
+	(xd-wcs.crpix[0])*cos(src->imgrota) +
 	(yd-wcs.crpix[1])*sin(src->imgrota) + wcs.crpix[0];
       double ydrot=
-	-(xd-wcs.crpix[0])*sin(src->imgrota) + 
+	-(xd-wcs.crpix[0])*sin(src->imgrota) +
 	 (yd-wcs.crpix[1])*cos(src->imgrota) + wcs.crpix[1];
       
       // Convert the long-valued pixel coordinates to double values,
@@ -2069,7 +1916,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
     char imagref[SIMPUT_MAXSTR];
     getSrcImagRef(cat, src, prevtime, mjdref, imagref, status);
     CHECK_STATUS_BREAK(*status);
-    int imagtype=getExtType(cat, imagref, status);
+    int imagtype=getSimputExtType(cat, imagref, status);
     CHECK_STATUS_RET(*status, 0);
 
     // Check if it is a point-like or an extended source.

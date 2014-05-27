@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Basic distributed-transpose interface - FFTW 3.3.2</title>
+<title>Basic distributed-transpose interface - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="FFTW-MPI-Transposes.html#FFTW-MPI-Transposes" title="FFTW MPI Transposes">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -67,11 +67,11 @@ following function:
                                        double *in, double *out,
                                        MPI_Comm comm, unsigned flags);
 </pre>
-   <p><a name="index-fftw_005fmpi_005fplan_005ftranspose-397"></a>
+   <p><a name="index-fftw_005fmpi_005fplan_005ftranspose-400"></a>
 The input and output arrays (<code>in</code> and <code>out</code>) can be the
 same.  The transpose is actually executed by calling
 <code>fftw_execute</code> on the plan, as usual. 
-<a name="index-fftw_005fexecute-398"></a>
+<a name="index-fftw_005fexecute-401"></a>
 
    <p>The <code>flags</code> are the usual FFTW planner flags, but support
 two additional flags: <code>FFTW_MPI_TRANSPOSED_OUT</code> and/or
@@ -83,19 +83,19 @@ order, but for an <code>FFTW_MPI_TRANSPOSED_IN</code> plan the input data is
 stored as <code>n1</code> by <code>local_n0</code> in row-major order.  Similarly,
 <code>FFTW_MPI_TRANSPOSED_OUT</code> means that the output is <code>n0</code> by
 <code>local_n1</code> instead of <code>local_n1</code> by <code>n0</code>. 
-<a name="index-FFTW_005fMPI_005fTRANSPOSED_005fOUT-399"></a><a name="index-FFTW_005fMPI_005fTRANSPOSED_005fIN-400"></a>
+<a name="index-FFTW_005fMPI_005fTRANSPOSED_005fOUT-402"></a><a name="index-FFTW_005fMPI_005fTRANSPOSED_005fIN-403"></a>
 
    <p>To determine the local size of the array on each process before and
 after the transpose, as well as the amount of storage that must be
 allocated, one should call <code>fftw_mpi_local_size_2d_transposed</code>,
 just as for a 2d DFT as described in the previous section:
-<a name="index-data-distribution-401"></a>
+<a name="index-data-distribution-404"></a>
 <pre class="example">     ptrdiff_t fftw_mpi_local_size_2d_transposed
                      (ptrdiff_t n0, ptrdiff_t n1, MPI_Comm comm,
                       ptrdiff_t *local_n0, ptrdiff_t *local_0_start,
                       ptrdiff_t *local_n1, ptrdiff_t *local_1_start);
 </pre>
-   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f2d_005ftransposed-402"></a>
+   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f2d_005ftransposed-405"></a>
 Again, the return value is the local storage to allocate, which in
 this case is the number of <em>real</em> (<code>double</code>) values rather
 than complex numbers as in the previous examples.

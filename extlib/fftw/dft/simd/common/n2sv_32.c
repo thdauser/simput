@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:00:52 EDT 2012 */
+/* Generated on Tue Mar  4 13:47:05 EST 2014 */
 
 #include "codelet-dft.h"
 
@@ -45,7 +45,7 @@ static void n2sv_32(const R *ri, const R *ii, R *ro, R *io, stride is, stride os
      DVK(KP414213562, +0.414213562373095048801688724209698078569671875);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - (2 * VL), ri = ri + ((2 * VL) * ivs), ii = ii + ((2 * VL) * ivs), ro = ro + ((2 * VL) * ovs), io = io + ((2 * VL) * ovs), MAKE_VOLATILE_STRIDE(is), MAKE_VOLATILE_STRIDE(os)) {
+	  for (i = v; i > 0; i = i - (2 * VL), ri = ri + ((2 * VL) * ivs), ii = ii + ((2 * VL) * ivs), ro = ro + ((2 * VL) * ovs), io = io + ((2 * VL) * ovs), MAKE_VOLATILE_STRIDE(128, is), MAKE_VOLATILE_STRIDE(128, os)) {
 	       V T61, T62, T63, T64, T65, T66, T67, T68, T69, T6a, T6b, T6c, T6d, T6e, T6f;
 	       V T6g, T6h, T6i, T6j, T6k, T6l, T6m, T6n, T6o, T6p, T6q, T6r, T6s, T6t, T6u;
 	       V T6v, T6w, T3g, T3f, T6x, T6y, T6z, T6A, T6B, T6C, T6D, T6E, T4p, T49, T4l;
@@ -727,7 +727,7 @@ static void n2sv_32(const R *ri, const R *ii, R *ro, R *io, stride is, stride os
      DVK(KP707106781, +0.707106781186547524400844362104849039284835938);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - (2 * VL), ri = ri + ((2 * VL) * ivs), ii = ii + ((2 * VL) * ivs), ro = ro + ((2 * VL) * ovs), io = io + ((2 * VL) * ovs), MAKE_VOLATILE_STRIDE(is), MAKE_VOLATILE_STRIDE(os)) {
+	  for (i = v; i > 0; i = i - (2 * VL), ri = ri + ((2 * VL) * ivs), ii = ii + ((2 * VL) * ivs), ro = ro + ((2 * VL) * ovs), io = io + ((2 * VL) * ovs), MAKE_VOLATILE_STRIDE(128, is), MAKE_VOLATILE_STRIDE(128, os)) {
 	       V T7, T4r, T4Z, T18, T1z, T3t, T3T, T2T, Te, T1f, T50, T4s, T2W, T3u, T1G;
 	       V T3U, Tm, T1n, T1O, T2Z, T3y, T3X, T4w, T53, Tt, T1u, T1V, T2Y, T3B, T3W;
 	       V T4z, T52, T2t, T3L, T3O, T2K, TR, TY, T5F, T5G, T5H, T5I, T4R, T5j, T2E;

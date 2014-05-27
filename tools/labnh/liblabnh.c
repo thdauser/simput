@@ -1,8 +1,5 @@
-
 #include "labnh.h"
 #include "posstring.h"
-
-#include <malloc.h>
 
 #include <math.h>
 #include <err.h>
@@ -75,10 +72,17 @@ double angdist(double l1, double b1, double l2, double b2) {
   double sindl=sin(l2-l1);
   double cosdl=cos(l2-l1);
   #else
+  #ifdef __APPLE__ && __MACH__
+  double sinb1,cosb1,sinb2,cosb2,sindl,cosdl;
+  __sincos(b1,&sinb1,&cosb1);
+  __sincos(b2,&sinb2,&cosb2);
+  __sincos(l2-l1,&sindl,&cosdl);
+  #else
   double sinb1,cosb1,sinb2,cosb2,sindl,cosdl;
   sincos(b1,&sinb1,&cosb1);
   sincos(b2,&sinb2,&cosb2);
   sincos(l2-l1,&sindl,&cosdl);
+  #endif
   #endif
 
   double nom=sqrt(

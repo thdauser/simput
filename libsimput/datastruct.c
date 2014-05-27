@@ -1,3 +1,23 @@
+/*
+   This file is part of SIMPUT.
+
+   SIMPUT is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIMPUT is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2007-2014 Christian Schmid, FAU
+*/
+
 #include "common.h"
 
 
@@ -192,7 +212,6 @@ SimputCtlg* newSimputCtlg(int* const status)
   cat->psdbuff  =NULL;
   cat->imgbuff  =NULL;
   cat->specbuff =NULL;
-  cat->krlcbuff =NULL;
   cat->extbuff  =NULL;
   cat->arf      =NULL;
 
@@ -233,9 +252,6 @@ void freeSimputCtlg(SimputCtlg** const cat,
     }
     if (NULL!=(*cat)->specbuff) {
       freeSimputSpecBuffer((struct SimputSpecBuffer**)&((*cat)->specbuff));
-    }
-    if (NULL!=(*cat)->krlcbuff) {
-      freeSimputKRLCBuffer((struct SimputKRLCBuffer**)&((*cat)->krlcbuff));
     }
     if (NULL!=(*cat)->extbuff) {
       freeSimputExttypeBuffer((struct SimputExttypeBuffer**)&((*cat)->extbuff));
@@ -343,11 +359,11 @@ SimputMIdpSpec* newSimputMIdpSpec(int* const status)
 		 "memory allocation for SimputMIdpSpec failed", spec);
 
   // Initialize elements.
-  spec->nentries=0;
-  spec->energy  =NULL;
-  spec->pflux   =NULL;
-  spec->name    =NULL;
-  spec->fileref =NULL;
+  spec->nentries   =0;
+  spec->energy     =NULL;
+  spec->fluxdensity=NULL;
+  spec->name       =NULL;
+  spec->fileref    =NULL;
 
   return(spec);  
 }
@@ -359,8 +375,8 @@ void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
     if (NULL!=(*spec)->energy) {
       free((*spec)->energy);
     }
-    if (NULL!=(*spec)->pflux) {
-      free((*spec)->pflux);
+    if (NULL!=(*spec)->fluxdensity) {
+      free((*spec)->fluxdensity);
     }
     if (NULL!=(*spec)->name) {
       free((*spec)->name);
@@ -377,7 +393,7 @@ void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
 void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  const long row,
 			  float* const energy, 
-			  float* const pflux,
+			  float* const fluxdensity,
 			  int* const status)
 {
   if (row>=spec->nentries) {
@@ -386,8 +402,8 @@ void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
     return;
   }
 
-  *energy=spec->energy[row];
-  *pflux =spec->pflux[row];
+  *energy     =spec->energy[row];
+  *fluxdensity=spec->fluxdensity[row];
 }
 
 
@@ -674,7 +690,8 @@ SimputLC* newSimputLC(int* const status)
   lc->timezero=0.;
   lc->phase0  =0.;
   lc->period  =0.;
-  lc->fluxscal=0.;
+  lc->dperiod =0.;
+  lc->fluxscal=1.;
   lc->src_id  =0;
   lc->fileref =NULL;
 
@@ -748,85 +765,6 @@ void freeSimputLCBuffer(struct SimputLCBuffer** sb)
 	freeSimputLC(&((*sb)->lcs[ii]));
       }
       free((*sb)->lcs);
-    }
-    free(*sb);
-    *sb=NULL;
-  }
-}
-
-
-SimputKRLC* newSimputKRLC(int* const status)
-{
-  SimputKRLC* lc=(SimputKRLC*)malloc(sizeof(SimputKRLC));
-  CHECK_NULL_RET(lc, *status, 
-		 "memory allocation for SimputKRLC failed", lc);
-
-  // Initialize elements.
-  lc->nentries=0;
-  lc->time    =NULL;
-  lc->phase   =NULL;
-  lc->a       =NULL;
-  lc->b       =NULL;
-  lc->mjdref  =0.;
-  lc->timezero=0.;
-  lc->phase0  =0.;
-  lc->period  =0.;
-  lc->src_id  =0;
-  lc->fileref =NULL;
-
-  return(lc);
-}
-
-
-void freeSimputKRLC(SimputKRLC** const lc)
-{
-  if (NULL!=*lc) {
-    if (NULL!=(*lc)->time) {
-      free((*lc)->time);
-    }
-    if (NULL!=(*lc)->phase) {
-      free((*lc)->phase);
-    }
-    if (NULL!=(*lc)->a) {
-      free((*lc)->a);
-    }
-    if (NULL!=(*lc)->b) {
-      free((*lc)->b);
-    }
-    if (NULL!=(*lc)->fileref) {
-      free((*lc)->fileref);
-    }
-    free(*lc);
-    *lc=NULL;
-  }
-}
-
-
-struct SimputKRLCBuffer* newSimputKRLCBuffer(int* const status)
-{
-  struct SimputKRLCBuffer *lcbuff= 
-    (struct SimputKRLCBuffer*)malloc(sizeof(struct SimputKRLCBuffer));
-
-  CHECK_NULL_RET(lcbuff, *status, 
-		 "memory allocation for SimputKRLCBuffer failed", lcbuff);
-    
-  lcbuff->nkrlcs=0;
-  lcbuff->ckrlc =0;
-  lcbuff->krlcs =NULL;
-
-  return(lcbuff);
-}
-
-
-void freeSimputKRLCBuffer(struct SimputKRLCBuffer** sb)
-{
-  if (NULL!=*sb) {
-    if (NULL!=(*sb)->krlcs) {
-      long ii;
-      for (ii=0; ii<(*sb)->nkrlcs; ii++) {
-	freeSimputKRLC(&((*sb)->krlcs[ii]));
-      }
-      free((*sb)->krlcs);
     }
     free(*sb);
     *sb=NULL;
@@ -909,7 +847,6 @@ SimputImg* newSimputImg(int* const status)
   img->naxis1  =0;
   img->naxis2  =0;
   img->dist    =NULL;
-  img->fluxscal=0.;
   img->fileref =NULL;
   img->wcs     =NULL;
 
@@ -982,6 +919,7 @@ SimputPhList* newSimputPhList(int* const status)
   // Initialize elements.
   phl->fptr    =NULL;
   phl->nphs    =0;
+  phl->nrphs   =0;
   phl->cra     =0;
   phl->cdec    =0;
   phl->cenergy =0;

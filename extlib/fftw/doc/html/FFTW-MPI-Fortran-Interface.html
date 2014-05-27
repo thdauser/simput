@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>FFTW MPI Fortran Interface - FFTW 3.3.2</title>
+<title>FFTW MPI Fortran Interface - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Distributed_002dmemory-FFTW-with-MPI.html#Distributed_002dmemory-FFTW-with-MPI" title="Distributed-memory FFTW with MPI">
@@ -10,7 +10,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -54,8 +54,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Distributed_002dmemory-FFTW-with-MPI.ht
 
 <h3 class="section">6.13 FFTW MPI Fortran Interface</h3>
 
-<p><a name="index-Fortran-interface-494"></a>
-<a name="index-iso_005fc_005fbinding-495"></a>The FFTW MPI interface is callable from modern Fortran compilers
+<p><a name="index-Fortran-interface-497"></a>
+<a name="index-iso_005fc_005fbinding-498"></a>The FFTW MPI interface is callable from modern Fortran compilers
 supporting the Fortran 2003 <code>iso_c_binding</code> standard for calling
 C functions.  As described in <a href="Calling-FFTW-from-Modern-Fortran.html#Calling-FFTW-from-Modern-Fortran">Calling FFTW from Modern Fortran</a>,
 this means that you can directly call FFTW's C interface from Fortran
@@ -78,7 +78,7 @@ difference in notation and incurs no performance overhead.  However,
 it means that, whereas in C the <em>first</em> dimension is distributed,
 in Fortran the <em>last</em> dimension of your array is distributed.
 
-     <li><a name="index-MPI-communicator-496"></a>In Fortran, communicators are stored as <code>integer</code> types; there is
+     <li><a name="index-MPI-communicator-499"></a>In Fortran, communicators are stored as <code>integer</code> types; there is
 no <code>MPI_Comm</code> type, nor is there any way to access a C
 <code>MPI_Comm</code>.  Fortunately, this is taken care of for you by the
 FFTW Fortran interface: whenever the C interface expects an
@@ -97,7 +97,7 @@ guaranteeding proper data alignment.)
 <code>ptrdiff_t</code> in C, you should use <code>integer(C_INTPTR_T)</code> in
 Fortran (see <a href="FFTW-Fortran-type-reference.html#FFTW-Fortran-type-reference">FFTW Fortran type reference</a>).
 
-     <li><a name="index-fftw_005fexecute_005fdft-497"></a><a name="index-fftw_005fmpi_005fexecute_005fdft-498"></a><a name="index-new_002darray-execution-499"></a>In Fortran, because of the language semantics, we generally recommend
+     <li><a name="index-fftw_005fexecute_005fdft-500"></a><a name="index-fftw_005fmpi_005fexecute_005fdft-501"></a><a name="index-new_002darray-execution-502"></a>In Fortran, because of the language semantics, we generally recommend
 using the new-array execute functions for all plans, even in the
 common case where you are executing the plan on the same arrays for
 which the plan was created (see <a href="Plan-execution-in-Fortran.html#Plan-execution-in-Fortran">Plan execution in Fortran</a>). 

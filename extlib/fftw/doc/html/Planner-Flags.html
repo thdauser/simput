@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Planner Flags - FFTW 3.3.2</title>
+<title>Planner Flags - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Basic-Interface.html#Basic-Interface" title="Basic Interface">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -127,14 +127,15 @@ performance; for multi-dimensional c2r transforms, however, no
 input-preserving algorithms are implemented and the planner will return
 <code>NULL</code> if one is requested. 
 <a name="index-c2r-179"></a><a name="index-hc2r-180"></a>
-<li><a name="index-FFTW_005fUNALIGNED-181"></a><a name="index-alignment-182"></a><code>FFTW_UNALIGNED</code> specifies that the algorithm may not impose any
+<li><a name="index-FFTW_005fUNALIGNED-181"></a><a name="index-alignment-182"></a><a name="index-fftw_005fmalloc-183"></a><a name="index-fftw_005falignment_005fof-184"></a><code>FFTW_UNALIGNED</code> specifies that the algorithm may not impose any
 unusual alignment requirements on the input/output arrays (i.e. no
 SIMD may be used).  This flag is normally <em>not necessary</em>, since
 the planner automatically detects misaligned arrays.  The only use for
 this flag is if you want to use the new-array execute interface to
 execute a given plan on a different array that may not be aligned like
 the original.  (Using <code>fftw_malloc</code> makes this flag unnecessary
-even then.)
+even then.  You can also use <code>fftw_alignment_of</code> to detect
+whether two arrays are equivalently aligned.)
 
 </ul>
 
@@ -142,7 +143,7 @@ even then.)
 
 <pre class="example">     extern void fftw_set_timelimit(double seconds);
 </pre>
-   <p><a name="index-fftw_005fset_005ftimelimit-183"></a>
+   <p><a name="index-fftw_005fset_005ftimelimit-185"></a>
 This function instructs FFTW to spend at most <code>seconds</code> seconds
 (approximately) in the planner.  If <code>seconds ==
 FFTW_NO_TIMELIMIT</code> (the default value, which is negative), then
@@ -150,7 +151,7 @@ planning time is unbounded.  Otherwise, FFTW plans with a
 progressively wider range of algorithms until the the given time limit
 is reached or the given range of algorithms is explored, returning the
 best available plan. 
-<a name="index-FFTW_005fNO_005fTIMELIMIT-184"></a>
+<a name="index-FFTW_005fNO_005fTIMELIMIT-186"></a>
 
    <p>For example, specifying <code>FFTW_PATIENT</code> first plans in
 <code>FFTW_ESTIMATE</code> mode, then in <code>FFTW_MEASURE</code> mode, then

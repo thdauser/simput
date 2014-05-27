@@ -1,3 +1,23 @@
+/*
+   This file is part of SIMPUT.
+
+   SIMPUT is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIMPUT is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2007-2014 Christian Schmid, FAU
+*/
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +56,7 @@ void printSimputSource(SimputSrc* sse) {
 
 int main(int argc, char **argv)
 {
-  const char filename[] = "simput.fits";
+  const char filename[]="simput.fits";
 
   SimputCtlg* cat=NULL;
   SimputMIdpSpec* spec =NULL;
@@ -72,13 +92,13 @@ int main(int argc, char **argv)
 
       SimputSrc* src=
 	newSimputSrcV(1, "", -1.*M_PI/180., 2.5*M_PI/180., 0., 1., 
-		      1., 10., 5.e-12, "[SPEC,1][#row==1]", "", "", &status);
+		      1., 10., 5.e-12, "[SPEC,1][#row==1]", "[IMG1,1]", "", &status);
       CHECK_STATUS_BREAK(status);
       appendSimputSrc(cat, src, &status);
       CHECK_STATUS_BREAK(status);
 
       src=newSimputSrcV(2, "", -1.8*M_PI/180., 2.3*M_PI/180., 30.*M_PI/180., 1.2,
-			0.5, 15., 8.e-13, "[SPEC,1][#row==1]", "", "", &status);
+			0.5, 15., 8.e-13, "[SPEC,1][#row==2]", "", "", &status);
       CHECK_STATUS_BREAK(status);
       appendSimputSrc(cat, src, &status);
       CHECK_STATUS_BREAK(status);
@@ -94,15 +114,15 @@ int main(int argc, char **argv)
       spec->nentries=2;
       spec->energy=(float*)malloc(2*sizeof(float));
       CHECK_NULL_BREAK(spec->energy, status, "memory allocation failed!\n");
-      spec->pflux =(float*)malloc(2*sizeof(float));
-      CHECK_NULL_BREAK(spec->pflux, status, "memory allocation failed!\n");
-      spec->name  =(char*)malloc(1024*sizeof(char));
+      spec->fluxdensity=(float*)malloc(2*sizeof(float));
+      CHECK_NULL_BREAK(spec->fluxdensity, status, "memory allocation failed!\n");
+      spec->name=(char*)malloc(1024*sizeof(char));
       CHECK_NULL_BREAK(spec->name, status, "memory allocation failed!\n");
 
       spec->energy[0]=1.0;
-      spec->pflux[0] =0.8;
+      spec->fluxdensity[0]=0.8;
       spec->energy[1]=2.0;
-      spec->pflux[1] =0.6;
+      spec->fluxdensity[1]=0.6;
       strcpy(spec->name, "spec1");
 
       saveSimputMIdpSpec(spec, filename, "SPEC", 1, &status);
@@ -116,17 +136,17 @@ int main(int argc, char **argv)
       spec2->nentries=3;
       spec2->energy=(float*)malloc(3*sizeof(float));
       CHECK_NULL_BREAK(spec2->energy, status, "memory allocation failed!\n");
-      spec2->pflux =(float*)malloc(3*sizeof(float));
-      CHECK_NULL_BREAK(spec2->pflux, status, "memory allocation failed!\n");
-      spec2->name  =(char*)malloc(1024*sizeof(char));
+      spec2->fluxdensity=(float*)malloc(3*sizeof(float));
+      CHECK_NULL_BREAK(spec2->fluxdensity, status, "memory allocation failed!\n");
+      spec2->name=(char*)malloc(1024*sizeof(char));
       CHECK_NULL_BREAK(spec2->name, status, "memory allocation failed!\n");
 
       spec2->energy[0]=1.5;
-      spec2->pflux[0] =0.75;
+      spec2->fluxdensity[0]=0.75;
       spec2->energy[1]=2.5;
-      spec2->pflux[1] =0.65;
+      spec2->fluxdensity[1]=0.65;
       spec2->energy[2]=3.5;
-      spec2->pflux[2] =0.55;
+      spec2->fluxdensity[2]=0.55;
       strcpy(spec2->name, "spec2");
 
       saveSimputMIdpSpec(spec2, filename, "SPEC", 1, &status);
@@ -136,22 +156,45 @@ int main(int argc, char **argv)
       // Create a source image and append it to the file with the source catalog.
       img=newSimputImg(&status);
       CHECK_STATUS_BREAK(status);
-      img->dist = (double**)malloc(3*sizeof(double*));
+      img->dist=(double**)malloc(3*sizeof(double*));
       CHECK_NULL_BREAK(img->dist, status, "memory allocation failed!\n");
       long ii;
       for (ii=0; ii<3; ii++) {
-	img->dist[ii] = (double*)malloc(sizeof(double));
+	img->dist[ii]=(double*)malloc(sizeof(double));
 	CHECK_NULL_BREAK(img->dist[ii], status, "memory allocation failed!\n");
       }
       CHECK_STATUS_BREAK(status);
-      img->naxis1   = 3;
-      img->naxis2   = 1;
-      img->dist[0][0] = 0.6;
-      img->dist[1][0] = 1.6;
-      img->dist[2][0] = 2.0;
-      img->fluxscal = 2.0;
+      img->naxis1=3;
+      img->naxis2=1;
+      img->dist[0][0]=0.6;
+      img->dist[1][0]=1.6;
+      img->dist[2][0]=2.0;
 
-      //      saveSimputImg(img, filename, "IMG1", 0, &status);
+      img->wcs=(struct wcsprm*)malloc(sizeof(struct wcsprm));
+      if (NULL==img->wcs) {
+	printf("error: memory allocation for WCS data structure failed!\n");
+	status=EXIT_FAILURE;
+	break;
+      }
+      img->wcs->flag=-1;
+      if (0!=wcsini(1, 2, img->wcs)) {
+	printf("error: initalization of WCS data structure failed!\n");
+	status=EXIT_FAILURE;
+	break;
+      }
+      img->wcs->naxis=2;
+      strcpy(img->wcs->ctype[0], "RA---TAN");
+      strcpy(img->wcs->ctype[1], "DEC--TAN");
+      strcpy(img->wcs->cunit[0], "deg");
+      strcpy(img->wcs->cunit[1], "deg");
+      img->wcs->crval[0]=0.0;
+      img->wcs->crval[1]=0.0;
+      img->wcs->crpix[0]=2.0;
+      img->wcs->crpix[1]=1.0;
+      img->wcs->cdelt[0]=0.01;
+      img->wcs->cdelt[1]=0.01;
+
+      saveSimputImg(img, filename, "IMG1", 0, &status);
       CHECK_STATUS_BREAK(status);
       // END of create a source image.
     }

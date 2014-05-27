@@ -1,3 +1,23 @@
+/*
+   This file is part of SIMPUT.
+
+   SIMPUT is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIMPUT is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2007-2014 Christian Schmid, FAU
+*/
+
 #ifndef SIMPUT_H
 #define SIMPUT_H (1)
 
@@ -10,24 +30,18 @@
 #endif
 
 
-/*
-  simput.h
+/////////////////////////////////////////////////////////////////
+// Constants.
+/////////////////////////////////////////////////////////////////
 
-  Version  Date       Author                
-  -------------------------------------------------------------------- 
-  0.1  2011/04/02   Christian Schmid      initial 
-  0.2  2011/09/08   Christian Schmid      updated
 
-  0.11 2012/01/26   Christian Schmid      updated
-  0.12 2012/02/21   Christian Schmid      updated
-
-  0.25 2012/08/31   Christian Schmid      renewed interface
-  -------------------------------------------------------------------- 
-
-   This is the header file of the SIMPUT library. The library provides
-   basic routines to create a SIMPUT source catalog file according to
-   the standard defined in the SIMPUT format document (reference ???).
-*/
+/** Different types of extensions in SIMPUT FITS files. */
+#define EXTTYPE_NONE (0)
+#define EXTTYPE_MIDPSPEC (1)
+#define EXTTYPE_IMAGE (2)
+#define EXTTYPE_PHLIST (3)
+#define EXTTYPE_LC (4)
+#define EXTTYPE_PSD (5)
 
 
 /////////////////////////////////////////////////////////////////
@@ -137,9 +151,6 @@ typedef struct {
   /** Buffer for pre-loaded spectra. */
   void* specbuff;
 
-  /** Buffer for pre-loaded Klein and Robert light curves. */
-  void* krlcbuff;
-
   /** Instrument ARF. */
   struct ARF* arf;
 
@@ -155,8 +166,8 @@ typedef struct {
   /** Energy values [keV]. */
   float* energy;
 
-  /** Photon flux distribution [photons/cm**2/keV]. */
-  float* pflux;
+  /** Photon flux density [photons/cm**2/keV]. */
+  float* fluxdensity;
 
   /** Unique case-sensitive designator for an individual spectrum. */
   char* name;
@@ -215,11 +226,14 @@ typedef struct {
   /** Zero time [s]. */
   double timezero;
 
-  /** Phase of periodic oscillation at timezero. */
+  /** Phase of periodic signal at timezero. */
   double phase0;
 
-  /** Duration of one oscillation period [s]. */
+  /** Duration of one period [s]. */
   double period;
+
+  /** First derivative of period with respect to time [unitless] */
+  double dperiod;
 
   /** Flux scaling factor. */
   float fluxscal;
@@ -239,53 +253,6 @@ typedef struct {
 } SimputLC;
 
 
-/** SIMPUT light curve converted to the form needed by the Klein &
-    Roberts (1984) algorithm. */
-typedef struct {
-
-  /** Number of entries in the light curve. */
-  long nentries;
-
-  /** Time values [s]. */
-  double* time;
-
-  /** Phase values (between 0 and 1). */
-  double* phase;
-
-  /** Piece-wise linear light curve data points. The value a_k
-      represents the gradient of the light curve between the time t_k
-      and t_{k+1} (slope, [1/s]). The value b_k represents the
-      constant contribution (intercept) at t_k. These values include
-      the FLUXSCAL. */
-  double *a, *b;
-
-  /** MJD for reference time [d]. */
-  double mjdref;
-
-  /** Zero time [s]. */
-  double timezero;
-
-  /** Phase of periodic oscillation at timezero. */
-  double phase0;
-
-  /** Duration of one oscillation period [s]. */
-  double period;
-  
-  /** If the light curve has been produced from a PSD, it is assigned
-      to a particular source and cannot be re-used for different
-      sources. In that case the SRC_ID of the respective source is
-      stored in this variable. Otherwise its value is set to 0. */
-  long src_id;
-
-  /** Reference to the location of the light curve given by the
-      extended filename syntax. This reference is used to check,
-      whether the light curve is already contained in the internal
-      storage. */
-  char* fileref;
-
-} SimputKRLC;
-
-
 /** SIMPUT power spectral density (PSD). */
 typedef struct {
 
@@ -298,9 +265,9 @@ typedef struct {
   /** Power spectral density with Miyamoto normalization [Hz^-1]. */
   float* power;
 
-  /** Reference to the location of the light curve given by the
+  /** Reference to the location of the power spectrum given by the
       extended filename syntax. This reference is used to check,
-      whether the light curve is already contained in the internal
+      whether the power spectrum is already contained in the internal
       storage. */
   char* fileref;
 
@@ -315,9 +282,6 @@ typedef struct {
 
   /** Pixel value distribution function. */
   double** dist;
-
-  /** Flux scaling factor. */
-  float fluxscal;
 
   /** WCS data used by wcslib. */
   struct wcsprm* wcs;
@@ -345,6 +309,16 @@ typedef struct {
 
   /** Total number of photons in the list. */
   long nphs;
+
+  /** Number of photons randomly drawn from the list. Note that there
+      is not recording of which photons from the list have already
+      been used. Therefore it is possible that one and the same photon
+      is drawn multiple times in a single simulation. This counter is
+      used to print warnings when the number of randomly returned
+      photons exceeds one fifth of the total number of available
+      photons (nphs). The number of photons returned from a particular
+      (non-random) line in the file is not counted. */
+  long nrphs;
 
   /** MJD for reference time [d]. */
   double mjdref;
@@ -559,6 +533,12 @@ void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  float* const pflux,
 			  int* const status);
 
+/** Determine the flux in the specified energy band in
+    [erg/cm**2]. */
+float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
+				const float emin, 
+				const float emax);
+
 /** Set the instrument ARF containing the effective area. This
     information is required to obtain a mission-specific spectrum from
     the mission-independent format. The access to the ARF data
@@ -726,6 +706,12 @@ int getSimputPhoton(SimputCtlg* const cat,
 		    /** [rad]. */
 		    double* const dec,
 		    int* const status);
+
+
+/** Determine the extension type of a particular FITS file HDU. */
+int getSimputExtType(SimputCtlg* const cat, 
+		     const char* const filename, 
+		     int* const status);
 
 
 #endif /* SIMPUT_H */

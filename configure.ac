@@ -1,15 +1,19 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ(2.65)
-AC_INIT([simput],[0.48],[christian.schmid@sternwarte.uni-erlangen.de])
+AC_PREREQ(2.59)
+AC_INIT([simput],[0.76],[christian.schmid@sternwarte.uni-erlangen.de])
+
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
 AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
+
+# Check for programs:
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
 AC_PROG_FC # Search for a Fortran compiler.
 AC_PROG_RANLIB
-AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
+AM_PROG_AR
 
 # Compiler and Linker Flags:
 # "-g -W -Wall -O0" for the compiler for debugging
@@ -59,19 +63,6 @@ AC_CHECK_HEADERS([limit.h math.h stdio.h stdlib.h stdarg.h string.h])
 # Checks for typedefs, structures, and compiler characteristics.
 AC_C_CONST
 
-# PIL parameter files have to be installed to the $PFILES directory.
-AC_ARG_VAR([PFILESDIR], [target directory for .par files])
-if test -z "$PFILESDIR"
-then
-	if test -z "$HEADAS"
-	then
-		AC_MSG_ERROR([Environment variable '\$HEADAS' is not set], [])
-	else
-		PFILESDIR="\${HEADAS}/pfiles"
-	fi
-fi
-AC_SUBST([PFILESDIR])
-
 # The following line tells 'configure' to create a header file 'config.h'
 # that is filled with definitions from this script.
 # The 'config.h' contains for example the name of the package and can be
@@ -97,8 +88,17 @@ AC_CONFIG_FILES([Makefile
 		 sample/Makefile
 		 sample/csample/Makefile
 		 sample/fsample/Makefile
-		 labnh/Makefile
-		 galabs/Makefile])
+		 tools/Makefile
+		 tools/labnh/Makefile
+		 tools/galabs/Makefile
+		 tools/simputfile/Makefile
+		 tools/simputlc/Makefile
+		 tools/simputpsd/Makefile
+		 tools/simputimg/Makefile
+		 tools/simputmerge/Makefile
+		 tools/simputspec/Makefile
+		 tools/simputsrc/Makefile
+		 tools/simputverify/Makefile])
 		
 AC_CONFIG_SUBDIRS([extlib/cfitsio extlib/wcslib extlib/fftw])
 

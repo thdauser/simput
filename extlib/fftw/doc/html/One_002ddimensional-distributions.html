@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>One-dimensional distributions - FFTW 3.3.2</title>
+<title>One-dimensional distributions - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="MPI-Data-Distribution.html#MPI-Data-Distribution" title="MPI Data Distribution">
@@ -10,7 +10,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -68,7 +68,7 @@ for forward and backward transforms to work correctly.
                      ptrdiff_t *local_ni, ptrdiff_t *local_i_start,
                      ptrdiff_t *local_no, ptrdiff_t *local_o_start);
 </pre>
-   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f1d-383"></a>
+   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f1d-386"></a>
 This function computes the data distribution for a 1d transform of
 size <code>n0</code> with the given transform <code>sign</code> and <code>flags</code>. 
 Both input and output data use block distributions.  The input on the
@@ -96,7 +96,7 @@ a communications step.)  If you pass <code>FFTW_MPI_SCRAMBLED_OUT</code> in
 the flags, then the output is stored in this (undocumented) scrambled
 order.  Conversely, to perform the inverse transform of data in
 scrambled order, pass the <code>FFTW_MPI_SCRAMBLED_IN</code> flag. 
-<a name="index-FFTW_005fMPI_005fSCRAMBLED_005fOUT-384"></a><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fIN-385"></a>
+<a name="index-FFTW_005fMPI_005fSCRAMBLED_005fOUT-387"></a><a name="index-FFTW_005fMPI_005fSCRAMBLED_005fIN-388"></a>
 
    <p>In MPI FFTW, only composite sizes <code>n0</code> can be parallelized; we
 have not yet implemented a parallel algorithm for large prime sizes.

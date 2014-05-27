@@ -1,7 +1,7 @@
 (*
  * Copyright (c) 1997-1999 Massachusetts Institute of Technology
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -118,9 +118,9 @@ let generate n =
 	     Expr_assign (CVar ar1, CPlus [CVar ar1; CVar sivs]);
 	     Expr_assign (CVar acr, CPlus [CVar acr; CVar sovs]);
 	     Expr_assign (CVar aci, CPlus [CVar aci; CVar sovs]);
-	     make_volatile_stride (CVar rs);
-	     make_volatile_stride (CVar csr);
-	     make_volatile_stride (CVar csi)
+	     make_volatile_stride (4*n) (CVar rs);
+	     make_volatile_stride (4*n) (CVar csr);
+	     make_volatile_stride (4*n) (CVar csi)
 	   ],
 	  Asch annot)
    ])

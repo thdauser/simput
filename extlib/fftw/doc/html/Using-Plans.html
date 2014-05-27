@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Using Plans - FFTW 3.3.2</title>
+<title>Using Plans - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="FFTW-Reference.html#FFTW-Reference" title="FFTW Reference">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -137,10 +137,13 @@ even for single and long-double precision versions of FFTW.)
 
 <pre class="example">     void fftw_fprint_plan(const fftw_plan plan, FILE *output_file);
      void fftw_print_plan(const fftw_plan plan);
+     char *fftw_sprint_plan(const fftw_plan plan);
 </pre>
    <p><a name="index-fftw_005ffprint_005fplan-158"></a><a name="index-fftw_005fprint_005fplan-159"></a>
 This outputs a &ldquo;nerd-readable&rdquo; representation of the <code>plan</code> to
-the given file or to <code>stdout</code>, respectively.
+the given file, to <code>stdout</code>, or two a newly allocated
+NUL-terminated string (which the caller is responsible for deallocating
+with <code>free</code>), respectively.
 
 <!--  -->
    </body></html>

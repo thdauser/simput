@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Transposed distributions - FFTW 3.3.2</title>
+<title>Transposed distributions - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="MPI-Data-Distribution.html#MPI-Data-Distribution" title="MPI Data Distribution">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -67,7 +67,7 @@ local to each process; (ii) transposing to an <code>n1</code> by <code>n0</code>
 array, distributed across the <code>n1</code> dimension; (iii) transforming
 the <code>n0</code> dimension, which is now local to each process; (iv)
 transposing back. 
-<a name="index-transpose-379"></a>
+<a name="index-transpose-382"></a>
 
    <p>However, in many applications it is acceptable to compute a
 multidimensional DFT whose results are produced in transposed order
@@ -79,7 +79,7 @@ to the planner routines.  To compute the inverse transform of
 transposed output, you specify <code>FFTW_MPI_TRANSPOSED_IN</code> to tell
 it that the input is transposed.  In this section, we explain how to
 interpret the output format of such a transform. 
-<a name="index-FFTW_005fMPI_005fTRANSPOSED_005fOUT-380"></a><a name="index-FFTW_005fMPI_005fTRANSPOSED_005fIN-381"></a>
+<a name="index-FFTW_005fMPI_005fTRANSPOSED_005fOUT-383"></a><a name="index-FFTW_005fMPI_005fTRANSPOSED_005fIN-384"></a>
 
    <p>Suppose you have are transforming multi-dimensional data with (at
 least two) dimensions n<sub>0</sub>&nbsp;&times;&nbsp;n<sub>1</sub>&nbsp;&times;&nbsp;n<sub>2</sub>&nbsp;&times;&nbsp;&hellip;&nbsp;&times;&nbsp;n<sub>d-1</sub>.  As always, it is distributed along
@@ -107,7 +107,7 @@ might call:
                      ptrdiff_t *local_n0, ptrdiff_t *local_0_start,
                      ptrdiff_t *local_n1, ptrdiff_t *local_1_start);
 </pre>
-   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f3d_005ftransposed-382"></a>
+   <p><a name="index-fftw_005fmpi_005flocal_005fsize_005f3d_005ftransposed-385"></a>
 Here, <code>local_n0</code> and <code>local_0_start</code> give the size and
 starting index of the <code>n0</code> dimension for the
 <em>non</em>-transposed data, as in the previous sections.  For

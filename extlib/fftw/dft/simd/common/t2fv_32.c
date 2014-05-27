@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:01:36 EDT 2012 */
+/* Generated on Tue Mar  4 13:47:20 EST 2014 */
 
 #include "codelet-dft.h"
 
@@ -47,7 +47,7 @@ static void t2fv_32(R *ri, R *ii, const R *W, stride rs, INT mb, INT me, INT ms)
 	  INT m;
 	  R *x;
 	  x = ri;
-	  for (m = mb, W = W + (mb * ((TWVL / VL) * 62)); m < me; m = m + VL, x = x + (VL * ms), W = W + (TWVL * 62), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + (mb * ((TWVL / VL) * 62)); m < me; m = m + VL, x = x + (VL * ms), W = W + (TWVL * 62), MAKE_VOLATILE_STRIDE(32, rs)) {
 	       V T26, T25, T1Z, T22, T1W, T2a, T2k, T2g;
 	       {
 		    V T4, T1z, T2o, T32, T2r, T3f, Tf, T1A, T34, T2L, T1D, TC, T33, T2O, T1C;
@@ -448,7 +448,7 @@ static void t2fv_32(R *ri, R *ii, const R *W, stride rs, INT mb, INT me, INT ms)
 	  INT m;
 	  R *x;
 	  x = ri;
-	  for (m = mb, W = W + (mb * ((TWVL / VL) * 62)); m < me; m = m + VL, x = x + (VL * ms), W = W + (TWVL * 62), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + (mb * ((TWVL / VL) * 62)); m < me; m = m + VL, x = x + (VL * ms), W = W + (TWVL * 62), MAKE_VOLATILE_STRIDE(32, rs)) {
 	       V T4, T1A, T2o, T32, Tf, T1v, T2r, T3f, TC, T1C, T2L, T34, Tr, T1D, T2O;
 	       V T33, T1k, T20, T2F, T3b, T1r, T21, T2C, T3a, TV, T1X, T2y, T38, T12, T1Y;
 	       V T2v, T37;

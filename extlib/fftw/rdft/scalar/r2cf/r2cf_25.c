@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:02:41 EDT 2012 */
+/* Generated on Tue Mar  4 13:49:08 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -104,7 +104,7 @@ static void r2cf_25(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride cs
      DK(KP618033988, +0.618033988749894848204586834365638117720309180);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(100, rs), MAKE_VOLATILE_STRIDE(100, csr), MAKE_VOLATILE_STRIDE(100, csi)) {
 	       E T2H, T2w, T2x, T2A, T2C, T2v, T2M, T2y, T2B, T2N;
 	       {
 		    E T2u, TJ, T1O, T39, T2t, TB, T21, T1M, T2e, T26, T1B, T1r, T1k, T1c, T9;
@@ -471,7 +471,7 @@ static void r2cf_25(R *R0, R *R1, R *Cr, R *Ci, stride rs, stride csr, stride cs
      DK(KP951056516, +0.951056516295153572116439333379382143405698634);
      {
 	  INT i;
-	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(rs), MAKE_VOLATILE_STRIDE(csr), MAKE_VOLATILE_STRIDE(csi)) {
+	  for (i = v; i > 0; i = i - 1, R0 = R0 + ivs, R1 = R1 + ivs, Cr = Cr + ovs, Ci = Ci + ovs, MAKE_VOLATILE_STRIDE(100, rs), MAKE_VOLATILE_STRIDE(100, csr), MAKE_VOLATILE_STRIDE(100, csi)) {
 	       E T8, T1j, T1V, T1l, T7, T9, Ta, T12, T2u, T1O, T19, T1P, Ti, T2r, T1K;
 	       E Tp, T1L, Tx, T2q, T1H, TE, T1I, TN, T2t, T1R, TU, T1S, T6, T1k, T3;
 	       E T2s, T2v;

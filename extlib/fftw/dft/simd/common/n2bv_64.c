@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:00:44 EDT 2012 */
+/* Generated on Tue Mar  4 13:47:02 EST 2014 */
 
 #include "codelet-dft.h"
 
@@ -57,7 +57,7 @@ static void n2bv_64(const R *ri, const R *ii, R *ro, R *io, stride is, stride os
 	  R *xo;
 	  xi = ii;
 	  xo = io;
-	  for (i = v; i > 0; i = i - VL, xi = xi + (VL * ivs), xo = xo + (VL * ovs), MAKE_VOLATILE_STRIDE(is), MAKE_VOLATILE_STRIDE(os)) {
+	  for (i = v; i > 0; i = i - VL, xi = xi + (VL * ivs), xo = xo + (VL * ovs), MAKE_VOLATILE_STRIDE(128, is), MAKE_VOLATILE_STRIDE(128, os)) {
 	       V T7z, T7A, T7B, T7C, T5T, T5S, T5X, T65, T8a, T8b, T8e, T8g, T5Z, T5R, T67;
 	       V T63, T5U, T64;
 	       {
@@ -918,7 +918,7 @@ static void n2bv_64(const R *ri, const R *ii, R *ro, R *io, stride is, stride os
 	  R *xo;
 	  xi = ii;
 	  xo = io;
-	  for (i = v; i > 0; i = i - VL, xi = xi + (VL * ivs), xo = xo + (VL * ovs), MAKE_VOLATILE_STRIDE(is), MAKE_VOLATILE_STRIDE(os)) {
+	  for (i = v; i > 0; i = i - VL, xi = xi + (VL * ivs), xo = xo + (VL * ovs), MAKE_VOLATILE_STRIDE(128, is), MAKE_VOLATILE_STRIDE(128, os)) {
 	       V T4p, T5u, Tb, T3A, T2q, T3v, T6G, T78, Tq, T3w, T6B, T79, T2l, T3B, T4w;
 	       V T5r, TI, T2g, T6u, T74, T3q, T3D, T4E, T5o, TZ, T2h, T6x, T75, T3t, T3E;
 	       V T4L, T5p, T23, T2N, T6m, T70, T6p, T71, T2c, T2O, T3i, T3Y, T5f, T5R, T5k;

@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Overview of Fortran interface - FFTW 3.3.2</title>
+<title>Overview of Fortran interface - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Calling-FFTW-from-Modern-Fortran.html#Calling-FFTW-from-Modern-Fortran" title="Calling FFTW from Modern Fortran">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -62,7 +62,7 @@ described elsewhere, which can be found in the same directory as
 <code>fftw3.h</code> (the C header file).  In any Fortran subroutine where
 you want to use FFTW functions, you should begin with:
 
-   <p><a name="index-iso_005fc_005fbinding-502"></a>
+   <p><a name="index-iso_005fc_005fbinding-505"></a>
 <pre class="example">       use, intrinsic :: iso_c_binding
        include 'fftw3.f03'
 </pre>
@@ -75,7 +75,7 @@ prefer (see <a href="Defining-an-FFTW-module.html#Defining-an-FFTW-module">Defin
 directly, almost exactly as in C other than minor changes in syntax. 
 For example:
 
-   <p><a name="index-fftw_005fplan_005fdft_005f2d-503"></a><a name="index-fftw_005fexecute_005fdft-504"></a><a name="index-fftw_005fdestroy_005fplan-505"></a>
+   <p><a name="index-fftw_005fplan_005fdft_005f2d-506"></a><a name="index-fftw_005fexecute_005fdft-507"></a><a name="index-fftw_005fdestroy_005fplan-508"></a>
 <pre class="example">       type(C_PTR) :: plan
        complex(C_DOUBLE_COMPLEX), dimension(1024,1000) :: in, out
        plan = fftw_plan_dft_2d(1000,1024, in,out, FFTW_FORWARD,FFTW_ESTIMATE)
@@ -87,7 +87,7 @@ For example:
    <p>A few important things to keep in mind are:
 
      <ul>
-<li><a name="index-fftw_005fcomplex-506"></a><a name="index-C_005fPTR-507"></a><a name="index-C_005fINT-508"></a><a name="index-C_005fDOUBLE-509"></a><a name="index-C_005fDOUBLE_005fCOMPLEX-510"></a>FFTW plans are <code>type(C_PTR)</code>.  Other C types are mapped in the
+<li><a name="index-fftw_005fcomplex-509"></a><a name="index-C_005fPTR-510"></a><a name="index-C_005fINT-511"></a><a name="index-C_005fDOUBLE-512"></a><a name="index-C_005fDOUBLE_005fCOMPLEX-513"></a>FFTW plans are <code>type(C_PTR)</code>.  Other C types are mapped in the
 obvious way via the <code>iso_c_binding</code> standard: <code>int</code> turns
 into <code>integer(C_INT)</code>, <code>fftw_complex</code> turns into
 <code>complex(C_DOUBLE_COMPLEX)</code>, <code>double</code> turns into
@@ -102,12 +102,12 @@ in array indexing conventions (see <a href="Multi_002ddimensional-Array-Format.h
 (see <a href="Fortran_002dinterface-routines.html#Fortran_002dinterface-routines">Fortran-interface routines</a>), which reversed the dimensions
 for you.  See <a href="Reversing-array-dimensions.html#Reversing-array-dimensions">Reversing array dimensions</a>.
 
-     <li><a name="index-alignment-511"></a><a name="index-SIMD-512"></a>Using ordinary Fortran array declarations like this works, but may
+     <li><a name="index-alignment-514"></a><a name="index-SIMD-515"></a>Using ordinary Fortran array declarations like this works, but may
 yield suboptimal performance because the data may not be not aligned
 to exploit SIMD instructions on modern proessors (see <a href="SIMD-alignment-and-fftw_005fmalloc.html#SIMD-alignment-and-fftw_005fmalloc">SIMD alignment and fftw_malloc</a>). Better performance will often be obtained
 by allocating with &lsquo;<samp><span class="samp">fftw_alloc</span></samp>&rsquo;. See <a href="Allocating-aligned-memory-in-Fortran.html#Allocating-aligned-memory-in-Fortran">Allocating aligned memory in Fortran</a>.
 
-     <li><a name="index-fftw_005fexecute-513"></a>Similar to the legacy Fortran interface (see <a href="FFTW-Execution-in-Fortran.html#FFTW-Execution-in-Fortran">FFTW Execution in Fortran</a>), we currently recommend <em>not</em> using <code>fftw_execute</code>
+     <li><a name="index-fftw_005fexecute-516"></a>Similar to the legacy Fortran interface (see <a href="FFTW-Execution-in-Fortran.html#FFTW-Execution-in-Fortran">FFTW Execution in Fortran</a>), we currently recommend <em>not</em> using <code>fftw_execute</code>
 but rather using the more specialized functions like
 <code>fftw_execute_dft</code> (see <a href="New_002darray-Execute-Functions.html#New_002darray-Execute-Functions">New-array Execute Functions</a>). 
 However, you should execute the plan on the <code>same arrays</code> as the
@@ -116,7 +116,7 @@ careful.  See <a href="Plan-execution-in-Fortran.html#Plan-execution-in-Fortran"
 you from using <code>fftw_execute</code> by mistake, the <code>fftw3.f03</code>
 file does not provide an <code>fftw_execute</code> interface declaration.
 
-     <li><a name="index-flags-514"></a>Multiple planner flags are combined with <code>ior</code> (equivalent to &lsquo;<samp><span class="samp">|</span></samp>&rsquo; in C).  e.g. <code>FFTW_MEASURE | FFTW_DESTROY_INPUT</code> becomes <code>ior(FFTW_MEASURE, FFTW_DESTROY_INPUT)</code>.  (You can also use &lsquo;<samp><span class="samp">+</span></samp>&rsquo; as long as you don't try to include a given flag more than once.)
+     <li><a name="index-flags-517"></a>Multiple planner flags are combined with <code>ior</code> (equivalent to &lsquo;<samp><span class="samp">|</span></samp>&rsquo; in C).  e.g. <code>FFTW_MEASURE | FFTW_DESTROY_INPUT</code> becomes <code>ior(FFTW_MEASURE, FFTW_DESTROY_INPUT)</code>.  (You can also use &lsquo;<samp><span class="samp">+</span></samp>&rsquo; as long as you don't try to include a given flag more than once.)
 
    </ul>
 

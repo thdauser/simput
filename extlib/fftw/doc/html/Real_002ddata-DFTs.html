@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Real-data DFTs - FFTW 3.3.2</title>
+<title>Real-data DFTs - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Basic-Interface.html#Basic-Interface" title="Basic Interface">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -70,7 +70,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Basic-Interface.html#Basic-Interface">B
                                  double *in, fftw_complex *out,
                                  unsigned flags);
 </pre>
-   <p><a name="index-fftw_005fplan_005fdft_005fr2c_005f1d-185"></a><a name="index-fftw_005fplan_005fdft_005fr2c_005f2d-186"></a><a name="index-fftw_005fplan_005fdft_005fr2c_005f3d-187"></a><a name="index-fftw_005fplan_005fdft_005fr2c-188"></a><a name="index-r2c-189"></a>
+   <p><a name="index-fftw_005fplan_005fdft_005fr2c_005f1d-187"></a><a name="index-fftw_005fplan_005fdft_005fr2c_005f2d-188"></a><a name="index-fftw_005fplan_005fdft_005fr2c_005f3d-189"></a><a name="index-fftw_005fplan_005fdft_005fr2c-190"></a><a name="index-r2c-191"></a>
 Plan a real-input/complex-output discrete Fourier transform (DFT) in
 zero or more dimensions, returning an <code>fftw_plan</code> (see <a href="Using-Plans.html#Using-Plans">Using Plans</a>).
 
@@ -114,13 +114,13 @@ transform to be <em>even</em>.
 
      <li><code>in</code> and <code>out</code> point to the input and output arrays of the
 transform, which may be the same (yielding an in-place transform). 
-<a name="index-in_002dplace-190"></a>These arrays are overwritten during planning, unless
+<a name="index-in_002dplace-192"></a>These arrays are overwritten during planning, unless
 <code>FFTW_ESTIMATE</code> is used in the flags.  (The arrays need not be
 initialized, but they must be allocated.)  For an in-place transform, it
 is important to remember that the real array will require padding,
 described in <a href="Real_002ddata-DFT-Array-Format.html#Real_002ddata-DFT-Array-Format">Real-data DFT Array Format</a>. 
-<a name="index-padding-191"></a>
-<li><a name="index-flags-192"></a><code>flags</code> is a bitwise OR (&lsquo;<samp><span class="samp">|</span></samp>&rsquo;) of zero or more planner flags,
+<a name="index-padding-193"></a>
+<li><a name="index-flags-194"></a><code>flags</code> is a bitwise OR (&lsquo;<samp><span class="samp">|</span></samp>&rsquo;) of zero or more planner flags,
 as defined in <a href="Planner-Flags.html#Planner-Flags">Planner Flags</a>.
 
 </ul>
@@ -141,7 +141,7 @@ half of a logically Hermitian array) to real output, are given by:
                                  fftw_complex *in, double *out,
                                  unsigned flags);
 </pre>
-   <p><a name="index-fftw_005fplan_005fdft_005fc2r_005f1d-193"></a><a name="index-fftw_005fplan_005fdft_005fc2r_005f2d-194"></a><a name="index-fftw_005fplan_005fdft_005fc2r_005f3d-195"></a><a name="index-fftw_005fplan_005fdft_005fc2r-196"></a><a name="index-c2r-197"></a>
+   <p><a name="index-fftw_005fplan_005fdft_005fc2r_005f1d-195"></a><a name="index-fftw_005fplan_005fdft_005fc2r_005f2d-196"></a><a name="index-fftw_005fplan_005fdft_005fc2r_005f3d-197"></a><a name="index-fftw_005fplan_005fdft_005fc2r-198"></a><a name="index-c2r-199"></a>
 The arguments are the same as for the r2c transforms, except that the
 input and output data formats are reversed.
 
@@ -149,7 +149,7 @@ input and output data formats are reversed.
 c2r transform (or vice versa) will result in the original data
 multiplied by the size of the transform (the product of the logical
 dimensions). 
-<a name="index-normalization-198"></a>An r2c transform produces the same output as a <code>FFTW_FORWARD</code>
+<a name="index-normalization-200"></a>An r2c transform produces the same output as a <code>FFTW_FORWARD</code>
 complex DFT of the same input, and a c2r transform is correspondingly
 equivalent to <code>FFTW_BACKWARD</code>.  For more information, see <a href="What-FFTW-Really-Computes.html#What-FFTW-Really-Computes">What FFTW Really Computes</a>.
 

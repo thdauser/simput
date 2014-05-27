@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 11:05:06 EDT 2012 */
+/* Generated on Tue Mar  4 13:51:49 EST 2014 */
 
 #include "codelet-rdft.h"
 
@@ -43,7 +43,7 @@ static void hc2cfdftv_20(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT 
      DVK(KP618033988, +0.618033988749894848204586834365638117720309180);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 38)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 38), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 38)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 38), MAKE_VOLATILE_STRIDE(80, rs)) {
 	       V T2g, T2f, T2w, T2k, T2A, T2u, T2e, T2o, T1O, T2b, T2i, T1R, T1X, T1k, TN;
 	       V T1w, T1G, T1t, Ti, T2c, T12, T1x, T2j, T1U, T1y, T1d, T24, T2v, T2h, T2x;
 	       V T2B, T2p, T2l, T2z, T2y, T2D, T2C, T2r, T2q, T2n, T2m;
@@ -303,7 +303,7 @@ static void hc2cfdftv_20(R *Rp, R *Ip, R *Rm, R *Im, const R *W, stride rs, INT 
      DVK(KP500000000, +0.500000000000000000000000000000000000000000000);
      {
 	  INT m;
-	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 38)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 38), MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + ((mb - 1) * ((TWVL / VL) * 38)); m < me; m = m + VL, Rp = Rp + (VL * ms), Ip = Ip + (VL * ms), Rm = Rm - (VL * ms), Im = Im - (VL * ms), W = W + (TWVL * 38), MAKE_VOLATILE_STRIDE(80, rs)) {
 	       V TW, T1x, T2i, T2A, T1r, T1s, T1a, T1y, T1l, Tn, TK, TL, T1p, T1o, T27;
 	       V T2t, T2a, T2u, T2e, T2C, T20, T2w, T23, T2x, T2d, T2B, T1W, T1X, T1U, T1V;
 	       V T2z, T2K, T2G, T2N, T2J, T2v, T2y, T2F, T2D, T2E, T2M, T2H, T2I, T2L;

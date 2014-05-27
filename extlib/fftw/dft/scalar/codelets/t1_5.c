@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 /* This file was automatically generated --- DO NOT EDIT */
-/* Generated on Sat Apr 28 10:59:09 EDT 2012 */
+/* Generated on Tue Mar  4 13:45:51 EST 2014 */
 
 #include "codelet-dft.h"
 
@@ -42,7 +42,7 @@ static void t1_5(R *ri, R *ii, const R *W, stride rs, INT mb, INT me, INT ms)
      DK(KP618033988, +0.618033988749894848204586834365638117720309180);
      {
 	  INT m;
-	  for (m = mb, W = W + (mb * 8); m < me; m = m + 1, ri = ri + ms, ii = ii + ms, W = W + 8, MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + (mb * 8); m < me; m = m + 1, ri = ri + ms, ii = ii + ms, W = W + 8, MAKE_VOLATILE_STRIDE(10, rs)) {
 	       E T1, TM, TJ, TA, TQ, Te, TC, Tk, TE, Tq;
 	       {
 		    E Tg, Tj, Tm, TB, Th, Tp, Tl, Ti, To, TD, Tn;
@@ -161,7 +161,7 @@ static void t1_5(R *ri, R *ii, const R *W, stride rs, INT mb, INT me, INT ms)
      DK(KP951056516, +0.951056516295153572116439333379382143405698634);
      {
 	  INT m;
-	  for (m = mb, W = W + (mb * 8); m < me; m = m + 1, ri = ri + ms, ii = ii + ms, W = W + 8, MAKE_VOLATILE_STRIDE(rs)) {
+	  for (m = mb, W = W + (mb * 8); m < me; m = m + 1, ri = ri + ms, ii = ii + ms, W = W + 8, MAKE_VOLATILE_STRIDE(10, rs)) {
 	       E T1, TE, Tu, Tx, TJ, TI, TB, TC, TD, Tc, Tn, To;
 	       T1 = ri[0];
 	       TE = ii[0];

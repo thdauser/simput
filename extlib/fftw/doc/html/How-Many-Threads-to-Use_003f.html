@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>How Many Threads to Use? - FFTW 3.3.2</title>
+<title>How Many Threads to Use? - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="up" href="Multi_002dthreaded-FFTW.html#Multi_002dthreaded-FFTW" title="Multi-threaded FFTW">
@@ -11,7 +11,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -57,7 +57,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="Multi_002dthreaded-FFTW.html#Multi_002d
 
 <h3 class="section">5.3 How Many Threads to Use?</h3>
 
-<p><a name="index-number-of-threads-339"></a>There is a fair amount of overhead involved in synchronizing threads,
+<p><a name="index-number-of-threads-342"></a>There is a fair amount of overhead involved in synchronizing threads,
 so the optimal number of threads to use depends upon the size of the
 transform as well as on the number of processors you have.
 
@@ -72,7 +72,7 @@ will have to involve at least a few thousand data points before threads
 become beneficial.  If you plan with <code>FFTW_PATIENT</code>, it will
 automatically disable threads for sizes that don't benefit from
 parallelization. 
-<a name="index-FFTW_005fPATIENT-340"></a>
+<a name="index-FFTW_005fPATIENT-343"></a>
 <!--  -->
 
    </body></html>

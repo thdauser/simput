@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2003, 2007-11 Matteo Frigo
- * Copyright (c) 2003, 2007-11 Massachusetts Institute of Technology
+ * Copyright (c) 2003, 2007-14 Matteo Frigo
+ * Copyright (c) 2003, 2007-14 Massachusetts Institute of Technology
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,6 +74,7 @@ int X(nbuf_redundant)(INT n, INT vl, int which,
 		      const INT *maxnbuf, int nmaxnbuf)
 {
      int i;
+     (void)nmaxnbuf; /* UNUSED */
      for (i = 0; i < which; ++i)
 	  if (X(nbuf)(n, vl, maxnbuf[i]) == X(nbuf)(n, vl, maxnbuf[which]))
 	       return 1;

@@ -1,8 +1,8 @@
 <html lang="en">
 <head>
-<title>Distributed-memory FFTW with MPI - FFTW 3.3.2</title>
+<title>Distributed-memory FFTW with MPI - FFTW 3.3.4</title>
 <meta http-equiv="Content-Type" content="text/html">
-<meta name="description" content="FFTW 3.3.2">
+<meta name="description" content="FFTW 3.3.4">
 <meta name="generator" content="makeinfo 4.13">
 <link title="Top" rel="start" href="index.html#Top">
 <link rel="prev" href="Multi_002dthreaded-FFTW.html#Multi_002dthreaded-FFTW" title="Multi-threaded FFTW">
@@ -10,7 +10,7 @@
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <!--
 This manual is for FFTW
-(version 3.3.2, 28 April 2012).
+(version 3.3.4, 20 September 2013).
 
 Copyright (C) 2003 Matteo Frigo.
 
@@ -56,8 +56,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="index.html#Top">Top</a>
 
 <h2 class="chapter">6 Distributed-memory FFTW with MPI</h2>
 
-<p><a name="index-MPI-344"></a>
-<a name="index-parallel-transform-345"></a>In this chapter we document the parallel FFTW routines for parallel
+<p><a name="index-MPI-347"></a>
+<a name="index-parallel-transform-348"></a>In this chapter we document the parallel FFTW routines for parallel
 systems supporting the MPI message-passing interface.  Unlike the
 shared-memory threads described in the previous chapter, MPI allows
 you to use <em>distributed-memory</em> parallelism, where each CPU has
@@ -67,7 +67,7 @@ each process only stores a <em>portion</em> of the data to be
 transformed, which means that the data structures and
 programming-interface are quite different from the serial or threads
 versions of FFTW. 
-<a name="index-data-distribution-346"></a>
+<a name="index-data-distribution-349"></a>
 
    <p>Distributed-memory parallelism is especially useful when you are
 transforming arrays so large that they do not fit into the memory of a
@@ -88,7 +88,7 @@ which is the predefined communicator <code>MPI_COMM_WORLD</code> which
 refers to <em>all</em> processes.  For more information on these and
 other concepts common to all MPI programs, we refer the reader to the
 documentation at <a href="http://www.mcs.anl.gov/research/projects/mpi/">the MPI home page</a>. 
-<a name="index-MPI-communicator-347"></a><a name="index-MPI_005fCOMM_005fWORLD-348"></a>
+<a name="index-MPI-communicator-350"></a><a name="index-MPI_005fCOMM_005fWORLD-351"></a>
 
    <p>We assume in this chapter that the reader is familiar with the usage
 of the serial (uniprocessor) FFTW, and focus only on the concepts new
