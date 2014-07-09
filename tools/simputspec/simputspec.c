@@ -482,13 +482,24 @@ int simputspec_main()
       long ii;
       for (ii=0; ii<nlines; ii++) {
 	float fbuffer;
-        if (fscanf(xspecfile, "%f %f %f\n",
+        /*if (fscanf(xspecfile, "%f %f %f\n",
 		   &(simputspec->energy[ii]), 
 		   &fbuffer, 
 		   &(simputspec->fluxdensity[ii]))<3) {
 	  SIMPUT_ERROR("failed reading data from ASCII file");
 	  status=EXIT_FAILURE;
 	  break;
+	}*/
+	char linebuffer[SIMPUT_MAXSTR];
+	if(fgets(linebuffer, SIMPUT_MAXSTR, xspecfile)!=NULL){
+	  if(sscanf(linebuffer, "%f %f %f", 
+		 &(simputspec->energy[ii]), 
+		 &fbuffer, 
+		 &(simputspec->fluxdensity[ii]))!=3) {
+	  SIMPUT_ERROR("failed reading data from ASCII file");
+	  status=EXIT_FAILURE;
+	  break;
+	  }
 	}
       }
       CHECK_STATUS_BREAK(status);
