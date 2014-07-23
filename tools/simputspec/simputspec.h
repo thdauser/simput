@@ -71,6 +71,9 @@ struct Parameters {
   /** File name of the input ISIS parameter file containing a spectral
       model. */
   char ISISFile[SIMPUT_MAXSTR];
+  /** File name for optional preperation script (f. e. to load additional
+   models). */
+  char ISISPrep[SIMPUT_MAXSTR];
 
   /** File name of the Xspec spectral model. */
   char XSPECFile[SIMPUT_MAXSTR];

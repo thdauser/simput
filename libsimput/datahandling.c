@@ -265,7 +265,7 @@ static inline double getLCTime(const SimputLC* const lc,
     if (fabs(lc->dperiod)<1.e-20) {
       return(phase*lc->period);
     } else {
-      return((double)((expl(phase*lc->dperiod)-1.0)*lc->period/lc->dperiod
+      return((double)((expm1l(phase*lc->dperiod))*lc->period/lc->dperiod
 		      +lc->timezero+(lc->mjdref-mjdref)*24.*3600.));
     }
   }

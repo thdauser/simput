@@ -95,6 +95,10 @@ int simputspec_main()
 	(0==strcmp(par.ISISFile, "NONE"))) {
       strcpy(par.ISISFile, "");
     }
+    if ((0==strcmp(par.ISISPrep, "none"))||
+	(0==strcmp(par.ISISPrep, "NONE"))) {
+      strcpy(par.ISISPrep, "");
+    }
     if ((0==strcmp(par.XSPECFile, "none"))||
 	(0==strcmp(par.XSPECFile, "NONE"))) {
       strcpy(par.XSPECFile, "");
@@ -214,6 +218,9 @@ int simputspec_main()
       } else { 
         // An ISIS parameter file with an explizit spectral
         // model is given.
+	if(strlen(par.ISISPrep)!=0){
+	  fprintf(cmdfile, "require(\"%s\");\n", par.ISISPrep);
+	}
         fprintf(cmdfile, "load_par(\"%s\");\n", par.ISISFile);
         fprintf(cmdfile, "fluxdensity=eval_fun_keV(lo, hi)/(hi-lo);\n");
         fprintf(cmdfile, "spec=struct{ENERGY=0.5*(lo+hi), FLUXDENSITY=fluxdensity};\n");
@@ -482,13 +489,16 @@ int simputspec_main()
       long ii;
       for (ii=0; ii<nlines; ii++) {
 	float fbuffer;
-        if (fscanf(xspecfile, "%f %f %f\n",
-		   &(simputspec->energy[ii]), 
-		   &fbuffer, 
-		   &(simputspec->fluxdensity[ii]))<3) {
+	char linebuffer[SIMPUT_MAXSTR];
+	if(fgets(linebuffer, SIMPUT_MAXSTR, xspecfile)!=NULL){
+	  if(sscanf(linebuffer, "%f %f %f", 
+		 &(simputspec->energy[ii]), 
+		 &fbuffer, 
+		 &(simputspec->fluxdensity[ii]))!=3) {
 	  SIMPUT_ERROR("failed reading data from ASCII file");
 	  status=EXIT_FAILURE;
 	  break;
+	  }
 	}
       }
       CHECK_STATUS_BREAK(status);
@@ -867,6 +877,14 @@ int simputspec_getpar(struct Parameters* const par)
     return(status);
   }
   strcpy(par->ISISFile, sbuffer);
+  free(sbuffer);
+
+  status=ape_trad_query_string("ISISPrep", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the name of the ISIS prep file failed");
+    return(status);
+  }
+  strcpy(par->ISISPrep, sbuffer);
   free(sbuffer);
 
   status=ape_trad_query_string("XSPECFile", &sbuffer);
