@@ -35,6 +35,9 @@ int simputspec_main()
   // XSPEC .qdp file containing the spectrum.
   FILE* xspecfile=NULL;
 
+  // ASCII file containing the spectrum.
+  FILE* asciifile=NULL;
+
   // Instrument response.
   struct ARF* arf=NULL;
   struct RMF* rmf=NULL;
@@ -107,6 +110,10 @@ int simputspec_main()
 	(0==strcmp(par.PHAFile, "NONE"))) {
       strcpy(par.PHAFile, "");
     }
+    if ((0==strcmp(par.ASCIIFile, "none"))||
+	(0==strcmp(par.ASCIIFile, "NONE"))) {
+      strcpy(par.ASCIIFile, "");
+    }
 
     int noptions=0;
     if ((par.plFlux>0.) || (par.bbFlux>0.) || 
@@ -121,6 +128,9 @@ int simputspec_main()
       noptions++;
     }
     if (strlen(par.PHAFile)>0) {
+      noptions++;
+    }
+    if (strlen(par.ASCIIFile)>0) {
       noptions++;
     }
     if (0==noptions) {
@@ -506,6 +516,58 @@ int simputspec_main()
       // Close the file.
       fclose(xspecfile);
       xspecfile=NULL;
+
+    } else if (strlen(par.ASCIIFile)>0) {
+        // The spectrum is contained in a ascii file,
+        // and has to be loaded from there.
+
+        // Open the file.
+        asciifile=fopen(par.ASCIIFile, "r");
+        CHECK_NULL_BREAK(asciifile, status, "could not open ascii file");
+
+        // Determine the number of rows.
+        long nlines=0;
+        char c=0;
+        while(!feof(asciifile)) {
+          c=fgetc(asciifile);
+          if ('\n'==c) {
+            nlines++;
+          }
+        }
+        // Check if the last line has been empty.
+        if('\n'==c) {
+          nlines--;
+        }
+
+        // Allocate memory.
+        simputspec->nentries=nlines;
+        simputspec->energy=(float*)malloc(nlines*sizeof(float));
+        CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
+        simputspec->fluxdensity=(float*)malloc(nlines*sizeof(float));
+        CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
+
+        // Reset the file pointer, read the data, and store them in
+        // the SimputMIdpSpec data structure.
+        rewind(asciifile);
+        // Read the actual data.
+        long ii;
+        for (ii=0; ii<nlines; ii++) {
+  	char linebuffer[SIMPUT_MAXSTR];
+  	if(fgets(linebuffer, SIMPUT_MAXSTR, asciifile)!=NULL){
+  	  if(sscanf(linebuffer, "%f %f",
+  		 &(simputspec->energy[ii]),
+  		 &(simputspec->fluxdensity[ii]))!=2) {
+  	  SIMPUT_ERROR("failed reading data from ASCII file");
+  	  status=EXIT_FAILURE;
+  	  break;
+  	  }
+  	}
+        }
+        CHECK_STATUS_BREAK(status);
+
+        // Close the file.
+        fclose(asciifile);
+        asciifile=NULL;
 
     } else {
       // The spectrum has to be obtained from a PHA file.
@@ -893,6 +955,14 @@ int simputspec_getpar(struct Parameters* const par)
     return(status);
   }
   strcpy(par->XSPECFile, sbuffer);
+  free(sbuffer);
+
+  status=ape_trad_query_string("ASCIIFile", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the name of the ASCII spectrum file failed");
+    return(status);
+  }
+  strcpy(par->ASCIIFile, sbuffer);
   free(sbuffer);
 
   status=ape_trad_query_string("PHAFile", &sbuffer);

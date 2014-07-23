@@ -84,6 +84,9 @@ struct Parameters {
   /** File name of the input Xspec spectral model. */
   char XSPECFile[SIMPUT_MAXSTR];
 
+  /** File name of the input ASCII spectrum. */
+  char ASCIIFile[SIMPUT_MAXSTR];
+
   /** File name of the input PHA spectrum. */
   char PHAFile[SIMPUT_MAXSTR];
 
