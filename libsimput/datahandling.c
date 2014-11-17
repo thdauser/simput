@@ -1035,7 +1035,42 @@ static SimputImg* getSimputImg(SimputCtlg* const cat,
 }
 
 
-static void p2s(struct wcsprm* const wcs,
+void simput_s2p(struct wcsprm* const wcs,
+		double* px,
+		double* py,
+		const double sx,
+		const double sy,
+		int* const status)
+{
+	// convert to degree
+  double world[2] = { sx*180./M_PI, sy*180./M_PI };
+  double pixcrd[2], imgcrd[2];
+  double phi, theta;
+
+  // If CUNIT is set to 'degree', change this to 'deg'.
+  // Otherwise the WCSlib will not work properly.
+  if (0==strcmp(wcs->cunit[0], "degree  ")) {
+    strcpy(wcs->cunit[0], "deg");
+  }
+  if (0==strcmp(wcs->cunit[1], "degree  ")) {
+    strcpy(wcs->cunit[1], "deg");
+  }
+
+// Perform the transform using WCSlib.
+  int retval=wcss2p(wcs, 1, 2, world, &phi, &theta,  imgcrd, pixcrd, status);
+  CHECK_STATUS_VOID(*status);
+  if (0!=retval) {
+    *status=EXIT_FAILURE;
+    SIMPUT_ERROR("WCS transformation failed");
+    return;
+  }
+
+  *px=pixcrd[0];
+  *py=pixcrd[1];
+}
+
+
+inline static void p2s(struct wcsprm* const wcs,
 		const double px, 
 		const double py,
 		double* sx, 
@@ -1069,6 +1104,16 @@ static void p2s(struct wcsprm* const wcs,
   *sy=world[1]*M_PI/180.;
 }
 
+// make the p2s function publicly available
+void simput_p2s(struct wcsprm* const wcs,
+		const double px,
+		const double py,
+		double* sx,
+		double* sy,
+		int* const status)
+{
+	p2s(wcs,px,py,sx,sy,status);
+}
 
 /** Return the requested photon lists. Keeps a certain number of
     photon lists in an internal storage. If the requested photon list
@@ -1817,19 +1862,19 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // between CRVAL [deg] and CDELT [different unit]. 
       // TODO This is not required by the standard.
       if (((0!=strcmp(wcs.cunit[0], "deg     ")) &&
-	   (0!=strcmp(wcs.cunit[0], "degree  ")) &&
-	   (0!=strcmp(wcs.cunit[0], "deg")) &&
-	   (0!=strcmp(wcs.cunit[0], "degree"))) ||
-	  ((0!=strcmp(wcs.cunit[1], "deg     ")) &&
-	   (0!=strcmp(wcs.cunit[1], "degree  ")) &&
-	   (0!=strcmp(wcs.cunit[1], "deg")) &&
-	   (0!=strcmp(wcs.cunit[1], "degree")))) {
-	*status=EXIT_FAILURE;
-	char msg[SIMPUT_MAXSTR];
-	sprintf(msg, "units of image coordinates are '%s' and '%s' "
-		"(must be 'deg')", wcs.cunit[0], wcs.cunit[1]);
-	SIMPUT_ERROR(msg);
-	break;
+    		  (0!=strcmp(wcs.cunit[0], "degree  ")) &&
+    		  (0!=strcmp(wcs.cunit[0], "deg")) &&
+    		  (0!=strcmp(wcs.cunit[0], "degree"))) ||
+    		  ((0!=strcmp(wcs.cunit[1], "deg     ")) &&
+    				  (0!=strcmp(wcs.cunit[1], "degree  ")) &&
+    				  (0!=strcmp(wcs.cunit[1], "deg")) &&
+    				  (0!=strcmp(wcs.cunit[1], "degree")))) {
+    	  *status=EXIT_FAILURE;
+    	  char msg[SIMPUT_MAXSTR];
+    	  sprintf(msg, "units of image coordinates are '%s' and '%s' "
+    			  "(must be 'deg')", wcs.cunit[0], wcs.cunit[1]);
+    	  SIMPUT_ERROR(msg);
+    	  break;
       }
 
       // Determine floating point pixel positions shifted by 0.5 in 
