@@ -97,6 +97,7 @@ AC_CONFIG_FILES([Makefile
 		 tools/simputimg/Makefile
 		 tools/simputmerge/Makefile
 		 tools/simputspec/Makefile
+		 tools/simputmultispec/Makefile
 		 tools/simputsrc/Makefile
 		 tools/simputverify/Makefile])
 		

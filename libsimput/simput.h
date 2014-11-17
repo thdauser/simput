@@ -713,5 +713,43 @@ int getSimputExtType(SimputCtlg* const cat,
 		     const char* const filename, 
 		     int* const status);
 
+// WCSlib: pixel to sky
+void simput_p2s(struct wcsprm* const wcs,
+		const double px,
+		const double py,
+		double* sx,
+		double* sy,
+		int* const status);
+
+// WCSlib: sky to pixel
+void simput_s2p(struct wcsprm* const wcs,
+		double* px,
+		double* py,
+		const double sx,
+		const double sy,
+		int* const status);
+
+/** Read an Fits-File of a spectrum, which was created by ISIS, using the
+    routine write_isisSpec_file. Values are stored in "simputspec".*/
+void read_isisSpec_fits_file(char *fname, SimputMIdpSpec* simputspec,
+		char *ISISFile, float Emin, float Emax,
+		float plFlux, float bbFlux, float flFlux, float rflFlux,
+		int *status);
+
+/** Read an ASCII-File of a spectrum, which was created by ISIS, using the
+    routine write_isisSpec_file. Values are stored in "simputspec". */
+void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status);
+
+/** Writes and executes an isis script for calculating a spectrum from a
+    given file or from the parameters given (if file==""). */
+void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
+		char *ISISPostCmd, float Elow, float Eup, float Estep,
+		float plPhoIndex, float bbkT, float flSigma, float rflSpin, float NH,
+		int *status);
+
+/** Write and executes a XSPEC script for calculating a spectrum */
+void write_xspecSpec_file(char *fname, char *XSPECFile, float Elow,
+		float Eup,	float Estep, int *status);
+
 
 #endif /* SIMPUT_H */

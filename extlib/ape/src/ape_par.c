@@ -227,7 +227,6 @@ void ape_par_destroy(ApePar * ape_par) {
 
 char * ape_par_get_line(const ApePar * ape_par) {
   char * line = 0;
-
   if (0 == ape_par) {
     ape_msg_debug("ape_par_get_line: %s.\n", "NULL pointer passed for argument \"ape_par\"");
   } else if (0 == ape_par->field) {
@@ -241,19 +240,16 @@ char * ape_par_get_line(const ApePar * ape_par) {
     /* Loop once just to get the total size of the line. */
     for (field_itor = ape_list_begin(field); field_itor != end; field_itor = ape_list_next(field_itor)) {
       char ** list = (char **) ape_list_get(field_itor);
-      for (; 0 != list && 0 != *list; ++list) {
+      for (; 0 != list && 0 != *list; ++list)
         line_size += strlen(*list);
-      }
       /* Leave room for comma delimiter. */
       ++line_size;
     }
 
     /* Add room for the comment. */
-    size_t prelen=line_size;
     line_size += strlen(ape_par->comment);
 
     /* Create output buffer. */
-
     line = (char *) calloc(line_size, sizeof(char));
     if (0 == line) {
       ape_msg_debug("ape_par_get_line: %s.\n", "allocation failed for output line buffer");
@@ -266,19 +262,14 @@ char * ape_par_get_line(const ApePar * ape_par) {
         /* At end of field, insert terminating comma. */
         strcat(line, ",");
       }
-      /* An extra comma was concatenated to the output string, so zero it out. */
-      //jw original code. strlen causes errors with valgrind
-      // line[strlen(line) - 1] = '\0';
 
-      // jw new code, no errors
-      line[prelen-2]='\0';
+      /* An extra comma was concatenated to the output string, so zero it out. */
+      line[strlen(line) - 1] = '\0';
 
       /* Append comment. */
       strcat(line, ape_par->comment);
     }
   }
-
-  exit(1);
   return line;
 }
 
