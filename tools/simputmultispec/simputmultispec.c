@@ -91,8 +91,6 @@ static void saveSimputImg_map(SimputImg* const img,
 
 }
 
-
-
 static double get_interp_from_img(const SimputImg* ctsImg, SimputImg* parImg,
 		int indX, int indY, int* outside, int* status){
 	// interpolate the parameter value for a certain pixel (indX, indY) in the cts-Image
@@ -188,23 +186,33 @@ static int get_single_par_id(double pmin, double pmax, int npar, double pval, in
 	return (int) lrint(id_val);
 }
 
+static void print_par_array(par_info par, int ii, int logScale){
+	int jj;
+	printf("\nValues for Parameter %i (%s): \n",ii+1,par.par_names);
+	for (jj=0; jj < par.num_pvals; jj++){
+	    printf("  %.3e",par.pvals[jj]);
+	}
+	if (logScale) {
+	    printf("   (log scale)");
+	}
+	printf("\n\n");
+}
+
 static void cal_par_arrays(par_info *par, struct param_input *ipar, SimputImg** img, int num_param, int* status){
 
 
 	int ii;
 	for (ii=0; ii<num_param; ii++){
 
-		// TODO: properly check this
-		if (ipar[ii].minPar == ipar[ii].maxPar){
-			min_max_2d(img[ii]->dist,img[ii]->naxis1,img[ii]->naxis2,
-					&ipar[ii].minPar,&ipar[ii].maxPar);
-		}
+	    min_max_2d(img[ii]->dist,img[ii]->naxis1,img[ii]->naxis2,
+	            &ipar[ii].minPar,&ipar[ii].maxPar);
 
 		if (ipar[ii].minPar >= ipar[ii].maxPar){
 			printf("for Param%i parMin (%.4f) >= parMax (%.4f)",ii+1,ipar[ii].minPar,ipar[ii].maxPar);
 			*status=EXIT_FAILURE;
 			break;
 		}
+        printf("\n------- %.3f %.3f (%i) -------- \n",ipar[ii].minPar,ipar[ii].maxPar,ipar[ii].num_values);
 
 		par[ii].pvals = (double *)malloc(ipar[ii].num_values*(sizeof(double)));
 		CHECK_MALLOC_VOID(par[ii].pvals);
@@ -217,24 +225,124 @@ static void cal_par_arrays(par_info *par, struct param_input *ipar, SimputImg** 
 	    par[ii].num_pvals = ipar[ii].num_values;
 	    par[ii].par_names = ipar[ii].param_names;
 
+	    print_par_array(par[ii], ii, ipar[ii].logScale);
 	}
 
 }
 
-static void set_input_par(struct param_input *ipar,
-		struct Parameters* par) {
-	ipar[0].param_files = par->Param1File;
-	ipar[0].param_names = par->Param1Name;
-	ipar[0].num_values = par->Param1num_values;
-	ipar[0].logScale = par->Param1logScale;
-	ipar[0].minPar = 0.0;
-	ipar[0].maxPar = 0.0;
-	ipar[1].param_files = par->Param2File;
-	ipar[1].param_names = par->Param2Name;
-	ipar[1].num_values = par->Param2num_values;
-	ipar[1].logScale = par->Param2logScale;
-	ipar[1].minPar = 0.0;
-	ipar[1].maxPar = 0.0;
+
+static char* parse_string(char *str){
+	char *pch;
+	pch = strtok (str,";");
+	return pch;
+}
+static int parse_num_param(char *paramstr){
+
+	int num_param = 0;
+
+	char buffer[SIMPUT_MAXSTR];
+	strcpy(buffer,paramstr); // make sure we do not destroy the string
+
+	char *pch;
+	pch = parse_string(buffer);
+	while (pch != NULL) {
+		pch = parse_string(NULL);
+		num_param++;
+	}
+	return num_param;
+}
+static char** parse_string2array(char *paramstr, int n, int *status){
+
+	char str[SIMPUT_MAXSTR];
+	strcpy(str,paramstr); // make sure we do not destroy the string
+
+	// simply return if the desired number of parameters is not given
+	// TODO: Test case if only 1 parameter is given
+	if ( n != parse_num_param(str)){
+		return NULL;
+	}
+
+	// allocate array
+	char **strarray = NULL;
+	strarray = (char**) malloc( n * sizeof(char*) );
+	CHECK_NULL_RET(strarray,*status,"malloc failed",NULL);
+	int ii = 0;
+	for (ii=0; ii < n; ii++){
+		strarray[ii] = (char*) malloc (SIMPUT_MAXSTR * sizeof(char));
+		CHECK_NULL_RET(strarray[ii],*status,"malloc failed",NULL);
+	}
+
+	char *pch = NULL;
+	pch = parse_string(str);
+	ii=0;
+	strcpy(strarray[ii],pch);
+
+	while ( pch != NULL){
+		ii++;
+		pch = parse_string(NULL);
+
+		if (pch != NULL){
+			strcpy(strarray[ii],pch);
+		}
+	}
+	return strarray;
+}
+static void set_input_par(struct param_input *ipar, struct Parameters* par, int num_par, int *status) {
+
+   	char **pfiles = NULL;
+    char **pnames = NULL;
+    char **pnumval = NULL;
+    char **plog = NULL;
+
+    int ii;
+
+    pfiles = parse_string2array(par->ParamFiles,num_par,status);
+    CHECK_NULL_VOID(pfiles,*status,"Error when parsing ParamFiles");
+
+    pnames = parse_string2array(par->ParamNames,num_par,status);
+    CHECK_NULL_VOID(pnames,*status,"Error when parsing ParamNames");
+
+    for (ii=0; ii < num_par ; ii++ ){
+        	ipar[ii].param_files = pfiles[ii];
+        	ipar[ii].param_names = pnames[ii];
+    }
+
+    // we now do allow NULL here and then set the values to the standard value
+    pnumval = parse_string2array(par->ParamsNumValues,num_par,status);
+    for (ii=0; ii < num_par ; ii++ ){
+    	if (pnumval == NULL){
+    		ipar[ii].num_values = DEFAULT_NUM_VALUES;
+    	} else {
+    	    ipar[ii].num_values = (int) (atof(pnumval[ii]));
+    	    // make sure that if a string (like "none") is given, we use the default value
+    	    if (ipar[ii].num_values == 0 ){
+    	        ipar[ii].num_values = DEFAULT_NUM_VALUES;
+    	    }
+    	}
+    }
+
+    plog = parse_string2array(par->ParamsLogScale,num_par,status);
+
+    for (ii=0; ii < num_par ; ii++ ){
+    	if (plog == NULL){
+    		ipar[ii].logScale = 0;
+    	} else {
+    		if ( strcmp(plog[ii],"yes") == 0 ){
+    			ipar[ii].logScale = 1;
+    		} else {
+    			ipar[ii].logScale = 0;
+    		}
+    	}
+    }
+
+
+    // set minial and maximal parameter value
+    // TODO: do we want to allow them to be set in the par file?
+    for (ii=0; ii < num_par ; ii++ ){
+        ipar[0].minPar = 0.0;
+    	ipar[0].maxPar = 0.0;
+    }
+
 }
 
 static void get_par_id(int id_array[], const SimputImg *ctsImg, SimputImg *parImgs[],
@@ -441,26 +549,6 @@ static img_list* create_img_list(param_node *root, par_info *par, int num_param,
 
 }
 
-
-//static void print_par_arr(int *pa, int n){
-//	for (int ii=0; ii<n-1; ii++){
-//		printf("%i, ",pa[ii]);
-//	}
-//	printf("%i\n",pa[n-1]);
-//}
-//static void print_img_list(img_list *li){
-//
-//	printf("The different possible combinations: \n");
-//	print_par_arr(li->pval_ar,li->num_param);
-//	while (li->next != NULL){
-//		li = li->next;
-//		print_par_arr(li->pval_ar,li->num_param);
-//	}
-//
-//}
-
-
-
 static void init_string(char **str,char *f0, char *fmt, int *status){
 	int len = maxStrLenCat;
 	*str=(char*) malloc( len*sizeof(char) );
@@ -509,8 +597,10 @@ static void ms_save_src(SimputCtlg *ctlg, char *fname, char *fspec, char *fimg,
     char path_fspec[SIMPUT_MAXSTR];
     char path_fimg[SIMPUT_MAXSTR];
 
-    sprintf(path_fspec,"%s[%s,%i][NAME=='%s']",par.Simput,extnameSpec,extver,fspec);
-    sprintf(path_fimg,"%s[%s,%i]",par.Simput,fimg,extver);
+ //   sprintf(path_fspec,"%s[%s,%i][NAME=='%s']",par.Simput,extnameSpec,extver,fspec);
+//    sprintf(path_fimg,"%s[%s,%i]",par.Simput,fimg,extver);
+    sprintf(path_fspec,"[%s,%i][NAME=='%s']",extnameSpec,extver,fspec);
+    sprintf(path_fimg,"[%s,%i]",fimg,extver);
 
     // Get a new source entry.
     SimputSrc *src = newSimputSrcV(src_id,fname, par.RA*M_PI/180., par.Dec*M_PI/180.,
@@ -545,7 +635,7 @@ static void delete_tmp_spec_files(struct Parameters par){
 	if (strlen(par.ISISFile)>0) {
 		char filename[SIMPUT_MAXSTR];
 		sprintf(filename, "%s.spec0", par.Simput);
-//		remove(filename);
+		remove(filename);
 	}
 	if (strlen(par.XSPECFile)>0) {
 		char filename[SIMPUT_MAXSTR];
@@ -606,8 +696,6 @@ static float ms_save_spec(struct Parameters par, char *fspec,
 	// and get the model flux
 	double srcFlux = getSimputMIdpSpecBandFlux(spec, par.Emin,par.Emax);
 
-	printf(" ******** flux: %.4e, fd: %.4e \n",srcFlux, spec->fluxdensity[10]);
-
 	// delete temp files and free memory
 	delete_tmp_spec_files(par);
 	free(spec);
@@ -624,7 +712,7 @@ static void save_single_combi(img_list *li, SimputImg *ctsImg, struct Parameters
 	get_filenames(&fsrc,&fspec,&fimg, li, status);
 	CHECK_STATUS_VOID(*status);
 
-	// --- SPECTRUM --- //
+    // --- SPECTRUM --- //
 	float specSrcFlux = ms_save_spec(par, fspec, data_par, li, status);
 	CHECK_STATUS_VOID(*status);
 
@@ -690,14 +778,14 @@ static void create_simputmultispec_file(img_list *li, SimputImg *ctsImg,
 	loop_images_fits(li,ctsImg,par,data_par,cat,status);
 }
 
-int simputmultispec_main()
-{
+
+
+int simputmultispec_main() {
   // Program parameters.
   struct Parameters input_par;
 
   // Error status.
   int status=EXIT_SUCCESS;
-
 
   // Register HEATOOL
   set_toolname("simputmultispec");
@@ -714,9 +802,10 @@ int simputmultispec_main()
     // ************************************************************ //
     // TODO: needs to be given als input and done automatically!!
     //		 (and in a function)
-    const int num_param = 2;
+    int num_param = parse_num_param(input_par.ParamFiles);
     struct param_input ipar[num_param];
-    set_input_par(ipar, &input_par);
+    set_input_par(ipar, &input_par, num_param, &status);
+    CHECK_STATUS_BREAK(status);
     // ************************************************************ //
 
     SimputImg* ctsImg = loadSimputImg_map(input_par.ImageFile, &status);
@@ -877,12 +966,10 @@ int simputmultispec_getpar(struct Parameters* const par) {
   query_simput_parameter_float("srcFlux", &par->srcFlux, &status );
 
   // *** PARAMETER information *** //
-  query_simput_parameter_string("Param1File", par->Param1File, &status );
-  query_simput_parameter_string("Param2File", par->Param2File, &status );
-  query_simput_parameter_string("Param1Name", par->Param1Name, &status );
-  query_simput_parameter_string("Param2Name", par->Param2Name, &status );
-  query_simput_parameter_int("Param1num_values", &par->Param1num_values, &status );
-  query_simput_parameter_int("Param2num_values", &par->Param2num_values, &status );
+  query_simput_parameter_string("ParamFiles", par->ParamFiles, &status );
+  query_simput_parameter_string("ParamNames", par->ParamNames, &status );
+  query_simput_parameter_string("ParamsNumValues", par->ParamsNumValues, &status );
+  query_simput_parameter_string("ParamsLogScale", par->ParamsLogScale, &status );
 
   query_simput_parameter_int("chatter", &par->chatter, &status );
   query_simput_parameter_bool("clobber", &par->clobber, &status );
@@ -899,18 +986,6 @@ int simputmultispec_getpar(struct Parameters* const par) {
 
     // ***************************** //
 
-    // OLD VERSION: WHY?????
-    //    char sclobber[SIMPUT_MAXSTR], shistory[SIMPUT_MAXSTR];
-    //    if (0==par.clobber) {
-    //      strcpy(sclobber, "no");
-    //    } else {
-    //      strcpy(sclobber, "yes");
-    //    }
-    //    if (0==par.history) {
-    //      strcpy(shistory, "no");
-    //    } else {
-    //      strcpy(shistory, "yes");
-    //    }
 
   return(status);
 }

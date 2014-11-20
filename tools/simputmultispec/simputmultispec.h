@@ -42,6 +42,7 @@
     return;\
   }
 
+const int DEFAULT_NUM_VALUES = 8;
 
 struct param_input{
 	double minPar;
@@ -79,18 +80,6 @@ struct Parameters {
       (value=0.0), it is set according to the assigned spectrum. */
   float srcFlux;
 
-/*
-  * ID of the source.
-  int Src_ID;
-  * Name of the source.
-  char Src_Name[SIMPUT_MAXSTR];
-
-
-
-
-
-*/
-
   /* Lower and upper boundary of the generated spectrum [keV].*/
   float Elow;
   float Eup;
@@ -114,10 +103,16 @@ struct Parameters {
 
 
    // Param1
-  char Param1File[SIMPUT_MAXSTR];
-  char Param1Name[SIMPUT_MAXSTR];
+   char ParamFiles[SIMPUT_MAXSTR];
+   char ParamNames[SIMPUT_MAXSTR];
+   char ParamsNumValues[SIMPUT_MAXSTR];
+   char ParamsLogScale[SIMPUT_MAXSTR];
 
-  // Param2
+
+   char Param1File[SIMPUT_MAXSTR];
+   char Param1Name[SIMPUT_MAXSTR];
+
+   // Param2
  char Param2File[SIMPUT_MAXSTR];
  char Param2Name[SIMPUT_MAXSTR];
 
