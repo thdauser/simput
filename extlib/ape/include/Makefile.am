@@ -7,3 +7,6 @@ SUBDIRS = ape
 # Define the headers that will be installed in $(includedir):
 include_HEADERS=pil.h pil_error.h cfortran.h
 
+install-data-local:
+	mkdir -p @includedir@/ape
+	mv @includedir@/ape_*.h @includedir@/ape/

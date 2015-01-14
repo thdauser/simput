@@ -4,10 +4,10 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/cfitsio
 ########### LIBRARIES #################
 
 # Libraries that are installed in the 'lib' directory.
-noinst_LIBRARIES=libatFunctions.a
+lib_LTLIBRARIES=libatFunctions.la
 
 # Sources:
-libatFunctions_a_SOURCES=atAberration.c atAddVect.c atAngDistance.c	\
+libatFunctions_la_SOURCES=atAberration.c atAddVect.c atAngDistance.c	\
 			 atAtTimeDToAtTime.c atAtTimeToAtTimeD.c	\
 			 atAzEl.c atAzElSet.c atBrazil.c atConvPol.c	\
 			 atCopyVect.c atCrossPts.c atCTime.c		\
@@ -43,3 +43,4 @@ libatFunctions_a_SOURCES=atAberration.c atAddVect.c atAngDistance.c	\
 			 atPathNum3.c atPathNumUSC3.c atSatPos3.c	\
 			 atSetElement3.c f2c.h
 
+libatFunctions_la_LDFLAGS = -version-info 1:0:0

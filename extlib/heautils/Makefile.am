@@ -4,10 +4,10 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/ape/include
 ########### LIBRARIES #################
 
 # Libraries that are installed in the 'lib' directory.
-noinst_LIBRARIES=libhdutils.a
+lib_LTLIBRARIES=libhdutils.la
 
 # Sources:
-libhdutils_a_SOURCES=headas_sort.c headas_lock.c headas_history.c	\
+libhdutils_la_SOURCES=headas_sort.c headas_lock.c headas_history.c	\
                      headas_file_check.c headas_error_init.c		\
                      HDgtcalf_test.c headas_utils.c headas_toolname.c	\
                      headas_svdfit.c headas_smooth.c headas_rand.c	\
@@ -16,6 +16,10 @@ libhdutils_a_SOURCES=headas_sort.c headas_lock.c headas_history.c	\
                      headas_polyfit.c headas_parstamp.c			\
                      headas_error_manager.c headas_copykeys.c		\
                      HDgtcalf_standalone.c HDgtcalf_internal.c
+
+libhdutils_la_LDFLAGS = -version-info 1:0:0
+
+libhdutils_la_LIBADD=../ape/src/libape.la
 
 ############ HEADERS #################
 

@@ -25,17 +25,14 @@ endif
 bin_PROGRAMS=$(PROGS)
 
 galabs_SOURCES=galabs.c spectree.c spectree.h
-galabs_LDADD  =@top_builddir@/labnh/liblabnh.a 
-galabs_LDADD +=@top_builddir@/labnh/libposstring.a
-galabs_LDADD +=@top_builddir@/libsimput/libsimput.a 
+galabs_LDADD  =@top_builddir@/labnh/liblabnh.la 
+galabs_LDADD +=@top_builddir@/labnh/libposstring.la
+galabs_LDADD +=@top_builddir@/libsimput/libsimput.la 
 galabs_LDADD +=-lXSFunctions 
 galabs_LDADD +=-lXSModel 
 galabs_LDADD +=-lXSUtil 
 galabs_LDADD +=-lXS 
 galabs_LDADD +=-lCCfits_2.4 
 galabs_LDADD +=-lgfortran
-galabs_LDADD +=@top_builddir@/extlib/fftw/.libs/libfftw3.a
-galabs_LDADD +=@top_builddir@/extlib/ape/src/libape.a
-galabs_LDADD +=@top_builddir@/extlib/atFunctions/src/libatFunctions.a
-galabs_LDADD +=@top_builddir@/extlib/cfitsio/libcfitsio.a
-galabs_LDADD +=@top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
+galabs_LDADD +=@top_builddir@/extlib/ape/src/libape.la
+galabs_LDADD +=@top_builddir@/extlib/atFunctions/src/libatFunctions.la

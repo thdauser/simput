@@ -6,10 +6,13 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/cfitsio
 ########### LIBRARIES #################
 
 # Libraries that are installed in the 'lib' directory.
-noinst_LIBRARIES=libhdinit.a
+lib_LTLIBRARIES=libhdinit.la
 
 # Sources:
-libhdinit_a_SOURCES=headas_init.c
+libhdinit_la_SOURCES=headas_init.c
+libhdinit_la_LDFLAGS = -version-info 1:0:0
+
+EXTRA_DIST=headas_main.c
 
 ############ HEADERS #################
 

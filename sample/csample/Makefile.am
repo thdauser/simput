@@ -13,12 +13,12 @@ AM_CFLAGS+=-Wall -Werror
 noinst_PROGRAMS= csample
 
 csample_SOURCES=csample.c
-csample_LDADD =@top_builddir@/libsimput/libsimput.a
-csample_LDADD+=@top_builddir@/extlib/heaio/libhdio.a 
-csample_LDADD+=@top_builddir@/extlib/heasp/libhdsp.a 
-csample_LDADD+=@top_builddir@/extlib/cfitsio/libcfitsio.a 
-csample_LDADD+=@top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
-csample_LDADD+=@top_builddir@/extlib/fftw/.libs/libfftw3.a
+csample_LDADD =@top_builddir@/libsimput/libsimput.la
+csample_LDADD+=@top_builddir@/extlib/heainit/libhdinit.la
+csample_LDADD+=@top_builddir@/extlib/heaio/libhdio.la
+csample_LDADD+=@top_builddir@/extlib/heautils/libhdutils.la
+csample_LDADD+=@top_builddir@/extlib/heasp/libhdsp.la
+csample_LDADD+=@top_builddir@/extlib/ape/src/libape.la
 
 ########### Sample data ##############
 

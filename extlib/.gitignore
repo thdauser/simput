@@ -1,4 +1,9 @@
 cfitsio/cfitsio.pc
+cfitsio/libcfitsio.so
+cfitsio/GNUmakefile
+fftw/doc/fftw3.info
+fftw/doc/fftw3.info-1
+fftw/doc/fftw3.info-2
 fftw/api/fftw3.f03
 fftw/config.h.in
 fftw/fftw.pc
@@ -12,6 +17,7 @@ fftw/tools/fftw-wisdom.1
 fftw/tools/fftw_wisdom.1
 wcslib/C/fitshdr.c
 wcslib/C/libwcs.so.4.13.4
+wcslib/C/libwcs.so
 wcslib/C/wcsbth.c
 wcslib/C/wcspih.c
 wcslib/C/wcsulex.c

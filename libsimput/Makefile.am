@@ -17,14 +17,16 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/fftw/api
 ########### LIBRARIES #################
 
 # Libraries that are installed in the 'lib' directory.
-lib_LIBRARIES=libsimput.a
+lib_LTLIBRARIES=libsimput.la
 
 # Sources:
-libsimput_a_SOURCES=datastruct.c fileaccess.c datahandling.c vector.c	\
+libsimput_la_SOURCES=datastruct.c fileaccess.c datahandling.c vector.c	\
                     arf.c rmf.c $(FSRC)
+libsimput_la_LIBADD=@top_builddir@/extlib/heasp/libhdsp.la
+
+libsimput_la_LDFLAGS = -version-info 2:0:0
 
 ############ HEADERS #################
 
 # Define the headers that will be installed in $(includedir):
-include_HEADERS=simput.h
-noinst_HEADERS =common.h vector.h arf.h rmf.h
+include_HEADERS=simput.h common.h vector.h arf.h rmf.h

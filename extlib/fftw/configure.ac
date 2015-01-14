@@ -23,7 +23,7 @@ AM_CONFIG_HEADER(config.h)
 AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE
 AC_SUBST(SHARED_VERSION_INFO)
-AC_DISABLE_SHARED dnl to hell with shared libraries
+# TD: removed for SIMPUT library:  AC_DISABLE_SHARED dnl to hell with shared libraries
 AC_CANONICAL_HOST
 
 dnl configure options

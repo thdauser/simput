@@ -22,13 +22,9 @@ dist_pfiles_DATA=simputmerge.par
 bin_PROGRAMS=simputmerge
 
 simputmerge_SOURCES=simputmerge.c simputmerge.h
-simputmerge_LDADD =@top_builddir@/libsimput/libsimput.a
-simputmerge_LDADD+=@top_builddir@/extlib/heainit/libhdinit.a
-simputmerge_LDADD+=@top_builddir@/extlib/heaio/libhdio.a
-simputmerge_LDADD+=@top_builddir@/extlib/heautils/libhdutils.a
-simputmerge_LDADD+=@top_builddir@/extlib/heasp/libhdsp.a
-simputmerge_LDADD+=@top_builddir@/extlib/ape/src/libape.a
-simputmerge_LDADD+=@top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
-simputmerge_LDADD+=@top_builddir@/extlib/fftw/.libs/libfftw3.a
-simputmerge_LDADD+=@top_builddir@/extlib/cfitsio/libcfitsio.a
-
+simputmerge_LDADD =@top_builddir@/libsimput/libsimput.la
+simputmerge_LDADD+=@top_builddir@/extlib/heainit/libhdinit.la
+simputmerge_LDADD+=@top_builddir@/extlib/heaio/libhdio.la
+simputmerge_LDADD+=@top_builddir@/extlib/heautils/libhdutils.la
+simputmerge_LDADD+=@top_builddir@/extlib/heasp/libhdsp.la
+simputmerge_LDADD+=@top_builddir@/extlib/ape/src/libape.la

@@ -13,7 +13,4 @@ endif
 noinst_PROGRAMS=$(PROGS)
 
 fsample_SOURCES= fsample.f95
-fsample_LDADD  = @top_builddir@/libsimput/libsimput.a
-fsample_LDADD += @top_builddir@/extlib/cfitsio/libcfitsio.a
-fsample_LDADD += @top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
-fsample_LDADD += @top_builddir@/extlib/fftw/.libs/libfftw3.a
+fsample_LDADD  = @top_builddir@/libsimput/libsimput.la

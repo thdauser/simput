@@ -22,13 +22,9 @@ dist_pfiles_DATA=simputverify.par
 bin_PROGRAMS=simputverify
 
 simputverify_SOURCES=simputverify.c simputverify.h
-simputverify_LDADD =@top_builddir@/libsimput/libsimput.a
-simputverify_LDADD+=@top_builddir@/extlib/heainit/libhdinit.a
-simputverify_LDADD+=@top_builddir@/extlib/heaio/libhdio.a
-simputverify_LDADD+=@top_builddir@/extlib/heautils/libhdutils.a
-simputverify_LDADD+=@top_builddir@/extlib/heasp/libhdsp.a
-simputverify_LDADD+=@top_builddir@/extlib/ape/src/libape.a
-simputverify_LDADD+=@top_builddir@/extlib/wcslib/C/libwcs-4.13.4.a
-simputverify_LDADD+=@top_builddir@/extlib/fftw/.libs/libfftw3.a
-simputverify_LDADD+=@top_builddir@/extlib/cfitsio/libcfitsio.a
-
+simputverify_LDADD =@top_builddir@/libsimput/libsimput.la
+simputverify_LDADD+=@top_builddir@/extlib/heainit/libhdinit.la
+simputverify_LDADD+=@top_builddir@/extlib/heaio/libhdio.la
+simputverify_LDADD+=@top_builddir@/extlib/heautils/libhdutils.la
+simputverify_LDADD+=@top_builddir@/extlib/heasp/libhdsp.la
+simputverify_LDADD+=@top_builddir@/extlib/ape/src/libape.la
