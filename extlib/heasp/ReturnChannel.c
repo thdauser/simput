@@ -70,27 +70,24 @@ void ReturnChannel(struct RMF *rmf, float energy, int NumberPhoton, long *channe
 
     lower = 0;
     upper = rmf->NumberChannels-1;
-    if ( RandomNumber[i] <= sumresponse[upper] ) {
-      while ( upper - lower > 1 ) {
-	middle = (upper + lower)/2;
-	if ( RandomNumber[i] < sumresponse[middle] ) {
-	  upper = middle;
-	} else {
-	  lower = middle;
-	}
-      }
-      if ( RandomNumber[i] > sumresponse[lower] ) {
-	channel[i] = upper;
-      } else {
-	channel[i] = lower;
-      }
 
-  /* correct the channel number for the first channel number in use in the response matrix */
-
-      channel[i] += rmf->FirstChannel;
-
+    while((upper-lower)>1){
+    
+      middle=(upper+lower)/2;
+    
+      if(sumresponse[middle]>RandomNumber[i]){
+	upper=middle;
+      }else{
+	lower=middle;
+      }   
     }
-
+    if((sumresponse[lower]>RandomNumber[i]) || (sumresponse[upper+1]<RandomNumber[i])){
+      puts("ReturnChannel.c: Binary search did not find the requested channel.");
+      printf("lower=%ld, middle=%ld, upper=%ld\n", lower, middle, upper);
+    }else{
+      channel[i]=lower+rmf->FirstChannel;
+    }
+    
   }
 
   /* memory tidy-up */
