@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: wcspih.l,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: wcspih.l,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * wcspih.l is a Flex description file containing the definition of a lexical
@@ -111,6 +105,8 @@ STRING	'([^']|'')*'
 #include "wcs.h"
 #include "wcshdr.h"
 #include "wcsmath.h"
+#include "wcsprintf.h"
+#include "wcsutil.h"
 
 #define INTEGER 0
 #define FLOAT   1
@@ -827,7 +823,7 @@ jmp_buf wcspih_abort_jmp_env;
 	        }
 	
 	        /* Read the keyvalue. */
-	        sscanf(yytext, "%lf", (double *)wptr);
+	        wcsutil_str2double(yytext, "%lf", (double *)wptr);
 	
 	        /* Flag the presence of PCi_ja, or CDi_ja and/or CROTAia. */
 	        if (altlin) {
@@ -939,7 +935,7 @@ jmp_buf wcspih_abort_jmp_env;
 	      keep = wcspih_hdr - 80;
 	
 	    } else if (ctrl > 2) {
-	      fprintf(stderr, "%.80s\n  Discarded.\n", wcspih_hdr-80);
+	      wcsfprintf(stderr, "%.80s\n  Discarded.\n", wcspih_hdr-80);
 	    }
 	  }
 	  BEGIN(FLUSH);
@@ -954,7 +950,7 @@ jmp_buf wcspih_abort_jmp_env;
 	    }
 	
 	    if (abs(ctrl%10) > 1) {
-	      fprintf(stderr, "%.80s\n%4d: %s.\n", wcspih_hdr-80, *nreject,
+	      wcsfprintf(stderr, "%.80s\n%4d: %s.\n", wcspih_hdr-80, *nreject,
 	        errmsg);
 	    }
 	  }
@@ -989,9 +985,11 @@ jmp_buf wcspih_abort_jmp_env;
 	
 	    if (abs(ctrl%10) > 2) {
 	      if (*nwcs == 1) {
-	        fprintf(stderr, "Found one coordinate representation.\n");
+	        if (strcmp(wcs[0]->wcsname, "DEFAULTS") != 0) {
+	          wcsfprintf(stderr, "Found one coordinate representation.\n");
+	        }
 	      } else {
-	        fprintf(stderr, "Found %d coordinate representations.\n",
+	        wcsfprintf(stderr, "Found %d coordinate representations.\n",
 	          *nwcs);
 	      }
 	    }
@@ -1013,7 +1011,7 @@ jmp_buf wcspih_abort_jmp_env;
 	    if (ctrl < 0) {
 	      *hptr = '\0';
 	    } else if (ctrl == 1) {
-	      fprintf(stderr, "%d WCS keyrecords were rejected.\n",
+	      wcsfprintf(stderr, "%d WCS keyrecords were rejected.\n",
 	        *nreject);
 	    }
 	
@@ -1080,7 +1078,7 @@ int wcspih_inits(
   struct wcsprm **wcs)
 
 {
-  int ialt, npsmax, npvmax, status = 0;
+  int ialt, defaults, npsmax, npvmax, status = 0;
   struct wcsprm *wcsp;
 
   /* Find the number of coordinate descriptions. */
@@ -1089,7 +1087,7 @@ int wcspih_inits(
     if (alts[ialt]) (*nwcs)++;
   }
 
-  if (!(*nwcs) && naxis) {
+  if ((defaults = !(*nwcs) && naxis)) {
     /* NAXIS is non-zero but there were no WCS keywords with an alternate
        version code; create a default WCS with blank alternate version. */
     wcspih_naxes(naxis, 0, 0, ' ', alts, 0x0);
@@ -1122,6 +1120,11 @@ int wcspih_inits(
         /* Record the alternate version code. */
         if (ialt) {
           wcsp->alt[0] = 'A' + ialt - 1;
+        }
+
+        /* Record in wcsname whether this is a default description. */
+        if (defaults) {
+          strcpy(wcsp->wcsname, "DEFAULTS");
         }
 
         /* On the second pass alts[] indexes the array of wcsprm structs. */

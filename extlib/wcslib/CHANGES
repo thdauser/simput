@@ -1,3 +1,252 @@
+WCSLIB version 4.25.1 (2015/01/05)
+----------------------------------
+
+* C library
+
+  - Updated the test output reference files for tpih1, tbth1, twcsfix,
+    and twcstab to account for the change to wcsset() in release 4.25.
+
+  - Documentation generation moved to doxygen 1.8.9.1 (was 1.8.8).
+
+* Fortran wrappers
+
+  - Updated the test output reference files for tpih1, twcsfix, and
+    twcstab to account for the change to wcsset() in release 4.25.
+
+
+WCSLIB version 4.25 (2014/12/15)
+----------------------------------
+
+* C library
+
+  - wcsset() now supplies default values for the auxiliary keywords
+    EQUINOXa and RADESYSa if not present in the FITS header.
+
+
+WCSLIB version 4.24 (2014/09/19)
+----------------------------------
+
+* C library
+
+  - Changed API to wcscompare() to allow a tolerance to be specified for
+    floating-point comparisons.  Contributed by Michael Droettboom.
+
+  - Documentation generation moved to doxygen 1.8.8 (was 1.8.4).
+
+* Fortran wrappers
+
+    Track the change to wcscompare().
+
+* User manual
+
+  - Added mention of WCSLIB in "homebrew-science" (MacOSX) in the
+    section on other packages.
+
+
+WCSLIB version 4.23 (2014/05/11)
+--------------------------------
+
+* C library
+
+  - New function wcscompare() compares two wcsprm structs for equality
+    with varying degrees of strictness.  Test program twcscompare.
+    Contributed by Michael Droettboom.
+
+  - In wcssub(), fixed a bug uncovered by valgrind arising from
+    allocation of insufficient memory for temporaries when a new axis
+    is added.  Reported by Michael Droettboom.
+
+  - In wcshdo(), don't write RESTFRQ or RESTWAV if zero.
+
+    Also, to distinguish them from integer keyvalues, floating-
+    point values will now always be written with an exponent or
+    fractional part, ".0" being appended if necessary to achieve this.
+    Suggested by Peter Weilbacher.
+
+  - Fixed the '-h' option in twcshdr.
+
+* Fortran wrappers
+
+  - Wrapper for wcscompare().
+
+
+WCSLIB version 4.22 (2014/04/13)
+--------------------------------
+
+* C library
+
+  - In pcox2s() and pcos2x(), use alternative projection equations for
+    greater numerical precision near theta == 0.  In cops2x(), return
+    an exact result for theta at the poles.  Relaxed the tolerance for
+    bounds checking a little in sflx2s().
+
+
+WCSLIB version 4.21 (2014/03/24)
+--------------------------------
+
+* C library
+
+  - New function prjbchk() performs bounds checking on native spherical
+    coordinates.  It is invoked automatically by the deprojection (x2s)
+    routines if prjprm::bounds&4 is set.  Documented the new bounds
+    checking implemented by prjbchk() in the prologue entry for
+    wcsbchk().  Improvements to tprj1 to test the vector API of prjx2s()
+    and to deal better with out-of-bounds native coordinates returned by
+    it.
+
+  - Bug fixes in the projection routines: in hpxx2s() relating to bounds
+    checking, bug introduced at 4.20, reported by Michael Droettboom; in
+    parx2s() and molx2s() relating to setting the stat vector; in
+    hpxx2s() relating to implementation of the vector API; and in
+    xphx2s() relating to setting an out-of-bounds value of phi.
+
+* Fortran wrappers
+
+  - Wrapper for prjbchk().  Modified tprj1.f to track changes to the C
+    version.
+
+
+WCSLIB version 4.20 (2013/12/18)
+--------------------------------
+
+* C library
+
+  - New function, wcsbchk(), for controlling bounds checking in the
+    projection routines.
+
+  - Enable bounds checking in the pixel-to-sky (x2s) direction for HPX
+    and XPH if prjprm::bounds&2.  Tightened bounds checking in xphx2s().
+    prjini() now sets prjprm::bounds = 3 to enable all bounds checking
+    by default.
+
+  - Fixed an incorrect error message in wcs_units().  Also report
+    potentially unsafe units translations in unitfix() - both
+    contributed by Michael Droettboom.
+
+* Fortran wrappers
+
+  - Wrapper for wcsbchk().
+
+* PGSBOX
+
+  - Fixed a few nuisance warnings from gfortran 4.7.2 relating to
+    implicit type conversions in pgsbox.f.
+
+* User manual
+
+  - Added mention of wcsjs (Javascript) in the section on other
+    packages.
+
+
+WCSLIB version 4.19 (2013/09/30)
+--------------------------------
+
+* C library
+
+  - Bug fix in wcshdo(), uncovered by cppcheck and reported by David
+    Binderman.  Fixed additional minor inconsistencies in hpxx2s(),
+    wcsprintf(), and wcsfprintf() reported by cppcheck.
+
+  - Minor fix to twcstab reported by cppcheck.
+
+  - Bug fix in wcssub() for handling (non-standard) PROJPn keywords
+    (uncovered by valgrind, reported by Paul Price).
+
+
+WCSLIB version 4.18 (2013/07/13)
+--------------------------------
+
+* C library
+
+  - Implemented the butterfly projection (XPH), being the polar form of
+    the HEALPix projection with (H,K) = (4,3).  Augmented tprj1.c and
+    tprj2.c to suit.
+
+  - Bug fix in celfix() when translating GLS to SFL with non-zero
+    reference point.
+
+  - Documentation generation moved to doxygen 1.8.4 (was 1.5.6).
+
+* Fortran wrappers
+
+  - Wrappers for the XPH projection functions and corresponding
+    modifications to the test programs.
+
+  - Fixed a few inconsequential warnings from gfortran 4.7.2 relating
+    to implicit type conversions in the test programs.
+
+* Utilities
+
+  - In HPXcvt, fixed incorrect axis scaling (CDELT1 and CDELT2) in the
+    XPH header, and set the PCi_ja matrix in the HPX header to a pure
+    45 degree rotation with appropriate adjustment of CDELT1 and CDELT2
+    (matching XPH).  Also set LONPOLE to 180 degree in the XPH header
+    with adjustment of CRVAL1 as recommended in the errata.  These
+    changes prompted by Paddy Leahy.  Also, modified the FITS header
+    comment for XPH - it is no longer "experimental", and accept the
+    '-x' option (i.e. without qualification) as equivalent to '-xn'.
+
+
+WCSLIB version 4.17 (2013/01/29)
+--------------------------------
+
+* C library
+
+  - Added wcsfprintf() to wcsprint.h.  Now used in wcsbth() and wcspih()
+    to allow diagnostic output to be redirected.  Changes provided by
+    Michael Droettboom.
+
+
+WCSLIB version 4.16 (2012/11/07)
+--------------------------------
+
+* C library
+
+  - When wcspih() constructs a default coordinate representation it will
+    give it the special name "DEFAULTS", and will not report "Found one
+    coordinate representation" (if reporting is enabled).
+
+* Utilities
+
+  - wcsware has a new option, -P, which does the same as -p except that
+    it won't print a wcsprm struct with the name "DEFAULTS".
+
+
+WCSLIB version 4.15 (2012/09/26)
+--------------------------------
+
+* C library
+
+  - Bug fixes in spctype(), spcspxe(), spcxpse, and spctrne() for
+    propagating an error status correctly from lower-level routines.
+    Amendments to the prologues of these routines.  Reported by
+    Hans Terlouw.
+
+  - Similarly for wcsunitse(), wcsulexe(), and wcsutrne().
+
+* PGSBOX
+
+  - Bug fix in PGSBOX for handling cycles in angle when both world
+    coordinate elements are angular.  Reported by Thomas Robitaille.
+
+
+WCSLIB version 4.14 (2012/07/13)
+--------------------------------
+
+* C library
+
+  - Problems were caused for fitshdr(), wcsbth(), wcspih(), wcsulex(),
+    datfix() and wcshdo(), by locales such as "fr_FR" in which commas
+    are used to delimit the decimal part of floating point numbers.
+    In particular, these locales adversely affect the behaviour of
+    sscanf() and sprintf() when reading and writing FITS header
+    keyvalues.  Thread-safe fixes provided by Michael Droettboom.
+
+  - Applied astropy patches from Michael Droettboom: attend to compiler
+    warnings in prj.c, spc.c, tab.c, and wcsutil.c, including those for
+    MS-Windows.
+
+
 WCSLIB version 4.13.4 (2012/04/02)
 ----------------------------------
 
@@ -127,7 +376,7 @@ WCSLIB version 4.8.3 (2011/11/17)
 * C library
 
   - Minor generalization of the wcserr diagnostics to allow the return
-    of informative messages which are associated with negative status
+    of informative messages, which are associated with negative status
     values.  wcserr_prt() will now recognize and print them as such.
     Added wcserr_clear() to reset (clear) a wcserr struct.
 
@@ -1932,4 +2181,4 @@ WCSLIB version 1.0 (1995/01/31)
   Initial release.
 
 ------------------------------------------------------------------------
-$Id: CHANGES,v 4.13.1.3 2012/03/26 03:58:33 cal103 Exp cal103 $
+$Id: CHANGES,v 4.25.1.2 2015/01/05 03:28:58 mcalabre Exp mcalabre $

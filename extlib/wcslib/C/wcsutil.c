@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,25 +16,23 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: wcsutil.c,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: wcsutil.c,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *===========================================================================*/
 
+#include <ctype.h>
+#include <locale.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "wcsutil.h"
+#include "wcsmath.h"
 
 /*--------------------------------------------------------------------------*/
 
@@ -98,6 +96,79 @@ int wcsutil_allEq(int nvec, int nelem, const double *first)
 
 /*--------------------------------------------------------------------------*/
 
+int wcsutil_Eq(int nelem, double tol, const double *arr1, const double *arr2)
+
+{
+  int i;
+
+  if (nelem == 0) return 1;
+  if (nelem  < 0) return 0;
+
+  if (arr1 == 0x0 && arr2 == 0x0) return 1;
+  if (arr1 == 0x0 || arr2 == 0x0) return 0;
+
+  if (tol == 0.0) {
+    /* Handled separately for speed of execution. */
+    for (i = 0; i < nelem; i++, arr1++, arr2++) {
+      if (*arr1 != *arr2) return 0;
+    }
+
+  } else {
+    for (i = 0; i < nelem; i++, arr1++, arr2++) {
+      /* Undefined values must match exactly. */
+      if (*arr1 == UNDEFINED && *arr2 != UNDEFINED) return 0;
+      if (*arr1 != UNDEFINED && *arr2 == UNDEFINED) return 0;
+
+      /* Otherwise, compare within the specified tolerance. */
+      if (fabs(*arr1 - *arr2) > 0.5*tol) return 0;
+    }
+  }
+
+  return 1;
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcsutil_intEq(int nelem, const int *arr1, const int *arr2)
+
+{
+  int i;
+
+  if (nelem == 0) return 1;
+  if (nelem  < 0) return 0;
+
+  if (arr1 == 0x0 && arr2 == 0x0) return 1;
+  if (arr1 == 0x0 || arr2 == 0x0) return 0;
+
+  for (i = 0; i < nelem; i++, arr1++, arr2++) {
+    if (*arr1 != *arr2) return 0;
+  }
+
+  return 1;
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcsutil_strEq(int nelem, char (*arr1)[72], char (*arr2)[72])
+
+{
+  int i;
+
+  if (nelem == 0) return 1;
+  if (nelem  < 0) return 0;
+
+  if (arr1 == 0x0 && arr2 == 0x0) return 1;
+  if (arr1 == 0x0 || arr2 == 0x0) return 0;
+
+  for (i = 0; i < nelem; i++, arr1++, arr2++) {
+    if (strncmp(*arr1, *arr2, 72)) return 0;
+  }
+
+  return 1;
+}
+
+/*--------------------------------------------------------------------------*/
+
 void wcsutil_setAll(int nvec, int nelem, double *first)
 
 {
@@ -151,7 +222,7 @@ void wcsutil_setBit(int nelem, const int *sel, int bits, int *array)
 
 /*--------------------------------------------------------------------------*/
 
-char *wcsutil_fptr2str(int (*func)(), char hext[])
+char *wcsutil_fptr2str(int (*func)(void), char hext[19])
 
 {
   unsigned char *p = (unsigned char *)(&func);
@@ -183,4 +254,105 @@ char *wcsutil_fptr2str(int (*func)(), char hext[])
   }
 
   return hext;
+}
+
+/*--------------------------------------------------------------------------*/
+
+static void wcsutil_locale_to_dot(char *buf)
+
+{
+  struct lconv *locale_data = localeconv();
+  const char *decimal_point = locale_data->decimal_point;
+
+  if (decimal_point[0] != '.' || decimal_point[1] != 0) {
+    size_t decimal_point_len = strlen(decimal_point);
+    char *inbuf = buf;
+    char *outbuf = buf;
+
+    for ( ; *inbuf; inbuf++) {
+      if (strncmp(inbuf, decimal_point, decimal_point_len) == 0) {
+        *outbuf++ = '.';
+        inbuf += decimal_point_len - 1;
+      } else {
+        *outbuf++ = *inbuf;
+      }
+    }
+
+    *outbuf = '\0';
+  }
+}
+
+
+void wcsutil_double2str(char *buf, const char *format, double value)
+
+{
+  char *bp, *cp;
+
+  sprintf(buf, format, value);
+  wcsutil_locale_to_dot(buf);
+
+  /* Look for a decimal point or exponent. */
+  bp = buf;
+  while (*bp) {
+    if (*bp != ' ') {
+      if (*bp == '.') return;
+      if (*bp == 'e') return;
+      if (*bp == 'E') return;
+    }
+    bp++;
+  }
+
+  /* Not found, add a fractional part. */
+  bp = buf;
+  if (*bp == ' ') {
+    cp = buf + 1;
+    if (*cp == ' ') cp++;
+
+    while (*cp) {
+      *bp = *cp;
+      bp++;
+      cp++;
+    }
+
+    *bp = '.';
+    bp++;
+    if (bp < cp) *bp = '0';
+  }
+}
+
+/*--------------------------------------------------------------------------*/
+
+static const char *wcsutil_dot_to_locale(const char *inbuf, char *outbuf)
+
+{
+  struct lconv *locale_data = localeconv();
+  const char *decimal_point = locale_data->decimal_point;
+
+  if (decimal_point[0] != '.' || decimal_point[1] != 0) {
+    char *out = outbuf;
+    size_t decimal_point_len = strlen(decimal_point);
+
+    for ( ; *inbuf; inbuf++) {
+      if (*inbuf == '.') {
+        strncpy(out, decimal_point, decimal_point_len);
+        out += decimal_point_len;
+      } else {
+        *out++ = *inbuf;
+      }
+    }
+
+    *out = '\0';
+
+    return outbuf;
+  } else {
+    return inbuf;
+  }
+}
+
+
+int wcsutil_str2double(const char *buf, const char *format, double *value)
+
+{
+  char ctmp[72];
+  return sscanf(wcsutil_dot_to_locale(buf, ctmp), "%lf", value) < 1;
 }

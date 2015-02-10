@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: wcsutrn.l,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: wcsutrn.l,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * wcsutrn.l is a Flex description file containing the definition of a lexical
@@ -74,13 +68,15 @@ jmp_buf wcsutrn_abort_jmp_env;
 
 %%
 	static const char *function = "wcsutrne";
-
+	
 	char orig[80], subs[80];
 	int bracket = 0;
 	int unsafe  = 0;
 	int status  = -1;
 	YY_BUFFER_STATE inbuff;
 	int yylex_destroy(void);
+	
+	if (err) *err = 0x0;
 	
 	*orig = '\0';
 	*subs = '\0';

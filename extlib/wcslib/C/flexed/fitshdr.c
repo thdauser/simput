@@ -10083,8 +10083,8 @@ char *fitshdrtext;
 #line 1 "fitshdr.l"
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -10099,19 +10099,13 @@ char *fitshdrtext;
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: fitshdr.c,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: fitshdr.c,v 4.25.1.2 2015/01/06 01:06:52 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * fitshdr.l is a Flex description file containing a lexical scanner
@@ -10129,7 +10123,7 @@ char *fitshdrtext;
 /* Characters forming standard unit strings (jwBIQX are not used). */
 /* Exclusive start states. */
 
-#line 82 "fitshdr.l"
+#line 76 "fitshdr.l"
 #include <math.h>
 #include <limits.h>
 #include <setjmp.h>
@@ -10137,6 +10131,7 @@ char *fitshdrtext;
 #include <string.h>
 
 #include "fitshdr.h"
+#include "wcsutil.h"
 
 #define YY_DECL int fitshdr(const char header[], int nkeyrec, int nkeyids, \
                             struct fitskeyid keyids[], int *nreject, \
@@ -10170,7 +10165,7 @@ const char *fitshdr_errmsg[] = {
    "Memory allocation failed",
    "Fatal error returned by Flex parser"};
 
-#line 10174 "fitshdr.c"
+#line 10169 "fitshdr.c"
 
 #define INITIAL 0
 #define VALUE 1
@@ -10348,7 +10343,7 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 124 "fitshdr.l"
+#line 119 "fitshdr.l"
 
 	char *cptr, ctmp[72];
 	int  blank, continuation, end, j, k, keyno;
@@ -10393,7 +10388,7 @@ YY_DECL
 	
 	BEGIN(INITIAL);
 
-#line 10397 "fitshdr.c"
+#line 10392 "fitshdr.c"
 
 	if ( !(yy_init) )
 		{
@@ -10473,7 +10468,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 168 "fitshdr.l"
+#line 163 "fitshdr.l"
 {
 	  /* A completely blank keyrecord. */
 	  strncpy(kptr->keyword, fitshdrtext, 8);
@@ -10484,7 +10479,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 176 "fitshdr.l"
+#line 171 "fitshdr.l"
 {
 	  strncpy(kptr->keyword, fitshdrtext, 8);
 	  BEGIN(COMMENT);
@@ -10492,7 +10487,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 181 "fitshdr.l"
+#line 176 "fitshdr.l"
 {
 	  strncpy(kptr->keyword, fitshdrtext, 8);
 	  end = 1;
@@ -10501,7 +10496,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 187 "fitshdr.l"
+#line 182 "fitshdr.l"
 {
 	  /* Illegal END keyrecord. */
 	  strncpy(kptr->keyword, fitshdrtext, 8);
@@ -10511,7 +10506,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 194 "fitshdr.l"
+#line 189 "fitshdr.l"
 {
 	  /* Illegal END keyrecord. */
 	  strncpy(kptr->keyword, fitshdrtext, 8);
@@ -10521,7 +10516,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 201 "fitshdr.l"
+#line 196 "fitshdr.l"
 {
 	  strncpy(kptr->keyword, fitshdrtext, 8);
 	  BEGIN(VALUE);
@@ -10530,7 +10525,7 @@ YY_RULE_SETUP
 case 7:
 /* rule 7 can match eol */
 YY_RULE_SETUP
-#line 206 "fitshdr.l"
+#line 201 "fitshdr.l"
 {
 	  /* Continued string keyvalue. */
 	  strncpy(kptr->keyword, fitshdrtext, 8);
@@ -10551,7 +10546,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 224 "fitshdr.l"
+#line 219 "fitshdr.l"
 {
 	  /* Keyword without value. */
 	  strncpy(kptr->keyword, fitshdrtext, 8);
@@ -10560,7 +10555,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 230 "fitshdr.l"
+#line 225 "fitshdr.l"
 {
 	  /* Illegal keyword, carry on regardless. */
 	  strncpy(kptr->keyword, fitshdrtext, 8);
@@ -10570,7 +10565,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 237 "fitshdr.l"
+#line 232 "fitshdr.l"
 {
 	  /* Illegal keyword, carry on regardless. */
 	  strncpy(kptr->keyword, fitshdrtext, 8);
@@ -10583,7 +10578,7 @@ case 11:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up fitshdrtext again */
 YY_RULE_SETUP
-#line 244 "fitshdr.l"
+#line 239 "fitshdr.l"
 {
 	  /* Null keyvalue. */
 	  BEGIN(INLINE);
@@ -10591,7 +10586,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 249 "fitshdr.l"
+#line 244 "fitshdr.l"
 {
 	  /* Logical keyvalue. */
 	  kptr->type = 1;
@@ -10601,7 +10596,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 256 "fitshdr.l"
+#line 251 "fitshdr.l"
 {
 	  /* 32-bit signed integer keyvalue. */
 	  kptr->type = 2;
@@ -10615,10 +10610,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 267 "fitshdr.l"
+#line 262 "fitshdr.l"
 {
 	  /* 64-bit signed integer keyvalue (up to 18 digits). */
-	  if (sscanf(fitshdrtext, "%lf", &dtmp) < 1) {
+	  if (wcsutil_str2double(fitshdrtext, "%lf", &dtmp)) {
 	    kptr->status |= FITSHDR_KEYVALUE;
 	    BEGIN(ERROR);
 	
@@ -10659,7 +10654,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 308 "fitshdr.l"
+#line 303 "fitshdr.l"
 {
 	  /* Very long integer keyvalue (and 19-digit int64). */
 	  kptr->type = 4;
@@ -10703,11 +10698,11 @@ YY_RULE_SETUP
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 349 "fitshdr.l"
+#line 344 "fitshdr.l"
 {
 	  /* Float keyvalue. */
 	  kptr->type = 5;
-	  if (sscanf(fitshdrtext, "%lf", &(kptr->keyvalue.f)) < 1) {
+	  if (wcsutil_str2double(fitshdrtext, "%lf", &(kptr->keyvalue.f))) {
 	    kptr->status |= FITSHDR_KEYVALUE;
 	    BEGIN(ERROR);
 	  }
@@ -10717,7 +10712,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 360 "fitshdr.l"
+#line 355 "fitshdr.l"
 {
 	  /* Integer complex keyvalue. */
 	  kptr->type = 6;
@@ -10732,12 +10727,27 @@ YY_RULE_SETUP
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 372 "fitshdr.l"
+#line 367 "fitshdr.l"
 {
 	  /* Floating point complex keyvalue. */
 	  kptr->type = 7;
-	  if (sscanf(fitshdrtext, "(%lf,%lf)", kptr->keyvalue.c,
-	      kptr->keyvalue.c+1) < 2) {
+	
+	  for (cptr = ctmp, k = 1; fitshdrtext[k] != ','; cptr++, k++) {
+	    *cptr = fitshdrtext[k];
+	  }
+	  *cptr = '\0';
+	
+	  if (wcsutil_str2double(ctmp, "%lf", kptr->keyvalue.c)) {
+	    kptr->status |= FITSHDR_KEYVALUE;
+	    BEGIN(ERROR);
+	  }
+	
+	  for (cptr = ctmp, k++; fitshdrtext[k] != ')'; cptr++, k++) {
+	    *cptr = fitshdrtext[k];
+	  }
+	  *cptr = '\0';
+	
+	  if (wcsutil_str2double(ctmp, "%lf", kptr->keyvalue.c+1)) {
 	    kptr->status |= FITSHDR_KEYVALUE;
 	    BEGIN(ERROR);
 	  }
@@ -10748,7 +10758,7 @@ YY_RULE_SETUP
 case 19:
 /* rule 19 can match eol */
 YY_RULE_SETUP
-#line 384 "fitshdr.l"
+#line 394 "fitshdr.l"
 {
 	  /* String keyvalue. */
 	  kptr->type = 8;
@@ -10784,7 +10794,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 417 "fitshdr.l"
+#line 427 "fitshdr.l"
 {
 	  kptr->status |= FITSHDR_KEYVALUE;
 	  BEGIN(ERROR);
@@ -10795,7 +10805,7 @@ case 21:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up fitshdrtext again */
 YY_RULE_SETUP
-#line 422 "fitshdr.l"
+#line 432 "fitshdr.l"
 {
 	  BEGIN(FLUSH);
 	}
@@ -10805,21 +10815,21 @@ case 22:
 (yy_c_buf_p) = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up fitshdrtext again */
 YY_RULE_SETUP
-#line 426 "fitshdr.l"
+#line 436 "fitshdr.l"
 {
 	  BEGIN(FLUSH);
 	}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 430 "fitshdr.l"
+#line 440 "fitshdr.l"
 {
 	  BEGIN(UNITS);
 	}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 434 "fitshdr.l"
+#line 444 "fitshdr.l"
 {
 	  kptr->status |= FITSHDR_COMMENT;
 	  BEGIN(ERROR);
@@ -10827,7 +10837,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 439 "fitshdr.l"
+#line 449 "fitshdr.l"
 {
 	  /* Keyvalue parsing must now also be suspect. */
 	  kptr->status |= FITSHDR_COMMENT;
@@ -10837,7 +10847,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 446 "fitshdr.l"
+#line 456 "fitshdr.l"
 {
 	  kptr->ulen = fitshdrleng;
 	  yymore();
@@ -10846,7 +10856,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 452 "fitshdr.l"
+#line 462 "fitshdr.l"
 {
 	  yymore();
 	  BEGIN(COMMENT);
@@ -10854,7 +10864,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 457 "fitshdr.l"
+#line 467 "fitshdr.l"
 {
 	  strcpy(kptr->comment, fitshdrtext);
 	  nullfill(kptr->comment, 84);
@@ -10863,7 +10873,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 463 "fitshdr.l"
+#line 473 "fitshdr.l"
 {
 	  if (!continuation) kptr->type = -abs(kptr->type);
 	
@@ -10877,7 +10887,7 @@ YY_RULE_SETUP
 case 30:
 /* rule 30 can match eol */
 YY_RULE_SETUP
-#line 473 "fitshdr.l"
+#line 483 "fitshdr.l"
 {
 	  /* Discard the rest of the input line. */
 	  kptr->keyno = ++keyno;
@@ -10941,7 +10951,7 @@ case YY_STATE_EOF(UNITS):
 case YY_STATE_EOF(COMMENT):
 case YY_STATE_EOF(ERROR):
 case YY_STATE_EOF(FLUSH):
-#line 529 "fitshdr.l"
+#line 539 "fitshdr.l"
 {
 	  /* End-of-input. */
 	  fitshdrlex_destroy();
@@ -10950,10 +10960,10 @@ case YY_STATE_EOF(FLUSH):
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 535 "fitshdr.l"
+#line 545 "fitshdr.l"
 ECHO;
 	YY_BREAK
-#line 10957 "fitshdr.c"
+#line 10967 "fitshdr.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -11906,7 +11916,7 @@ void fitshdrfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 535 "fitshdr.l"
+#line 545 "fitshdr.l"
 
 
 

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.13 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2012, Mark Calabretta
+* WCSLIB 4.25 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2015, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,17 +18,11 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Correspondence concerning WCSLIB may be directed to:
-*   Internet email: mcalabre@atnf.csiro.au
-*   Postal address: Dr. Mark Calabretta
-*                   Australia Telescope National Facility, CSIRO
-*                   PO Box 76
-*                   Epping NSW 1710
-*                   AUSTRALIA
+* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
-* http://www.atnf.csiro.au/~mcalabre/index.html
-* $Id: tprj1.f,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+* http://www.atnf.csiro.au/people/Mark.Calabretta
+* $Id: tprj1.f,v 4.25.1.2 2015/01/06 01:02:37 mcalabre Exp mcalabre $
 *=======================================================================
 
       PROGRAM TPRJ1
@@ -185,6 +179,9 @@
       PV(2) = 3D0
       NFAIL = NFAIL + PROJEX ('HPX', PV, 90, -90, TOL)
 
+*     XPH: HEALPix polar, aka "butterfly" projection.
+      NFAIL = NFAIL + PROJEX ('XPH', PV, 90, -90, TOL)
+
 
       IF (NFAIL.NE.0) THEN
         WRITE (*, 60) NFAIL
@@ -210,11 +207,12 @@
 *      SOUTH    I        Southern cutoff latitude, degrees.
 *      TOL      D        Reporting tolerance, degrees.
 *-----------------------------------------------------------------------
-      INTEGER   J, LAT, LNG, NFAIL, NORTH, SOUTH, STAT1(361),
-     :          STAT2(361), STATUS
-      DOUBLE PRECISION DLAT, DLATMX, DLNG, DLNGMX, DR, DRMAX, LAT1,
-     :          LAT2(361), LNG1(361), LNG2(361), PV(0:29), R, THETA,
-     :          TOL, X(361), X1(361), X2(361), Y(361), Y1(361), Y2(361)
+      INTEGER   I, J, LAT, LNG, NFAIL, NORTH, SOUTH, STAT1(361),
+     :          STAT2(361), STATR(25,25), STATUS
+      DOUBLE PRECISION DLAT, DLATMX, DLNG, DLNGMX, DR, DRMAX, DX, DY,
+     :          LAT1, LAT2(361), LATR(25,25), LNG1(361), LNG2(361),
+     :          LNGR(25,25), PV(0:29), R, TOL, X(361), X1(25),
+     :          X2(25,25), Y(361), Y1(25), Y2(25,25)
       CHARACTER PCODE*3
 
 *     On some systems, such as Sun Sparc, the struct MUST be aligned
@@ -249,7 +247,7 @@
       DLNGMX = 0D0
       DLATMX = 0D0
 
-      DO 80 LAT = NORTH, SOUTH, -1
+      DO 90 LAT = NORTH, SOUTH, -1
         LAT1 = DBLE(LAT)
 
         J = 1
@@ -262,26 +260,29 @@
         IF (STATUS.EQ.1) THEN
           WRITE (*, 40) PCODE, STATUS
  40       FORMAT (3X,A3,'(S2X) ERROR',I2)
-          GO TO 80
+          GO TO 90
         END IF
 
         STATUS = PRJX2S (PRJ, 361, 0, 1, 1, X, Y, LNG2, LAT2, STAT2)
         IF (STATUS.EQ.1) THEN
           WRITE (*, 50) PCODE, STATUS
  50       FORMAT (3X,A3,'(X2S) ERROR',I2)
-          GO TO 80
+          GO TO 90
         END IF
 
         LNG = -180
-        DO 70 J = 1, 361
-          IF (STAT1(J).NE.0) GO TO 70
+        DO 80 J = 1, 361
+          IF (STAT1(J).NE.0) GO TO 80
 
           IF (STAT2(J).NE.0) THEN
-            WRITE (*, 55) PCODE, LNG1(J), LAT1, X(J), Y(J), STAT2(J)
- 55         FORMAT (3X,A3,'(X2S): lng1 =',F20.15,'  lat1 =',F20.15,/,
-     :              '                x =',F20.15,'     y =',F20.15,
+            NFAIL = NFAIL + 1
+            WRITE (*, 60) PCODE, LNG1(J), LAT1, X(J), Y(J), LNG2(J),
+     :                    LAT2(J), STAT2(J)
+ 60         FORMAT (3X,A3,'(X2S): lng1 =',F20.15,'  lat1 =',F20.15,/,
+     :              '                x =',F20.15,'     y =',F20.15,/,
+     :              '             lng2 =',F20.15,'  lat2 =',F20.15,
      :              '  ERROR',I3)
-            GO TO 70
+            GO TO 80
           END IF
 
           DLNG = ABS(LNG2(J) - LNG1(J))
@@ -292,71 +293,77 @@
 
           IF (DLAT.GT.TOL) THEN
             NFAIL = NFAIL + 1
-            WRITE (*, 60) PCODE, LNG1(J), LAT1, X(J), Y(J), LNG2(J),
+            WRITE (*, 70) PCODE, LNG1(J), LAT1, X(J), Y(J), LNG2(J),
      :                    LAT2(J)
- 60         FORMAT (8X,A3,': lng1 =',F20.15,'  lat1 =',F20.15,/,
+ 70         FORMAT (8X,A3,': lng1 =',F20.15,'  lat1 =',F20.15,/,
      :              8X,'        x =',F20.15,'     y =',F20.15,/,
      :              8X,'     lng2 =',F20.15,'  lat2 =',F20.15)
           ELSE IF (ABS(LAT).NE.90) THEN
             IF (DLNG.GT.TOL) THEN
               NFAIL = NFAIL + 1
-              WRITE (*, 60) PCODE, LNG1(J), LAT1, X(J), Y(J),
+              WRITE (*, 70) PCODE, LNG1(J), LAT1, X(J), Y(J),
      :                      LNG2(J), LAT2(J)
              END IF
           END IF
- 70     CONTINUE
- 80   CONTINUE
+ 80     CONTINUE
+ 90   CONTINUE
 
-      WRITE (*, 90) DLNGMX, DLATMX
- 90   FORMAT (13X,'Maximum residual (sky): lng',1P,E8.1,'   lat',E8.1)
+      WRITE (*, 100) DLNGMX, DLATMX
+ 100  FORMAT (13X,'Maximum residual (sky): lng',1P,E8.1,'   lat',E8.1)
 
 
 *     Test closure at points close to the reference point.
-      R = 1.0
-      THETA = -180D0
+      R = 1D0
+      X1(13) = 0D0
+      Y1(13) = 0D0
+      DO 110 I = 1, 12
+        X1(I) = -R
+        Y1(I) = -R
+        X1(26-I) = R
+        Y1(26-I) = R
+
+        R = R / 10D0
+ 110  CONTINUE
+
+      STATUS = PRJX2S (PRJ, 25, 25, 1, 1, X1, Y1, LNGR, LATR, STATR)
+      IF (STATUS.NE.0) THEN
+        WRITE (*, 120) PCODE, STATUS
+ 120    FORMAT (8X,A3,'(X2S): ERROR',I3)
+        GO TO 999
+      END IF
+
+      STATUS = PRJS2X (PRJ, 625, 0, 1, 1, LNGR, LATR, X2, Y2, STATR)
+      IF (STATUS.NE.0) THEN
+        WRITE (*, 130) PCODE, STATUS
+ 130    FORMAT (3X,A3,' ERROR',I3)
+        GO TO 999
+      END IF
 
       DRMAX = 0D0
 
-      DO 140 J = 1, 12
-        X1(1) = R*COS(THETA*D2R)
-        Y1(1) = R*SIN(THETA*D2R)
+      DO 160 J = 1, 25
+        DO 150 I = 1, 25
+          DX = X2(I,J) - X1(I)
+          DY = Y2(I,J) - Y1(J)
+          DR = SQRT(DX*DX + DY*DY)
 
-        STATUS = PRJX2S (PRJ, 1, 1, 1, 1, X1, Y1, LNG1, LAT1, STAT2)
-        IF (STATUS.NE.0) THEN
-          WRITE (*, 100) PCODE, X1(1), Y1(1), STATUS
- 100      FORMAT (8X,A3,'(X2S):   x1 =',F20.15,'    y1 =',F20.15,
-     :            '  ERROR',I3)
-          GO TO 130
-        END IF
-
-        STATUS = PRJS2X (PRJ, 1, 1, 1, 1, LNG1, LAT1, X2, Y2, STAT1)
-        IF (STATUS.NE.0) THEN
-          WRITE (*, 110) PCODE, X1(1), Y1(1), LNG1(1), LAT1, STATUS
- 110      FORMAT (3X,A3,':   x1 =',F20.15,'    y1 =',F20.15,/,
-     :            3X,'      lng =',F20.15,'   lat =',F20.15,'  ERROR',
-     :            I3)
-          GO TO 130
-        END IF
-
-        DR = SQRT((X2(1)-X1(1))**2 + (Y2(1)-Y1(1))**2)
-        IF (DR.GT.DRMAX) DRMAX = DR
-        IF (DR.GT.TOL) THEN
-          NFAIL = NFAIL + 1
-          WRITE (*, 120) PCODE, X1(1), Y1(1), LNG1(1), LAT1, X2(1),
-     :                   Y2(1)
- 120      FORMAT (8X,A3,':   x1 =',F20.15,'    y1 =',F20.15,/,
-     :            8X,'      lng =',F20.15,'   lat =',F20.15,/,
-     :            8X,'       x2 =',F20.15,'    y2 =',F20.15)
-        END IF
-
- 130    R = R/10D0
-        THETA = THETA + 15D0
- 140  CONTINUE
-
-      WRITE (*, 150) DRMAX
- 150  FORMAT (13X,'Maximum residual (ref):  dR',1PE8.1)
+          IF (DR.GT.DRMAX) DRMAX = DR
+          IF (DR.GT.TOL) THEN
+            NFAIL = NFAIL + 1
+            WRITE (*, 140) PCODE, X1(I), Y1(J), LNGR(I,J), LATR(I,J),
+     :                     X2(I,J), Y2(I,J)
+ 140        FORMAT (8X,A3,':   x1 =',F20.15,'    y1 =',F20.15,/,
+     :              8X,'      lng =',F20.15,'   lat =',F20.15,/,
+     :              8X,'       x2 =',F20.15,'    y2 =',F20.15)
+          END IF
+ 150    CONTINUE
+ 160  CONTINUE
 
 
-      PROJEX = NFAIL
+      WRITE (*, 170) DRMAX
+ 170  FORMAT (13X,'Maximum residual (ref):  dR',1PE8.1)
+
+
+ 999  PROJEX = NFAIL
 
       END

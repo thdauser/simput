@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.13 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2012, Mark Calabretta
+* WCSLIB 4.25 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2015, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,51 +18,50 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Correspondence concerning WCSLIB may be directed to:
-*   Internet email: mcalabre@atnf.csiro.au
-*   Postal address: Dr. Mark Calabretta
-*                   Australia Telescope National Facility, CSIRO
-*                   PO Box 76
-*                   Epping NSW 1710
-*                   AUSTRALIA
+* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
-* http://www.atnf.csiro.au/~mcalabre/index.html
-* $Id: prj.inc,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+* http://www.atnf.csiro.au/people/Mark.Calabretta
+* $Id: prj.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  PRJFREE, PRJGET, PRJGTC, PRJGTD, PRJGTI, PRJINI, PRJPRT,
-     :          PRJPTC,  PRJPTD, PRJPTI, PRJPUT, PRJS2X, PRJSET, PRJX2S
-      INTEGER   PRJFREE, PRJGET, PRJGTC, PRJGTD, PRJGTI, PRJINI, PRJPRT,
-     :          PRJPTC,  PRJPTD, PRJPTI, PRJPUT, PRJS2X, PRJSET, PRJX2S
+      EXTERNAL  PRJBCHK, PRJFREE, PRJGET, PRJGTC, PRJGTD, PRJGTI,
+     :          PRJINI,  PRJPRT,  PRJPTC, PRJPTD, PRJPTI, PRJPUT,
+     :          PRJS2X,  PRJSET,  PRJX2S
+      INTEGER   PRJBCHK, PRJFREE, PRJGET, PRJGTC, PRJGTD, PRJGTI,
+     :          PRJINI,  PRJPRT,  PRJPTC, PRJPTD, PRJPTI, PRJPUT,
+     :          PRJS2X,  PRJSET,  PRJX2S
 
-      EXTERNAL  AZPSET, AZPX2S, AZPS2X,    SFLSET, SFLX2S, SFLS2X,
-     :          SZPSET, SZPX2S, SZPS2X,    PARSET, PARX2S, PARS2X,
-     :          TANSET, TANX2S, TANS2X,    MOLSET, MOLX2S, MOLS2X,
-     :          STGSET, STGX2S, STGS2X,    AITSET, AITX2S, AITS2X,
-     :          SINSET, SINX2S, SINS2X,    COPSET, COPX2S, COPS2X,
-     :          ARCSET, ARCX2S, ARCS2X,    COESET, COEX2S, COES2X,
-     :          ZPNSET, ZPNX2S, ZPNS2X,    CODSET, CODX2S, CODS2X,
-     :          ZEASET, ZEAX2S, ZEAS2X,    COOSET, COOX2S, COOS2X,
-     :          AIRSET, AIRX2S, AIRS2X,    BONSET, BONX2S, BONS2X,
-     :          CYPSET, CYPX2S, CYPS2X,    PCOSET, PCOX2S, PCOS2X,
-     :          CEASET, CEAX2S, CEAS2X,    TSCSET, TSCX2S, TSCS2X,
-     :          CARSET, CARX2S, CARS2X,    CSCSET, CSCX2S, CSCS2X,
-     :          MERSET, MERX2S, MERS2X,    QSCSET, QSCX2S, QSCS2X
-      INTEGER   AZPSET, AZPX2S, AZPS2X,    SFLSET, SFLX2S, SFLS2X,
-     :          SZPSET, SZPX2S, SZPS2X,    PARSET, PARX2S, PARS2X,
-     :          TANSET, TANX2S, TANS2X,    MOLSET, MOLX2S, MOLS2X,
-     :          STGSET, STGX2S, STGS2X,    AITSET, AITX2S, AITS2X,
-     :          SINSET, SINX2S, SINS2X,    COPSET, COPX2S, COPS2X,
-     :          ARCSET, ARCX2S, ARCS2X,    COESET, COEX2S, COES2X,
-     :          ZPNSET, ZPNX2S, ZPNS2X,    CODSET, CODX2S, CODS2X,
-     :          ZEASET, ZEAX2S, ZEAS2X,    COOSET, COOX2S, COOS2X,
-     :          AIRSET, AIRX2S, AIRS2X,    BONSET, BONX2S, BONS2X,
-     :          CYPSET, CYPX2S, CYPS2X,    PCOSET, PCOX2S, PCOS2X,
-     :          CEASET, CEAX2S, CEAS2X,    TSCSET, TSCX2S, TSCS2X,
-     :          CARSET, CARX2S, CARS2X,    CSCSET, CSCX2S, CSCS2X,
-     :          MERSET, MERX2S, MERS2X,    QSCSET, QSCX2S, QSCS2X
+      EXTERNAL  AZPSET, AZPX2S, AZPS2X,    PARSET, PARX2S, PARS2X,
+     :          SZPSET, SZPX2S, SZPS2X,    MOLSET, MOLX2S, MOLS2X,
+     :          TANSET, TANX2S, TANS2X,    AITSET, AITX2S, AITS2X,
+     :          STGSET, STGX2S, STGS2X,    COPSET, COPX2S, COPS2X,
+     :          SINSET, SINX2S, SINS2X,    COESET, COEX2S, COES2X,
+     :          ARCSET, ARCX2S, ARCS2X,    CODSET, CODX2S, CODS2X,
+     :          ZPNSET, ZPNX2S, ZPNS2X,    COOSET, COOX2S, COOS2X,
+     :          ZEASET, ZEAX2S, ZEAS2X,    BONSET, BONX2S, BONS2X,
+     :          AIRSET, AIRX2S, AIRS2X,    PCOSET, PCOX2S, PCOS2X,
+     :          CYPSET, CYPX2S, CYPS2X,    TSCSET, TSCX2S, TSCS2X,
+     :          CEASET, CEAX2S, CEAS2X,    CSCSET, CSCX2S, CSCS2X,
+     :          CARSET, CARX2S, CARS2X,    QSCSET, QSCX2S, QSCS2X
+     :          MERSET, MERX2S, MERS2X,    HPXSET, HPXX2S, HPXS2X
+     :          SFLSET, SFLX2S, SFLS2X,    XPHSET, XPHX2S, XPHS2X
+
+      INTEGER   AZPSET, AZPX2S, AZPS2X,    PARSET, PARX2S, PARS2X,
+     :          SZPSET, SZPX2S, SZPS2X,    MOLSET, MOLX2S, MOLS2X,
+     :          TANSET, TANX2S, TANS2X,    AITSET, AITX2S, AITS2X,
+     :          STGSET, STGX2S, STGS2X,    COPSET, COPX2S, COPS2X,
+     :          SINSET, SINX2S, SINS2X,    COESET, COEX2S, COES2X,
+     :          ARCSET, ARCX2S, ARCS2X,    CODSET, CODX2S, CODS2X,
+     :          ZPNSET, ZPNX2S, ZPNS2X,    COOSET, COOX2S, COOS2X,
+     :          ZEASET, ZEAX2S, ZEAS2X,    BONSET, BONX2S, BONS2X,
+     :          AIRSET, AIRX2S, AIRS2X,    PCOSET, PCOX2S, PCOS2X,
+     :          CYPSET, CYPX2S, CYPS2X,    TSCSET, TSCX2S, TSCS2X,
+     :          CEASET, CEAX2S, CEAS2X,    CSCSET, CSCX2S, CSCS2X,
+     :          CARSET, CARX2S, CARS2X,    QSCSET, QSCX2S, QSCS2X
+     :          MERSET, MERX2S, MERS2X,    HPXSET, HPXX2S, HPXS2X
+     :          SFLSET, SFLX2S, SFLS2X,    XPHSET, XPHX2S, XPHS2X
 
 *     Length of the PRJPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 116 on 32-bit machines.

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: wcsutil.h,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: wcsutil.h,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * Summary of the wcsutil routines
@@ -109,6 +103,74 @@
 *             int       Status return value:
 *                         0: Not all equal.
 *                         1: All equal.
+*
+*
+* wcsutil_Eq() - Test for equality of two double arrays
+* -----------------------------------------------------
+* INTERNAL USE ONLY.
+*
+* wcsutil_Eq() tests for equality of two double-precision arrays.
+*
+* Given:
+*   nelem     int       The number of elements in each array.
+*
+*   tol       double    Tolerance for comparison of the floating-point values.
+*                       For example, for tol == 1e-6, all floating-point
+*                       values in the arrays must be equal to the first 6
+*                       decimal places.  A value of 0 implies exact equality.
+*
+*   arr1      const double*
+*                       The first array.
+*
+*   arr2      const double*
+*                       The second array
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Not equal.
+*                         1: Equal.
+*
+*
+* wcsutil_intEq() - Test for equality of two int arrays
+* -----------------------------------------------------
+* INTERNAL USE ONLY.
+*
+* wcsutil_intEq() tests for equality of two int arrays.
+*
+* Given:
+*   nelem     int       The number of elements in each array.
+*
+*   arr1      const int*
+*                       The first array.
+*
+*   arr2      const int*
+*                       The second array
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Not equal.
+*                         1: Equal.
+*
+*
+* wcsutil_strEq() - Test for equality of two string arrays
+* --------------------------------------------------------
+* INTERNAL USE ONLY.
+*
+* wcsutil_strEq() tests for equality of two string arrays.
+*
+* Given:
+*   nelem     int       The number of elements in each array.
+*
+*   arr1      const char**
+*                       The first array.
+*
+*   arr2      const char**
+*                       The second array
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Not equal.
+*                         1: Equal.
 *
 *
 * wcsutil_setAll() - Set a particular vector element
@@ -196,34 +258,89 @@
 *
 * wcsutil_fptr2str() translates a pointer-to-function to hexadecimal string
 * representation for output.  It is used by the various routines that print
-* the contents of WCSLIB structs.  Note that it is not strictly legal to
-* type-pun a function pointer to void*.
-*
-* See stackoverflow.com/questions/2741683/how-to-format-a-function-pointer
+* the contents of WCSLIB structs, noting that it is not strictly legal to
+* type-pun a function pointer to void*.  See
+* http://stackoverflow.com/questions/2741683/how-to-format-a-function-pointer
 *
 * Given:
-*   fptr      int (*)() Pointer to function.
+*   fptr      int(*)()  Pointer to function.
 *
 * Returned:
-*   hext      char[]    Null-terminated string.  Should be at least 19 bytes
+*   hext      char[19]  Null-terminated string.  Should be at least 19 bytes
 *                       in size to accomodate a 64-bit address (16 bytes in
 *                       hex), plus the leading "0x" and trailing '\0'.
 *
 * Function return value:
 *             char *    The address of hext.
 *
+*
+* wcsutil_double2str() - Translate double to string ignoring the locale
+* ---------------------------------------------------------------------
+* INTERNAL USE ONLY.
+*
+* wcsutil_double2str() converts a double to a string, but unlike sprintf() it
+* ignores the locale and always uses a '.' as the decimal separator.  Also,
+* unless it includes an exponent, the formatted value will always have a
+* fractional part, ".0" being appended if necessary.
+*
+* Returned:
+*   buf       char *    The buffer to write the string into.
+*
+* Given:
+*   format    char *    The formatting directive, such as "%f".  This
+*                       may be any of the forms accepted by sprintf(), but
+*                       should only include a formatting directive and
+*                       nothing else.  For "%g" and "%G" formats, unless it
+*                       includes an exponent, the formatted value will always
+*                       have a fractional part, ".0" being appended if
+*                       necessary.
+*
+*   value     double    The value to convert to a string.
+*
+*
+* wcsutil_str2double() - Translate string to a double, ignoring the locale
+* ------------------------------------------------------------------------
+* INTERNAL USE ONLY.
+*
+* wcsutil_str2double() converts a string to a double, but unlike sscanf() it
+* ignores the locale and always expects a '.' as the decimal separator.
+*
+* Given:
+*   buf       char *    The string containing the value
+*
+*   format    char *    The formatting directive, such as "%lf".  This
+*                       may be any of the forms accepted by sscanf(), but
+*                       should only include a single formatting directive.
+*
+* Returned:
+*   value     double *  The double value parsed from the string.
+*
 *===========================================================================*/
 
 #ifndef WCSLIB_WCSUTIL
 #define WCSLIB_WCSUTIL
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void wcsutil_blank_fill(int n, char c[]);
 void wcsutil_null_fill (int n, char c[]);
 
 int  wcsutil_allEq (int nvec, int nelem, const double *first);
+int  wcsutil_Eq(int nelem, double tol, const double *arr1,
+                const double *arr2);
+int  wcsutil_intEq(int nelem, const int *arr1, const int *arr2);
+int  wcsutil_strEq(int nelem, char (*arr1)[72], char (*arr2)[72]);
 void wcsutil_setAll(int nvec, int nelem, double *first);
 void wcsutil_setAli(int nvec, int nelem, int *first);
 void wcsutil_setBit(int nelem, const int *sel, int bits, int *array);
-char *wcsutil_fptr2str(int (*func)(), char hext[]);
+char *wcsutil_fptr2str(int (*func)(void), char hext[19]);
+int  wcsutil_str2double(const char *buf, const char *format, double *value);
+void wcsutil_double2str(char *buf, const char *format, double value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* WCSLIB_WCSUTIL */

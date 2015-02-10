@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: prj.c,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: prj.c,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <math.h>
@@ -60,11 +54,11 @@ const char prj_categories[9][32] =
 
 
 /* Projection codes. */
-const int  prj_ncode = 27;
-const char prj_codes[27][4] =
+const int  prj_ncode = 28;
+const char prj_codes[28][4] =
   {"AZP", "SZP", "TAN", "STG", "SIN", "ARC", "ZPN", "ZEA", "AIR", "CYP",
    "CEA", "CAR", "MER", "COP", "COE", "COD", "COO", "SFL", "PAR", "MOL",
-   "AIT", "BON", "PCO", "TSC", "CSC", "QSC", "HPX"};
+   "AIT", "BON", "PCO", "TSC", "CSC", "QSC", "HPX", "XPH"};
 
 const int AZP = 101;
 const int SZP = 102;
@@ -93,6 +87,7 @@ const int TSC = 701;
 const int CSC = 702;
 const int QSC = 703;
 const int HPX = 801;
+const int XPH = 802;
 
 
 /* Map status return value to message. */
@@ -122,11 +117,17 @@ const char *prj_errmsg[] = {
 
 
 /*============================================================================
-* Generic routines.
+* Generic routines:
 *
 * prjini initializes a prjprm struct to default values.
 *
+* prjfree frees any memory that may have been allocated to store an error
+*        message in the prjprm struct.
+*
 * prjprt prints the contents of a prjprm struct.
+*
+* prjbchk performs bounds checking on the native coordinates returned by the
+*        *x2s() routines.
 *
 * prjset invokes the specific initialization routine based on the projection
 *        code in the prjprm struct.
@@ -159,7 +160,7 @@ struct prjprm *prj;
   prj->r0     = 0.0;
   prj->phi0   = UNDEFINED;
   prj->theta0 = UNDEFINED;
-  prj->bounds = 1;
+  prj->bounds = 7;
 
   strcpy(prj->name, "undefined");
   for (k = 9; k < 40; prj->name[k++] = '\0');
@@ -285,11 +286,67 @@ const struct prjprm *prj;
   wcsprintf("          m: %d\n", prj->m);
   wcsprintf("          n: %d\n", prj->n);
   wcsprintf("     prjx2s: %s\n",
-    wcsutil_fptr2str((int (*)())prj->prjx2s, hext));
+    wcsutil_fptr2str((int (*)(void))prj->prjx2s, hext));
   wcsprintf("     prjs2x: %s\n",
-    wcsutil_fptr2str((int (*)())prj->prjs2x, hext));
+    wcsutil_fptr2str((int (*)(void))prj->prjs2x, hext));
 
   return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+
+int prjbchk(tol, nphi, ntheta, spt, phi, theta, stat)
+
+double tol;
+int nphi, ntheta, spt;
+double phi[], theta[];
+int stat[];
+
+{
+  int status = 0;
+  register int iphi, itheta, *statp;
+  register double *phip, *thetap;
+
+  phip   = phi;
+  thetap = theta;
+  statp  = stat;
+  for (itheta = 0; itheta < ntheta; itheta++) {
+    for (iphi = 0; iphi < nphi; iphi++, phip += spt, thetap += spt, statp++) {
+      if (*phip < -180.0) {
+        if (*phip < -180.0-tol) {
+          *statp = 1;
+          status = 1;
+        } else {
+          *phip = -180.0;
+        }
+      } else if (180.0 < *phip) {
+        if (180.0+tol < *phip) {
+          *statp = 1;
+          status = 1;
+        } else {
+          *phip = 180.0;
+        }
+      }
+
+      if (*thetap < -90.0) {
+        if (*thetap < -90.0-tol) {
+          *statp = 1;
+          status = 1;
+        } else {
+          *thetap = -90.0;
+        }
+      } else if (90.0 < *thetap) {
+        if (90.0+tol < *thetap) {
+          *statp = 1;
+          status = 1;
+        } else {
+          *thetap = 90.0;
+        }
+      }
+    }
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -363,6 +420,8 @@ struct prjprm *prj;
     status = qscset(prj);
   } else if (strcmp(prj->code, "HPX") == 0) {
     status = hpxset(prj);
+  } else if (strcmp(prj->code, "XPH") == 0) {
+    status = xphset(prj);
   } else {
     /* Unrecognized projection code. */
     status = wcserr_set(WCSERR_SET(PRJERR_BAD_PARAM),
@@ -417,8 +476,8 @@ int stat[];
 }
 
 /*============================================================================
-* Internal helper routine used by the *set() routines that forces
-* (x,y) = (0,0) at (phi0,theta0).
+* Internal helper routine used by the *set() routines - not intended for
+* outside use.  It forces (x,y) = (0,0) at (phi0,theta0).
 *---------------------------------------------------------------------------*/
 
 int prjoff(prj, phi0, theta0)
@@ -640,6 +699,12 @@ int stat[];
     }
   }
 
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("azpx2s");
+  }
+
   return status;
 }
 
@@ -720,10 +785,10 @@ int stat[];
 
         /* Bounds checking. */
         istat = 0;
-        if (prj->bounds) {
+        if (prj->bounds&1) {
           if (*thetap < prj->w[5]) {
             /* Overlap. */
-            istat  = 1;
+            istat = 1;
             if (!status) status = PRJERR_BAD_WORLD_SET("azps2x");
 
           } else if (prj->w[7] > 0.0) {
@@ -740,7 +805,7 @@ int stat[];
               if (b > 90.0) b -= 360.0;
 
               if (*thetap < ((a > b) ? a : b)) {
-                istat  = 1;
+                istat = 1;
                 if (!status) status = PRJERR_BAD_WORLD_SET("azps2x");
               }
             }
@@ -967,6 +1032,12 @@ int stat[];
     }
   }
 
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("szpx2s");
+  }
+
   return status;
 }
 
@@ -1050,10 +1121,10 @@ int stat[];
       for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
         /* Bounds checking. */
         istat = 0;
-        if (prj->bounds) {
+        if (prj->bounds&1) {
           if (*thetap < prj->w[8]) {
             /* Divergence. */
-            istat  = 1;
+            istat = 1;
             if (!status) status = PRJERR_BAD_WORLD_SET("szps2x");
 
           } else if (fabs(prj->pv[1]) > 1.0) {
@@ -1071,7 +1142,7 @@ int stat[];
               if (b > 90.0) b -= 360.0;
 
               if (*thetap < ((a > b) ? a : b)) {
-                istat  = 1;
+                istat = 1;
                 if (!status) status = PRJERR_BAD_WORLD_SET("szps2x");
               }
             }
@@ -1166,6 +1237,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -1206,7 +1279,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("tanx2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -1281,10 +1360,13 @@ int stat[];
     } else {
       r =  prj->r0*cosd(*thetap)/s;
 
+      /* Bounds checking. */
       istat = 0;
-      if (prj->bounds && s < 0.0) {
-        istat  = 1;
-        if (!status) status = PRJERR_BAD_WORLD_SET("tans2x");
+      if (prj->bounds&1) {
+        if (s < 0.0) {
+          istat = 1;
+          if (!status) status = PRJERR_BAD_WORLD_SET("tans2x");
+        }
       }
 
       for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
@@ -1724,6 +1806,12 @@ int stat[];
     }
   }
 
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("sinx2s");
+  }
+
   return status;
 }
 
@@ -1804,9 +1892,11 @@ int stat[];
     if (prj->w[1] == 0.0) {
       /* Orthographic projection. */
       istat = 0;
-      if (prj->bounds && *thetap < 0.0) {
-        istat  = 1;
-        if (!status) status = PRJERR_BAD_WORLD_SET("sins2x");
+      if (prj->bounds&1) {
+        if (*thetap < 0.0) {
+          istat = 1;
+          if (!status) status = PRJERR_BAD_WORLD_SET("sins2x");
+        }
       }
 
       for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
@@ -1823,10 +1913,10 @@ int stat[];
 
       for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
         istat = 0;
-        if (prj->bounds) {
+        if (prj->bounds&1) {
           t = -atand(prj->pv[1]*(*xp) - prj->pv[2]*(*yp));
           if (*thetap < t) {
-            istat  = 1;
+            istat = 1;
             if (!status) status = PRJERR_BAD_WORLD_SET("sins2x");
           }
         }
@@ -1927,6 +2017,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -1968,7 +2060,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("arcx2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -2241,9 +2339,11 @@ int stat[];
       if (k < 1) {
         /* Constant - no solution. */
         return PRJERR_BAD_PARAM_SET("zpnx2s");
+
       } else if (k == 1) {
         /* Linear. */
         zd = (r - prj->pv[0])/prj->pv[1];
+
       } else if (k == 2) {
         /* Quadratic. */
         a = prj->pv[2];
@@ -2341,6 +2441,12 @@ int stat[];
     }
   }
 
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("zpnx2s");
+  }
+
   return status;
 }
 
@@ -2412,10 +2518,13 @@ int stat[];
     }
     r *= prj->r0;
 
+    /* Bounds checking. */
     istat = 0;
-    if (prj->bounds && s > prj->w[0]) {
-      istat  = 1;
-      if (!status) status = PRJERR_BAD_WORLD_SET("zpns2x");
+    if (prj->bounds&1) {
+      if (s > prj->w[0]) {
+        istat = 1;
+        if (!status) status = PRJERR_BAD_WORLD_SET("zpns2x");
+      }
     }
 
     for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
@@ -2568,6 +2677,12 @@ int stat[];
 
       *(statp++) = 0;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("zeax2s");
   }
 
   return status;
@@ -2854,6 +2969,12 @@ int stat[];
     }
   }
 
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("airx2s");
+  }
+
   return status;
 }
 
@@ -2927,12 +3048,12 @@ int stat[];
         r = xi*prj->w[3];
       } else {
         cosxi = cosd((90.0 - *thetap)/2.0);
-        tanxi = sqrt(1.0-cosxi*cosxi)/cosxi;
+        tanxi = sqrt(1.0 - cosxi*cosxi)/cosxi;
         r = -prj->w[0]*(log(cosxi)/tanxi + prj->w[1]*tanxi);
       }
     } else {
       r = 0.0;
-      istat  = 1;
+      istat = 1;
       if (!status) status = PRJERR_BAD_WORLD_SET("airs2x");
     }
 
@@ -3066,6 +3187,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -3096,7 +3219,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("cypx2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -3159,7 +3288,7 @@ int stat[];
 
     istat = 0;
     if (eta == 0.0) {
-      istat  = 1;
+      istat = 1;
       if (!status) status = PRJERR_BAD_WORLD_SET("cyps2x");
 
     } else {
@@ -3310,7 +3439,7 @@ int stat[];
     if (fabs(s) > 1.0) {
       if (fabs(s) > 1.0+tol) {
         s = 0.0;
-        istat  = 1;
+        istat = 1;
         if (!status) status = PRJERR_BAD_PIX_SET("ceax2s");
       } else {
         s = copysign(90.0, s);
@@ -3323,6 +3452,12 @@ int stat[];
       *thetap = s;
       *(statp++) = istat;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("ceax2s");
   }
 
   return status;
@@ -3479,6 +3614,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -3508,7 +3645,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("carx2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -3662,6 +3805,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -3691,7 +3836,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("merx2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -3754,7 +3905,7 @@ int stat[];
 
     if (*thetap <= -90.0 || *thetap >= 90.0) {
       eta = 0.0;
-      istat  = 1;
+      istat = 1;
       if (!status) status = PRJERR_BAD_WORLD_SET("mers2x");
     } else {
       eta = prj->r0*log(tand((*thetap+90.0)/2.0)) - prj->y0;
@@ -3884,7 +4035,7 @@ int stat[];
 
     istat = 0;
     if (s == 0.0) {
-      istat  = 1;
+      istat = 1;
       if (!status) status = PRJERR_BAD_PIX_SET("sflx2s");
     } else {
       s = 1.0/s;
@@ -3895,8 +4046,14 @@ int stat[];
     for (ix = 0; ix < mx; ix++, phip += spt, thetap += spt) {
       *phip  *= s;
       *thetap = t;
-      *(statp++) = 0;
+      *(statp++) = istat;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-12, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("sflx2s");
   }
 
   return status;
@@ -4098,7 +4255,7 @@ int stat[];
     if (r > 1.0 || r < -1.0) {
       s = 0.0;
       t = 0.0;
-      istat  = 1;
+      istat = 1;
       if (!status) status = PRJERR_BAD_PIX_SET("parx2s");
 
     } else {
@@ -4121,11 +4278,19 @@ int stat[];
           *(statp++) = 1;
           if (!status) status = PRJERR_BAD_PIX_SET("parx2s");
         }
+      } else {
+        *(statp++) = istat;
       }
 
       *phip  *= s;
       *thetap = t;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-12, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("parx2s");
   }
 
   return status;
@@ -4324,7 +4489,7 @@ int stat[];
     istat = 0;
     if (r <= tol) {
       if (r < -tol) {
-        istat  = 1;
+        istat = 1;
         if (!status) status = PRJERR_BAD_PIX_SET("molx2s");
       } else {
         /* OK if fabs(x) < tol whence phi = 0.0. */
@@ -4343,7 +4508,7 @@ int stat[];
     if (fabs(z) > 1.0) {
       if (fabs(z) > 1.0+tol) {
         z = 0.0;
-        istat  = 1;
+        istat = 1;
         if (!status) status = PRJERR_BAD_PIX_SET("molx2s");
       } else {
         z = copysign(1.0, z) + y0*r/PI;
@@ -4355,7 +4520,7 @@ int stat[];
     if (fabs(z) > 1.0) {
       if (fabs(z) > 1.0+tol) {
         z = 0.0;
-        istat  = 1;
+        istat = 1;
         if (!status) status = PRJERR_BAD_PIX_SET("molx2s");
       } else {
         z = copysign(1.0, z);
@@ -4372,11 +4537,19 @@ int stat[];
           *(statp++) = 1;
           if (!status) status = PRJERR_BAD_PIX_SET("molx2s");
         }
+      } else {
+        *(statp++) = istat;
       }
 
       *phip  *= s;
       *thetap = t;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-11, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("molx2s");
   }
 
   return status;
@@ -4441,9 +4614,11 @@ int stat[];
     if (fabs(*thetap) == 90.0) {
       xi  = 0.0;
       eta = copysign(prj->w[0], *thetap);
+
     } else if (*thetap == 0.0) {
       xi  = 1.0;
       eta = 0.0;
+
     } else {
       u  = PI*sind(*thetap);
       v0 = -PI;
@@ -4602,7 +4777,7 @@ int stat[];
       istat = 0;
       if (s < 0.5) {
         if (s < 0.5-tol) {
-          istat  = 1;
+          istat = 1;
           if (!status) status = PRJERR_BAD_PIX_SET("aitx2s");
         }
 
@@ -4621,7 +4796,7 @@ int stat[];
       t = z*yj/prj->r0;
       if (fabs(t) > 1.0) {
         if (fabs(t) > 1.0+tol) {
-          istat  = 1;
+          istat = 1;
           if (!status) status = PRJERR_BAD_PIX_SET("aitx2s");
         }
         t = copysign(90.0, t);
@@ -4633,6 +4808,12 @@ int stat[];
       *thetap = t;
       *(statp++) = istat;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("aitx2s");
   }
 
   return status;
@@ -4818,6 +4999,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -4861,7 +5044,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("copx2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -4930,16 +5119,32 @@ int stat[];
 
     istat = 0;
     if (s == 0.0) {
+      /* Latitude of divergence. */
       r = 0.0;
-      istat  = 1;
+      istat = 1;
       if (!status) status = PRJERR_BAD_WORLD_SET("cops2x");
+
+    } else if (fabs(*thetap) == 90.0) {
+      /* Return an exact value at the poles. */
+      r = 0.0;
+
+      /* Bounds checking. */
+      if (prj->bounds&1) {
+        if ((*thetap < 0.0) != (prj->pv[1] < 0.0)) {
+          istat = 1;
+          if (!status) status = PRJERR_BAD_WORLD_SET("cops2x");
+        }
+      }
 
     } else {
       r = prj->w[2] - prj->w[3]*sind(t)/s;
 
-      if (prj->bounds && r*prj->w[0] < 0.0) {
-        istat  = 1;
-        if (!status) status = PRJERR_BAD_WORLD_SET("cops2x");
+      /* Bounds checking. */
+      if (prj->bounds&1) {
+        if (r*prj->w[0] < 0.0) {
+          istat = 1;
+          if (!status) status = PRJERR_BAD_WORLD_SET("cops2x");
+        }
       }
     }
 
@@ -5120,7 +5325,7 @@ int stat[];
             t = -90.0;
           } else {
             t = 0.0;
-            istat  = 1;
+            istat = 1;
             if (!status) status = PRJERR_BAD_PIX_SET("coex2s");
           }
         } else {
@@ -5132,6 +5337,12 @@ int stat[];
       *thetap = t;
       *(statp++) = istat;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("coex2s");
   }
 
   return status;
@@ -5315,6 +5526,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -5358,7 +5571,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("codx2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -5597,7 +5816,7 @@ int stat[];
           t = -90.0;
         } else {
           t = 0.0;
-          istat  = 1;
+          istat = 1;
           if (!status) status = PRJERR_BAD_PIX_SET("coox2s");
         }
       } else {
@@ -5608,6 +5827,12 @@ int stat[];
       *thetap = t;
       *(statp++) = istat;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("coox2s");
   }
 
   return status;
@@ -5679,7 +5904,7 @@ int stat[];
     if (*thetap == -90.0) {
       r = 0.0;
       if (prj->w[0] >= 0.0) {
-        istat  = 1;
+        istat = 1;
         if (!status) status = PRJERR_BAD_WORLD_SET("coos2x");
       }
     } else {
@@ -5799,6 +6024,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -5850,7 +6077,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-11, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("bonx2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -5943,8 +6176,9 @@ int stat[];
 *      prj->x0      Fiducial offset in x.
 *      prj->y0      Fiducial offset in y.
 *      prj->w[0]    r0*(pi/180)
-*      prj->w[1]    1/r0
+*      prj->w[1]    (180/pi)/r0
 *      prj->w[2]    2*r0
+*      prj->w[3]    (pi/180)/(2*r0)
 *      prj->prjx2s  Pointer to pcox2s().
 *      prj->prjs2x  Pointer to pcos2x().
 *===========================================================================*/
@@ -5978,6 +6212,7 @@ struct prjprm *prj;
     prj->w[1] = 1.0/prj->w[0];
     prj->w[2] = 2.0*prj->r0;
   }
+  prj->w[3] = D2R/prj->w[2];
 
   prj->prjx2s = pcox2s;
   prj->prjs2x = pcos2x;
@@ -6020,6 +6255,8 @@ int stat[];
     ny = nx;
   }
 
+  status = 0;
+
 
   /* Do x dependence. */
   xp = x;
@@ -6057,24 +6294,23 @@ int stat[];
         *thetap = copysign(90.0, yj);
 
       } else {
-        /* Iterative solution using weighted division of the interval. */
-        if (yj > 0.0) {
-          thepos =  90.0;
+        if (w < 1.0e-4) {
+          /* To avoid cot(theta) blowing up near theta == 0. */
+          the    = yj / (prj->w[0] + prj->w[3]*xj*xj);
+          ymthe  = yj - prj->w[0]*the;
+          tanthe = tand(the);
+
         } else {
-          thepos = -90.0;
-        }
-        theneg = 0.0;
+          /* Iterative solution using weighted division of the interval. */
+          thepos = yj / prj->w[0];
+          theneg = 0.0;
 
-        xx = xj*xj;
-        ymthe = yj - prj->w[0]*thepos;
-        fpos = xx + ymthe*ymthe;
-        fneg = -999.0;
+          /* Setting fneg = -fpos halves the interval in the first iter. */
+          xx = xj*xj;
+          fpos  =  xx;
+          fneg  = -xx;
 
-        for (k = 0; k < 64; k++) {
-          if (fneg < -100.0) {
-            /* Equal division of the interval. */
-            the = (thepos+theneg)/2.0;
-          } else {
+          for (k = 0; k < 64; k++) {
             /* Weighted division of the interval. */
             lambda = fpos/(fpos-fneg);
             if (lambda < 0.1) {
@@ -6083,24 +6319,24 @@ int stat[];
               lambda = 0.9;
             }
             the = thepos - lambda*(thepos-theneg);
-          }
 
-          /* Compute the residue. */
-          ymthe = yj - prj->w[0]*(the);
-          tanthe = tand(the);
-          f = xx + ymthe*(ymthe - prj->w[2]/tanthe);
+            /* Compute the residue. */
+            ymthe  = yj - prj->w[0]*the;
+            tanthe = tand(the);
+            f = xx + ymthe*(ymthe - prj->w[2]/tanthe);
 
-          /* Check for convergence. */
-          if (fabs(f) < tol) break;
-          if (fabs(thepos-theneg) < tol) break;
+            /* Check for convergence. */
+            if (fabs(f) < tol) break;
+            if (fabs(thepos-theneg) < tol) break;
 
-          /* Redefine the interval. */
-          if (f > 0.0) {
-            thepos = the;
-            fpos = f;
-          } else {
-            theneg = the;
-            fneg = f;
+            /* Redefine the interval. */
+            if (f > 0.0) {
+              thepos = the;
+              fpos = f;
+            } else {
+              theneg = the;
+              fneg = f;
+            }
           }
         }
 
@@ -6119,7 +6355,13 @@ int stat[];
     }
   }
 
-  return 0;
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-12, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("pcox2s");
+  }
+
+  return status;
 }
 
 /*--------------------------------------------------------------------------*/
@@ -6134,7 +6376,7 @@ int stat[];
 
 {
   int mphi, mtheta, rowlen, rowoff, status;
-  double alpha, costhe, cotthe, sinthe, therad;
+  double cospsi, costhe, cotthe, sinpsi, sinthe, therad;
   register int iphi, itheta, *statp;
   register const double *phip, *thetap;
   register double *xp, *yp;
@@ -6174,21 +6416,32 @@ int stat[];
   yp = y;
   statp = stat;
   for (itheta = 0; itheta < ntheta; itheta++, thetap += spt) {
-    therad = (*thetap)*D2R;
-    sincosd(*thetap, &sinthe, &costhe);
-
-    for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
-      if (sinthe == 0.0) {
+    if (*thetap == 0.0) {
+      for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
         *xp =  prj->w[0]*(*xp) - prj->x0;
         *yp = -prj->y0;
-      } else {
-        alpha  = (*xp)*sinthe;
-        cotthe = costhe/sinthe;
-        *xp = prj->r0*cotthe*sind(alpha) - prj->x0;
-        *yp = prj->r0*(cotthe*(1.0 - cosd(alpha)) + therad) - prj->y0;
+        *(statp++) = 0;
       }
 
-      *(statp++) = 0;
+    } else if (fabs(*thetap) < 1.0e-4) {
+      /* To avoid cot(theta) blowing up near theta == 0. */
+      for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
+        *xp = prj->w[0]*(*xp)*cosd(*thetap) - prj->x0;
+        *yp = (prj->w[0] + prj->w[3]*(*xp)*(*xp))*(*thetap) - prj->y0;
+        *(statp++) = 0;
+      }
+
+    } else {
+      therad = (*thetap)*D2R;
+      sincosd(*thetap, &sinthe, &costhe);
+
+      for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
+        sincosd((*xp)*sinthe, &sinpsi, &cospsi);
+        cotthe = costhe/sinthe;
+        *xp = prj->r0*cotthe*sinpsi - prj->x0;
+        *yp = prj->r0*(cotthe*(1.0 - cospsi) + therad) - prj->y0;
+        *(statp++) = 0;
+      }
     }
   }
 
@@ -6310,7 +6563,7 @@ int stat[];
     for (ix = 0; ix < mx; ix++, phip += spt, thetap += spt) {
       xf = *phip;
 
-      /* Check bounds. */
+      /* Bounds checking. */
       if (fabs(xf) <= 1.0) {
         if (fabs(yf) > 3.0) {
           *phip = 0.0;
@@ -6379,6 +6632,12 @@ int stat[];
       *thetap = asind(n);
       *(statp++) = 0;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("tscx2s");
   }
 
   return status;
@@ -6517,14 +6776,14 @@ int stat[];
       istat = 0;
       if (fabs(xf) > 1.0) {
         if (fabs(xf) > 1.0+tol) {
-          istat  = 1;
+          istat = 1;
           if (!status) status = PRJERR_BAD_WORLD_SET("tscs2x");
         }
         xf = copysign(1.0, xf);
       }
       if (fabs(yf) > 1.0) {
         if (fabs(yf) > 1.0+tol) {
-          istat  = 1;
+          istat = 1;
           if (!status) status = PRJERR_BAD_WORLD_SET("tscs2x");
         }
         yf = copysign(1.0, yf);
@@ -6604,40 +6863,40 @@ int stat[];
 
 {
   int face, mx, my, rowlen, rowoff, status;
-  double l, m, n;
+  double l, m, n, t;
   register int ix, iy, *statp;
   register const double *xp, *yp;
   register double *phip, *thetap;
 
-  float     chi, psi, xf, xx, yf, yy, z0, z1, z2, z3, z4, z5, z6;
-  const float p00 = -0.27292696;
-  const float p10 = -0.07629969;
-  const float p20 = -0.22797056;
-  const float p30 =  0.54852384;
-  const float p40 = -0.62930065;
-  const float p50 =  0.25795794;
-  const float p60 =  0.02584375;
-  const float p01 = -0.02819452;
-  const float p11 = -0.01471565;
-  const float p21 =  0.48051509;
-  const float p31 = -1.74114454;
-  const float p41 =  1.71547508;
-  const float p51 = -0.53022337;
-  const float p02 =  0.27058160;
-  const float p12 = -0.56800938;
-  const float p22 =  0.30803317;
-  const float p32 =  0.98938102;
-  const float p42 = -0.83180469;
-  const float p03 = -0.60441560;
-  const float p13 =  1.50880086;
-  const float p23 = -0.93678576;
-  const float p33 =  0.08693841;
-  const float p04 =  0.93412077;
-  const float p14 = -1.41601920;
-  const float p24 =  0.33887446;
-  const float p05 = -0.63915306;
-  const float p15 =  0.52032238;
-  const float p06 =  0.14381585;
+  float chi, psi, xf, xx, yf, yy, z0, z1, z2, z3, z4, z5, z6;
+  const float p00 = -0.27292696f;
+  const float p10 = -0.07629969f;
+  const float p20 = -0.22797056f;
+  const float p30 =  0.54852384f;
+  const float p40 = -0.62930065f;
+  const float p50 =  0.25795794f;
+  const float p60 =  0.02584375f;
+  const float p01 = -0.02819452f;
+  const float p11 = -0.01471565f;
+  const float p21 =  0.48051509f;
+  const float p31 = -1.74114454f;
+  const float p41 =  1.71547508f;
+  const float p51 = -0.53022337f;
+  const float p02 =  0.27058160f;
+  const float p12 = -0.56800938f;
+  const float p22 =  0.30803317f;
+  const float p32 =  0.98938102f;
+  const float p42 = -0.83180469f;
+  const float p03 = -0.60441560f;
+  const float p13 =  1.50880086f;
+  const float p23 = -0.93678576f;
+  const float p33 =  0.08693841f;
+  const float p04 =  0.93412077f;
+  const float p14 = -1.41601920f;
+  const float p24 =  0.33887446f;
+  const float p05 = -0.63915306f;
+  const float p15 =  0.52032238f;
+  const float p06 =  0.14381585f;
 
   /* Initialize. */
   if (prj == 0x0) return PRJERR_NULL_POINTER;
@@ -6662,7 +6921,7 @@ int stat[];
   rowoff = 0;
   rowlen = nx*spt;
   for (ix = 0; ix < nx; ix++, rowoff += spt, xp += sxy) {
-    xf = (*xp + prj->x0)*prj->w[1];
+    xf = (float)((*xp + prj->x0)*prj->w[1]);
 
     phip = phi + rowoff;
     for (iy = 0; iy < my; iy++) {
@@ -6678,14 +6937,14 @@ int stat[];
   thetap = theta;
   statp  = stat;
   for (iy = 0; iy < ny; iy++, yp += sxy) {
-    yf = (*yp + prj->y0)*prj->w[1];
+    yf = (float)((*yp + prj->y0)*prj->w[1]);
 
     for (ix = 0; ix < mx; ix++, phip += spt, thetap += spt) {
-      xf = *phip;
+      xf = (float)(*phip);
 
-      /* Check bounds. */
-      if (fabs(xf) <= 1.0) {
-        if (fabs(yf) > 3.0) {
+      /* Bounds checking. */
+      if (fabs((double)xf) <= 1.0) {
+        if (fabs((double)yf) > 3.0) {
           *phip = 0.0;
           *thetap = 0.0;
           *(statp++) = 1;
@@ -6693,7 +6952,7 @@ int stat[];
           continue;
         }
       } else {
-        if (fabs(xf) > 7.0 || fabs(yf) > 1.0) {
+        if (fabs((double)xf) > 7.0 || fabs((double)yf) > 1.0) {
           *phip = 0.0;
           *thetap = 0.0;
           *(statp++) = 1;
@@ -6703,24 +6962,24 @@ int stat[];
       }
 
       /* Map negative faces to the other side. */
-      if (xf < -1.0) xf += 8.0;
+      if (xf < -1.0f) xf += 8.0f;
 
       /* Determine the face. */
-      if (xf > 5.0) {
+      if (xf > 5.0f) {
         face = 4;
-        xf = xf - 6.0;
-      } else if (xf > 3.0) {
+        xf = xf - 6.0f;
+      } else if (xf > 3.0f) {
         face = 3;
-        xf = xf - 4.0;
-      } else if (xf > 1.0) {
+        xf = xf - 4.0f;
+      } else if (xf > 1.0f) {
         face = 2;
-        xf = xf - 2.0;
-      } else if (yf > 1.0) {
+        xf = xf - 2.0f;
+      } else if (yf > 1.0f) {
         face = 0;
-        yf = yf - 2.0;
-      } else if (yf < -1.0) {
+        yf = yf - 2.0f;
+      } else if (yf < -1.0f) {
         face = 5;
-        yf = yf + 2.0;
+        yf = yf + 2.0f;
       } else {
         face = 1;
       }
@@ -6738,7 +6997,7 @@ int stat[];
       z6 = p06;
 
       chi = z0 + yy*(z1 + yy*(z2 + yy*(z3 + yy*(z4 + yy*(z5 + yy*z6)))));
-      chi = xf + xf*(1.0 - xx)*chi;
+      chi = xf + xf*(1.0f - xx)*chi;
 
       z0 = p00 + yy*(p10 + yy*(p20 + yy*(p30 + yy*(p40 + yy*(p50 +
                  yy*(p60))))));
@@ -6750,37 +7009,38 @@ int stat[];
       z6 = p06;
 
       psi = z0 + xx*(z1 + xx*(z2 + xx*(z3 + xx*(z4 + xx*(z5 + xx*z6)))));
-      psi = yf + yf*(1.0 - yy)*psi;
+      psi = yf + yf*(1.0f - yy)*psi;
 
+      t = 1.0/sqrt((double)(chi*chi + psi*psi) + 1.0);
       switch (face) {
       case 1:
-        l =  1.0/sqrt(chi*chi + psi*psi + 1.0);
+        l =  t;
         m =  chi*l;
         n =  psi*l;
         break;
       case 2:
-        m =  1.0/sqrt(chi*chi + psi*psi + 1.0);
+        m =  t;
         l = -chi*m;
         n =  psi*m;
         break;
       case 3:
-        l = -1.0/sqrt(chi*chi + psi*psi + 1.0);
+        l = -t;
         m =  chi*l;
         n = -psi*l;
         break;
       case 4:
-        m = -1.0/sqrt(chi*chi + psi*psi + 1.0);
+        m = -t;
         l = -chi*m;
         n = -psi*m;
         break;
       case 5:
-        n = -1.0/sqrt(chi*chi + psi*psi + 1.0);
+        n = -t;
         l = -psi*n;
         m = -chi*n;
         break;
       default:
         /* face == 0 */
-        n =  1.0/sqrt(chi*chi + psi*psi + 1.0);
+        n =  t;
         l = -psi*n;
         m =  chi*n;
         break;
@@ -6795,6 +7055,12 @@ int stat[];
       *thetap = asind(n);
       *(statp++) = 0;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("cscx2s");
   }
 
   return status;
@@ -6820,18 +7086,18 @@ int stat[];
 
   float chi, chi2, chi2psi2, chi4, chipsi, psi, psi2, psi4, chi2co, psi2co,
         x0, xf, y0, yf;
-  const float gstar  =  1.37484847732;
-  const float mm     =  0.004869491981;
-  const float gamma  = -0.13161671474;
-  const float omega1 = -0.159596235474;
-  const float d0  =  0.0759196200467;
-  const float d1  = -0.0217762490699;
-  const float c00 =  0.141189631152;
-  const float c10 =  0.0809701286525;
-  const float c01 = -0.281528535557;
-  const float c11 =  0.15384112876;
-  const float c20 = -0.178251207466;
-  const float c02 =  0.106959469314;
+  const float gstar  =  1.37484847732f;
+  const float mm     =  0.004869491981f;
+  const float gamma  = -0.13161671474f;
+  const float omega1 = -0.159596235474f;
+  const float d0  =  0.0759196200467f;
+  const float d1  = -0.0217762490699f;
+  const float c00 =  0.141189631152f;
+  const float c10 =  0.0809701286525f;
+  const float c01 = -0.281528535557f;
+  const float c11 =  0.15384112876f;
+  const float c20 = -0.178251207466f;
+  const float c02 =  0.106959469314f;
 
 
   /* Initialize. */
@@ -6946,41 +7212,41 @@ int stat[];
         break;
       }
 
-      chi =  xi/zeta;
-      psi = eta/zeta;
+      chi = (float)( xi/zeta);
+      psi = (float)(eta/zeta);
 
       chi2 = chi*chi;
       psi2 = psi*psi;
-      chi2co = 1.0 - chi2;
-      psi2co = 1.0 - psi2;
+      chi2co = 1.0f - chi2;
+      psi2co = 1.0f - psi2;
 
       /* Avoid floating underflows. */
-      chipsi = fabs(chi*psi);
-      chi4   = (chi2 > 1.0e-16) ? chi2*chi2 : 0.0;
-      psi4   = (psi2 > 1.0e-16) ? psi2*psi2 : 0.0;
-      chi2psi2 = (chipsi > 1.0e-16) ? chi2*psi2 : 0.0;
+      chipsi = (float)fabs((double)(chi*psi));
+      chi4   = (chi2 > 1.0e-16f) ? chi2*chi2 : 0.0f;
+      psi4   = (psi2 > 1.0e-16f) ? psi2*psi2 : 0.0f;
+      chi2psi2 = (chipsi > 1.0e-16f) ? chi2*psi2 : 0.0f;
 
       xf = chi*(chi2 + chi2co*(gstar + psi2*(gamma*chi2co + mm*chi2 +
                 psi2co*(c00 + c10*chi2 + c01*psi2 + c11*chi2psi2 + c20*chi4 +
                 c02*psi4)) + chi2*(omega1 - chi2co*(d0 + d1*chi2))));
-       yf = psi*(psi2 + psi2co*(gstar + chi2*(gamma*psi2co + mm*psi2 +
+      yf = psi*(psi2 + psi2co*(gstar + chi2*(gamma*psi2co + mm*psi2 +
                 chi2co*(c00 + c10*psi2 + c01*chi2 + c11*chi2psi2 + c20*psi4 +
                 c02*chi4)) + psi2*(omega1 - psi2co*(d0 + d1*psi2))));
 
       istat = 0;
-      if (fabs(xf) > 1.0) {
-        if (fabs(xf) > 1.0+tol) {
-          istat  = 1;
+      if (fabs((double)xf) > 1.0) {
+        if (fabs((double)xf) > 1.0+tol) {
+          istat = 1;
           if (!status) status = PRJERR_BAD_WORLD_SET("cscs2x");
         }
-        xf = copysign(1.0, xf);
+        xf = (float)copysign(1.0, (double)xf);
       }
-      if (fabs(yf) > 1.0) {
-        if (fabs(yf) > 1.0+tol) {
-          istat  = 1;
+      if (fabs((double)yf) > 1.0) {
+        if (fabs((double)yf) > 1.0+tol) {
+          istat = 1;
           if (!status) status = PRJERR_BAD_WORLD_SET("cscs2x");
         }
-        yf = copysign(1.0, yf);
+        yf = (float)copysign(1.0, (double)yf);
       }
 
       *xp = prj->w[0]*(xf + x0) - prj->x0;
@@ -7108,7 +7374,7 @@ int stat[];
     for (ix = 0; ix < mx; ix++, phip += spt, thetap += spt) {
       xf = *phip;
 
-      /* Check bounds. */
+      /* Bounds checking. */
       if (fabs(xf) <= 1.0) {
         if (fabs(yf) > 3.0) {
           *phip = 0.0;
@@ -7281,6 +7547,12 @@ int stat[];
       *thetap = asind(n);
       *(statp++) = 0;
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-13, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("qscx2s");
   }
 
   return status;
@@ -7491,14 +7763,14 @@ int stat[];
       istat = 0;
       if (fabs(xf) > 1.0) {
         if (fabs(xf) > 1.0+tol) {
-          istat  = 1;
+          istat = 1;
           if (!status) status = PRJERR_BAD_WORLD_SET("qscs2x");
         }
         xf = copysign(1.0, xf);
       }
       if (fabs(yf) > 1.0) {
         if (fabs(yf) > 1.0+tol) {
-          istat  = 1;
+          istat = 1;
           if (!status) status = PRJERR_BAD_WORLD_SET("qscs2x");
         }
         yf = copysign(1.0, yf);
@@ -7611,9 +7883,7 @@ int stat[];
 
 {
   int h, mx, my, offset, rowlen, rowoff, status;
-  double absy, s, sigma, t, yr;
-  const double slim = prj->w[6] + 1e-12;
-  const double ylim = prj->w[9] * prj->w[4];
+  double absy, r, s, sigma, slim, t, ylim, yr;
   register int istat, ix, iy, *statp;
   register const double *xp, *yp;
   register double *phip, *thetap;
@@ -7624,6 +7894,9 @@ int stat[];
   if (prj->flag != HPX) {
     if ((status = hpxset(prj))) return status;
   }
+
+  slim = prj->w[6] + 1e-12;
+  ylim = prj->w[9] * prj->w[4];
 
   if (ny > 0) {
     mx = nx;
@@ -7692,7 +7965,7 @@ int stat[];
         if (t < -1.0) {
           s = 0.0;
           t = 0.0;
-          istat  = 1;
+          istat = 1;
           if (!status) status = PRJERR_BAD_PIX_SET("hpxx2s");
         } else {
           s = 1.0/sigma;
@@ -7713,19 +7986,21 @@ int stat[];
         }
 
         /* Recall that theta[] holds (x - x_c). */
-        s *= *thetap;
-        if (fabs(s) < slim) {
-          if (s != 0.0) s -= *thetap;
-          *phip += s;
-          *thetap = t;
-          *(statp++) = istat;
-        } else {
-          /* Out-of-bounds. */
-          *phip   = 0.0;
-          *thetap = 0.0;
-          *(statp++) = 1;
-          if (!status) status = PRJERR_BAD_PIX_SET("hpxx2s");
+        r = s * *thetap;
+
+        /* Bounds checking. */
+        if (prj->bounds&2) {
+          if (slim <= fabs(r)) {
+            istat = 1;
+            if (!status) status = PRJERR_BAD_PIX_SET("hpxx2s");
+          }
         }
+
+        if (r != 0.0) r -= *thetap;
+        *phip  += r;
+        *thetap = t;
+
+        *(statp++) = istat;
       }
 
     } else {
@@ -7737,6 +8012,12 @@ int stat[];
       }
       if (!status) status = PRJERR_BAD_PIX_SET("hpxx2s");
     }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-12, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("hpxx2s");
   }
 
   return status;
@@ -7846,6 +8127,354 @@ int stat[];
         /* Put the phi = 180 meridian in the expected place. */
         if (180.0 < *xp) *xp = 360.0 - *xp;
       }
+    }
+  }
+
+  return 0;
+}
+
+/*============================================================================
+*   XPH: HEALPix polar, aka "butterfly" projection.
+*
+*   Given and/or returned:
+*      prj->r0      Reset to 180/pi if 0.
+*      prj->phi0    Reset to 0.0 if undefined.
+*      prj->theta0  Reset to 0.0 if undefined.
+*
+*   Returned:
+*      prj->flag     XPH
+*      prj->code    "XPH"
+*      prj->x0      Fiducial offset in x.
+*      prj->y0      Fiducial offset in y.
+*      prj->w[0]    r0*(pi/180)/sqrt(2)
+*      prj->w[1]    (180/pi)/r0/sqrt(2)
+*      prj->w[2]    2/3
+*      prj->w[3]    tol (= 1e-4)
+*      prj->w[4]    sqrt(2/3)*(180/pi)
+*      prj->w[5]    90 - tol*sqrt(2/3)*(180/pi)
+*      prj->w[6]    sqrt(3/2)*(pi/180)
+*      prj->prjx2s  Pointer to xphx2s().
+*      prj->prjs2x  Pointer to xphs2x().
+*===========================================================================*/
+
+int xphset(prj)
+
+struct prjprm *prj;
+
+{
+  if (prj == 0x0) return PRJERR_NULL_POINTER;
+
+  prj->flag = XPH;
+  strcpy(prj->code, "XPH");
+
+  strcpy(prj->name, "butterfly");
+  prj->category  = HEALPIX;
+  prj->pvrange   = 0;
+  prj->simplezen = 0;
+  prj->equiareal = 1;
+  prj->conformal = 0;
+  prj->global    = 1;
+  prj->divergent = 0;
+
+  if (prj->r0 == 0.0) {
+    prj->r0 = R2D;
+    prj->w[0] = 1.0;
+    prj->w[1] = 1.0;
+  } else {
+    prj->w[0] = prj->r0*D2R;
+    prj->w[1] = R2D/prj->r0;
+  }
+
+  prj->w[0] /= sqrt(2.0);
+  prj->w[1] /= sqrt(2.0);
+  prj->w[2]  = 2.0/3.0;
+  prj->w[3]  = 1e-4;
+  prj->w[4]  = sqrt(prj->w[2])*R2D;
+  prj->w[5]  = 90.0 - prj->w[3]*prj->w[4];
+  prj->w[6]  = sqrt(1.5)*D2R;
+
+  prj->prjx2s = xphx2s;
+  prj->prjs2x = xphs2x;
+
+  return prjoff(prj, 0.0, 90.0);
+}
+
+/*--------------------------------------------------------------------------*/
+
+int xphx2s(prj, nx, ny, sxy, spt, x, y, phi, theta, stat)
+
+struct prjprm *prj;
+int nx, ny, sxy, spt;
+const double x[], y[];
+double phi[], theta[];
+int stat[];
+
+{
+  int mx, my, rowlen, rowoff, status;
+  double abseta, eta, eta1, sigma, xi, xi1, xr, yr;
+  const double tol = 1.0e-12;
+  register int istat, ix, iy, *statp;
+  register const double *xp, *yp;
+  register double *phip, *thetap;
+
+
+  /* Initialize. */
+  if (prj == 0x0) return PRJERR_NULL_POINTER;
+  if (prj->flag != XPH) {
+    if ((status = xphset(prj))) return status;
+  }
+
+  if (ny > 0) {
+    mx = nx;
+    my = ny;
+  } else {
+    mx = 1;
+    my = 1;
+    ny = nx;
+  }
+
+  status = 0;
+
+
+  /* Do x dependence. */
+  xp = x;
+  rowoff = 0;
+  rowlen = nx*spt;
+  for (ix = 0; ix < nx; ix++, rowoff += spt, xp += sxy) {
+    xr = (*xp + prj->x0)*prj->w[1];
+
+    phip = phi + rowoff;
+    for (iy = 0; iy < my; iy++) {
+      *phip = xr;
+      phip  += rowlen;
+    }
+  }
+
+
+  /* Do y dependence. */
+  yp = y;
+  phip   = phi;
+  thetap = theta;
+  statp  = stat;
+  for (iy = 0; iy < ny; iy++, yp += sxy) {
+    yr = (*yp + prj->y0)*prj->w[1];
+
+    for (ix = 0; ix < mx; ix++, phip += spt, thetap += spt) {
+      xr = *phip;
+
+      if (xr <= 0.0 && 0.0 < yr) {
+        xi1  = -xr - yr;
+        eta1 =  xr - yr;
+        *phip = -180.0;
+      } else if (xr < 0.0 && yr <= 0.0) {
+        xi1  =  xr - yr;
+        eta1 =  xr + yr;
+        *phip = -90.0;
+      } else if (0.0 <= xr && yr < 0.0) {
+        xi1  =  xr + yr;
+        eta1 = -xr + yr;
+        *phip = 0.0;
+      } else {
+        xi1  = -xr + yr;
+        eta1 = -xr - yr;
+        *phip = 90.0;
+      }
+
+      xi  = xi1  + 45.0;
+      eta = eta1 + 90.0;
+      abseta = fabs(eta);
+
+      if (abseta <= 90.0) {
+        if (abseta <= 45.0) {
+          /* Equatorial regime. */
+          *phip  += xi;
+          *thetap = asind(eta/67.5);
+          istat = 0;
+
+          /* Bounds checking. */
+          if (prj->bounds&2) {
+            if (45.0+tol < fabs(xi1)) {
+              istat = 1;
+              if (!status) status = PRJERR_BAD_PIX_SET("xphx2s");
+            }
+          }
+
+          *(statp++) = istat;
+
+        } else {
+          /* Polar regime. */
+          sigma = (90.0 - abseta) / 45.0;
+
+          /* Ensure an exact result for points on the boundary. */
+          if (xr == 0.0) {
+            if (yr <= 0.0) {
+              *phip = 0.0;
+            } else {
+              *phip = 180.0;
+            }
+          } else if (yr == 0.0) {
+            if (xr < 0.0) {
+              *phip = -90.0;
+            } else {
+              *phip =  90.0;
+            }
+          } else {
+            *phip += 45.0 + xi1/sigma;
+          }
+
+          if (sigma < prj->w[3]) {
+            *thetap = 90.0 - sigma*prj->w[4];
+          } else {
+            *thetap = asind(1.0 - sigma*sigma/3.0);
+          }
+          if (eta < 0.0) *thetap = -(*thetap);
+
+          /* Bounds checking. */
+          istat = 0;
+          if (prj->bounds&2) {
+            if (eta < -45.0 && eta+90.0+tol < fabs(xi1)) {
+              istat = 1;
+              if (!status) status = PRJERR_BAD_PIX_SET("xphx2s");
+            }
+          }
+
+          *(statp++) = istat;
+        }
+
+      } else {
+        /* Beyond latitude range. */
+        *phip   = 0.0;
+        *thetap = 0.0;
+        *(statp++) = 1;
+        if (!status) status = PRJERR_BAD_PIX_SET("xphx2s");
+      }
+    }
+  }
+
+
+  /* Do bounds checking on the native coordinates. */
+  if (prj->bounds&4 && prjbchk(1.0e-12, nx, my, spt, phi, theta, stat)) {
+    if (!status) status = PRJERR_BAD_PIX_SET("xphx2s");
+  }
+
+  return status;
+}
+
+/*--------------------------------------------------------------------------*/
+
+int xphs2x(prj, nphi, ntheta, spt, sxy, phi, theta, x, y, stat)
+
+struct prjprm *prj;
+int nphi, ntheta, spt, sxy;
+const double phi[], theta[];
+double x[], y[];
+int stat[];
+
+{
+  int mphi, mtheta, rowlen, rowoff, status;
+  double abssin, chi, eta, psi, sigma, sinthe, xi;
+  register int iphi, itheta, *statp;
+  register const double *phip, *thetap;
+  register double *xp, *yp;
+
+
+  /* Initialize. */
+  if (prj == 0x0) return PRJERR_NULL_POINTER;
+  if (prj->flag != XPH) {
+    if ((status = xphset(prj))) return status;
+  }
+
+  if (ntheta > 0) {
+    mphi   = nphi;
+    mtheta = ntheta;
+  } else {
+    mphi   = 1;
+    mtheta = 1;
+    ntheta = nphi;
+  }
+
+
+  /* Do phi dependence. */
+  phip = phi;
+  rowoff = 0;
+  rowlen = nphi*sxy;
+  for (iphi = 0; iphi < nphi; iphi++, rowoff += sxy, phip += spt) {
+    chi = *phip;
+    if (180.0 <= fabs(chi)) {
+      chi = fmod(chi, 360.0);
+      if (chi < -180.0) {
+        chi += 360.0;
+      } else if (180.0 <= chi) {
+        chi -= 360.0;
+      }
+    }
+
+    /* phi is also recomputed from chi to avoid rounding problems. */
+    chi += 180.0;
+    psi = fmod(chi, 90.0);
+
+    xp = x + rowoff;
+    yp = y + rowoff;
+    for (itheta = 0; itheta < mtheta; itheta++) {
+      /* y[] is used to hold phi (rounded). */
+      *xp = psi;
+      *yp = chi - 180.0;
+      xp += rowlen;
+      yp += rowlen;
+    }
+  }
+
+
+  /* Do theta dependence. */
+  thetap = theta;
+  xp = x;
+  yp = y;
+  statp = stat;
+  for (itheta = 0; itheta < ntheta; itheta++, thetap += spt) {
+    sinthe = sind(*thetap);
+    abssin = fabs(sinthe);
+
+    for (iphi = 0; iphi < mphi; iphi++, xp += sxy, yp += sxy) {
+      if (abssin <= prj->w[2]) {
+        /* Equatorial regime. */
+        xi  = *xp;
+        eta = 67.5 * sinthe;
+
+      } else {
+        /* Polar regime. */
+        if (*thetap < prj->w[5]) {
+          sigma = sqrt(3.0*(1.0 - abssin));
+        } else {
+          sigma = (90.0 - *thetap)*prj->w[6];
+        }
+
+        xi  = 45.0 + (*xp - 45.0)*sigma;
+        eta = 45.0 * (2.0 - sigma);
+        if (*thetap < 0.0) eta = -eta;
+      }
+
+      xi  -= 45.0;
+      eta -= 90.0;
+
+      /* Recall that y[] holds phi. */
+      if (*yp < -90.0) {
+        *xp = prj->w[0]*(-xi + eta) - prj->x0;
+        *yp = prj->w[0]*(-xi - eta) - prj->y0;
+
+      } else if (*yp <  0.0) {
+        *xp = prj->w[0]*(+xi + eta) - prj->x0;
+        *yp = prj->w[0]*(-xi + eta) - prj->y0;
+
+      } else if (*yp < 90.0) {
+        *xp = prj->w[0]*( xi - eta) - prj->x0;
+        *yp = prj->w[0]*( xi + eta) - prj->y0;
+
+      } else {
+        *xp = prj->w[0]*(-xi - eta) - prj->x0;
+        *yp = prj->w[0]*( xi - eta) - prj->y0;
+      }
+
+      *(statp++) = 0;
     }
   }
 

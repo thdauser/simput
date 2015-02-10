@@ -99,8 +99,8 @@ Testing -TAB interpreter (twcstab.c)
         wtb: 0x<address>  (see below)
       types: 0x<address>
             2500 2501 3510  520
-     lngtyp: "    "
-     lattyp: "    "
+     lngtyp: "RA"
+     lattyp: "DEC"
         lng: 0
         lat: 1
        spec: 2
@@ -3246,7 +3246,7 @@ imgpix[3][]:   0            0           -1            1
          pv: (not used)
        phi0: UNDEFINED
      theta0: UNDEFINED
-     bounds: 1
+     bounds: 7
 
        name: "undefined"
    category: 0 (undefined)

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: ttab3.c,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: ttab3.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * ttab3 tests the -TAB routines using PGPLOT for graphical display.  It
@@ -126,19 +120,15 @@ int main()
 
   prjini(&prj);
   prj.pv[1] = 35.0;
-  status = bonx2s(&prj, K1, K2, 1, 2, x, y, tab.coord, tab.coord+1,
-                  (int *)stat);
 
-  dp = tab.coord;
-  for (j = 0; j < K2; j++) {
-    for (i = 0; i < K1; i++) {
-      if (stat[j][i]) {
-        *dp = 999.0;
-        *(dp+1) = 999.0;
-      }
-      dp += 2;
-    }
-  }
+  /* Disable bounds checking (or alternatively, simply ignore out-of-bounds
+     errors).  This is necessary to provide continuity beyond the -180 and
+     +180 meridians, noting that bonx2s() computes out-of-bounds values so
+     as to provide continuity. */
+  prj.bounds = 0;
+
+  status = bonx2s(&prj, K1, K2, 1, 2, x, y, tab.coord, tab.coord+1,
+                  stat[0]);
 
 
   /* Draw meridians. */
@@ -156,8 +146,7 @@ int main()
     world[0][0] = 0.0;
     world[180][0] = 0.0;
 
-    status = tabs2x(&tab, 181, 2, (double *)world, (double *)xy,
-                    (int *)stat);
+    status = tabs2x(&tab, 181, 2, world[0], xy[0], stat[0]);
 
     k = 0;
     for (j = 0; j < 181; j++) {
@@ -187,8 +176,7 @@ int main()
       world[j][1] = (double)ilat;
     }
 
-    status = tabs2x(&tab, 361, 2, (double *)world, (double *)xy,
-                    (int *)stat);
+    status = tabs2x(&tab, 361, 2, world[0], xy[0], stat[0]);
 
     k = 0;
     for (j = 0; j < 361; j++) {

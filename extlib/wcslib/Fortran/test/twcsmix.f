@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.13 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2012, Mark Calabretta
+* WCSLIB 4.25 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2015, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,17 +18,11 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Correspondence concerning WCSLIB may be directed to:
-*   Internet email: mcalabre@atnf.csiro.au
-*   Postal address: Dr. Mark Calabretta
-*                   Australia Telescope National Facility, CSIRO
-*                   PO Box 76
-*                   Epping NSW 1710
-*                   AUSTRALIA
+* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
-* http://www.atnf.csiro.au/~mcalabre/index.html
-* $Id: twcsmix.f,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+* http://www.atnf.csiro.au/people/Mark.Calabretta
+* $Id: twcsmix.f,v 4.25.1.2 2015/01/06 01:02:37 mcalabre Exp mcalabre $
 *=======================================================================
 
       PROGRAM TWCS2
@@ -281,8 +275,8 @@
           PIXLNG = PIX1(LNGIDX)
           PIXLAT = PIX1(LATIDX)
 
-          IPT(1) = PIXLNG
-          JPT(1) = PIXLAT
+          IPT(1) = REAL(PIXLNG)
+          JPT(1) = REAL(PIXLAT)
           CALL PGPT (1, IPT, JPT, -1)
 
           LNGSPN(1) = LNG1 - 9.3D0
@@ -438,8 +432,8 @@
         DOID = 0
 
         CALL PGSCI (9)
-        IPT(1) = PIXLNG
-        JPT(1) = PIXLAT
+        IPT(1) = REAL(PIXLNG)
+        JPT(1) = REAL(PIXLAT)
         CALL PGPT (1, IPT, JPT, 21)
         CALL PGSCI (2)
       END IF
@@ -539,8 +533,8 @@
         STATUS = LINX2P (LIN, 9, NELEM, IMG, PIX)
 
         DO 30 J = 0, 8
-          IR(J) = PIX(LNGIDX,J)
-          JR(J) = PIX(LATIDX,J)
+          IR(J) = REAL(PIX(LNGIDX,J))
+          JR(J) = REAL(PIX(LATIDX,J))
  30     CONTINUE
 
         CALL PGLINE (9, IR, JR)
@@ -592,8 +586,8 @@
             END IF
           END IF
 
-          IR(K) = PIX(LNGIDX,J)
-          JR(K) = PIX(LATIDX,J)
+          IR(K) = REAL(PIX(LNGIDX,J))
+          JR(K) = REAL(PIX(LATIDX,J))
           J = J + 1
           K = K + 1
  50     CONTINUE
@@ -631,8 +625,8 @@
             END IF
           END IF
 
-          IR(K) = PIX(LNGIDX,J)
-          JR(K) = PIX(LATIDX,J)
+          IR(K) = REAL(PIX(LNGIDX,J))
+          JR(K) = REAL(PIX(LATIDX,J))
           J = J + 1
           K = K + 1
  80     CONTINUE
@@ -683,8 +677,8 @@
             END IF
           END IF
 
-          IR(K) = PIX(LNGIDX,J)
-          JR(K) = PIX(LATIDX,J)
+          IR(K) = REAL(PIX(LNGIDX,J))
+          JR(K) = REAL(PIX(LATIDX,J))
           J = J + 1
           K = K + 1
  110    CONTINUE
@@ -728,8 +722,8 @@
             END IF
           END IF
 
-          IR(K) = PIX(LNGIDX,J)
-          JR(K) = PIX(LATIDX,J)
+          IR(K) = REAL(PIX(LNGIDX,J))
+          JR(K) = REAL(PIX(LATIDX,J))
           J = J + 1
           K = K + 1
  140    CONTINUE

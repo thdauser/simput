@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: wcshdr.c,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: wcshdr.c,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <ctype.h>
@@ -531,10 +525,10 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* Reference pixel coordinates. */
   for (j = 0; j < naxis; j++) {
-    sprintf(keyvalue, "%20.12G", wcs->crpix[j]);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->crpix[j]);
     wcshdo_util(relax, "CRPIX", "CRP", WCSHDO_CRPXna, "CRPX", 0, j+1, 0, alt,
-      colnum, colax, keyvalue, "Pixel coordinate of reference point",
-      nkeyrec, header, &status);
+      colnum, colax, keyvalue, "Pixel coordinate of reference point", nkeyrec,
+      header, &status);
   }
 
   /* Linear transformation matrix. */
@@ -547,17 +541,17 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
         if (wcs->pc[k] == 0.0) continue;
       }
 
-      sprintf(keyvalue, "%20.12G", wcs->pc[k]);
+      wcsutil_double2str(keyvalue, "%20.12G", wcs->pc[k]);
       wcshdo_util(relax, "PC", bintab ? "PC" : "P", WCSHDO_TPCn_ka,
-        bintab ? 0x0 : "PC", i+1, j+1, 0, alt, colnum, colax, keyvalue,
-        "Coordinate transformation matrix element",
+        bintab ? 0x0 : "PC", i+1, j+1, 0, alt, colnum, colax,
+        keyvalue, "Coordinate transformation matrix element",
         nkeyrec, header, &status);
     }
   }
 
   /* Coordinate increment at reference point. */
   for (i = 0; i < naxis; i++) {
-    sprintf(keyvalue, "%20.12G", wcs->cdelt[i]);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->cdelt[i]);
     comment[0] = '\0';
     if (wcs->cunit[i][0]) sprintf(comment, "[%s] ", wcs->cunit[i]);
     strcat(comment, "Coordinate increment at reference point");
@@ -594,10 +588,13 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
           break;
         case 'E':
           strcpy(comment, "ecliptic ");
+          break;
         case 'H':
           strcpy(comment, "helioecliptic ");
+          break;
         case 'S':
           strcpy(comment, "supergalactic ");
+          break;
         }
 
         if (i == wcs->lng) {
@@ -637,7 +634,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* Coordinate value at reference point. */
   for (i = 0; i < naxis; i++) {
-    sprintf(keyvalue, "%20.12G", wcs->crval[i]);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->crval[i]);
     comment[0] = '\0';
     if (wcs->cunit[i][0]) sprintf(comment, "[%s] ", wcs->cunit[i]);
     strcat(comment, "Coordinate value at reference point");
@@ -647,7 +644,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* Parameter values. */
   for (k = 0; k < wcs->npv; k++) {
-    sprintf(keyvalue, "%20.12G", (wcs->pv[k]).value);
+    wcsutil_double2str(keyvalue, "%20.12G", (wcs->pv[k]).value);
     if ((wcs->pv[k]).i == (wcs->lng + 1)) {
       switch ((wcs->pv[k]).m) {
       case 1:
@@ -699,28 +696,28 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* Celestial and spectral transformation parameters. */
   if (!undefined(wcs->lonpole)) {
-    sprintf(keyvalue, "%20.12G", wcs->lonpole);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->lonpole);
     wcshdo_util(relax, "LONPOLE", "LONP", 0, 0x0, 0, 0, 0, alt,
       colnum, colax, keyvalue, "[deg] Native longitude of celestial pole",
       nkeyrec, header, &status);
   }
 
   if (!undefined(wcs->latpole)) {
-    sprintf(keyvalue, "%20.12G", wcs->latpole);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->latpole);
     wcshdo_util(relax, "LATPOLE", "LATP", 0, 0x0, 0, 0, 0, alt,
       colnum, colax, keyvalue, "[deg] Native latitude of celestial pole",
       nkeyrec, header, &status);
   }
 
-  if (!undefined(wcs->restfrq)) {
-    sprintf(keyvalue, "%20.12G", wcs->restfrq);
+  if (wcs->restfrq != 0.0) {
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->restfrq);
     wcshdo_util(relax, "RESTFRQ", "RFRQ", 0, 0x0, 0, 0, 0, alt,
       colnum, colax, keyvalue, "[Hz] Line rest frequency",
       nkeyrec, header, &status);
   }
 
-  if (!undefined(wcs->restwav)) {
-    sprintf(keyvalue, "%20.12G", wcs->restwav);
+  if (wcs->restwav != 0.0) {
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->restwav);
     wcshdo_util(relax, "RESTWAV", "RWAV", 0, 0x0, 0, 0, 0, alt,
       colnum, colax, keyvalue, "[Hz] Line rest wavelength",
       nkeyrec, header, &status);
@@ -758,7 +755,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
     for (i = 0; i < naxis; i++) {
       if (undefined(wcs->crder[i])) continue;
 
-      sprintf(keyvalue, "%20.12G", wcs->crder[i]);
+      wcsutil_double2str(keyvalue, "%20.12G", wcs->crder[i]);
       comment[0] = '\0';
       if (wcs->cunit[i][0]) sprintf(comment, "[%s] ", wcs->cunit[i]);
       strcat(comment, "Random error in coordinate");
@@ -772,7 +769,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
     for (i = 0; i < naxis; i++) {
       if (undefined(wcs->csyer[i])) continue;
 
-      sprintf(keyvalue, "%20.12G", wcs->csyer[i]);
+      wcsutil_double2str(keyvalue, "%20.12G", wcs->csyer[i]);
       comment[0] = '\0';
       if (wcs->cunit[i][0]) sprintf(comment, "[%s] ", wcs->cunit[i]);
       strcat(comment, "Systematic error in coordinate");
@@ -791,7 +788,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* Equinox of equatorial coordinate system. */
   if (!undefined(wcs->equinox)) {
-    sprintf(keyvalue, "%20.12G", wcs->equinox);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->equinox);
     wcshdo_util(relax, "EQUINOX", "EQUI", 0, 0x0, 0, 0, 0, alt,
       colnum, colax, keyvalue, "[yr] Equinox of equatorial coordinates",
       nkeyrec, header, &status);
@@ -815,7 +812,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* Observer's velocity towards source. */
   if (!undefined(wcs->velosys)) {
-    sprintf(keyvalue, "%20.12G", wcs->velosys);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->velosys);
     wcshdo_util(relax, "VELOSYS", "VSYS", 0, 0x0, 0, 0, 0, alt,
       colnum, colax, keyvalue, "[m/s] Velocity towards source",
       nkeyrec, header, &status);
@@ -831,7 +828,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* Redshift of the source. */
   if (!undefined(wcs->zsource)) {
-    sprintf(keyvalue, "%20.12G", wcs->zsource);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->zsource);
     wcshdo_util(relax, "ZSOURCE", "ZSOU", 0, 0x0, 0, 0, 0, alt,
       colnum, colax, keyvalue, "Redshift of the source",
       nkeyrec, header, &status);
@@ -841,7 +838,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
   for (k = 0; k < 3; k++) {
     if (undefined(wcs->obsgeo[k])) continue;
 
-    sprintf(keyvalue, "%20.12G", wcs->obsgeo[k]);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->obsgeo[k]);
     sprintf(comment, "[m] ITRF observatory %c-coordinate", xyz[k]);
     obsgeo[7] = xyz[k];
     obsg[4]   = xyz[k];
@@ -851,7 +848,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* MJD of observation. */
   if (!undefined(wcs->mjdobs)) {
-    sprintf(keyvalue, "%20.12G", wcs->mjdobs);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->mjdobs);
 
     strcpy(comment, "[d] MJD of observation");
     if (wcs->dateobs[0]) {
@@ -868,7 +865,7 @@ int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header)
 
   /* MJD mid-observation time. */
   if (!undefined(wcs->mjdavg)) {
-    sprintf(keyvalue, "%20.12G", wcs->mjdavg);
+    wcsutil_double2str(keyvalue, "%20.12G", wcs->mjdavg);
 
     strcpy(comment, "[d] MJD mid-observation");
     if (wcs->dateavg[0]) {

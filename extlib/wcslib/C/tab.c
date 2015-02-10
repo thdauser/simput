@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: tab.c,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: tab.c,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <math.h>
@@ -39,6 +33,7 @@
 #include "wcserr.h"
 #include "wcsmath.h"
 #include "wcsprintf.h"
+#include "wcsutil.h"
 #include "tab.h"
 
 const int TABSET = 137;
@@ -413,6 +408,55 @@ int tabcpy(int alloc, const struct tabprm *tabsrc, struct tabprm *tabdst)
 
   return 0;
 }
+
+/*--------------------------------------------------------------------------*/
+
+int tabcmp(int cmp,
+           double tol,
+           const struct tabprm *tab1,
+           const struct tabprm *tab2,
+           int *equal)
+
+{
+  int status = 0;
+  int m, M, N;
+
+  if (tab1  == 0x0) return TABERR_NULL_POINTER;
+  if (tab2  == 0x0) return TABERR_NULL_POINTER;
+  if (equal == 0x0) return TABERR_NULL_POINTER;
+
+  *equal = 0;
+
+  if (tab1->M != tab2->M) {
+    return 0;
+  }
+
+  M = tab1->M;
+
+  if (!wcsutil_intEq(M, tab1->K, tab2->K) ||
+      !wcsutil_intEq(M, tab1->map, tab2->map) ||
+      !wcsutil_Eq(M, tol, tab1->crval, tab2->crval)) {
+    return 0;
+  }
+
+  N = M;
+  for (m = 0; m < M; m++) {
+    if (!wcsutil_Eq(tab1->K[m], tol, tab1->index[m], tab2->index[m])) {
+      return 0;
+    }
+
+    N *= tab1->K[m];
+  }
+
+  if (!wcsutil_Eq(N, tol, tab1->coord, tab2->coord)) {
+    return 0;
+  }
+
+  *equal = 1;
+
+  return 0;
+}
+
 
 /*--------------------------------------------------------------------------*/
 
@@ -1144,6 +1188,8 @@ int tabs2x(
   /* This is used a lot. */
   M = tab->M;
 
+  tabcoord = 0x0;
+  nv = 0;
   if (M > 1) {
     nv = 1 << M;
     tabcoord = calloc(nv, sizeof(double *));
@@ -1309,7 +1355,7 @@ int tabs2x(
     statp++;
   }
 
-  if (M > 1) free(tabcoord);
+  if (tabcoord) free(tabcoord);
 
   return status;
 }

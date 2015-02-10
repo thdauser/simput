@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: doxextr.l,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: doxextr.l,v 4.25.1.2 2015/01/06 01:02:55 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * doxextr.l is a Flex description file containing a lexical scanner definition
@@ -347,9 +341,9 @@ DASH {WS1}-{WS1}
 	}
 
 <FNMARK>{NAME} {
-	  strcpy(name, yytext);
+	  strncpy(name, yytext, 32);
 	  for (ifunc = 0; ifunc < nfunc; ifunc++) {
-	    if (strcmp(yytext, func[ifunc]) == 0) {
+	    if (strncmp(yytext, func[ifunc], 32) == 0) {
 	      printf("\n/** @fn %s\n*\n", proto[ifunc]);
 	      break;
 	    }
@@ -419,7 +413,8 @@ DASH {WS1}-{WS1}
 	    printf("%s\n%-*s", strtok(yytext, " "), id, "*");
 	    pcont = 0;
 	  } else {
-	    sprintf(text, "* @param[%s] %s ", param, strtok(yytext, " "));
+	    snprintf(text, 128, "* @param[%s] %s ", param,
+	      strtok(yytext, " "));
 	    printf("%-24s", text);
 	  }
 	  printe(yytext+20, name);
@@ -547,7 +542,7 @@ DASH {WS1}-{WS1}
 	}
 
 <STRUCTMARK>{NAME} {
-	  strcpy(name, yytext);
+	  strncpy(name, yytext, 32);
 	  printf("\n/** @struct %s\n*\n", yytext);
 	}
 
@@ -556,7 +551,7 @@ DASH {WS1}-{WS1}
 	}
 
 <UNIONMARK>{NAME} {
-	  strcpy(name, yytext);
+	  strncpy(name, yytext, 32);
 	  printf("\n/** @union %s\n*\n", yytext);
 	}
 
@@ -564,7 +559,7 @@ DASH {WS1}-{WS1}
 	  BEGIN(BRIEF);
 	}
 
-<STRUCTURE>{I}(char|int|long|double|struct{WS1}{NAME}|union) {
+<STRUCTURE>{I}(char|int|long|double|struct{WS1}{NAME}|union|void) {
 	  endlist(0, 0, listype, listndt, &ilist);
 	  printf("*/\n");
 	  printf("\n/** @var %s", yytext+lmore+2);
@@ -640,7 +635,7 @@ DASH {WS1}-{WS1}
 
 
 <DEFMARK>{NAME} {
-	  strcpy(name, yytext);
+	  strncpy(name, yytext, 32);
 	  printf("\n/** @def %s\n*\n", yytext);
 	}
 
@@ -674,12 +669,12 @@ DASH {WS1}-{WS1}
 	  BEGIN(FLUSH);
 	}
 
-<BODY>^(void|int|double){WS1}{NAME}{WS0}\([^)]* {
+<BODY>^(void|char|int|double){WS1}("*"*){NAME}{WS0}\([^;]* {
 	  proto[nfunc] = malloc((yyleng+2)*sizeof(char));
-	  sprintf(proto[nfunc], "%s)", yytext);
-	  func[nfunc] = malloc(16*sizeof(char));
+	  sprintf(proto[nfunc], "%s", yytext);
+	  func[nfunc] = malloc(32*sizeof(char));
 	  strtok(yytext, " ");
-	  strcpy(func[nfunc], strtok(0x0, " ("));
+	  strncpy(func[nfunc], strtok(0x0, " *("), 32);
 	  nfunc++;
 	  BEGIN(FLUSH);
 	}

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.13 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2012, Mark Calabretta
+* WCSLIB 4.25 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2015, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,17 +18,11 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Correspondence concerning WCSLIB may be directed to:
-*   Internet email: mcalabre@atnf.csiro.au
-*   Postal address: Dr. Mark Calabretta
-*                   Australia Telescope National Facility, CSIRO
-*                   PO Box 76
-*                   Epping NSW 1710
-*                   AUSTRALIA
+* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
-* http://www.atnf.csiro.au/~mcalabre/index.html
-* $Id: tprj2.f,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+* http://www.atnf.csiro.au/people/Mark.Calabretta
+* $Id: tprj2.f,v 4.25.1.2 2015/01/06 01:02:37 mcalabre Exp mcalabre $
 *=======================================================================
 
       PROGRAM TPRJ2
@@ -210,6 +204,10 @@
       WRITE (*, 40) 'HEALPix', (PV(J), J=1,2)
       CALL PRJPLT ('HPX', 90, -90, PV)
 
+*     XPH: HEALPix polar, aka "butterfly" projection.
+      WRITE (*, 40) 'Butterfly', (PV(J), J=1,2)
+      CALL PRJPLT ('XPH', 90, -90, PV)
+
       CALL PGASK (0)
       CALL PGEND
 
@@ -229,7 +227,7 @@
       LOGICAL   CUBIC, HEALPX, INTRRP
       INTEGER   CI, H, ILAT, ILNG, J, K, LEN, NORTH, SOUTH, STAT(361),
      :          STATUS
-      REAL      HX, HY, SX, SY, XR(512), YR(512)
+      REAL      HX, HY, SX, SY, XR(512), XR0, YR(512), YR0
       DOUBLE PRECISION LAT(361), LNG(361), PV(0:29), X(361), X0, Y(361),
      :          Y0
       CHARACTER PCODE*3
@@ -269,24 +267,28 @@
 
         STATUS = PRJGET (PRJ, PRJ_X0, X0)
         STATUS = PRJGET (PRJ, PRJ_Y0, Y0)
-        XR(1) =      45.0 + X0
-        YR(1) =      45.0 - Y0
-        XR(2) =      45.0 + X0
-        YR(2) =  3.0*45.0 - Y0
-        XR(3) =     -45.0 + X0
-        YR(3) =  3.0*45.0 - Y0
-        XR(4) =     -45.0 + X0
-        YR(4) = -3.0*45.0 - Y0
-        XR(5) =      45.0 + X0
-        YR(5) = -3.0*45.0 - Y0
-        XR(6) =      45.0 + X0
-        YR(6) =      45.0 - Y0
-        XR(7) = -7.0*45.0 + X0
-        YR(7) =      45.0 - Y0
-        XR(8) = -7.0*45.0 + X0
-        YR(8) =     -45.0 - Y0
-        XR(9) =      45.0 + X0
-        YR(9) =     -45.0 - Y0
+
+        XR0 = REAL(X0)
+        YR0 = REAL(Y0)
+
+        XR(1) =      45.0 + XR0
+        YR(1) =      45.0 - YR0
+        XR(2) =      45.0 + XR0
+        YR(2) =  3.0*45.0 - YR0
+        XR(3) =     -45.0 + XR0
+        YR(3) =  3.0*45.0 - YR0
+        XR(4) =     -45.0 + XR0
+        YR(4) = -3.0*45.0 - YR0
+        XR(5) =      45.0 + XR0
+        YR(5) = -3.0*45.0 - YR0
+        XR(6) =      45.0 + XR0
+        YR(6) =      45.0 - YR0
+        XR(7) = -7.0*45.0 + XR0
+        YR(7) =      45.0 - YR0
+        XR(8) = -7.0*45.0 + XR0
+        YR(8) =     -45.0 - YR0
+        XR(9) =      45.0 + XR0
+        YR(9) =     -45.0 - YR0
         CALL PGLINE (9, XR, YR)
 
       ELSE
@@ -295,57 +297,83 @@
         CALL PGTEXT (-240.0, -220.0, PCODE//' - 15 degree graticule')
 
         IF (HEALPX) THEN
-*         Draw the perimeter of the HEALPix projection.
-          CALL PGSCI (8)
+          IF (PCODE.EQ.'HPX') THEN
+*           Draw the perimeter of the HEALPix projection.
+            CALL PGSCI (8)
 
-          H = NINT(PV(1))
-          SX = 180.0 / H
-          SY = SX * NINT(PV(2) + 1D0) / 2.0
+            H = NINT(PV(1))
+            SX = 180.0 / H
+            SY = SX * NINT(PV(2) + 1D0) / 2.0
 
-          STATUS = PRJGET (PRJ, PRJ_X0, X0)
-          STATUS = PRJGET (PRJ, PRJ_Y0, Y0)
-          HX = 180.0 + X0
-          HY = SY - SX - Y0
-          CALL PGMOVE (HX, HY)
+            STATUS = PRJGET (PRJ, PRJ_X0, X0)
+            STATUS = PRJGET (PRJ, PRJ_Y0, Y0)
 
-          DO 30 J = 1, H
-            HX = HX - SX
-            HY = HY + SX
-            CALL PGDRAW (HX, HY)
+            XR0 = REAL(X0)
+            YR0 = REAL(Y0)
 
-            HX = HX - SX
-            HY = HY - SX
-            CALL PGDRAW (HX, HY)
- 30       CONTINUE
+            HX = 180.0 + XR0
+            HY = SY - SX - YR0
+            CALL PGMOVE (HX, HY)
 
-          HX = 180.0 + X0
-          HY = -SY + SX - Y0
+            DO 30 J = 1, H
+              HX = HX - SX
+              HY = HY + SX
+              CALL PGDRAW (HX, HY)
 
-          IF (MOD(INT(PV(2)),2).EQ.1) THEN
-            K = 1
-          ELSE
-            K = -1
-            HY = HY - SX
+              HX = HX - SX
+              HY = HY - SX
+              CALL PGDRAW (HX, HY)
+ 30         CONTINUE
+
+            HX = 180.0 + XR0
+            HY = -SY + SX - YR0
+
+            IF (MOD(INT(PV(2)),2).EQ.1) THEN
+              K = 1
+            ELSE
+              K = -1
+              HY = HY - SX
+            END IF
+
+            CALL PGMOVE (HX, HY)
+
+            DO 40 J = 1, H
+              HX = HX - SX
+              HY = HY - K*SX
+              CALL PGDRAW (HX, HY)
+
+              HX = HX - SX
+              HY = HY + K*SX
+              CALL PGDRAW (HX, HY)
+ 40         CONTINUE
+
+          ELSE IF (PCODE.EQ.'XPH') THEN
+            DO 70 ILNG = -90, 180, 90
+              LNG(1) = DBLE(ILNG) - 0.0001
+
+              J = 1
+              DO 50 ILAT = 90, -90, -1
+                LAT(J) = DBLE(ILAT)
+                J = J + 1
+ 50           CONTINUE
+
+              STATUS = PRJS2X(PRJ, 1, 181, 1, 1, LNG, LAT, X, Y, STAT)
+
+              DO 60 J = 1, 181
+                XR(J) = -REAL(X(J))
+                YR(J) =  REAL(Y(J))
+ 60           CONTINUE
+
+              CALL PGLINE(181, XR, YR)
+ 70         CONTINUE
           END IF
-
-          CALL PGMOVE (HX, HY)
-
-          DO 40 J = 1, H
-            HX = HX - SX
-            HY = HY - K*SX
-            CALL PGDRAW (HX, HY)
-
-            HX = HX - SX
-            HY = HY + K*SX
-            CALL PGDRAW (HX, HY)
- 40       CONTINUE
 
         END IF
       END IF
 
 
       CI = 1
-      DO 70 ILNG = -180, 180, 15
+      DO 100 ILNG = -180, 180, 15
         CI = CI + 1
         IF (CI.GT.7) CI = 2
 
@@ -358,20 +386,20 @@
         END IF
 
         J = 1
-        DO 50 ILAT = NORTH, SOUTH, -1
+        DO 80 ILAT = NORTH, SOUTH, -1
           LAT(J) = DBLE(ILAT)
           J = J + 1
- 50     CONTINUE
+ 80     CONTINUE
 
         LEN  = NORTH - SOUTH + 1
         STATUS = PRJS2X (PRJ, 1, LEN, 1, 1, LNG, LAT, X, Y, STAT)
 
         K = 0
-        DO 60 J = 1, LEN
+        DO 90 J = 1, LEN
           IF (STAT(J).NE.0) THEN
             IF (K.GT.1) CALL PGLINE (K, XR, YR)
             K = 0
-            GO TO 60
+            GO TO 90
           END IF
 
           IF (CUBIC .AND. J.GT.0) THEN
@@ -381,25 +409,25 @@
               K = 0
             END IF
           ELSE IF (HEALPX .AND. ILNG.EQ.180) THEN
-            IF (X(J).GT.180D0) GO TO 60
+            IF (X(J).GT.180D0) GO TO 90
           END IF
 
           K = K + 1
-          XR(K) = -X(J)
-          YR(K) =  Y(J)
- 60     CONTINUE
+          XR(K) = -REAL(X(J))
+          YR(K) =  REAL(Y(J))
+ 90     CONTINUE
 
         CALL PGLINE (K, XR, YR)
- 70   CONTINUE
+ 100  CONTINUE
 
       CI = 1
       INTRRP = CUBIC .OR. HEALPX
-      DO 100 ILAT = -90, 90, 15
+      DO 130 ILAT = -90, 90, 15
         CI = CI + 1
         IF (CI.GT.7) CI = 2
 
-        IF (ILAT.GT.NORTH) GO TO 100
-        IF (ILAT.LT.SOUTH) GO TO 100
+        IF (ILAT.GT.NORTH) GO TO 130
+        IF (ILAT.LT.SOUTH) GO TO 130
 
         LAT(1) = DBLE(ILAT)
 
@@ -410,19 +438,19 @@
         END IF
 
         ILNG = -180
-        DO 80 J = 1, 361
+        DO 110 J = 1, 361
           LNG(J) = DBLE(ILNG)
           ILNG = ILNG + 1
- 80     CONTINUE
+ 110    CONTINUE
 
         STATUS = PRJS2X (PRJ, 361, 1, 1, 1, LNG, LAT, X, Y, STAT)
 
         K = 0
-        DO 90 J = 1, 361
+        DO 120 J = 1, 361
           IF (STAT(J).NE.0) THEN
             IF (K.GT.1) CALL PGLINE (K, XR, YR)
             K = 0
-            GO TO 90
+            GO TO 120
           END IF
 
           IF (INTRRP .AND. J.GT.0) THEN
@@ -434,12 +462,12 @@
           END IF
 
           K = K + 1
-          XR(K) = -X(J)
-          YR(K) =  Y(J)
- 90     CONTINUE
+          XR(K) = -REAL(X(J))
+          YR(K) =  REAL(Y(J))
+ 120    CONTINUE
 
         CALL PGLINE (K, XR, YR)
- 100  CONTINUE
+ 130  CONTINUE
 
       CALL PGSCI(1)
       XR(1) = 0.0

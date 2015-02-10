@@ -159,7 +159,7 @@ imgpix[3][]:  -0           -0           -0.20408     -1.0204
               2            210          60        
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "slant zenithal perspective"
    category: 1 (zenithal)
@@ -353,7 +353,7 @@ imgpix[3][]:   0            0            0            1
               2            210          60        
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "slant zenithal perspective"
    category: 1 (zenithal)

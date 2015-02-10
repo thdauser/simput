@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,22 +16,16 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: spc.h,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: spc.h,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *=============================================================================
 *
-* WCSLIB 4.13 - C routines that implement the spectral coordinate systems
+* WCSLIB 4.25 - C routines that implement the spectral coordinate systems
 * recognized by the FITS World Coordinate System (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -383,9 +377,11 @@
 *                        X-types) only if restreq%3 != 0.
 *
 *   err       struct wcserr **
-*                       For function return values > 1, this struct will
-*                       contain a detailed error message.  May be NULL if an
-*                       error message is not desired.
+*                       If enabled, for function return values > 1, this
+*                       struct will contain a detailed error message, see
+*                       wcserr_enable().  May be NULL if an error message is
+*                       not desired.  Otherwise, the user is responsible for
+*                       deleting the memory allocated for the wcserr struct.
 *
 * Function return value:
 *             int       Status return value:
@@ -441,9 +437,11 @@
 *                       coordinate.
 *
 *   err       struct wcserr **
-*                       For function return values > 1, this struct will
-*                       contain a detailed error message.  May be NULL if an
-*                       error message is not desired.
+*                       If enabled, for function return values > 1, this
+*                       struct will contain a detailed error message, see
+*                       wcserr_enable().  May be NULL if an error message is
+*                       not desired.  Otherwise, the user is responsible for
+*                       deleting the memory allocated for the wcserr struct.
 *
 * Function return value:
 *             int       Status return value:
@@ -501,9 +499,11 @@
 *                       keyvalue.
 *
 *   err       struct wcserr **
-*                       For function return values > 1, this struct will
-*                       contain a detailed error message.  May be NULL if an
-*                       error message is not desired.
+*                       If enabled, for function return values > 1, this
+*                       struct will contain a detailed error message, see
+*                       wcserr_enable().  May be NULL if an error message is
+*                       not desired.  Otherwise, the user is responsible for
+*                       deleting the memory allocated for the wcserr struct.
 *
 * Function return value:
 *             int       Status return value:
@@ -567,9 +567,11 @@
 *                       units.
 *
 *   err       struct wcserr **
-*                       For function return values > 1, this struct will
-*                       contain a detailed error message.  May be NULL if an
-*                       error message is not desired.
+*                       If enabled, for function return values > 1, this
+*                       struct will contain a detailed error message, see
+*                       wcserr_enable().  May be NULL if an error message is
+*                       not desired.  Otherwise, the user is responsible for
+*                       deleting the memory allocated for the wcserr struct.
 *
 * Function return value:
 *             int       Status return value:
@@ -837,23 +839,23 @@ int spcx2s(struct spcprm *spc, int nx, int sx, int sspec,
 int spcs2x(struct spcprm *spc, int nspec, int sspec, int sx,
            const double spec[], double x[], int stat[]);
 
-int spctype(const char ctype[], char stype[], char scode[], char sname[],
+int spctype(const char ctype[9], char stype[], char scode[], char sname[],
             char units[], char *ptype, char *xtype, int *restreq,
             struct wcserr **err);
 
-int spcspxe(const char ctypeS[], double crvalS, double restfrq,
+int spcspxe(const char ctypeS[9], double crvalS, double restfrq,
             double restwav, char *ptype, char *xtype, int *restreq,
             double *crvalX, double *dXdS, struct wcserr **err);
 
-int spcxpse(const char ctypeS[], double crvalX, double restfrq,
+int spcxpse(const char ctypeS[9], double crvalX, double restfrq,
             double restwav, char *ptype, char *xtype, int *restreq,
             double *crvalS, double *dSdX, struct wcserr **err);
 
-int spctrne(const char ctypeS1[], double crvalS1, double cdeltS1,
-            double restfrq, double restwav, char ctypeS2[], double *crvalS2,
+int spctrne(const char ctypeS1[9], double crvalS1, double cdeltS1,
+            double restfrq, double restwav, char ctypeS2[9], double *crvalS2,
             double *cdeltS2, struct wcserr **err);
 
-int spcaips(const char ctypeA[], int velref, char ctype[], char specsys[]);
+int spcaips(const char ctypeA[9], int velref, char ctype[9], char specsys[9]);
 
 
 /* Deprecated. */
@@ -863,16 +865,16 @@ int spcaips(const char ctypeA[], int velref, char ctype[], char specsys[]);
 #define spcx2s_errmsg spc_errmsg
 #define spcs2x_errmsg spc_errmsg
 
-int spctyp(const char ctype[], char stype[], char scode[], char sname[],
+int spctyp(const char ctype[9], char stype[], char scode[], char sname[],
            char units[], char *ptype, char *xtype, int *restreq);
-int spcspx(const char ctypeS[], double crvalS, double restfrq, double restwav,
-           char *ptype, char *xtype, int *restreq, double *crvalX,
-           double *dXdS);
-int spcxps(const char ctypeS[], double crvalX, double restfrq, double restwav,
-           char *ptype, char *xtype, int *restreq, double *crvalS,
-           double *dSdX);
-int spctrn(const char ctypeS1[], double crvalS1, double cdeltS1,
-           double restfrq, double restwav, char ctypeS2[], double *crvalS2,
+int spcspx(const char ctypeS[9], double crvalS, double restfrq,
+           double restwav, char *ptype, char *xtype, int *restreq,
+	   double *crvalX, double *dXdS);
+int spcxps(const char ctypeS[9], double crvalX, double restfrq,
+           double restwav, char *ptype, char *xtype, int *restreq,
+	   double *crvalS, double *dSdX);
+int spctrn(const char ctypeS1[9], double crvalS1, double cdeltS1,
+           double restfrq, double restwav, char ctypeS2[9], double *crvalS2,
            double *cdeltS2);
 
 #ifdef __cplusplus

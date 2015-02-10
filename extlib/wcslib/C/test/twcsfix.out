@@ -3,13 +3,13 @@ Testing WCSLIB translator for non-standard usage (twcsfix.c)
 
 wcsfix status returns: (-1, 0, 0, 0, 0, -1)
 
-INFORMATIVE message from datfix() at line 386 of file wcsfix.c:
+INFORMATIVE message from datfix() at line 402 of file wcsfix.c:
 Changed '1957/02/15 01:10:00' to '1957-02-15T01:10:00'.
 
-INFORMATIVE message from unitfix() at line 421 of file wcsfix.c:
+INFORMATIVE message from unitfix() at line 438 of file wcsfix.c:
 Changed units: 'ARCSEC' -> 'arcsec', 'ARCSEC' -> 'arcsec', 'KM/SEC' -> 'km/s'.
 
-INFORMATIVE message from spcfix() at line 468 of file wcsfix.c:
+INFORMATIVE message from spcfix() at line 485 of file wcsfix.c:
 Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W'.
 
        flag: 137
@@ -66,7 +66,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W'.
              UNDEFINED     UNDEFINED     UNDEFINED   
       csyer: 0x<address>
              UNDEFINED     UNDEFINED     UNDEFINED   
-    radesys: UNDEFINED
+    radesys: "ICRS"
     equinox: UNDEFINED
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
@@ -155,7 +155,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W'.
               0           -1.8049    
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "orthographic/synthesis"
    category: 1 (zenithal)
@@ -246,7 +246,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W'.
              UNDEFINED     UNDEFINED     UNDEFINED   
       csyer: 0x<address>
              UNDEFINED     UNDEFINED     UNDEFINED   
-    radesys: UNDEFINED
+    radesys: "ICRS"
     equinox: UNDEFINED
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
@@ -335,7 +335,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W'.
               0           -1.8049    
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "orthographic/synthesis"
    category: 1 (zenithal)

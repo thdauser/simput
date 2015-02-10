@@ -1,6 +1,109 @@
 Platforms on which the installation procedures and test suite were exercised
 
 
+WCSLIB version 4.23 (2014/05/11)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 7.0 (wheezy)
+  uname -r (kernel version): 3.2.0-4-686-pae
+  gcc --version: gcc (Debian 4.7.2-5) 4.7.2
+  gfortran --version: GNU Fortran (Debian 4.7.2-5) 4.7.2
+
+
+WCSLIB version 4.22 (2014/04/13)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 7.0 (wheezy)
+  uname -r (kernel version): 3.2.0-4-686-pae
+  gcc --version: gcc (Debian 4.7.2-5) 4.7.2
+  gfortran --version: GNU Fortran (Debian 4.7.2-5) 4.7.2
+
+
+* Dell PowerEdge R710 (Intel Xeon, x86_64) running Debian linux 6.0.9 (squeeze)
+  uname -r (kernel version): 2.6.32-5-amd64
+  gcc --version: gcc (Debian 4.4.5-8) 4.4.5
+  gfortran --version: GNU Fortran (Debian 4.4.5-8) 4.4.5
+
+
+* Mac Mini (Intel Core 2 Duo) running MacOSX 10.6.8 (10K549)
+  uname -r (kernel version): 10.8.0
+  gcc --version: i686-apple-darwin10-gcc-4.2.1 (GCC) 4.2.1
+                 (Apple Inc. build 5666) (dot 3)
+  gfortran --version: GNU Fortran (GCC) 4.5.0 20100107 (experimental)
+  (Non-graphics tests only.)
+
+
+WCSLIB version 4.21 (2014/03/24)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 7.0 (wheezy)
+  uname -r (kernel version): 3.2.0-4-686-pae
+  gcc --version: gcc (Debian 4.7.2-5) 4.7.2
+  gfortran --version: GNU Fortran (Debian 4.7.2-5) 4.7.2
+
+
+WCSLIB version 4.20 (2013/12/18)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 7.0 (wheezy)
+  uname -r (kernel version): 3.2.0-4-686-pae
+  gcc --version: gcc (Debian 4.7.2-5) 4.7.2
+  gfortran --version: GNU Fortran (Debian 4.7.2-5) 4.7.2
+
+
+WCSLIB version 4.19 (2013/09/30)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 7.0 (wheezy)
+  uname -r (kernel version): 3.2.0-4-686-pae
+  gcc --version: gcc (Debian 4.7.2-5) 4.7.2
+  gfortran --version: GNU Fortran (Debian 4.7.2-5) 4.7.2
+
+
+WCSLIB version 4.18 (2013/07/12)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 7.0 (wheezy)
+  uname -r (kernel version): 3.2.0-4-686-pae
+  gcc --version: gcc (Debian 4.7.2-5) 4.7.2
+  gfortran --version: GNU Fortran (Debian 4.7.2-5) 4.7.2
+
+
+WCSLIB version 4.17 (2013/01/29)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 5.0.9 (lenny)
+  uname -r (kernel version): 2.6.26-2-686
+  gcc --version: gcc (Debian 4.3.2-1.1) 4.3.2
+  gfortran --version: GNU Fortran (Debian 4.3.2-1.1) 4.3.2
+
+
+WCSLIB version 4.15 (2012/09/26)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 5.0.9 (lenny)
+  uname -r (kernel version): 2.6.26-2-686
+  gcc --version: gcc (Debian 4.3.2-1.1) 4.3.2
+  gfortran --version: GNU Fortran (Debian 4.3.2-1.1) 4.3.2
+
+
+WCSLIB version 4.14 (2012/07/13)
+--------------------------------
+
+* Dell Latitude D620 (Intel Centrino, i686) running Debian linux 5.0.9 (lenny)
+  uname -r (kernel version): 2.6.26-2-686
+  gcc --version: gcc (Debian 4.3.2-1.1) 4.3.2
+  gfortran --version: GNU Fortran (Debian 4.3.2-1.1) 4.3.2
+
+
+* MacBook Pro (Intel Core 2 Duo) running MacOSX 10.7.3 (11D50)
+  uname -r (Darwin kernel version): 11.3.0
+  gcc --version: i686-apple-darwin11-llvm-gcc-4.2 (GCC) 4.2.1
+                 (Apple Inc. build 5658) (LLVM build 2336.1.00)
+  gfortran --version: GNU Fortran (GCC) 4.6.1
+  (Non-graphics tests only.)
+
+
 WCSLIB version 4.13.1 (2012/03/15)
 ----------------------------------
 
@@ -12,8 +115,8 @@ WCSLIB version 4.13.1 (2012/03/15)
 
 * MacBook Pro (Intel Core 2 Duo) running MacOSX 10.7.3 (11D50)
   uname -r (Darwin kernel version): 11.3.0
-  gcc--version: i686-apple-darwin11-llvm-gcc-4.2 (GCC) 4.2.1
-                (Apple Inc. build 5658) (LLVM build 2336.1.00)
+  gcc --version: i686-apple-darwin11-llvm-gcc-4.2 (GCC) 4.2.1
+                 (Apple Inc. build 5658) (LLVM build 2336.1.00)
   gfortran --version: GNU Fortran (GCC) 4.6.1
   (Non-graphics tests only.)
 
@@ -210,4 +313,4 @@ WCSLIB version 4.4 (2009/08/06)
           2004/04/23
 
 ------------------------------------------------------------------------------
-$Id: VALIDATION,v 4.13.1.2 2012/03/15 06:18:04 cal103 Exp cal103 $
+$Id: VALIDATION,v 4.25.1.1 2014/12/14 14:32:47 mcalabre Exp mcalabre $

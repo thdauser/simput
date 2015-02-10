@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.13 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2012, Mark Calabretta
+* WCSLIB 4.25 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2015, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,28 +18,22 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Correspondence concerning WCSLIB may be directed to:
-*   Internet email: mcalabre@atnf.csiro.au
-*   Postal address: Dr. Mark Calabretta
-*                   Australia Telescope National Facility, CSIRO
-*                   PO Box 76
-*                   Epping NSW 1710
-*                   AUSTRALIA
+* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
-* http://www.atnf.csiro.au/~mcalabre/index.html
-* $Id: wcs.inc,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+* http://www.atnf.csiro.au/people/Mark.Calabretta
+* $Id: wcs.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  WCSCOPY, WCSFREE, WCSGET, WCSGTC, WCSGTD, WCSGTI,
-     :          WCSINI, WCSMIX, WCSNPS, WCSNPV, WCSP2S, WCSPERR, WCSPRT,
-     :          WCSSPTR, WCSPTC, WCSPTD, WCSPTI, WCSPUT, WCSS2P, WCSSET,
-     :          WCSSUB
-      INTEGER   WCSCOPY, WCSFREE, WCSGET, WCSGTC, WCSGTD, WCSGTI,
-     :          WCSINI, WCSMIX, WCSNPS, WCSNPV, WCSP2S, WCSPERR, WCSPRT,
-     :          WCSSPTR, WCSPTC, WCSPTD, WCSPTI, WCSPUT, WCSS2P, WCSSET,
-     :          WCSSUB
+      EXTERNAL  WCSBCHK, WCSCOMPARE, WCSCOPY, WCSFREE, WCSGET, WCSGTC,
+     :          WCSGTD, WCSGTI, WCSINI, WCSMIX, WCSNPS, WCSNPV, WCSP2S,
+     :          WCSPERR, WCSPRT, WCSSPTR, WCSPTC, WCSPTD, WCSPTI,
+     :          WCSPUT, WCSS2P, WCSSET, WCSSUB
+      INTEGER   WCSBCHK, WCSCOMPARE, WCSCOPY, WCSFREE, WCSGET, WCSGTC,
+     :          WCSGTD, WCSGTI, WCSINI, WCSMIX, WCSNPS, WCSNPV, WCSP2S,
+     :          WCSPERR, WCSPRT, WCSSPTR, WCSPTC, WCSPTD, WCSPTI,
+     :          WCSPUT, WCSS2P, WCSSET, WCSSUB
 
 *     Length of the WCSPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 416 on 32-bit machines.
@@ -123,7 +117,7 @@
       PARAMETER (WCS_SPC      = 213)
       PARAMETER (WCS_ERR      = 214)
 
-*     Flag bits for the AXES argument.
+*     Flag bits for WCSSUB's AXES argument.
       INTEGER WCSSUB_CELESTIAL, WCSSUB_CUBEFACE, WCSSUB_LATITUDE,
      :        WCSSUB_LONGITUDE, WCSSUB_SPECTRAL, WCSSUB_STOKES
 
@@ -133,6 +127,13 @@
       PARAMETER (WCSSUB_CELESTIAL = 4096 +  7)
       PARAMETER (WCSSUB_SPECTRAL  = 4096 +  8)
       PARAMETER (WCSSUB_STOKES    = 4096 + 16)
+
+*     Flag bits for WCSCOMPARE's CMP argument.
+      INTEGER WCSCOMPARE_ANCILLARY, WCSCOMPARE_TILING, WCSCOMPARE_CRPIX
+
+      PARAMETER (WCSCOMPARE_ANCILLARY = 1)
+      PARAMETER (WCSCOMPARE_TILING    = 2)
+      PARAMETER (WCSCOMPARE_CRPIX     = 4)
 
 *     Error codes and messages.
       INTEGER   WCSERR_BAD_COORD_TRANS, WCSERR_BAD_CTYPE,

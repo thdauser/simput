@@ -7,6 +7,14 @@ SUBDIRS=extlib libsimput tools sample
 
 dist_noinst_DATA=INSTALL.txt
 
+# make sure all library files are removed
+dir_cfitsio=$(distdir)/extlib/cfitsio
+dir_wcslib=$(distdir)/extlib/wcslib
+dist-hook:
+	chmod u+w $(dir_cfitsio) $(dir_wcslib)
+	cd $(dir_cfitsio) && make clean
+	cd $(dir_wcslib) && make distclean
+#	cd $(distdir)/extlib/ && chmod u+w wcslib cfitsio && rm -f wcslib/C/*.so* wcslib/C/*.dylib wcslib/C/*.a cfitsio/*.so* cfitsio/*.dylib cfitsio/*.a
 
 simputdistcheck: dist
 	case '$(DIST_ARCHIVES)' in \

@@ -3,7 +3,7 @@
 
 
 AC_PREREQ(2.59)
-AC_INIT([simput],[2.0.0],[thomas.dauser@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[2.0.1],[thomas.dauser@sternwarte.uni-erlangen.de])
 
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
@@ -52,20 +52,11 @@ dir="`pwd`"
 LDFLAGS="$LDFLAGS -g -W -Wall -L$dir/extlib/cfitsio -L$dir/extlib/wcslib/C -L$dir/extlib/fftw"
 LIBS="$LIBS -lcfitsio -lfftw3 -lwcs"
 
-#if test -z "$GALABS"
-#then
-# 	AC_SEARCH_LIBS(_gfortran_unlink, gfortran, [], [AC_MSG_ERROR([library gfortran not found!])], [])
-# 	AC_SEARCH_LIBS(frame_dummy, CCfits_2.4, [], [AC_MSG_ERROR([library CCfits_2.4 not found!])], [])
-# 	AC_SEARCH_LIBS(xgetin_, XS, [], [AC_MSG_ERROR([library XS not found!])], [])
-# 	AC_SEARCH_LIBS(xs_read, XSUtil, [], [AC_MSG_ERROR([library XUtil not found!])], [])
-# 	AC_SEARCH_LIBS(xsatbl, XSModel, [], [AC_MSG_ERROR([library XSModel not found!])], [])
-#	AC_SEARCH_LIBS(xsphab_, XSFunctions, [], [AC_MSG_ERROR([library XSFunctions not found!])], [])
-#fi
-
-# CHECK FOR THESE LIBS INSIDE SIMPUT
-#AC_SEARCH_LIBS([ffexist], [cfitsio], [], [AC_MSG_ERROR([ cfitsio not found!])], [])
-#AC_SEARCH_LIBS([wcssub], [wcs], [], [AC_MSG_ERROR([ libwcs not found!])], [])
-#AC_SEARCH_LIBS([fftw_free], [fftw3], [], [AC_MSG_ERROR([ libfftw not found!])], [])
+case "$build_os" in
+  darwin*) IS_OSX=true;;
+  *)	   IS_OSX=false;;
+esac
+AM_CONDITIONAL([IS_OSX], [test x$IS_OSX = xtrue])
 
 # Check for header files.
 AC_HEADER_STDC

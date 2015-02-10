@@ -3,8 +3,8 @@ include Makefile
 
 # Then, define the other targets needed by Automake Makefiles.
 
-version=3.3.0 #`grep -R "*version = (float)*" *.c | awk '{print substr($$5,0,5);}'`
-filename=libcfitsio.so
+LIBVER="3.3.0"
+LIBNAME=libcfitsio
 CFITSIO_PREFIX = cfitsio
 CFITSIO_INCLUDE = ${DESTDIR}${prefix}/include/${CFITSIO_PREFIX}
 INSTALL_DIRS_ALL    = ${INSTALL_DIRS} ${CFITSIO_INCLUDE}
@@ -15,9 +15,21 @@ install: ${filename} $(INSTALL_DIRS_ALL)
 	make install-inc
 	make install-lib
 
+
+LIBST_OSX=dylib
+LIBST_LINUX=so
+
+ifeq (${SHLIB_SUFFIX},.so)
+SHRLIB=${LIBNAME}.${LIBST_LINUX}.${LIBVER}
+SHRLN=${LIBNAME}.${LIBST_LINUX}
+else
+SHRLIB=${LIBNAME}.${LIBVER}.${LIBST_OSX}
+SHRLN=${LIBNAME}.${LIBST_OSX}
+endif
+
 install-lib:
-	/bin/cp ${filename} ${CFITSIO_LIB}/${filename}.${version}
-	cd ${CFITSIO_LIB} && ln -fs ${filename}.${version} ${filename}
+	/bin/cp ${SHRLN} ${CFITSIO_LIB}/${SHRLIB}
+	cd ${CFITSIO_LIB} && ln -fs ${SHRLIB} ${SHRLN}
 
 install-inc: $(INSTALL_DIRS_ALL)
 	@if [ ! -d ${CFITSIO_INCLUDE} ]; then mkdir -p ${CFITSIO_INCLUDE}; fi

@@ -1,4 +1,4 @@
-/** @mainpage WCSLIB 4.13.4 and PGSBOX 4.13.4
+/** @mainpage WCSLIB 4.25.1 and PGSBOX 4.25.1
 
 @image html Bonne.gif "Bonne's projection"
 
@@ -19,8 +19,8 @@
 @section copyright Copyright
 
 @verbatim
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25.1 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   WCSLIB is free software: you can redistribute it and/or modify it under the
   terms of the GNU Lesser General Public License as published by the Free
@@ -33,15 +33,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
+
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: mainpage.dox,v 4.25.1.3 2015/01/06 01:02:55 mcalabre Exp mcalabre $
 @endverbatim
 */
 
@@ -79,9 +77,9 @@ The FITS WCS standard is described in
 
 Reprints of all published papers may be obtained from NASA's Astrophysics
 Data System (ADS), http://adsabs.harvard.edu/.  Reprints of Papers I, II
-(+HPX) and III are available from http://www.atnf.csiro.au/~mcalabre/.
-This site also includes errata and supplementary material for Papers I,
-II and III.
+(+HPX) and III are available from
+http://www.atnf.csiro.au/people/Mark.Calabretta.  This site also includes
+errata and supplementary material for Papers I, II and III.
 
 Additional information on all aspects of FITS and its various software
 implementations may be found at the FITS Support Office
@@ -94,7 +92,8 @@ http://fits.gsfc.nasa.gov.
 Several implementations of the FITS WCS standards are available:
 
   - The @ref overview "WCSLIB" software distribution (i.e. this library) may
-    be obtained from http://www.atnf.csiro.au/~mcalabre/WCS/<I></I>.  The
+    be obtained from
+    http://www.atnf.csiro.au/people/Mark.Calabretta/WCS/<I></I>.  The
     remainder of this manual describes its use.
 
   - @b wcstools, developed by Doug Mink, may be obtained from
@@ -133,6 +132,12 @@ Java is supported via
     4.2 http://www.cadc-ccda.hia-iha.nrc-cnrc.gc.ca/cadc/source/ by
     Patrick Dowler.
 
+and Javascript by
+
+  -  <B>wcsjs</B>, https://github.com/astrojs/wcsjs, a port created by Amit
+     Kapadia using Emscripten, an LLVM to Javascript compiler.  wcsjs provides
+     a code base for running @ref overview "WCSLIB" on web browsers.
+
 Recommended WCS-aware FITS image viewers:
 
   - Bill Joye's <B>DS9</B>, http://hea-www.harvard.edu/RD/ds9/<I></I>, and
@@ -141,23 +146,36 @@ Recommended WCS-aware FITS image viewers:
 
 both handle 2-D images.
 
-Currently (2012/01/24) I know of no image viewers that handle 1-D spectra
+Currently (2013/01/29) I know of no image viewers that handle 1-D spectra
 properly nor multi-dimensional data, not even multi-dimensional data with
 only two non-degenerate image axes (please inform me if you know otherwise).
 
 Pre-built @ref overview "WCSLIB" packages are available, generally a little
-behind the main release (this list will probably be out-of-date by the time
-you read it, best do a web search):
+behind the main release (this list will probably be stale by the time you read
+it, best do a web search):
+
+  - archlinux (tgz),
+    https://www.archlinux.org/packages/extra/i686/wcslib<I></I>.
+
+  - Debian (deb),
+    http://packages.debian.org/search?keywords=wcslib<I></I>.
 
   - Fedora (RPM),
-    https://admin.fedoraproject.org/pkgdb/packages/name/wcslib<I></I>.
+    https://admin.fedoraproject.org/pkgdb/package/wcslib<I></I>.
 
-  - Fresh Ports (RPM), http://www.freshports.org/astro/wcslib/<I></I>.
+  - Fresh Ports (RPM), http://www.freshports.org/astro/wcslib<I></I>.
 
   - Gentoo, http://packages.gentoo.org/package/sci-astronomy/wcslib<I></I>.
 
+  - Homebrew (MacOSX),
+    https://github.com/Homebrew/homebrew-science<I></I>.
+
   - RPM (general)
-    http://v2.www.rpmseek.com/cat/Libraries.html?hl=com&cx=591:W<I></I>.
+    http://rpmfind.net/linux/rpm2html/search.php?query=wcslib<I></I>,
+    http://www.rpmseek.com/rpm-pl/wcslib.html<I></I>.
+
+  - Ubuntu (deb),
+    https://launchpad.net/ubuntu/+source/wcslib<I></I>.
 
 Bill Pence's general FITS IO library, <B>CFITSIO</B> is available from
 http://heasarc.gsfc.nasa.gov/fitsio/<I></I>.  It is used optionally by some of
@@ -686,7 +704,7 @@ may be set to 0.
 
 /** @page threads Thread-safety
 
-With the following exceptions WCSLIB 4.13 is thread-safe:
+With the following exceptions WCSLIB 4.25.1 is thread-safe:
 
 - The C code generated by Flex is not re-entrant.  Flex does have the capacity
   for producing re-entrant scanners but they have a different API.  This may
@@ -940,7 +958,7 @@ less than half the size of a @c DOUBLE @c PRECISION.
 @c PGSBOX, which is provided as a separate part of WCSLIB, is a @ref software
 "PGPLOT" routine (PGPLOT being a Fortran graphics library) that draws and
 labels curvilinear coordinate grids.  Example @c PGSBOX grids can be seen at
-http://www.atnf.csiro.au/~mcalabre/WCS/PGSBOX/index.html.
+http://www.atnf.csiro.au/people/Mark.Calabretta/WCS/PGSBOX/index.html.
 
 The prologue to pgsbox.f contains usage instructions.  pgtest.f and cpgtest.c
 serve as test and demonstration programs in Fortran and C and also as well-
@@ -972,10 +990,4 @@ fairly well established conventions.  Nevertheless, it's possible that you may
 need to modify the code if you use a combination of Fortran and C compilers
 with linkage conventions that differ from that of the GNU compilers, gcc and
 g77.
-*/
-
-/*
-Author: Mark Calabretta, Australia Telescope National Facility
-http://www.atnf.csiro.au/~mcalabre/index.html
-$Id: mainpage.dox,v 4.13.1.5 2012/04/02 03:27:12 cal103 Exp cal103 $
 */

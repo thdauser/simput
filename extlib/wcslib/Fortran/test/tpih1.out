@@ -142,7 +142,7 @@ Index of alternate coordinate descriptions found:
              UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
       csyer: 0x<address>
              UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
-    radesys: UNDEFINED
+    radesys: "FK5"
     equinox: 2000.000000
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
@@ -237,7 +237,7 @@ imgpix[3][]:   0            0            0            1
          pv: (not used)
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "gnomonic"
    category: 1 (zenithal)
@@ -434,7 +434,7 @@ imgpix[3][]:   0            0            0            1
               0            180          45        
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "slant zenithal perspective"
    category: 1 (zenithal)
@@ -630,7 +630,7 @@ imgpix[2][]:  -0           -0           -21905
               0            0            0            0         
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "zenithal/azimuthal polynomial"
    category: 1 (zenithal)

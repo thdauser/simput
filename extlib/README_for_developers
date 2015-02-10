@@ -1,0 +1,5 @@
+Changes made to the extlib files:
+
+- wcslib/configure.ac: L246 changed to SHRLN="libwcs.dylib"
+
+- fftw/configure.ac: L26: commented out "AC_DISABLE_SHARED"

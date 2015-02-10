@@ -57,7 +57,7 @@ WCSFIX status returns: (-1, 0, 0, 0, 0,-1)
              UNDEFINED     UNDEFINED     UNDEFINED   
       csyer: 0x<address>
              UNDEFINED     UNDEFINED     UNDEFINED   
-    radesys: UNDEFINED
+    radesys: "ICRS"
     equinox: UNDEFINED
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
@@ -146,7 +146,7 @@ WCSFIX status returns: (-1, 0, 0, 0, 0,-1)
               0           -1.8049    
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "orthographic/synthesis"
    category: 1 (zenithal)
@@ -237,7 +237,7 @@ WCSFIX status returns: (-1, 0, 0, 0, 0,-1)
              UNDEFINED     UNDEFINED     UNDEFINED   
       csyer: 0x<address>
              UNDEFINED     UNDEFINED     UNDEFINED   
-    radesys: UNDEFINED
+    radesys: "ICRS"
     equinox: UNDEFINED
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
@@ -326,7 +326,7 @@ WCSFIX status returns: (-1, 0, 0, 0, 0,-1)
               0           -1.8049    
        phi0:  0.000000
      theta0: 90.000000
-     bounds: 1
+     bounds: 7
 
        name: "orthographic/synthesis"
    category: 1 (zenithal)

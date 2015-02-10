@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,22 +16,16 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: tab.h,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: tab.h,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *=============================================================================
 *
-* WCSLIB 4.13 - C routines that implement tabular coordinate systems as
+* WCSLIB 4.25 - C routines that implement tabular coordinate systems as
 * defined by the FITS World Coordinate System (WCS) standard.  Refer to
 *
 *   "Representations of world coordinates in FITS",
@@ -187,6 +181,36 @@
 *                       For returns > 1, a detailed error message is set in
 *                       tabprm::err (associated with tabdst) if enabled, see
 *                       wcserr_enable().
+*
+*
+* tabcmp() - Compare two tabprm structs for equality
+* --------------------------------------------------
+* tabcmp() compares two tabprm structs for equality.
+*
+* Given:
+*   cmp       int       A bit field controlling the strictness of the
+*                       comparison.  At present, this value must always be 0,
+*                       indicating a strict comparison.  In the future, other
+*                       options may be added.
+*
+*   tol       double    Tolerance for comparison of floating-point values.
+*                       For example, for tol == 1e-6, all floating-point
+*                       values in the structs must be equal to the first 6
+*                       decimal places.  A value of 0 implies exact equality.
+*
+*   tab1      const struct tabprm*
+*                       The first tabprm struct to compare.
+*
+*   tab2      const struct tabprm*
+*                       The second tabprm struct to compare.
+*
+* Returned:
+*   equal     int*      Non-zero when the given structs are equal.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*                         1: Null pointer passed.
 *
 *
 * tabfree() - Destructor for the tabprm struct
@@ -350,7 +374,7 @@
 *   int M
 *     (Given or returned) Number of tabular coordinate axes.
 *
-*     If tabini() is used to initialize the linprm struct (as would normally
+*     If tabini() is used to initialize the tabprm struct (as would normally
 *     be the case) then it will set M from the value passed to it as a
 *     function argument.  The user should not subsequently modify it.
 *
@@ -359,7 +383,7 @@
 *     tabprm::M whose elements (K_1, K_2,... K_M) record the lengths of the
 *     axes of the coordinate array and of each indexing vector.
 *
-*     If tabini() is used to initialize the linprm struct (as would normally
+*     If tabini() is used to initialize the tabprm struct (as would normally
 *     be the case) then it will set K from the array passed to it as a
 *     function argument.  The user should not subsequently modify it.
 *
@@ -556,6 +580,9 @@ int tabini(int alloc, int M, const int K[], struct tabprm *tab);
 int tabmem(struct tabprm *tab);
 
 int tabcpy(int alloc, const struct tabprm *tabsrc, struct tabprm *tabdst);
+
+int tabcmp(int cmp, double tol, const struct tabprm *tab1,
+           const struct tabprm *tab2, int *equal);
 
 int tabfree(struct tabprm *tab);
 

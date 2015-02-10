@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.13 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2012, Mark Calabretta
+* WCSLIB 4.25 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2015, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,17 +18,11 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Correspondence concerning WCSLIB may be directed to:
-*   Internet email: mcalabre@atnf.csiro.au
-*   Postal address: Dr. Mark Calabretta
-*                   Australia Telescope National Facility, CSIRO
-*                   PO Box 76
-*                   Epping NSW 1710
-*                   AUSTRALIA
+* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 *
-* Author: Mark Calabretta, Australia Telescope National Facility
-* http://www.atnf.csiro.au/~mcalabre/index.html
-* $Id: ttab3.f,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+* Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+* http://www.atnf.csiro.au/people/Mark.Calabretta
+* $Id: ttab3.f,v 4.25.1.2 2015/01/06 01:02:37 mcalabre Exp mcalabre $
 *=======================================================================
 
       PROGRAM TTAB3
@@ -119,18 +113,20 @@
  60   CONTINUE
 
       STATUS = PRJINI (PRJ)
-      STATUS = PRJPUT (PRJ, PRJ_PV, 35D0, 1)
+      STATUS = PRJPTD (PRJ, PRJ_PV, 35D0, 1)
+
+*     Disable bounds checking (or alternatively, simply ignore
+*     out-of-bounds errors).  This is necessary to provide continuity
+*     beyond the -180 and +180 meridians, noting that bonx2s() computes
+*     out-of-bounds values so as to provide continuity.
+      STATUS = PRJPTI (PRJ, PRJ_BOUNDS, 0, 0)
+
       STATUS = BONX2S (PRJ, K1, K2, 1, 2, X, Y, COORD(1,1,1),
      :                 COORD(2,1,1), STAT)
 
       IK = 1
       DO 80 J = 1, K2
         DO 70 I = 1, K1
-          IF (STAT(I,J).NE.0) THEN
-            COORD(1,I,J) = 999D0
-            COORD(2,I,J) = 999D0
-          END IF
-
           STATUS = TABPUT (TAB, TAB_COORD, COORD(1,I,J), IK, 0)
           STATUS = TABPUT (TAB, TAB_COORD, COORD(2,I,J), IK+1, 0)
           IK = IK + 2
@@ -171,8 +167,8 @@
           END IF
 
           IK = IK + 1
-          XR(IK) = XY(1,J)
-          YR(IK) = XY(2,J)
+          XR(IK) = REAL(XY(1,J))
+          YR(IK) = REAL(XY(2,J))
  100    CONTINUE
 
         CALL PGLINE (IK, XR, YR)
@@ -208,8 +204,8 @@
           END IF
 
           IK = IK + 1
-          XR(IK) = XY(1,J)
-          YR(IK) = XY(2,J)
+          XR(IK) = REAL(XY(1,J))
+          YR(IK) = REAL(XY(2,J))
  130    CONTINUE
 
         CALL PGLINE (IK, XR, YR)

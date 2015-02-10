@@ -1,19 +1,14 @@
 #-----------------------------------------------------------------------------
 # Process this file with autoconf-2.53 or later to produce a configure script.
 #-----------------------------------------------------------------------------
-# N.B. it is necessary to run autoconf on a Mac in order for configure to
-# locate the X11 dylibs for PGPLOT.  Use autoconf-2.61 in MacOSX 10.6.2 or
-# later to avoid spurious messages about deleting conftest.dSYM when
-# configuring in MacOSX 10.6.
-#
-# Author: Mark Calabretta, Australia Telescope National Facility
-# http://www.atnf.csiro.au/~mcalabre/index.html
-# $Id: configure.ac,v 4.13.1.6 2012/04/02 03:27:25 cal103 Exp cal103 $
+# Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+# http://www.atnf.csiro.au/people/Mark.Calabretta
+# $Id: configure.ac,v 4.25.1.2 2015/01/06 00:58:14 mcalabre Exp mcalabre $
 #-----------------------------------------------------------------------------
 
-AC_INIT([WCSLIB], [4.13.4], [mcalabre@atnf.csiro.au], [wcslib-4.13.4])
+AC_INIT([WCSLIB], [4.25.1], [mark@calabretta.id.au], [wcslib-4.25.1])
 AC_PREREQ([2.53])
-AC_REVISION([$Revision: 4.13.1.6 $])
+AC_REVISION([$Revision: 4.25.1.2 $])
 AC_SUBST([PACKAGE_VERSION])
 AC_DEFINE_UNQUOTED([WCSLIB_VERSION], [$PACKAGE_VERSION], [Define wcslib version])
 
@@ -34,7 +29,7 @@ AC_SUBST([ARCH])
 AC_CHECK_PROG([FLEX], [flex], [flex], [], [], [])
 if test "x$FLEX" = xflex ; then
   # Version 2.5.9 or later is required.
-  V=`flex --version | awk '{print $NF}'`
+  V=`flex --version | awk '{print $2}'`
   W=`echo $V | awk -F. '{if ((($1*100 + $2)*100 + $3) < 20509) print "no"}'`
   if test "x$W" != x ; then
     AC_MSG_NOTICE([Flex version $V is too old, ignored.])
@@ -79,8 +74,8 @@ AC_TYPE_UINT32_T
 
 # Check for ANSI C headers.
 AC_HEADER_STDC
-AC_CHECK_HEADERS([ctype.h errno.h limits.h math.h setjmp.h stdarg.h stdio.h \
-                  stdlib.h string.h])
+AC_CHECK_HEADERS([ctype.h errno.h limits.h locale.h math.h setjmp.h stdarg.h \
+                  stdio.h stdlib.h string.h])
 if test "x$ac_cv_header_stdc" = xno; then
   AC_MSG_ERROR([
     -------------------------------------------------------------------
@@ -100,7 +95,7 @@ AC_FUNC_REALLOC
 AC_FUNC_SETVBUF_REVERSED
 AC_FUNC_STAT
 AC_FUNC_VPRINTF
-AC_CHECK_FUNCS([floor memset pow sqrt strchr strstr])
+AC_CHECK_FUNCS([floor memset pow setlocale sqrt strchr strstr])
 
 # System libraries that may be required by WCSLIB itself.
 # SunOS, extra maths functions.
@@ -248,7 +243,7 @@ if test "x$ac_cv_c_compiler_gnu" = xyes ; then
     SONAME="libwcs.$SHVER.dylib"
     SHRLD="$SHRLD -dynamiclib -single_module"
     SHRLD="$SHRLD -compatibility_version $SHVER -current_version $LIBVER"
-    SHRLN=
+    SHRLN="libwcs.dylib"
 
     case "$build_cpu" in
     powerpc*)
@@ -468,7 +463,35 @@ if test "x$with_cfitsio" != xno -o \
     AC_CHECK_LIB([cpgplot], [cpgbeg],    [PGPLOTLIB="-lcpgplot $PGPLOTLIB"],
                  [PGPLOTLIB=], [$PGPLOTLIB $FLIBS $LIBS])
 
+    # Only need the PGPLOT include file to build PGSBOX.
+    if test "x$PGPLOTINC" != x; then
+      SUBDIRS="$SUBDIRS pgsbox"
+      INSTDIR="pgsbox"
+    fi
+
+    # Also need the PGPLOT library to build pgtest and cpgtest.
+    if test "x$PGPLOTLIB" = x; then
+      AC_MSG_WARN([PGPLOT not found, skipping PGPLOT-dependent tests.])
+    else
+      AC_MSG_NOTICE([PGPLOT appears to be available.])
+
+      TSTDIRS="$TSTDIRS pgsbox"
+    fi
   fi
+fi
+
+
+# Utilities are compiled last since they need the libraries.
+# Ways of disabling them:
+#   configure --disable-utils
+#   configure --enable-utils=no
+AC_ARG_ENABLE([utils], [AS_HELP_STRING([--disable-utils],
+            [don't build the WCS utilities])], [])
+if test "x$enable_utils" != xno ; then
+  SUBDIRS="$SUBDIRS utils"
+  INSTDIR="$INSTDIR utils"
+else
+  AC_MSG_WARN([Compilation of WCS utilities disabled])
 fi
 
 
@@ -490,5 +513,5 @@ AC_MSG_NOTICE([End of auxiliary configuration.
 # Do it.
 AC_MSG_NOTICE([Configuring files...])
 AC_CONFIG_FILES([makedefs wcslib.pc])
-AC_CONFIG_HEADERS([wcsconfig.h wcsconfig_f77.h wcsconfig_tests.h])
+AC_CONFIG_HEADERS([wcsconfig.h wcsconfig_f77.h wcsconfig_tests.h wcsconfig_utils.h])
 AC_OUTPUT

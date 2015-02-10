@@ -58,20 +58,29 @@ clean-fftw:
 ##### WCS #####
 
 wcslib_dir=wcslib
-wcslib_file=libwcs.so.4.13.4
+LIBVER=4.25.1
+
+LIBST_OSX=dylib
+LIBST_LINUX=so
+
+if IS_OSX
+SHRLIB=libwcs.${LIBVER}.${LIBST_OSX}
+SHRLN=libwcs.${LIBST_OSX}
+else
+SHRLIB=libwcs.${LIBST_LINUX}.${LIBVER}
+SHRLN=libwcs.${LIBST_LINUX}
+endif
 
 all-wcslib:
-	cd ${wcslib_dir} && make && cd ./C/ && ln -sf libwcs.so.4.13.4 libwcs.so
+	cd ${wcslib_dir} && make && cd ./C/ && ln -sf ${SHRLIB} ${SHRLN}
 
 INSTALL_DIRS = ${libdir}
 install-wcslib: $(INSTALL_DIRS)
 	cd ${wcslib_dir} && make install
-	/bin/cp ${wcslib_dir}/C/${wcslib_file} ${libdir}/
-	cd ${libdir} && ln -fs  ${wcslib_file} libwcs.so
 	make ${wcslib_inc_files}
 
 clean-wcslib:
-	cd ${wcslib_dir} && make clean
+	cd ${wcslib_dir} && make distclean
 
 # just to create the links
 wcslib_inc_files=cel.h      getwcstab.h  log.h  spc.h  spx.h  wcsconfig_f77.h  wcserr.h  wcs.h  \

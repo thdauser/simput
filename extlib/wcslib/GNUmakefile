@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building WCSLIB 4.13
+# GNU makefile for building WCSLIB 4.25
 #
 # Summary of the main targets
 # ---------------------------
@@ -30,12 +30,16 @@
 #   2) Refer also to the makefiles in subdirectories, particularly
 #      C/GNUmakefile.
 #
-# Author: Mark Calabretta, Australia Telescope National Facility
-# http://www.atnf.csiro.au/~mcalabre/index.html
-# $Id: GNUmakefile,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+# Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+# http://www.atnf.csiro.au/people/Mark.Calabretta
+# $Id: GNUmakefile,v 4.25.1.1 2014/12/14 14:32:47 mcalabre Exp mcalabre $
 #-----------------------------------------------------------------------------
 # Get configure settings.
 include makedefs
+
+ifeq "$(CHECK)" "nopgplot"
+  TSTDIRS := $(filter-out pgsbox,$(TSTDIRS))
+endif
 
 .PHONY : build check chmod clean cleaner cleanest distclean install \
          realclean show tests writable
@@ -93,10 +97,10 @@ install :
 	     $(INSTALL) -d -m 2775 $(HTMLDIR)/html ; \
 	   fi
 	   $(INSTALL) -m 444 html/* $(HTMLDIR)/html
-#	   if [ ! -d "$(LIBDIR)/pkgconfig" ] ; then \
-#	     $(INSTALL) -d -m 2775 $(LIBDIR)/pkgconfig ; \
-#	   fi
-#	   $(INSTALL) -m 444 wcslib.pc $(LIBDIR)/pkgconfig/wcslib.pc
+	   if [ ! -d "$(LIBDIR)/pkgconfig" ] ; then \
+	     $(INSTALL) -d -m 2775 $(LIBDIR)/pkgconfig ; \
+	   fi
+	   $(INSTALL) -m 444 wcslib.pc $(LIBDIR)/pkgconfig/wcslib.pc
 
 clean cleaner :
 	   for DIR in $(SUBDIRS) doxygen ; do \
@@ -109,6 +113,7 @@ cleanest distclean realclean :
 	   done
 	-  $(RM) *.log
 	-  $(RM) -r autom4te.cache autoscan.log
+	-  $(RM) -r api-sanity-check
 	-  $(RM) confdefs.h conftest.*
 	-  $(RM) config.log config.status configure.lineno
 	-  $(RM) makedefs wcslib.pc
@@ -154,6 +159,7 @@ config.status : configure
 
 dist :
 	   $(MAKE) -C doxygen cleanest build
+	   $(MAKE) -C utils man
 	   $(MAKE) distclean
 	-@ echo $(WCSLIBPKG)/C/RCS        >  wcslib.X
 	-@ echo $(WCSLIBPKG)/C/flexed/RCS >> wcslib.X
@@ -163,8 +169,10 @@ dist :
 	-@ echo $(WCSLIBPKG)/Fortran/test/RCS >> wcslib.X
 	-@ echo $(WCSLIBPKG)/makedefs     >> wcslib.X
 	-@ echo $(WCSLIBPKG)/other        >> wcslib.X
+	-@ echo $(WCSLIBPKG)/pgsbox/RCS   >> wcslib.X
 	-@ echo $(WCSLIBPKG)/RCS          >> wcslib.X
 	-@ echo $(WCSLIBPKG)/TODO         >> wcslib.X
+	-@ echo $(WCSLIBPKG)/utils/RCS    >> wcslib.X
 	-@ echo $(WCSLIBPKG)/wcslib.T     >> wcslib.X
 	-@ echo $(WCSLIBPKG)/wcslib.X     >> wcslib.X
 	   rm -f $(WCSLIBPKG).tar.bz2
@@ -179,11 +187,11 @@ dist :
 	   chmod 444 $(WCSLIBPKG).tar.bz2
 
 install_dist :
-	   cp -fp $(WCSLIBPKG).tar.bz2 /nfs/ftp/software/wcslib/
+	   scp -p $(WCSLIBPKG).tar.bz2 cal103@venice:/nfs/ftp/software/wcslib/
 	   mv -f  $(WCSLIBPKG).tar.bz2 ../wcslib-releases/
-	   (cd /nfs/ftp/software/wcslib/ && \
+	   ssh cal103@venice "cd /nfs/ftp/software/wcslib/ && \
 	     rm -f wcslib.tar.bz2 && \
-	     ln -s $(WCSLIBPKG).tar.bz2 wcslib.tar.bz2)
+	     ln -s $(WCSLIBPKG).tar.bz2 wcslib.tar.bz2"
 	   cp -fp CHANGES wcslib.pdf ~/public_html/WCS/
 	   rsync --archive --delete html/ ~/public_html/WCS/wcslib/
 

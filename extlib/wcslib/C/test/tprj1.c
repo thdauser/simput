@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: tprj1.c,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: tprj1.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * tproj1 tests spherical projections for closure.
@@ -182,6 +176,9 @@ int main()
   prj.pv[2] = 3.0;
   nFail += projex("HPX", &prj, 90, -90, tol);
 
+  /* XPH: HEALPix polar, aka "butterfly" projection. */
+  nFail += projex("XPH", &prj, 90, -90, tol);
+
 
   if (nFail) {
     printf("\nFAIL: %d closure residuals exceed reporting tolerance.\n",
@@ -218,12 +215,12 @@ int projex(
   double tol)
 
 {
-  int    lat, lng, nFail = 0, stat1[361], stat2[361], status;
-  register int j;
-  double dlat, dlatmx, dlng, dlngmx, dr, drmax;
-  double lat1, lat2[361], lng1[361], lng2[361];
-  double r, theta;
-  double x[361], x1[361], x2[361], y[361], y1[361], y2[361];
+  int    lat, lng, nFail = 0, stat1[361], stat2[361], statr[25][25], status;
+  register int i, j;
+  double dlat, dlatmx, dlng, dlngmx, dr, drmax, dx, dy;
+  double lat1, lat2[361], lng1[361], lng2[361], x[361], y[361];
+  double latr[25][25], lngr[25][25], r, x1[25], x2[25][25], y1[25],
+         y2[25][25];
 
 
   strcpy(prj->code, pcode);
@@ -260,10 +257,13 @@ int projex(
       if (stat1[j]) continue;
 
       if (stat2[j]) {
+        nFail++;
         printf("   %3s(X2S): lng1 =%20.15f  lat1 =%20.15f\n",
           pcode, lng1[j], lat1);
-        printf("                x =%20.15f     y =%20.15f  ERROR%3d\n",
-          x[j], y[j], stat2[j]);
+        printf("                x =%20.15f     y =%20.15f\n",
+          x[j], y[j]);
+        printf("             lng2 =%20.15f  lat2 =%20.15f  ERROR%3d\n",
+          lng2[j], lat2[j], stat2[j]);
         continue;
       }
 
@@ -299,46 +299,49 @@ int projex(
     dlngmx, dlatmx);
 
 
-  /* Test closure at a point close to the reference point. */
+  /* Test closure in the neighbourhood of the reference point. */
   r = 1.0;
-  theta = -180.0;
+  x1[12] = y1[12] = 0.0;
+  for (i = 0; i < 12; i++) {
+    x1[i] = -r;
+    y1[i] = -r;
+    x1[24-i] = r;
+    y1[24-i] = r;
 
-  drmax = 0.0;
+    r /= 10.0;
+  }
 
-  for (j = 1; j <= 12; j++) {
-    x1[0] = r*cosd(theta);
-    y1[0] = r*sind(theta);
+  if ((status = prj->prjx2s(prj, 25, 25, 1, 1, x1, y1, lngr[0], latr[0],
+                            statr[0]))) {
+    printf("   %3s(X2S) ERROR: %s\n", pcode, prj_errmsg[status]);
 
-    if ((status = prj->prjx2s(prj, 1, 1, 1, 1, x1, y1, lng1, &lat1, stat2))) {
-      printf("   %3s(X2S):   x1 =%20.15f    y1 =%20.15f  ERROR%3d\n",
-        pcode, x1[0], y1[0], status);
+  } else if ((status = prj->prjs2x(prj, 625, 0, 1, 1, lngr[0], latr[0],
+                                   x2[0], y2[0], statr[0]))) {
+    printf("   %3s(S2X) ERROR: %s\n", pcode, prj_errmsg[status]);
 
-    } else if ((status = prj->prjs2x(prj, 1, 1, 1, 1, lng1, &lat1, x2, y2,
-                                     stat1))) {
-      printf("   %3s(S2X):   x1 =%20.15f    y1 =%20.15f\n",
-        pcode, x1[0], y1[0]);
-      printf("              lng =%20.15f   lat =%20.15f  ERROR%3d\n",
-        lng1[0], lat1, status);
+  } else {
+    drmax = 0.0;
+    for (j = 0; j < 25; j++) {
+      for (i = 0; i < 25; i++) {
+        dx = x2[j][i] - x1[i];
+        dy = y2[j][i] - y1[j];
+        dr = sqrt(dx*dx + dy*dy);
 
-    } else {
-      dr = sqrt((x2[0]-x1[0])*(x2[0]-x1[0]) + (y2[0]-y1[0])*(y2[0]-y1[0]));
-      if (dr > drmax) drmax = dr;
-      if (dr > tol) {
-        nFail++;
-        printf("        %3s:   x1 =%20.15f    y1 =%20.15f\n",
-          pcode, x1[0], y1[0]);
-        printf("              lng =%20.15f   lat =%20.15f\n",
-          lng1[0], lat1);
-        printf("               x2 =%20.15f    y2 =%20.15f\n",
-          x2[0], y2[0]);
+        if (dr > drmax) drmax = dr;
+        if (dr > tol) {
+          nFail++;
+          printf("        %3s:   x1 =%20.15f    y1 =%20.15f\n",
+            pcode, x1[i], y1[j]);
+          printf("              lng =%20.15f   lat =%20.15f\n",
+            lngr[j][i], latr[j][i]);
+          printf("               x2 =%20.15f    y2 =%20.15f\n",
+            x2[j][i], y2[j][i]);
+        }
       }
     }
 
-    r /= 10.0;
-    theta += 15.0;
+    printf("             Maximum residual (ref):  dR%8.1e\n", drmax);
   }
-
-  printf("             Maximum residual (ref):  dR%8.1e\n", drmax);
 
   prjini(prj);
 

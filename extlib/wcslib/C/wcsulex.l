@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: wcsulex.l,v 4.13.1.1 2012/03/14 07:40:37 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: wcsulex.l,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * wcsulex.l is a Flex description file containing the definition of a
@@ -100,9 +94,10 @@ ADD_UNIT  {ADD_ALL}|{ADD_SUP}|{ADD_SUB}|{ADD_NONE}
 #include "wcserr.h"
 #include "wcsmath.h"
 #include "wcsunits.h"
+#include "wcsutil.h"
 
 #define YY_DECL int wcsulexe(const char unitstr[], int *func, double *scale, \
-                             double units[], struct wcserr **err)
+                             double units[WCSUNITS_NTYPE], struct wcserr **err)
 
 /* Used in preempting the call to exit() by yy_fatal_error(). */
 jmp_buf wcsulex_abort_jmp_env;
@@ -112,7 +107,8 @@ jmp_buf wcsulex_abort_jmp_env;
 
 %%
 	static const char *function = "wcsulexe";
-
+	
+	char ctmp[72];
 	int bracket  = 0;
 	int operator = 0;
 	int paren    = 0;
@@ -123,6 +119,8 @@ jmp_buf wcsulex_abort_jmp_env;
 	void add(double *factor, double types[], double *expon, double *scale,
 	    double units[]);
 	int yylex_destroy(void);
+	
+	if (err) *err = 0x0;
 	
 	*func = 0;
 	for (i = 0; i < WCSUNITS_NTYPE; i++) {
@@ -866,7 +864,8 @@ sqrt" "*"(" {
 	}
 
 <EXPON>" "*"("" "*{FLOAT}" "*")" {
-	  sscanf(yytext, " (%lf)", &dexp);
+	  sscanf(yytext, " (%s)", ctmp);
+	  wcsutil_str2double(ctmp, "%lf", &dexp);
 	  expon *= dexp;
 	  add(&factor, types, &expon, scale, units);
 	  operator = 0;

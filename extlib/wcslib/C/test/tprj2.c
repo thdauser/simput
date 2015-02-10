@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.13 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2012, Mark Calabretta
+  WCSLIB 4.25 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2015, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -16,19 +16,13 @@
   more details.
 
   You should have received a copy of the GNU Lesser General Public License
-  along with WCSLIB.  If not, see <http://www.gnu.org/licenses/>.
+  along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Correspondence concerning WCSLIB may be directed to:
-    Internet email: mcalabre@atnf.csiro.au
-    Postal address: Dr. Mark Calabretta
-                    Australia Telescope National Facility, CSIRO
-                    PO Box 76
-                    Epping NSW 1710
-                    AUSTRALIA
+  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
 
-  Author: Mark Calabretta, Australia Telescope National Facility
-  http://www.atnf.csiro.au/~mcalabre/index.html
-  $Id: tprj2.c,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+  Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+  http://www.atnf.csiro.au/people/Mark.Calabretta
+  $Id: tprj2.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * tproj2 tests projection routines by plotting test graticules using PGPLOT.
@@ -240,6 +234,10 @@ int main()
   printf(text1, "HEALPix");
   prjplt("HPX", 90, -90, &prj);
 
+  /* XPH: HEALPix polar, aka "butterfly" projection. */
+  printf(text1, "Butterfly");
+  prjplt("XPH", 90, -90, &prj);
+
   cpgask(0);
   cpgend();
 
@@ -315,43 +313,63 @@ struct prjprm *prj;
     cpgtext(-240.0f, -220.0f, text);
 
     if (prj->category == HEALPIX) {
-      /* Draw the perimeter of the HEALPix projection. */
       cpgsci(8);
 
-      h = (int)(prj->pv[1] + 0.5);
-      sx = 180.0f / h;
-      sy = sx * (int)(prj->pv[2] + 1.5) / 2.0f;
+      if (strcmp(pcode, "HPX") == 0) {
+        /* Draw the perimeter of the HEALPix projection. */
+        h = (int)(prj->pv[1] + 0.5);
+        sx = 180.0f / h;
+        sy = sx * (int)(prj->pv[2] + 1.5) / 2.0f;
 
-      hx = 180.0f + prj->x0;
-      hy = sy - sx - prj->y0;
-      cpgmove(hx, hy);
+        hx = 180.0f + prj->x0;
+        hy = sy - sx - prj->y0;
+        cpgmove(hx, hy);
 
-      for (j = 0; j < h; j++) {
-        hx -= sx;
-        hy += sx;
-        cpgdraw(hx, hy);
+        for (j = 0; j < h; j++) {
+          hx -= sx;
+          hy += sx;
+          cpgdraw(hx, hy);
 
-        hx -= sx;
-        hy -= sx;
-        cpgdraw(hx, hy);
-      }
+          hx -= sx;
+          hy -= sx;
+          cpgdraw(hx, hy);
+        }
 
-      hx = 180.0f + prj->x0;
-      hy = -sy + sx - prj->y0;
+        hx = 180.0f + prj->x0;
+        hy = -sy + sx - prj->y0;
 
-      k = ((int)prj->pv[2])%2 ? 1 : -1;
-      if (k == -1) hy -= sx;
+        k = ((int)prj->pv[2])%2 ? 1 : -1;
+        if (k == -1) hy -= sx;
 
-      cpgmove(hx, hy);
+        cpgmove(hx, hy);
 
-      for (j = 0; j < h; j++) {
-        hx -= sx;
-        hy -= k*sx;
-        cpgdraw(hx, hy);
+        for (j = 0; j < h; j++) {
+          hx -= sx;
+          hy -= k*sx;
+          cpgdraw(hx, hy);
 
-        hx -= sx;
-        hy += k*sx;
-        cpgdraw(hx, hy);
+          hx -= sx;
+          hy += k*sx;
+          cpgdraw(hx, hy);
+        }
+
+      } else if (strcmp(pcode, "XPH") == 0) {
+        for (ilng = -90; ilng <= 180; ilng+=90) {
+          lng[0] = (double)ilng - 0.0001;
+
+          for (j = 0, ilat = 90; ilat >= -90; ilat--, j++) {
+            lat[j] = (double)ilat;
+          }
+
+          prj->prjs2x(prj, 1, 181, 1, 1, lng, lat, x, y, stat);
+
+          for (j = 0; j < 181; j++) {
+            xr[j] = -x[j];
+            yr[j] =  y[j];
+          }
+
+          cpgline(181, xr, yr);
+        }
       }
     }
   }
@@ -385,7 +403,7 @@ struct prjprm *prj;
           if (k > 1) cpgline(k, xr, yr);
           k = 0;
         }
-      } else if (prj->category == HEALPIX && ilng == 180) {
+      } else if (strcmp(pcode, "HPX") == 0 && ilng == 180) {
         if (x[j] > 180.0) {
           continue;
         }

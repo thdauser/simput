@@ -16,7 +16,7 @@ fftw/tools/fftw-wisdom-to-conf
 fftw/tools/fftw-wisdom.1
 fftw/tools/fftw_wisdom.1
 wcslib/C/fitshdr.c
-wcslib/C/libwcs.so.4.13.4
+wcslib/C/libwcs.so*
 wcslib/C/libwcs.so
 wcslib/C/wcsbth.c
 wcslib/C/wcspih.c

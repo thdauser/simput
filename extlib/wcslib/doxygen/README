@@ -24,6 +24,6 @@ subterfuge is necessary to avoid spurious file references in the
 generated latex manual.
 
 
-Author: Mark Calabretta, Australia Telescope National Facility
-http://www.atnf.csiro.au/~mcalabre/index.html
-$Id: README,v 4.13.1.1 2012/03/14 07:40:38 cal103 Exp cal103 $
+Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
+http://www.atnf.csiro.au/people/Mark.Calabretta
+$Id: README,v 4.25.1.1 2014/12/14 14:32:47 mcalabre Exp mcalabre $
