@@ -3,7 +3,7 @@
 SUBDIRS=. ape atFunctions heainit heaio heautils heasp
 
 DIST_SUBDIRS=ape atFunctions heainit heaio heautils heasp fftw
-EXTRA_DIST=cfitsio.GNUmakefile cfitsio wcslib 
+EXTRA_DIST=cfitsio wcslib 
 
 # We assume that the configure-script is executed by the main configure.ac in SIMPUT
 
@@ -37,8 +37,7 @@ all-cfitsio:
 
 # need to create and linke an adjusted Makefile
 install-cfitsio:
-	cd ${cfitsio_dir} && ln -sf \../cfitsio.GNUmakefile GNUmakefile
-	cd ${cfitsio_dir} &&  make install	
+	cd ${cfitsio_dir} && make install
 
 clean-cfitsio:
 	cd ${cfitsio_dir} && make clean
