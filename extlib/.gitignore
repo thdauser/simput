@@ -1,5 +1,5 @@
 cfitsio/cfitsio.pc
-cfitsio/libcfitsio.so
+cfitsio/libcfitsio.so*
 cfitsio/GNUmakefile
 fftw/doc/fftw3.info
 fftw/doc/fftw3.info-1

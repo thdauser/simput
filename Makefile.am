@@ -14,7 +14,6 @@ dist-hook:
 	chmod u+w $(dir_cfitsio) $(dir_wcslib)
 	cd $(dir_cfitsio) && make clean
 	cd $(dir_wcslib) && make distclean
-#	cd $(distdir)/extlib/ && chmod u+w wcslib cfitsio && rm -f wcslib/C/*.so* wcslib/C/*.dylib wcslib/C/*.a cfitsio/*.so* cfitsio/*.dylib cfitsio/*.a
 
 simputdistcheck: dist
 	case '$(DIST_ARCHIVES)' in \
@@ -33,10 +32,7 @@ simputdistcheck: dist
 	*.zip*) \
 	  unzip $(distdir).zip ;;\
 	esac
-#	chmod -R a-w $(distdir)
-#	chmod u+w $(distdir)
 	mkdir $(distdir)/_build $(distdir)/_inst
-#	chmod a-w $(distdir)
 	test -d $(distdir) || exit 0; \
 	dc_install_base=`$(am__cd) $(distdir)/_inst && pwd | sed -e 's,^[^:\\/]:[\\/],/,'` \
 	&& echo ${dc_install_base} \
