@@ -590,20 +590,12 @@ AC_CONFIG_FILES([
    rdft/simd/avx/Makefile
    rdft/simd/altivec/Makefile
    rdft/simd/neon/Makefile
-
    reodft/Makefile
-
    threads/Makefile
-
    api/Makefile
-
    mpi/Makefile
-
    libbench2/Makefile
    tests/Makefile
-   doc/Makefile
-   doc/FAQ/Makefile
-
    tools/Makefile
    tools/fftw_wisdom.1
    tools/fftw-wisdom-to-conf

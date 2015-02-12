@@ -1,10 +1,13 @@
 cfitsio/cfitsio.pc
 cfitsio/libcfitsio.so*
-cfitsio/GNUmakefile
+fftw/doc/html/*
+fftw/doc/stamp-vti
+fftw/doc/version.texi
 fftw/doc/fftw3.info
 fftw/doc/fftw3.info-1
 fftw/doc/fftw3.info-2
 fftw/api/fftw3.f03
+fftw/doc/version
 fftw/config.h.in
 fftw/fftw.pc
 fftw/fftw3.pc

@@ -42,7 +42,7 @@ else
 fi
 
 build_os=`uname`
-if ["$build_os" == "Darwin"]; then
+if [ "$build_os" == "Darwin" ]; then
     if [ "x$DYLD_LIBRARY_PATH" = x ]; then
 	DYLD_LIBRARY_PATH="$SIMPUT_LIB"
     else

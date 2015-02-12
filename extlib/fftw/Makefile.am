@@ -31,7 +31,7 @@ CHICKEN_EGG=. threads
 endif
 
 SUBDIRS=support $(GENFFT) kernel simd-support dft rdft reodft api	\
-libbench2 $(CHICKEN_EGG) tests mpi doc tools m4
+libbench2 $(CHICKEN_EGG) tests mpi tools m4
 EXTRA_DIST=COPYRIGHT bootstrap.sh CONVENTIONS fftw.pc.in
 
 SIMD_LIBS =						\
