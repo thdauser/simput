@@ -590,15 +590,9 @@ static void ms_save_img(SimputImg* ctsImg, double ** img, struct Parameters par,
 static void ms_save_src(SimputCtlg *ctlg, char *fname, char *fspec, char *fimg,
 		struct Parameters par, int src_id, float sflux, int *status){
 
-	// check if a flux value is given, or if we should use it from the spectrum
-    if (par.srcFlux > 0.0)
-		sflux = par.srcFlux;
-
     char path_fspec[SIMPUT_MAXSTR];
     char path_fimg[SIMPUT_MAXSTR];
 
- //   sprintf(path_fspec,"%s[%s,%i][NAME=='%s']",par.Simput,extnameSpec,extver,fspec);
-//    sprintf(path_fimg,"%s[%s,%i]",par.Simput,fimg,extver);
     sprintf(path_fspec,"[%s,%i][NAME=='%s']",extnameSpec,extver,fspec);
     sprintf(path_fimg,"[%s,%i]",fimg,extver);
 
@@ -663,7 +657,7 @@ static void ms_save_spec_isis(SimputMIdpSpec *spec, struct Parameters par,
 
 }
 
-static float ms_save_spec(struct Parameters par, char *fspec,
+static void ms_save_spec(struct Parameters par, char *fspec,
 		par_info *data_par, img_list *li, int *status){
 
 
@@ -682,42 +676,57 @@ static float ms_save_spec(struct Parameters par, char *fspec,
 		SIMPUT_ERROR("Error. No Parameter File exits. Should not happen.");
 		*status = EXIT_FAILURE;
 	}
-	CHECK_STATUS_RET(*status,0.0);
+	CHECK_STATUS_VOID(*status);
 
 	// --------------------------------------------------------- //
 
 	// set the name of the spectrum
 	spec->name = (char*) malloc (maxStrLenCat*sizeof(char));
-	CHECK_NULL_RET(spec->name,*status,"memory allocation failed",0.0);
+	CHECK_NULL_VOID(spec->name,*status,"memory allocation failed");
 	strcpy(spec->name,fspec);
 
 	// finally store it in the FITS table --------------------- //
 	saveSimputMIdpSpec(spec,par.Simput,extnameSpec,extver,status);
 	// and get the model flux
-	double srcFlux = getSimputMIdpSpecBandFlux(spec, par.Emin,par.Emax);
+//	double srcFlux = getSimputMIdpSpecBandFlux(spec, par.Emin,par.Emax);
 
 	// delete temp files and free memory
 	delete_tmp_spec_files(par);
 	free(spec);
 
-	return srcFlux;
+	return;
 }
 
 
+static float get_img_cts(double ** img, long n1, long n2){
+	double sumCts = 0.0;
+
+	int ii,jj;
+
+	for (ii=0;ii<n1;ii++){
+		for (jj=0;jj<n2;jj++){
+			sumCts += img[ii][jj];
+		}
+	}
+
+	return (float) sumCts;
+}
+
 
 static void save_single_combi(img_list *li, SimputImg *ctsImg, struct Parameters par,
-		par_info *data_par, SimputCtlg *ctlg, int src_counter, int *status){
+		par_info *data_par, SimputCtlg *ctlg, int src_counter, float totalFlux, int *status){
 
 	char *fsrc,*fspec,*fimg;
 	get_filenames(&fsrc,&fspec,&fimg, li, status);
 	CHECK_STATUS_VOID(*status);
 
     // --- SPECTRUM --- //
-	float specSrcFlux = ms_save_spec(par, fspec, data_par, li, status);
+	ms_save_spec(par, fspec, data_par, li, status);
 	CHECK_STATUS_VOID(*status);
 
 	// --- SOURCE --- ///
-	ms_save_src(ctlg, fsrc, fspec, fimg, par, src_counter,specSrcFlux,status);
+	float singleSrcFlux = get_img_cts(li->img,ctsImg->naxis1,ctsImg->naxis2)/totalFlux*par.srcFlux;
+	ms_save_src(ctlg, fsrc, fspec, fimg, par, src_counter,singleSrcFlux,status);
 	CHECK_STATUS_VOID(*status);
 
 
@@ -727,17 +736,24 @@ static void save_single_combi(img_list *li, SimputImg *ctsImg, struct Parameters
 
 }
 
+static float get_total_img_flux(struct Parameters par, int *status){
+	SimputImg* img = loadSimputImg_map(par.ImageFile, status);
+	return get_img_cts(img->dist,img->naxis1,img->naxis2);
+}
+
 static void loop_images_fits(img_list *li, SimputImg *ctsImg, struct Parameters par,
 		par_info *data_par, SimputCtlg *ctlg, int *status){
 
+	float totalFlux = get_total_img_flux(par, status);
+
 	int src_counter=1;
-	save_single_combi(li,ctsImg,par,data_par,ctlg,src_counter, status);
+	save_single_combi(li,ctsImg,par,data_par,ctlg,src_counter,totalFlux,status);
 
 	src_counter++;
 	while (li->next != NULL){
 		CHECK_STATUS_BREAK(*status);
 		li = li->next;
-		save_single_combi(li,ctsImg,par,data_par,ctlg,src_counter, status);
+		save_single_combi(li,ctsImg,par,data_par,ctlg,src_counter,totalFlux,status);
 		src_counter++;
 	}
 }

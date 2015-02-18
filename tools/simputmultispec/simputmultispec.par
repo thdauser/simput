@@ -1,5 +1,5 @@
 Simput,f,lq,"simput.fits",,,"output SIMPUT catalog file"
-srcFlux,r,h,0.0,0.0,,"source flux (erg/s/cm^2)"
+srcFlux,r,lq,0.0,0.0,,"source flux (erg/s/cm^2)"
 RA,r,h,0.0,0.0,360.0,"right ascension (deg)"
 Dec,r,h,0.0,-90.0,90.0,"declination (deg)"
 Elow,r,h,0.1,0.0,,"lower bound of the generated spectrum (keV)"
