@@ -7,6 +7,10 @@ SUBDIRS=extlib libsimput tools sample
 
 dist_noinst_DATA=INSTALL.txt
 
+# Define the headers that will be installed in $(includedir):
+include_HEADERS=simputconfig.h
+
+
 # make sure all library files are removed
 dir_cfitsio=$(distdir)/extlib/cfitsio
 dir_wcslib=$(distdir)/extlib/wcslib
@@ -43,6 +47,7 @@ simputdistcheck: dist
 	    $(AM_DISTCHECK_CONFIGURE_FLAGS) \
 	    $(DISTCHECK_CONFIGURE_FLAGS) \
 	    --srcdir=. --prefix="$$dc_install_base" \
+	    --without-pgplot \
 	  && $(MAKE) $(AM_MAKEFLAGS) \
 	  && $(MAKE) $(AM_MAKEFLAGS) dvi \
 	  && $(MAKE) $(AM_MAKEFLAGS) check \

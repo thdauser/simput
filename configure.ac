@@ -3,7 +3,7 @@
 
 
 AC_PREREQ(2.59)
-AC_INIT([simput],[2.0.5],[thomas.dauser@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[2.0.6],[thomas.dauser@sternwarte.uni-erlangen.de])
 
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
@@ -14,6 +14,8 @@ AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
 AC_PROG_FC # Search for a Fortran compiler.
 AM_PROG_AR
+
+LT_PREREQ(2.4) 
 
 AC_PROG_LIBTOOL
 
@@ -69,7 +71,7 @@ AC_C_CONST
 # that is filled with definitions from this script.
 # The 'config.h' contains for example the name of the package and can be
 # included in the programm sources.
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADER([simputconfig.h])
 
 # Create the following Makefiles (including subdirectories).
 # A Makefile that is not listed here will not be created by 'automake'!
