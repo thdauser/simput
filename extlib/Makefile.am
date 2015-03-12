@@ -33,7 +33,7 @@ install-headas-main:
 
 cfitsio_dir=cfitsio
 all-cfitsio:
-	cd ${cfitsio_dir} &&  make shared
+	cd ${cfitsio_dir} &&  make shared stand_alone
 
 # need to create and linke an adjusted Makefile
 install-cfitsio:
