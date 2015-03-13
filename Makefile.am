@@ -6,6 +6,7 @@ dist_bin_SCRIPTS+=simput-install.csh
 SUBDIRS=extlib libsimput tools sample 
 
 dist_noinst_DATA=INSTALL.txt
+EXTRA_DIST=test
 
 # Define the headers that will be installed in $(includedir):
 include_HEADERS=simputconfig.h
@@ -51,6 +52,7 @@ simputdistcheck: dist
 	  && $(MAKE) $(AM_MAKEFLAGS) \
 	  && $(MAKE) $(AM_MAKEFLAGS) dvi \
 	  && $(MAKE) $(AM_MAKEFLAGS) check \
+	  && $(MAKE) $(AM_MAKEFLAGS) test \
 	  && $(MAKE) $(AM_MAKEFLAGS) install \
 	  && $(MAKE) $(AM_MAKEFLAGS) installcheck \
 	  && $(MAKE) $(AM_MAKEFLAGS) uninstall \
@@ -63,3 +65,8 @@ simputdistcheck: dist
 	@(echo "$(distdir) archives ready for distribution: "; \
 	  list='$(DIST_ARCHIVES)'; for i in $$list; do echo $$i; done) | \
 	  sed -e 1h -e 1s/./=/g -e 1p -e 1x -e '$$p' -e '$$x'
+
+
+.PHONY: test
+test:
+	cd test && ./test_simput.csh
