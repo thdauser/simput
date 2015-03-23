@@ -25,7 +25,7 @@
 
 #include "simput.h"
 #include "common.h"
-
+#include "parinput.h"
 
 #define TOOLSUB simputmultispec_main
 #include "headas_main.c"

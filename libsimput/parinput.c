@@ -19,7 +19,7 @@
 */
 
 
-#include "input.h"
+#include "parinput.h"
 
 static void* query_simput_parameter(char* name, char* type, int* status ){
 
