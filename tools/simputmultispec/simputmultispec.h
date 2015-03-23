@@ -169,11 +169,6 @@ typedef struct li img_list;
 
 int simputmultispec_getpar(struct Parameters* const par);
 
-void query_simput_parameter_file_name(char *name, char *field, int *status);
-void query_simput_parameter_string(char *name, char *field, int *status);
-void query_simput_parameter_int(char *name, int *field, int *status);
-void query_simput_parameter_float(char *name, float *field, int *status);
-void query_simput_parameter_bool(char *name, char *field, int *status);
 
 #endif /* SIMPUTMULTISPEC_H */
 

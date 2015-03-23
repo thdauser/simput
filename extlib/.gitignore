@@ -31,3 +31,4 @@ wcslib/wcsconfig.h.in
 wcslib/wcsconfig_f77.h
 wcslib/wcsconfig_tests.h
 wcslib/wcslib.pc
+wcslib/utils/fitshdr
