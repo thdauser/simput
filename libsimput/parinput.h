@@ -15,7 +15,7 @@
    <http://www.gnu.org/licenses/>.
 
 
-   Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2007-2014 Thomas Dauser, FAU
 */
 
 #ifndef INPUT_H
@@ -29,6 +29,7 @@ void query_simput_parameter_file_name(char *name, char *field, int *status);
 void query_simput_parameter_string(char *name, char *field, int *status);
 void query_simput_parameter_int(char *name, int *field, int *status);
 void query_simput_parameter_float(char *name, float *field, int *status);
+void query_simput_parameter_double(char *name, double *field, int *status);
 void query_simput_parameter_bool(char *name, char *field, int *status);
 
 #endif /* INPUT_H */

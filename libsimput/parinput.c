@@ -15,7 +15,7 @@
    <http://www.gnu.org/licenses/>.
 
 
-   Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2007-2014 Thomas Dauser FAU
 */
 
 
@@ -31,17 +31,22 @@ static void* query_simput_parameter(char* name, char* type, int* status ){
 			*status=ape_trad_query_file_name(name, &sbuf);
 		return (char*) sbuf;
 	} else if (0==strcmp(type,"float")) {
-		float *fbuf=malloc(1*sizeof(float));
+		float *fbuf=malloc(sizeof(float));
 		CHECK_NULL_RET(fbuf, *status,"memory allocation failed",NULL);
 		*status=ape_trad_query_float(name,fbuf);
 		return (float *)fbuf;
+	} else if (0==strcmp(type,"double")) {
+		float *fbuf=malloc(sizeof(double));
+		CHECK_NULL_RET(fbuf, *status,"memory allocation failed",NULL);
+		*status=ape_trad_query_float(name,fbuf);
+		return (double *)fbuf;
 	} else if (0==strcmp(type,"int") ) {
-		int *ibuf=malloc(1*sizeof(int));
+		int *ibuf=malloc(sizeof(int));
 		CHECK_NULL_RET(ibuf, *status,"memory allocation failed",NULL);
 		*status = ape_trad_query_int(name,ibuf);
 		return (int*) ibuf;
 	} else if (0==strcmp(type,"bool") ) {
-		char *cbuf=malloc(1*sizeof(char));
+		char *cbuf=malloc(sizeof(char));
 		CHECK_NULL_RET(cbuf, *status,"memory allocation failed",NULL);
 		*status = ape_trad_query_bool(name,cbuf);
 		return (char*) cbuf;
@@ -87,6 +92,14 @@ void query_simput_parameter_int(char *name, int *field, int *status){
 void query_simput_parameter_float(char *name, float *field, int *status){
 	// do we a free here need this?
 	float *fbuf = (float *) query_simput_parameter(name, "float", status );
+	if (*status == EXIT_SUCCESS)
+		*field =  *fbuf;
+	free(fbuf);
+}
+
+void query_simput_parameter_double(char *name, double *field, int *status){
+	// do we a free here need this?
+	double *fbuf = (double *) query_simput_parameter(name, "double", status );
 	if (*status == EXIT_SUCCESS)
 		*field =  *fbuf;
 	free(fbuf);
