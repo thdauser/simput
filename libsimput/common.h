@@ -19,8 +19,7 @@
 */
 
 #ifndef COMMON_H
-#define COMMON_H 1
-
+#define COMMON_H 
 
 /////////////////////////////////////////////////////////////////
 // Includes.

@@ -19,7 +19,7 @@
 */
 
 #ifndef INPUT_H
-#define INPUT_H (1)
+#define INPUT_H
 
 #include "simput.h"
 #include "common.h"
@@ -28,6 +28,7 @@
 void query_simput_parameter_file_name(char *name, char *field, int *status);
 void query_simput_parameter_string(char *name, char *field, int *status);
 void query_simput_parameter_int(char *name, int *field, int *status);
+void query_simput_parameter_long(char *name, long *field, int *status);
 void query_simput_parameter_float(char *name, float *field, int *status);
 void query_simput_parameter_double(char *name, double *field, int *status);
 void query_simput_parameter_bool(char *name, char *field, int *status);

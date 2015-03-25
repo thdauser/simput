@@ -77,23 +77,34 @@ void query_simput_parameter_file_name(char *name, char *field, int *status){
 
 void query_simput_parameter_string(char *name, char *field, int *status){
 	char *sbuf = (char *) query_simput_parameter(name, "string", status );
-	if (*status == EXIT_SUCCESS)
+	if (*status == EXIT_SUCCESS) {
 		strcpy(field,sbuf);
+	}
 	free(sbuf);
 }
 
 void query_simput_parameter_int(char *name, int *field, int *status){
 	int *ibuf = (int *) query_simput_parameter(name, "int", status );
-	if (*status == EXIT_SUCCESS)
+	if (*status == EXIT_SUCCESS){
 		*field =  *ibuf;
+	}
+	free(ibuf); // do we need this?
+}
+
+void query_simput_parameter_long(char *name, long *field, int *status){
+	int *ibuf = (long *) query_simput_parameter(name, "long", status );
+	if (*status == EXIT_SUCCESS){
+		*field =  *ibuf;
+	}
 	free(ibuf); // do we need this?
 }
 
 void query_simput_parameter_float(char *name, float *field, int *status){
 	// do we a free here need this?
 	float *fbuf = (float *) query_simput_parameter(name, "float", status );
-	if (*status == EXIT_SUCCESS)
+	if (*status == EXIT_SUCCESS){
 		*field =  *fbuf;
+	}
 	free(fbuf);
 }
 
@@ -107,7 +118,8 @@ void query_simput_parameter_double(char *name, double *field, int *status){
 
 void query_simput_parameter_bool(char *name, char *field, int *status){
 	char *bbuf = (char *) query_simput_parameter(name, "bool", status );
-	if (*status == EXIT_SUCCESS)
+	if (*status == EXIT_SUCCESS) {
 		*field =  *bbuf;
+	}
 	free(bbuf); // do we need this?
 }
