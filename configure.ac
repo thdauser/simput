@@ -3,7 +3,7 @@
 
 
 AC_PREREQ(2.59)
-AC_INIT([simput],[2.0.7],[thomas.dauser@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[2.0.8],[thomas.dauser@sternwarte.uni-erlangen.de])
 
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 

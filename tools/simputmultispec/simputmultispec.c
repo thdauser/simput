@@ -38,10 +38,10 @@ static void min_max(double* array, int n, double* minn, double* maxx)  {
 }
 static void min_max_2d(double** array, int n1, int n2, double* minn, double* maxx){
 	// initialize
-	min_max(array[0], n1, minn, maxx);
+	min_max(array[0], n2, minn, maxx);
 	double minn_tmp=0., maxx_tmp=0.;
-	for(int i = 1; i < n2; i++ )  {
-		min_max(array[i], n1, &minn_tmp, &maxx_tmp);
+	for(int i = 1; i < n1; i++ )  {
+		min_max(array[i], n2, &minn_tmp, &maxx_tmp);
 		*minn = min(*minn,minn_tmp);
 		*maxx = max(*maxx,maxx_tmp);
 	}
@@ -200,7 +200,6 @@ static void print_par_array(par_info par, int ii, int logScale){
 
 static void cal_par_arrays(par_info *par, struct param_input *ipar, SimputImg** img, int num_param, int* status){
 
-
 	int ii;
 	for (ii=0; ii<num_param; ii++){
 
@@ -212,7 +211,7 @@ static void cal_par_arrays(par_info *par, struct param_input *ipar, SimputImg** 
 			*status=EXIT_FAILURE;
 			break;
 		}
-        printf("\n------- %.3f %.3f (%i) -------- \n",ipar[ii].minPar,ipar[ii].maxPar,ipar[ii].num_values);
+		//        printf("\n------- %.3f %.3f (%i) -------- \n",ipar[ii].minPar,ipar[ii].maxPar,ipar[ii].num_values);
 
 		par[ii].pvals = (double *)malloc(ipar[ii].num_values*(sizeof(double)));
 		CHECK_MALLOC_VOID(par[ii].pvals);
@@ -893,6 +892,7 @@ int simputmultispec_getpar(struct Parameters* const par) {
 
   query_simput_parameter_file_name("simput",par->Simput, &status);
 
+
   query_simput_parameter_string("ISISFile", par->ISISFile , &status );
   query_simput_parameter_string("XSPECFile", par->XSPECFile , &status );
   query_simput_parameter_string("ISISPrep", par->ISISPrep , &status );
@@ -923,7 +923,6 @@ int simputmultispec_getpar(struct Parameters* const par) {
   query_simput_parameter_float("Emax", &par->Emax, &status );
 
     // ***************************** //
-
 
   return(status);
 }

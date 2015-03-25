@@ -2816,7 +2816,7 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     // Parse the header string and store the data in the wcsprm data
     // structure.
     int nreject, nwcs;
-    if (0!=wcspih(headerstr, nkeys, 0, 3, &nreject, &nwcs, &img->wcs)) {
+    if (0!=wcspih(headerstr, nkeys, 0, 0, &nreject, &nwcs, &img->wcs)) {
       SIMPUT_ERROR("parsing of WCS header failed");
       *status=EXIT_FAILURE;
       break;
@@ -3052,15 +3052,23 @@ void saveSimputImg(SimputImg* const img,
       *status=EXIT_FAILURE;
       break;
     }
+
     char* strptr=headerstr;
-    while (strlen(strptr)>0) {
-      char strbuffer[81];
-      strncpy(strbuffer, strptr, 80);
-      strbuffer[80]='\0';
-      fits_write_record(fptr, strbuffer, status);
-      CHECK_STATUS_BREAK(*status);
-      strptr+=80;
+    for (ii=0; ii<nkeyrec; ii++) {
+    	if (strlen(strptr)==0) {
+    		SIMPUT_ERROR("WCS header unexpectedly ended");
+    		*status=EXIT_FAILURE;
+    		break;
+    	}
+
+    	char strbuffer[81];
+    	strncpy(strbuffer, strptr, 80);
+    	strbuffer[80]='\0';
+    	fits_write_record(fptr, strbuffer, status);
+    	CHECK_STATUS_BREAK(*status);
+    	strptr+=80;
     }
+
     CHECK_STATUS_BREAK(*status);
 
     // Store the image in the new extension.

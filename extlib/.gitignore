@@ -8,6 +8,7 @@ fftw/doc/fftw3.info-1
 fftw/doc/fftw3.info-2
 fftw/api/fftw3.f03
 fftw/doc/version
+fftw/config.h
 fftw/config.h.in
 fftw/fftw.pc
 fftw/fftw3.pc
@@ -32,3 +33,5 @@ wcslib/wcsconfig_f77.h
 wcslib/wcsconfig_tests.h
 wcslib/wcslib.pc
 wcslib/utils/fitshdr
+wcslib/utils/HPXcvt
+wcslib/utils/wcsware
