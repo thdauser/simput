@@ -3781,7 +3781,7 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 
 }
 
-void write_xspecSpec_file(char *fname, char *XSPECFile, float Elow,
+void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPostCmd, float Elow,
 		float Eup,	float Estep, int *status){
 
 	FILE* cmdfile=NULL;
@@ -3797,7 +3797,13 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, float Elow,
     	CHECK_NULL_VOID(cmdfile, *status, "opening temporary file failed");
 
     	// Write the header.
+    	fprintf(cmdfile, "query yes\n");
     	fprintf(cmdfile, "@%s\n", XSPECFile);
+
+    	if (strlen(XSPECPostCmd)!=0) {
+        	fprintf(cmdfile, "%s\n", XSPECPostCmd);
+    	}
+
     	fprintf(cmdfile, "dummyrsp %f %f %d log\n",
     			Elow, Eup, (int)((Eup-Elow)/Estep));
     	fprintf(cmdfile, "setplot device /null\n");
