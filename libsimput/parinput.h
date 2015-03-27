@@ -18,15 +18,25 @@
    Copyright 2007-2014 Thomas Dauser, FAU
 */
 
-#ifndef INPUT_H
-#define INPUT_H
+#ifndef PARINPUT_H
+#define PARINPUT_H
 
-void query_simput_parameter_file_name(char *name, char *field, int *status);
-void query_simput_parameter_string(char *name, char *field, int *status);
+#define PAR_STRING 1
+#define PAR_FILE 2
+#define PAR_INT 3
+#define PAR_LONG 4
+#define PAR_FLOAT 5
+#define PAR_DOUBLE 6
+#define PAR_BOOL 7
+
+void *query_simput_parameter(char *name,const int type, int *status);
+
+void query_simput_parameter_file_name(char *name, char **field, int *status);
+void query_simput_parameter_string(char *name, char **field, int *status);
 void query_simput_parameter_int(char *name, int *field, int *status);
 void query_simput_parameter_long(char *name, long *field, int *status);
 void query_simput_parameter_float(char *name, float *field, int *status);
 void query_simput_parameter_double(char *name, double *field, int *status);
 void query_simput_parameter_bool(char *name, char *field, int *status);
 
-#endif /* INPUT_H */
+#endif /* PARINPUT_H */

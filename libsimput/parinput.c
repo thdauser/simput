@@ -15,7 +15,7 @@
    <http://www.gnu.org/licenses/>.
 
 
-   Copyright 2007-2014 Thomas Dauser FAU
+   Copyright 2007-2014 Thomas Dauser, Joern Wilms FAU
 */
 
 
@@ -24,105 +24,124 @@
 #include "simput.h"
 #include "ape/ape_trad.h"
 
-static void* query_simput_parameter(char* name, char* type, int* status ){
+#define PAR_MAXBUFSIZE 1024
 
-	if (0==strcmp(type,"string") || 0==strcmp(type,"file") ){
-		char *sbuf=NULL; // malloc here as well?
-		if (0==strcmp(type,"string"))
-			*status=ape_trad_query_string(name, &sbuf);
-		else
-			*status=ape_trad_query_file_name(name, &sbuf);
-		return (char*) sbuf;
-	} else if (0==strcmp(type,"float")) {
-		float *fbuf=malloc(sizeof(float));
-		CHECK_NULL_RET(fbuf, *status,"memory allocation failed",NULL);
-		*status=ape_trad_query_float(name,fbuf);
-		return (float *)fbuf;
-	} else if (0==strcmp(type,"double")) {
-		float *fbuf=malloc(sizeof(double));
-		CHECK_NULL_RET(fbuf, *status,"memory allocation failed",NULL);
-		*status=ape_trad_query_float(name,fbuf);
-		return (double *)fbuf;
-	} else if (0==strcmp(type,"int") ) {
-		int *ibuf=malloc(sizeof(int));
-		CHECK_NULL_RET(ibuf, *status,"memory allocation failed",NULL);
-		*status = ape_trad_query_int(name,ibuf);
-		return (int*) ibuf;
-	} else if (0==strcmp(type,"bool") ) {
-		char *cbuf=malloc(sizeof(char));
-		CHECK_NULL_RET(cbuf, *status,"memory allocation failed",NULL);
-		*status = ape_trad_query_bool(name,cbuf);
-		return (char*) cbuf;
-	} else {
-		*status = EXIT_FAILURE;
-		printf("Failed to read parameter %s from the command line.",name);
-		return NULL;
-	}
+void* query_simput_parameter(char* name, const int type, int* status ){
 
+  switch (type) {
+  case PAR_STRING:
+  case PAR_FILE:
+    {
+      // JW: great danger of buffer overruns, 
+      // but I do not know what to do about this...
+      //      char *buffer=malloc(PAR_MAXBUFSIZE*sizeof(char));  
+      //CHECK_NULL_RET(buffer, *status,"memory allocation failed",NULL);
+      char *buffer=NULL;
+      if (type==PAR_STRING) {
+	*status=ape_trad_query_string(name, &buffer);
+      } else {
+	*status=ape_trad_query_file_name(name, &buffer);
+      }
+      char *sbuf;
+      sbuf=strndup(buffer,PAR_MAXBUFSIZE-1);
+      free(buffer);
+      return sbuf;
+    }
+  case PAR_FLOAT:
+    {
+      float *fbuf=malloc(sizeof(float));
+      CHECK_NULL_RET(fbuf, *status,"memory allocation failed",NULL);
+      *status=ape_trad_query_float(name,fbuf);
+      return fbuf;
+    }
+  case PAR_DOUBLE:
+    {
+      double *dbuf=malloc(sizeof(double));
+      CHECK_NULL_RET(dbuf, *status,"memory allocation failed",NULL);
+      *status=ape_trad_query_double(name,dbuf);
+      return dbuf;
+    }
+  case PAR_INT:
+    {
+      int *ibuf=malloc(sizeof(int));
+      CHECK_NULL_RET(ibuf, *status,"memory allocation failed",NULL);
+      *status = ape_trad_query_int(name,ibuf);
+      return ibuf;
+    }
+  case PAR_BOOL:
+    {
+      char *cbuf=malloc(sizeof(char));
+      CHECK_NULL_RET(cbuf, *status,"memory allocation failed",NULL);
+      *status = ape_trad_query_bool(name,cbuf);
+      return cbuf;
+    }
+  }
+
+  *status = EXIT_FAILURE;
+  printf("Failed to read parameter %s from the command line.",name);
+  return NULL;
 }
 
 static void simput_getpar_empty_file_name(char *file_name){
 	if ((0==strcmp(file_name, "none"))|| (0==strcmp(file_name, "NONE"))) {
 		strcpy(file_name, "");
-
 	}
 }
 
-void query_simput_parameter_file_name(char *name, char *field, int *status){
-	char *sbuf = (char *) query_simput_parameter(name, "file", status );
-	CHECK_NULL_VOID(sbuf, *status,"reading simput parameter failed"); // need to free a NULL pointer?
-	if (*status == EXIT_SUCCESS){
-		strcpy(field,sbuf);
-		simput_getpar_empty_file_name(sbuf);
-	}
-	free(sbuf);
+void query_simput_parameter_file_name(char *name, char **field, int *status){
+  char *sbuf = (char *) query_simput_parameter(name, PAR_FILE, status );
+  CHECK_NULL_VOID(sbuf, *status,"reading simput parameter failed"); 
+  if (*status == EXIT_SUCCESS){
+    simput_getpar_empty_file_name(sbuf);
+    *field=strdup(sbuf);
+  }
+  free(sbuf);
 }
 
-void query_simput_parameter_string(char *name, char *field, int *status){
-	char *sbuf = (char *) query_simput_parameter(name, "string", status );
-	if (*status == EXIT_SUCCESS) {
-		strcpy(field,sbuf);
-	}
-	free(sbuf);
+void query_simput_parameter_string(char *name, char **field, int *status){
+  char *sbuf = (char *) query_simput_parameter(name, PAR_STRING, status );
+  if (*status == EXIT_SUCCESS) {
+    *field=strdup(sbuf);
+  }
+  free(sbuf);
 }
 
 void query_simput_parameter_int(char *name, int *field, int *status){
-	int *ibuf = (int *) query_simput_parameter(name, "int", status );
-	if (*status == EXIT_SUCCESS){
-		*field =  *ibuf;
-	}
-	free(ibuf); // do we need this?
+  int *ibuf = (int *) query_simput_parameter(name, PAR_INT,status );
+  if (*status == EXIT_SUCCESS){
+    *field =  *ibuf;
+  }
+  free(ibuf);
 }
 
 void query_simput_parameter_long(char *name, long *field, int *status){
-	int *ibuf = (long *) query_simput_parameter(name, "long", status );
-	if (*status == EXIT_SUCCESS){
-		*field =  *ibuf;
-	}
-	free(ibuf); // do we need this?
+  long *lbuf = (long *) query_simput_parameter(name, PAR_LONG, status );
+  if (*status == EXIT_SUCCESS){
+    *field =  *lbuf;
+  }
+  free(lbuf);
 }
 
 void query_simput_parameter_float(char *name, float *field, int *status){
-	// do we a free here need this?
-	float *fbuf = (float *) query_simput_parameter(name, "float", status );
-	if (*status == EXIT_SUCCESS){
-		*field =  *fbuf;
-	}
-	free(fbuf);
+  float *fbuf = (float *) query_simput_parameter(name, PAR_FLOAT, status );
+  if (*status == EXIT_SUCCESS){
+    *field =  *fbuf;
+  }
+  free(fbuf);
 }
 
 void query_simput_parameter_double(char *name, double *field, int *status){
-	// do we a free here need this?
-	double *fbuf = (double *) query_simput_parameter(name, "double", status );
-	if (*status == EXIT_SUCCESS)
-		*field =  *fbuf;
-	free(fbuf);
+  double *fbuf = (double *) query_simput_parameter(name, PAR_DOUBLE, status );
+  if (*status == EXIT_SUCCESS) {
+    *field =  *fbuf;
+  }
+  free(fbuf);
 }
 
 void query_simput_parameter_bool(char *name, char *field, int *status){
-	char *bbuf = (char *) query_simput_parameter(name, "bool", status );
-	if (*status == EXIT_SUCCESS) {
-		*field =  *bbuf;
-	}
-	free(bbuf); // do we need this?
+  char *bbuf = (char *) query_simput_parameter(name, PAR_BOOL, status );
+  if (*status == EXIT_SUCCESS) {
+    *field =  *bbuf;
+  }
+  free(bbuf);
 }
