@@ -19,7 +19,7 @@
 */
 
 #ifndef SIMPUT_H
-#define SIMPUT_H (1)
+#define SIMPUT_H
 
 #include "fitsio.h"
 #include "wcs.h"

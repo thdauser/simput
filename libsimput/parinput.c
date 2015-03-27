@@ -20,6 +20,9 @@
 
 
 #include "parinput.h"
+#include "common.h"
+#include "simput.h"
+#include "ape/ape_trad.h"
 
 static void* query_simput_parameter(char* name, char* type, int* status ){
 

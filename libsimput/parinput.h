@@ -21,10 +21,6 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "simput.h"
-#include "common.h"
-#include "ape/ape_trad.h"
-
 void query_simput_parameter_file_name(char *name, char *field, int *status);
 void query_simput_parameter_string(char *name, char *field, int *status);
 void query_simput_parameter_int(char *name, int *field, int *status);
