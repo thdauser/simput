@@ -623,6 +623,21 @@ static void get_setPar_string_isis(char **str, par_info *data_par,img_list *li, 
 	}
 }
 
+static void get_setPar_string_xspec(char **str, par_info *data_par,img_list *li, int *status){
+
+	*str = (char*) malloc (SIMPUT_MAXSTR*sizeof(char));
+	CHECK_NULL_VOID(*str,*status,"memory allocation failed");
+	strcpy(*str,"");
+	int ii;
+	for (ii=0;ii<li->num_param;ii++){
+		sprintf(*str,"%s newpar %s %.8e ;",
+				*str,
+				data_par[ii].par_names,
+				data_par[ii].pvals[li->pval_ar[ii]]
+			    );
+	}
+}
+
 
 static void delete_tmp_spec_files(struct Parameters par){
 	if (strlen(par.ISISFile)>0) {
@@ -656,6 +671,30 @@ static void ms_save_spec_isis(SimputMIdpSpec *spec, struct Parameters par,
 
 }
 
+static void ms_save_spec_xspec(SimputMIdpSpec *spec, struct Parameters par,
+		par_info *data_par, img_list *li, int *status){
+
+
+	char *XSPECsetPar;
+	get_setPar_string_xspec(&XSPECsetPar, data_par, li, status);
+	printf("%s\n",XSPECsetPar);
+//	write_isisSpec_fits_file(par.Simput, par.ISISFile, par.ISISPrep,ISISsetPar,
+//			par.Elow, par.Eup, par.Estep, 0.0, 0.0, 0.0, 0.0, 0.0, status);
+
+	write_xspecSpec_file(par.Simput, par.XSPECFile, XSPECsetPar,
+			par.Elow, par.Eup, par.Estep, status);
+
+
+	free(XSPECsetPar);
+
+	CHECK_STATUS_VOID(*status);
+
+	read_xspecSpec_file(par.Simput, spec ,status);
+	CHECK_STATUS_VOID(*status);
+
+}
+
+
 static void ms_save_spec(struct Parameters par, char *fspec,
 		par_info *data_par, img_list *li, int *status){
 
@@ -667,10 +706,14 @@ static void ms_save_spec(struct Parameters par, char *fspec,
 
 	if (strlen(par.ISISFile)>0) {
 
+		printf("Loading Parameter File in ISIS: %s \n",par.ISISFile);
 		ms_save_spec_isis(spec,par, data_par,li,status);
 
 	} else if (strlen(par.XSPECFile) > 0) {
-		SIMPUT_ERROR("XSPEC not implemented yet. Try ISIS instead :-)");
+
+		printf("Loading Parameter File in XSPEC: %s \n",par.XSPECFile);
+		ms_save_spec_xspec(spec,par, data_par,li,status);
+
 	} else {
 		SIMPUT_ERROR("Error. No Parameter File exits. Should not happen.");
 		*status = EXIT_FAILURE;

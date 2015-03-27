@@ -747,7 +747,7 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 		int *status);
 
 /** Write and executes a XSPEC script for calculating a spectrum */
-void write_xspecSpec_file(char *fname, char *XSPECFile, float Elow,
+void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPostCmd, float Elow,
 		float Eup,	float Estep, int *status);
 
 
