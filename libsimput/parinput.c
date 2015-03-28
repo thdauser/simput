@@ -34,6 +34,9 @@
 // dispatcher routine for simple parameters
 //
 void query_simput_parameter(char* name, const int type, void *retval, int* status ){
+
+  if (*status!=EXIT_SUCCESS) return;
+
   switch (type) {
   case PAR_FLOAT:
       *status=ape_trad_query_float(name,(float *) retval);
@@ -71,47 +74,56 @@ int is_empty_file_name(char *file){
 
 // read a file name parameter and return it in a pointer that can be freed
 void query_simput_parameter_file_name(char *name, char **field, int *status){
-  char *buf=malloc(SIMPUT_MAXSTR*sizeof(char));
-  CHECK_NULL_VOID(buf, *status,"memory allocation failed"); 
+  if (*status!=EXIT_SUCCESS) return;
+
+  char *buf=NULL;
   *status=ape_trad_query_file_name(name, &buf);
-  if (*status==EXIT_SUCCESS) {
-    buf[SIMPUT_MAXSTR]='\0';
-    if (is_empty_file_name(buf)) {
-      *field=malloc(sizeof(char));
-      CHECK_NULL_VOID(buf, *status,"memory allocation failed"); 
-      field[0]='\0';
-    } else {
-      *field=strdup(buf);
-    }
+  if (*status!=EXIT_SUCCESS) return;
+
+  if (is_empty_file_name(buf)) {
+    *field=malloc(sizeof(char));
+    CHECK_NULL_VOID(buf, *status,"memory allocation failed"); 
+    field[0]='\0';
+  } else {
+    *field=strdup(buf);
+    free(buf);
   }
-  free(buf);
 }
 
 // read a file name parameter into a preallocated buffer
 void query_simput_parameter_file_name_buffer(char *name, char * const field, int buflen, int *status){
-  *status=ape_trad_query_file_name(name, field);
-  field[buflen]='\0';
-  if (is_empty_file_name(field)) {
+  if (*status!=EXIT_SUCCESS) return;
+  char *buf=NULL;
+  *status=ape_trad_query_file_name(name, &buf);
+  if (*status!=EXIT_SUCCESS) return;
+
+  if (is_empty_file_name(buf)) {
     field[0]='\0';
+  } else {
+    strncpy(field,buf,buflen-1);
+    field[buflen]='\0';
   }
 }
 
 // read a string parameter and return it in a pointer that can be freed
 void query_simput_parameter_string(char *name, char **field, int *status){
-  char *buf=malloc(SIMPUT_MAXSTR*sizeof(char));
-  CHECK_NULL_VOID(buf, *status,"memory allocation failed"); 
+  if (*status!=EXIT_SUCCESS) return;
+  char *buf=NULL;
   *status=ape_trad_query_string(name, &buf);
-  if (*status==EXIT_SUCCESS) {
-    buf[SIMPUT_MAXSTR-1]='\0';
-    *field=strdup(buf);
-  }
+  if (*status!=EXIT_SUCCESS) return;
+
+  *field=strdup(buf);
   free(buf);
 }
 
 // read a string parameter into a preallocated buffer
 void query_simput_parameter_string_buffer(char *name, char * const field, int buflen, int *status){
-  *status=ape_trad_query_string(name, field);
+  if (*status!=EXIT_SUCCESS) return;
+  char *buf=NULL;
+  *status=ape_trad_query_string(name, &buf);
+  strncpy(field,buf,buflen-1);
   field[buflen]='\0';
+  free(buf);
 }
 
 
