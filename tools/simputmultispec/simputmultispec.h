@@ -125,8 +125,8 @@ struct Parameters {
   char *ImageFile;
 
   int chatter;
-  char clobber;
-  char history;
+  int clobber;
+  int history;
 };
 
 struct node{
