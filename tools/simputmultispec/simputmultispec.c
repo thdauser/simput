@@ -933,13 +933,12 @@ int simputmultispec_getpar(struct Parameters* const par) {
   // Error status.
   int status=EXIT_SUCCESS;
 
-  query_simput_parameter_file_name("simput",par->Simput, &status);
+  query_simput_parameter_file_name("simput",&(par->Simput), &status);
 
-
-  query_simput_parameter_string("ISISFile", par->ISISFile , &status );
-  query_simput_parameter_string("XSPECFile", par->XSPECFile , &status );
-  query_simput_parameter_string("ISISPrep", par->ISISPrep , &status );
-  query_simput_parameter_file_name("ImageFile", par->ImageFile, &status );
+  query_simput_parameter_string("ISISFile", &(par->ISISFile), &status );
+  query_simput_parameter_string("XSPECFile", &(par->XSPECFile), &status );
+  query_simput_parameter_string("ISISPrep", &(par->ISISPrep), &status );
+  query_simput_parameter_file_name("ImageFile", &(par->ImageFile), &status );
 
   query_simput_parameter_float("RA", &par->RA, &status );
   query_simput_parameter_float("Dec", &par->Dec, &status );
@@ -947,10 +946,10 @@ int simputmultispec_getpar(struct Parameters* const par) {
   query_simput_parameter_float("srcFlux", &par->srcFlux, &status );
 
   // *** PARAMETER information *** //
-  query_simput_parameter_string("ParamFiles", par->ParamFiles, &status );
-  query_simput_parameter_string("ParamNames", par->ParamNames, &status );
-  query_simput_parameter_string("ParamsNumValues", par->ParamsNumValues, &status );
-  query_simput_parameter_string("ParamsLogScale", par->ParamsLogScale, &status );
+  query_simput_parameter_string("ParamFiles", &(par->ParamFiles), &status );
+  query_simput_parameter_string("ParamNames", &(par->ParamNames), &status );
+  query_simput_parameter_string("ParamsNumValues", &(par->ParamsNumValues), &status );
+  query_simput_parameter_string("ParamsLogScale", &(par->ParamsLogScale), &status );
 
   query_simput_parameter_int("chatter", &par->chatter, &status );
   query_simput_parameter_bool("clobber", &par->clobber, &status );

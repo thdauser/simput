@@ -19,7 +19,7 @@
 */
 
 #ifndef SIMPUTMULTISPEC_H
-#define SIMPUTMULTISPEC_H 1
+#define SIMPUTMULTISPEC_H 
 
 #include "ape/ape_trad.h"
 
@@ -70,7 +70,7 @@ static int extver = 1;
 
 struct Parameters {
   /** File name of the output SIMPUT file. */
-  char Simput[SIMPUT_MAXSTR];
+  char *Simput;
 
   /* Source position [deg]. */
   float RA;
@@ -91,39 +91,38 @@ struct Parameters {
 
   /** File name of the input ISIS parameter file containing a spectral
        model	. */
-   char ISISFile[SIMPUT_MAXSTR];
+   char *ISISFile;
 
 
    /* File name for optional preperation script (f. e. to load additional
     models). */
-   char ISISPrep[SIMPUT_MAXSTR];
+   char *ISISPrep;
 
    /* File name of the input Xspec spectral model. */
-   char XSPECFile[SIMPUT_MAXSTR];
+   char *XSPECFile;
 
 
    // Param1
-   char ParamFiles[SIMPUT_MAXSTR];
-   char ParamNames[SIMPUT_MAXSTR];
-   char ParamsNumValues[SIMPUT_MAXSTR];
-   char ParamsLogScale[SIMPUT_MAXSTR];
+   char *ParamFiles;
+   char *ParamNames;
+   char *ParamsNumValues;
+   char *ParamsLogScale;
 
-
-   char Param1File[SIMPUT_MAXSTR];
-   char Param1Name[SIMPUT_MAXSTR];
+   char *Param1File;
+   char *Param1Name;
 
    // Param2
- char Param2File[SIMPUT_MAXSTR];
- char Param2Name[SIMPUT_MAXSTR];
+   char *Param2File;
+   char *Param2Name;
 
- int Param1num_values;
- int Param2num_values;
+  int Param1num_values;
+  int Param2num_values;
 
- char Param1logScale;
- char Param2logScale;
+  char Param1logScale;
+  char Param2logScale;
 
   /** File name of the input FITS image. */
-  char ImageFile[SIMPUT_MAXSTR];
+  char *ImageFile;
 
   int chatter;
   char clobber;
