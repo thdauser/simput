@@ -58,6 +58,6 @@ void query_simput_parameter_float(char *name, float *field, int *status);
 void query_simput_parameter_double(char *name, double *field, int *status);
 
 // read parameter name as a boolean, return in field
-void query_simput_parameter_bool(char *name, char *field, int *status);
+void query_simput_parameter_bool(char *name, int *field, int *status);
 
 #endif /* PARINPUT_H */

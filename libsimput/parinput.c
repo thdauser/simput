@@ -144,6 +144,8 @@ void query_simput_parameter_double(char *name, double *field, int *status){
   query_simput_parameter(name, PAR_DOUBLE, field, status );
 }
 
-void query_simput_parameter_bool(char *name, char *field, int *status){
-  query_simput_parameter(name, PAR_BOOL, field, status );
+void query_simput_parameter_bool(char *name, int *field, int *status){
+  char dummy;
+  query_simput_parameter(name, PAR_BOOL, &dummy, status );
+  *field=(int) dummy;
 }
