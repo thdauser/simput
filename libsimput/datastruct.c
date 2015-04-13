@@ -42,6 +42,10 @@ SimputSrc* newSimputSrc(int* const status)
   entry->image   =NULL;
   entry->timing  =NULL;
 
+  entry->spec_ident=NULL;
+  entry->img_ident=NULL;
+  entry->timing_ident=NULL;
+
   return(entry);
 }
 
@@ -110,6 +114,12 @@ SimputSrc* newSimputSrcV(const long src_id,
   return(src);
 }
 
+void free_uniqueSimputident(uniqueSimputident *ident){
+
+	if (NULL!=ident->filename){
+		free(ident->filename);
+	}	return;
+}
 
 void freeSimputSrc(SimputSrc** const src)
 {
@@ -129,6 +139,19 @@ void freeSimputSrc(SimputSrc** const src)
     if (NULL!=(*src)->timing) {
       free((*src)->timing);
     }
+    if (NULL!=(*src)->spec_ident) {
+    	free_uniqueSimputident((*src)->spec_ident);
+    	free((*src)->spec_ident);
+    }
+    if (NULL!=(*src)->img_ident) {
+    	free_uniqueSimputident((*src)->img_ident);
+    	free((*src)->img_ident);
+    }
+    if (NULL!=(*src)->timing_ident) {
+    	free_uniqueSimputident((*src)->timing_ident);
+    	free((*src)->timing_ident);
+    }
+
     free(*src);
     *src=NULL;
   }
@@ -695,48 +718,77 @@ SimputLC* newSimputLC(int* const status)
   lc->src_id  =0;
   lc->fileref =NULL;
 
+  lc->spec_ident=NULL;
+  lc->img_ident=NULL;
+
   return(lc);
 }
 
 
 void freeSimputLC(SimputLC** const lc)
 {
-  if (NULL!=*lc) {
-    if ((*lc)->nentries>0) {
-      if (NULL!=(*lc)->spectrum) {
-	long ii;
-	for (ii=0; ii<(*lc)->nentries; ii++) {
-	  if (NULL!=(*lc)->spectrum[ii]) {
-	    free((*lc)->spectrum[ii]);
-	  }
+	if (NULL!=*lc) {
+		if ((*lc)->nentries>0) {
+			if (NULL!=(*lc)->spectrum) {
+				long ii;
+				for (ii=0; ii<(*lc)->nentries; ii++) {
+					if (NULL!=(*lc)->spectrum[ii]) {
+						free((*lc)->spectrum[ii]);
+					}
+				}
+				free((*lc)->spectrum);
+			}
+
+			if (NULL!=(*lc)->spec_ident) {
+				long ii;
+				for (ii=0; ii<(*lc)->nentries; ii++) {
+					if (NULL!=(*lc)->spec_ident[ii]) {
+						free_uniqueSimputident((*lc)->spec_ident[ii]);
+						free((*lc)->spec_ident[ii]);
+					}
+				}
+				free((*lc)->spec_ident);
+			}
+
+
+			if (NULL!=(*lc)->image) {
+				long ii;
+				for (ii=0; ii<(*lc)->nentries; ii++) {
+					if (NULL!=(*lc)->image[ii]) {
+						free((*lc)->image[ii]);
+					}
+				}
+				free((*lc)->image);
+			}
+
+			if (NULL!=(*lc)->img_ident) {
+				long ii;
+				for (ii=0; ii<(*lc)->nentries; ii++) {
+					if (NULL!=(*lc)->img_ident[ii]) {
+						free_uniqueSimputident((*lc)->img_ident[ii]);
+						free((*lc)->img_ident[ii]);
+					}
+				}
+				free((*lc)->img_ident);
+			}
+
+
+		}
+		if (NULL!=(*lc)->time) {
+			free((*lc)->time);
+		}
+		if (NULL!=(*lc)->phase) {
+			free((*lc)->phase);
+		}
+		if (NULL!=(*lc)->flux) {
+			free((*lc)->flux);
+		}
+		if (NULL!=(*lc)->fileref) {
+			free((*lc)->fileref);
+		}
+		free(*lc);
+		*lc=NULL;
 	}
-	free((*lc)->spectrum);    
-      }
-      if (NULL!=(*lc)->image) {
-	long ii;
-	for (ii=0; ii<(*lc)->nentries; ii++) {
-	  if (NULL!=(*lc)->image[ii]) {
-	    free((*lc)->image[ii]);
-	  }
-	}
-	free((*lc)->image);
-      }
-    }
-    if (NULL!=(*lc)->time) {
-      free((*lc)->time);
-    }
-    if (NULL!=(*lc)->phase) {
-      free((*lc)->phase);
-    }
-    if (NULL!=(*lc)->flux) {
-      free((*lc)->flux);
-    }
-    if (NULL!=(*lc)->fileref) {
-      free((*lc)->fileref);
-    }
-    free(*lc);
-    *lc=NULL;
-  }
 }
 
 

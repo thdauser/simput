@@ -892,6 +892,42 @@ void appendSimputSrcBlock(SimputCtlg* const cat,
 }
 
 
+// WARNING: THIS FUNCTION IS NOT WORKING YET AS IT SHOULD BE !!!
+uniqueSimputident* get_simput_ident(char* filename, int type, int *status){
+
+	uniqueSimputident *ident = (uniqueSimputident*) malloc (sizeof(uniqueSimputident));
+	CHECK_NULL_RET(ident,*status,"error: memory allocation failed",NULL);
+
+	// Open the specified FITS file. The filename must uniquely identify
+	// the spectrum contained in a binary table via the extended filename
+	// syntax. It must even specify the row, in which the spectrum is
+	// contained. Therefore we do not have to care about the HDU or row
+	// number.
+	fitsfile* fptr=NULL;
+
+	if (type == SIMPUT_IMG_TYPE){
+		fits_open_image(&fptr, filename, READONLY, status);
+	} else {
+		fits_open_file(&fptr, filename, READONLY, status);
+	}
+	if (EXIT_SUCCESS!=*status) {
+		char msg[SIMPUT_MAXSTR];
+		sprintf(msg, "could not open FITS table in file '%s'", filename);
+		SIMPUT_ERROR(msg);
+	}
+
+	CHECK_NULL_RET(fptr,*status,"error: empty pointer to fitsfile",NULL);
+	CHECK_NULL_RET(fptr->Fptr,*status,"error: empty pointer to fits structure",NULL);
+
+	ident->filename = strdup((fptr->Fptr)->filename);
+	ident->io_pos = (fptr->Fptr)->io_pos+(fptr->Fptr)->datastart;
+
+	if (NULL!=fptr) fits_close_file(fptr, status);
+	CHECK_STATUS_RET(*status, NULL);
+
+	return ident;
+}
+
 SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 				   int* const status)
 {

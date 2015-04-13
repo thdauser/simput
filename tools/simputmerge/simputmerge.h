@@ -39,6 +39,21 @@ struct Parameters {
   char clobber;
 };
 
+typedef struct{
+
+	char* spectrum;
+	char* image;
+	char* timing;
+
+}simput_refs;
+
+typedef struct{
+	int type;
+	char* ref;
+	char* orig_ref;
+	uniqueSimputident* ident;
+	void* data;
+}simput_data;
 
 int simputmerge_getpar(struct Parameters* const par);
 

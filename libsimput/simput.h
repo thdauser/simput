@@ -42,11 +42,21 @@
 #define EXTTYPE_LC (4)
 #define EXTTYPE_PSD (5)
 
+#define SIMPUT_SPEC_TYPE (0)
+#define SIMPUT_IMG_TYPE (1)
+#define SIMPUT_LC_TYPE (2)
 
 /////////////////////////////////////////////////////////////////
 // Type Declarations.
 /////////////////////////////////////////////////////////////////
 
+typedef struct{
+
+	char* filename;
+
+	LONGLONG io_pos;
+
+}uniqueSimputident;
 
 /** Single entry in the SimputCtlg. Requires about 128 bytes,
     depending on the string lengths. */
@@ -86,13 +96,17 @@ typedef struct {
       source. */
   char* spectrum;
 
+  uniqueSimputident* spec_ident;
+
   /** Reference string to the storage location of a spatial image of
       the source. */
   char* image;
+  uniqueSimputident* img_ident;
 
   /** Reference string to the storage location of a light curve or PSD
       of the source. */
   char* timing;
+  uniqueSimputident* timing_ident;
 
 } SimputSrc;
 
@@ -215,9 +229,15 @@ typedef struct {
       particular point of time or phase respectively. */
   char** spectrum;
 
+  uniqueSimputident** spec_ident;
+
+
   /** Reference to the storage location of the source image at a
       particular point of time or phase respectively. */
   char** image;
+
+  uniqueSimputident** img_ident;
+
 
   /** MJD for reference time [d]. */
   double mjdref;
@@ -750,5 +770,7 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPostCmd, float Elow,
 		float Eup,	float Estep, int *status);
 
+/** Get a unique descriptor of a FITS File, including extended file name syntax**/
+uniqueSimputident* get_simput_ident(char* filename, int type, int *status);
 
 #endif /* SIMPUT_H */

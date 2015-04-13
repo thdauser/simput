@@ -15,534 +15,451 @@
    <http://www.gnu.org/licenses/>.
 
 
-   Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015 Thomas Dauser, FAU
 */
 
 #include "simputmerge.h"
 
+// TODO: - add PSD to possible extensions?
+
+int GLOBAL_SPEC_COUNTER=0;
+int GLOBAL_IMG_COUNTER=0;
+int GLOBAL_LC_COUNTER=0;
+int GLOBAL_COUNTER=0;
+
+static void get_infile_names(char ** infilenames, int num_cat, struct Parameters par, int *status){
+	// Open the input catalogs. TODO: Need general routine
+	infilenames[0]= (char*)malloc((strlen(par.Infile1)+1)*sizeof(char));
+	CHECK_NULL_VOID(infilenames[0], *status, "memory allocation failed");
+	infilenames[1]= (char*)malloc((strlen(par.Infile2)+1)*sizeof(char));
+	CHECK_NULL_VOID(infilenames[1], *status, "memory allocation failed");
+
+	if(num_cat != 2){
+		*status=EXIT_FAILURE;
+		printf(" num_cat!=2 : not implemented yet \n");
+	}
+
+	strcpy(infilenames[0], par.Infile1);
+	strcpy(infilenames[1], par.Infile2);
+	return ;
+}
+static void show_progress(SimputCtlg* outcat, SimputCtlg** incat){
+	// Output of progress.
+	// TODO: need this for arbitrary number num_cat
+	if (0==outcat->nentries % 1000) {
+		headas_chat(1, "\r%ld/%ld (%.1lf%%) entries",
+				outcat->nentries, incat[0]->nentries+incat[1]->nentries,
+				outcat->nentries*100./(incat[0]->nentries+incat[1]->nentries));
+		fflush(NULL);
+	}
+	return;
+}
+static char* get_unused_ref(int type){
+
+	char ref[SIMPUT_MAXSTR];
+
+	switch (type) {
+	case SIMPUT_SPEC_TYPE:
+		sprintf(ref,"[SPECTRUM,1][NAME=='spec_%010i']",GLOBAL_SPEC_COUNTER);
+		break;
+	case SIMPUT_IMG_TYPE:
+		sprintf(ref,"[IMG_%010i,1]",GLOBAL_IMG_COUNTER);
+		break;
+	case SIMPUT_LC_TYPE:
+		sprintf(ref,"[TIM_%010i,1]",GLOBAL_LC_COUNTER);
+		break;
+	}
+
+	return strdup(ref);
+}
+
+/**
+static int compare_unique_ident(uniqueSimputident *id1, uniqueSimputident *id2){
+	if (id1->io_pos != id2->io_pos){
+		return -1;
+	}
+
+	if (strcmp(id1->filename,id2->filename) != 0){
+		return -1;
+	} else {
+		return 0;
+	}
+} **/
+
+static simput_data* find_src_in_buffer(char *ref, simput_data** buf, int *status){
+
+
+	for (int ii=0; ii< GLOBAL_COUNTER; ii++){
+		// if (compare_unique_ident (buf[ii]->ident,ident) == 0){
+		if (strcmp(buf[ii]->orig_ref,ref) == 0){
+			return buf[ii];
+		}
+	}
+	CHECK_STATUS_RET(*status,NULL);
+	// if we do not find the src in the buffer, we return NULL
+	return NULL;
+}
+
+static void append_src_to_buffer(simput_data* src,simput_data*** buf,int *status){
+	GLOBAL_COUNTER++;
+	*buf = realloc(*buf,GLOBAL_COUNTER * sizeof(simput_data*));
+	CHECK_NULL_VOID(*buf, *status, "memory (re)allocation failed")
+
+	(*buf)[GLOBAL_COUNTER-1] = src;
+
+	printf("[%i] appending extension %s \n",GLOBAL_COUNTER,src->orig_ref);
+
+}
+
+static char* add_single_data_to_buffer(char* filename, char *ref,
+		simput_data*** buf, int type, int *status){
+
+	char new_ref[SIMPUT_MAXSTR];
+
+	// first make sure we have the absolute path:
+	if ('['==ref[0]) {
+		strcpy(new_ref, filename);
+		strcat(new_ref, ref);
+	} else {
+		strcpy(new_ref, ref);
+	}
+
+	// this information is not used currently, as the function is not working yet
+	// uniqueSimputident *ident = get_simput_ident(new_ref,type,status);
+
+	simput_data *src = find_src_in_buffer(new_ref,*buf,status);
+	if(	 src == NULL){
+		// load source
+		src = (simput_data*) malloc (sizeof(simput_data));
+		CHECK_NULL_RET(src,*status,"memory allocation failed",NULL);
+
+		switch (type) {
+
+		case SIMPUT_SPEC_TYPE:
+			GLOBAL_SPEC_COUNTER++;
+			src->data = (SimputMIdpSpec*) malloc(sizeof(SimputMIdpSpec));
+			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
+			SimputMIdpSpec* buf = loadSimputMIdpSpec(new_ref,status);
+			sprintf(buf->name,"spec_%010i",GLOBAL_SPEC_COUNTER);
+			CHECK_STATUS_RET(*status,NULL);
+			src->data = buf;
+			break;
+
+		case SIMPUT_IMG_TYPE:
+			GLOBAL_IMG_COUNTER++;
+			src->data = (SimputImg*) malloc(sizeof(SimputImg));
+			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
+			src->data = loadSimputImg(new_ref, status);
+			CHECK_STATUS_RET(*status,NULL);
+			break;
+
+		case SIMPUT_LC_TYPE:
+			GLOBAL_LC_COUNTER++;
+			src->data = (SimputLC*) malloc(sizeof(SimputLC));
+			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
+			src->data = loadSimputLC(new_ref, status);
+			CHECK_STATUS_RET(*status,NULL);
+			break;
+		}
+		src->type=type;
+		// src->ident = ident;
+
+		// need to find an unused reference for this data
+		src->ref = get_unused_ref(type);
+		src->orig_ref = strdup(new_ref);
+
+		append_src_to_buffer(src,buf,status);
+
+	}
+
+	return src->ref;
+}
+
+static int is_fileref_given(char *str){
+	if ((strcmp(str,"") == 0) || (strcmp(str,"NULL") == 0) ){
+		return 0;
+	} else {
+		return 1;
+	}
+}
+
+simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, simput_data*** buf, int *status){
+
+	simput_refs* refs=(simput_refs*)malloc(sizeof(simput_refs));
+	CHECK_NULL_RET(refs, *status,"memory allocation for SimputSrc failed", NULL);
+
+	// need to do this for all possible extensions (lightcurves as well?)
+
+	// SPECTRUM
+	if (is_fileref_given(insrc->spectrum) == 1){
+		refs->spectrum = add_single_data_to_buffer(incat->filename,insrc->spectrum,
+				buf,SIMPUT_SPEC_TYPE,status);
+		CHECK_STATUS_RET(*status,NULL);
+	} else {
+		refs->spectrum = strdup(insrc->spectrum);
+	}
+
+	// IMAGE
+	if (is_fileref_given(insrc->image) == 1){
+		refs->image = add_single_data_to_buffer(incat->filename,insrc->image,
+				buf,SIMPUT_IMG_TYPE,status);
+		CHECK_STATUS_RET(*status,NULL);
+	} else {
+		refs->image = strdup(insrc->image);
+	}
+
+	// LIGHTCURVE
+	if (is_fileref_given(insrc->timing) == 1){
+		refs->timing = add_single_data_to_buffer(incat->filename,insrc->timing,
+				buf,SIMPUT_LC_TYPE,status);
+		CHECK_STATUS_RET(*status,NULL);
+	} else {
+		refs->timing = strdup(insrc->timing);
+	}
+
+	return refs;
+}
+
+static char* extract_extname_link(char *str,int *status){
+
+	char *pch;
+	pch = strchr(str,']');
+
+	CHECK_NULL_RET(pch,*status,"getting extension substring failed",NULL);
+
+	int n = pch-str+1;
+	char* substr;
+
+	substr= (char*)malloc((n+1)*sizeof(char));
+	CHECK_NULL_RET(substr, *status, "memory allocation failed",NULL);
+
+	strncpy(substr,str,n);
+	substr[n] = '\0';
+
+	return substr;
+}
+static char* extract_extname(char *str_init,int *status){
+
+	char *str;
+	str = extract_extname_link(str_init,status);
+
+	char *pch1,*pch2;
+	pch2 = strchr(str,',');
+	pch1 = strchr(str,'[');
+
+	CHECK_NULL_RET(pch1,*status,"getting extension substring failed",NULL);
+	CHECK_NULL_RET(pch2,*status,"getting extension substring failed",NULL);
+
+	int n = pch2-pch1-1;
+	char* substr;
+
+	substr= (char*)malloc((n+1)*sizeof(char));
+	CHECK_NULL_RET(substr, *status, "memory allocation failed",NULL);
+
+	strncpy(substr,pch1+1,n);
+	substr[n] = '\0';
+
+	return substr;
+}
+
+static void write_single_merge_data(simput_data* buf, char* filename, int *status){
+
+	int extver = 1;
+
+	switch (buf->type){
+	case SIMPUT_SPEC_TYPE:
+		saveSimputMIdpSpec(buf->data, filename,
+					extract_extname(buf->ref,status),
+					extver, status);
+		break;
+	case SIMPUT_IMG_TYPE:
+		saveSimputImg(buf->data, filename,
+					extract_extname(buf->ref,status),
+					extver, status);
+		break;
+	case SIMPUT_LC_TYPE:
+		saveSimputLC(buf->data, filename,
+				extract_extname(buf->ref,status),
+				extver, status);
+		break;
+	}
+
+}
+
+static void write_merge_data(simput_data** buf, char *filename, int *status){
+
+	for (int ii=0; ii<GLOBAL_COUNTER;ii++){
+		write_single_merge_data(buf[ii],filename,status);
+		printf("[%i] writing %s \n",ii,buf[ii]->ref);
+	}
+
+}
 
 int simputmerge_main() 
 {
-  // Program parameters.
-  struct Parameters par;
+	// Program parameters.
+	struct Parameters par;
 
-  // Filenames of the input catalogs.
-  char infilenames[2][SIMPUT_MAXSTR];
-
-  // SIMPUT source catalogs.
-  SimputCtlg* incat[2]={NULL, NULL};
-  SimputCtlg* outcat  = NULL;
-
-  // Array of already used IDs.
-  long* ids=NULL;
-  // Number of already used IDs.
-  long nids=0;
-
-  // HDU extension references used in the catalog.
-  char** specextrefs[2]={NULL, NULL};
-  long  nspecextrefs[2]={   0,    0};
-  char** imgextrefs[2]={NULL, NULL};
-  long  nimgextrefs[2]={   0,    0};
-  char** lcextrefs[2]={NULL, NULL};
-  long  nlcextrefs[2]={   0,    0};
-
-  // Error status.
-  int status=EXIT_SUCCESS; 
+	// Filenames of the input catalogs.
+	const int num_cat = 2; // TODO: only hard coded for now
+	char* infilenames[num_cat];
 
 
-  // Register HEATOOL
-  set_toolname("simputmerge");
-  set_toolversion("0.02");
+	// SIMPUT source catalogs.
+	SimputCtlg* outcat  = NULL;
+	SimputCtlg* incat[num_cat];
+
+	// Array of already used IDs.
+	long src_id=1;
+
+	// Error status.
+	int status=EXIT_SUCCESS;
+
+	// Register HEATOOL
+	set_toolname("simputmerge");
+	set_toolversion("0.03");
+
+	simput_data** data_buffer=NULL;
+
+	do { // Beginning of ERROR HANDLING Loop.
+
+		// ---- Initialization ----
+
+		// Read the parameters using PIL.
+		status=simputmerge_getpar(&par);
+		CHECK_STATUS_BREAK(status);
+
+		get_infile_names(infilenames, num_cat, par, &status);
+
+		// Get an empty output catalog. (TODO: Do proper checK??)
+		remove(par.Outfile);
+		outcat=openSimputCtlg(par.Outfile, READWRITE, 0, 0, 0, 0, &status);
+		CHECK_STATUS_BREAK(status);
+
+		// Loop over both source catalogs.
+		for (int ii=0; ii<num_cat; ii++) {
+			// Loop over all entries in the source catalog.
+
+			incat[ii]=openSimputCtlg(infilenames[ii], READONLY, 0, 0, 0, 0, &status);
+			CHECK_STATUS_BREAK(status);
+
+			long jj;
+			for (jj=0; jj<incat[ii]->nentries; jj++) {
+
+				SimputSrc* insrc=getSimputSrc(incat[ii], jj+1, &status);
+				CHECK_STATUS_BREAK(status);
+
+				// Check whether the extensions should remain in their current
+				// place or if they should by copied to the new output file.
+				if (0==par.FetchExtensions) {
+					printf("Not implemented yet!\n");
+					break;
+				}
+
+				simput_refs *refs=NULL;
+				refs = add_data_to_buffer(insrc,incat[ii],&data_buffer, &status);
+				CHECK_NULL_BREAK(refs,status,"adding data to buffer failed");
+
+				// Copy the entry from the input to the output catalog.
+				SimputSrc* outsrc=newSimputSrcV(src_id,
+						insrc->src_name,
+						insrc->ra,
+						insrc->dec,
+						insrc->imgrota,
+						insrc->imgscal,
+						insrc->e_min,
+						insrc->e_max,
+						insrc->eflux,
+						refs->spectrum, refs->image, refs->timing,
+						&status);
+				CHECK_STATUS_BREAK(status);
+
+				appendSimputSrc(outcat, outsrc, &status);
+				CHECK_STATUS_BREAK(status);
+
+				// needs to be a unique identifier
+				src_id++;
+
+				show_progress(outcat,incat);
+			}
+			CHECK_STATUS_BREAK(status);
+			// END of loop over all entries in the source catalog.
+		}
+		CHECK_STATUS_BREAK(status);
+		headas_chat(1, "\n");
+		// END of loop over both source catalogs.
+
+		// Copy the used extensions to the new output file.
+		if (0!=par.FetchExtensions) {
+			write_merge_data(data_buffer,par.Outfile,&status);
+		}
+		// END of copy extensions to the new output file.
+
+	} while(0); // END of ERROR HANDLING Loop.
+
+	// --- Clean up ---
+	headas_chat(3, "\ncleaning up ...\n");
+
+	freeSimputCtlg(&incat[0], &status);
+	freeSimputCtlg(&incat[1], &status);
+	freeSimputCtlg(&outcat, &status);
 
 
-  do { // Beginning of ERROR HANDLING Loop.
-
-    // ---- Initialization ----
-    
-    // Read the parameters using PIL.
-    status=simputmerge_getpar(&par);
-    CHECK_STATUS_BREAK(status);
-
-    // Open the input catalogs.
-    strcpy(infilenames[0], par.Infile1);
-    strcpy(infilenames[1], par.Infile2);
-    int ii;
-    for (ii=0; ii<2; ii++) {
-      incat[ii]=openSimputCtlg(infilenames[ii], READONLY, 0, 0, 0, 0, &status);
-      CHECK_STATUS_BREAK(status);
-    }
-    CHECK_STATUS_BREAK(status);
-
-    // Get an empty output catalog.
-    remove(par.Outfile);
-    outcat=openSimputCtlg(par.Outfile, READWRITE, 0, 0, 0, 0, &status);
-    CHECK_STATUS_BREAK(status);
-
-    // Smallest still available SRC_ID.
-    long min_src_id=1; 
-    // Loop over both source catalogs.
-    for (ii=0; ii<2; ii++) {
-      // Loop over all entries in the source catalog.
-      long jj;
-      for (jj=0; jj<incat[ii]->nentries; jj++) {
-
-	// Check if the SRC_ID of the new source is already contained 
-	// in the output catalog. The SRC_ID entry must be unique.
-	SimputSrc* insrc=getSimputSrc(incat[ii], jj+1, &status);
-	CHECK_STATUS_BREAK(status);
-	long src_id=insrc->src_id;
-	if (src_id<min_src_id) {
-	  src_id=min_src_id;
-	}
-	long kk;
-	do {
-	  for (kk=0; kk<nids; kk++) {
-	    if (src_id==ids[kk]) {
-	      // This SRC_ID is not available any more.
-	      if (src_id==min_src_id) {
-		min_src_id++;
-	      }
-	      src_id++;
-	      break;
-	    }
-	  }
-	} while (kk<nids);
-	if (src_id==min_src_id) {
-	  min_src_id++;
-	}
-
-	// Insert the new ID in the buffer of all used IDs.
-	if (0==(nids % 1000)) {
-	  ids=(long*)realloc(ids, (nids+1)*1000*sizeof(long));
-	  CHECK_NULL_BREAK(ids, status, "memory allocation failed");
-	}
-	ids[nids++]=src_id;
-
-	// Handle spectrum, image, and timing extensions.
-	char spectrum[SIMPUT_MAXSTR];
-	char timing[SIMPUT_MAXSTR];
-	char image[SIMPUT_MAXSTR];
-
-	// Check whether the extensions should remain in their current
-	// place or if they should by copied to the new output file.
-	if (0==par.FetchExtensions) {
-	  // Extensions should remain in their original place.
-	  // Check if they are local references to the same file
-	  // containing the catalog.
-	  // Spectrum.
-	  if ('['==insrc->spectrum[0]) {
-	    strcpy(spectrum, infilenames[ii]);
-	    strcat(spectrum, insrc->spectrum);
-	  } else {
-	    strcpy(spectrum, insrc->spectrum);
-	  }
-	  // Image.
-	  if ('['==insrc->image[0]) {
-	    strcpy(image, infilenames[ii]);
-	    strcat(image, insrc->image);
-	  } else {
-	    strcpy(image, insrc->image);
-	  }
-	  // Timing.
-	  if ('['==insrc->timing[0]) {
-	    strcpy(timing, infilenames[ii]);
-	    strcat(timing, insrc->timing);
-	  } else {
-	    strcpy(timing, insrc->timing);
-	  }
-	  // TODO What happens if the input file resides in another 
-	  // directory than the output file.
+	if (EXIT_SUCCESS==status) {
+		headas_chat(3, "finished successfully!\n\n");
+		return(EXIT_SUCCESS);
 	} else {
-	  // Extensions should be copied to the new output file.
-
-	  // Spectrum extensions.
-	  if ((strlen(insrc->spectrum)>0) &&
-	      (0!=strcmp(insrc->spectrum, "NULL"))) {
-	    // Check if this reference has already been used.
-	    long kk;
-	    for (kk=0; kk<nspecextrefs[ii]; kk++) {
-	      if (0==strcmp(specextrefs[ii][kk], insrc->spectrum)) {
-		break;
-	      }
-	    }
-	    if (kk==nspecextrefs[ii]) {
-	      // If not, append it to the list of used references.
-	      specextrefs[ii]=
-		(char**)realloc(specextrefs[ii],
-				(nspecextrefs[ii]+1)*sizeof(char*));
-	      CHECK_NULL_BREAK(specextrefs[ii], status, "memory allocation failed");
-	      specextrefs[ii][kk]=
-		(char*)malloc((strlen(insrc->spectrum)+1)*sizeof(char));
-	      CHECK_NULL_BREAK(specextrefs[ii][kk], status, "memory allocation failed");
-	      nspecextrefs[ii]++;
-	      strcpy(specextrefs[ii][kk], insrc->spectrum);
-	    }
-	    // Remove the preceeding file path and name.
-	    strcpy(spectrum, strchr(insrc->spectrum, '['));
-	  } else {
-	    strcpy(spectrum, "");
-	  }
-	  
-	  // Image extensions.
-	  if ((strlen(insrc->image)>0) &&
-	      (0!=strcmp(insrc->image, "NULL"))) {
-	    // Check if this reference has already been used.
-	    for (kk=0; kk<nimgextrefs[ii]; kk++) {
-	      if (0==strcmp(imgextrefs[ii][kk], insrc->image)) {
-		break;
-	      }
-	    }
-	    if (kk==nimgextrefs[ii]) {
-	      // If not, append it to the list of used references.
-	      imgextrefs[ii]=
-		(char**)realloc(imgextrefs[ii],
-				(nimgextrefs[ii]+1)*sizeof(char*));
-	      CHECK_NULL_BREAK(imgextrefs[ii], status, "memory allocation failed");
-	      imgextrefs[ii][kk]=
-	      (char*)malloc((strlen(insrc->image)+1)*sizeof(char));
-	      CHECK_NULL_BREAK(imgextrefs[ii][kk], status, "memory allocation failed");
-	      nimgextrefs[ii]++;
-	      strcpy(imgextrefs[ii][kk], insrc->image);
-	    }
-	    // Remove the preceeding file path and name.
-	    strcpy(image, strchr(insrc->image, '['));
-	  } else {
-	    strcpy(image, "");
-	  }
-
-	  // Light curve extensions.
-	  if ((strlen(insrc->timing)>0) &&
-	      (0!=strcmp(insrc->timing, "NULL"))) {
-	    // Check if this reference has already been used.
-	    for (kk=0; kk<nlcextrefs[ii]; kk++) {
-	      if (0==strcmp(lcextrefs[ii][kk], insrc->timing)) {
-		break;
-	      }
-	    }
-	    if (kk==nlcextrefs[ii]) {
-	      // If not, append it to the list of used references.
-	      lcextrefs[ii]=
-		(char**)realloc(lcextrefs[ii],
-				(nlcextrefs[ii]+1)*sizeof(char*));
-	      CHECK_NULL_BREAK(lcextrefs[ii], status, "memory allocation failed");
-	      lcextrefs[ii][kk]=
-		(char*)malloc((strlen(insrc->timing)+1)*sizeof(char));
-	      CHECK_NULL_BREAK(lcextrefs[ii][kk], status, "memory allocation failed");
-	      nlcextrefs[ii]++;
-	      strcpy(lcextrefs[ii][kk], insrc->timing);
-	    }
-	    // Remove the preceeding file path and name.
-	    strcpy(timing, strchr(insrc->timing, '['));  
-	  } else {
-	    strcpy(timing, "");
-	  }
+		return(EXIT_FAILURE);
 	}
-	// END of extensions should be copied to the new output file.
-
-	// Copy the entry from the input to the output catalog.
-	SimputSrc* outsrc=newSimputSrcV(src_id, 
-					insrc->src_name,
-					insrc->ra,
-					insrc->dec,
-					insrc->imgrota,
-					insrc->imgscal,
-					insrc->e_min,
-					insrc->e_max,
-					insrc->eflux,
-					spectrum, image, timing,
-					&status);
-	CHECK_STATUS_BREAK(status);
-
-	appendSimputSrc(outcat, outsrc, &status);
-	CHECK_STATUS_BREAK(status);
-
-	// Output of progress.
-	if (0==outcat->nentries % 1000) {
-	  headas_chat(1, "\r%ld/%ld (%.1lf%%) entries", 
-		      outcat->nentries, incat[0]->nentries+incat[1]->nentries,
-		      outcat->nentries*100./(incat[0]->nentries+incat[1]->nentries));
-	  fflush(NULL);
-	}
-      }
-      CHECK_STATUS_BREAK(status);
-      // END of loop over all entries in the source catalog.
-    }
-    CHECK_STATUS_BREAK(status);
-    headas_chat(1, "\n");
-    // END of loop over both source catalogs.
-
-    // Copy the used extensions to the new output file.
-    if (0!=par.FetchExtensions) {
-
-      // Spectra: check for duplicates.
-      for (ii=0; ii<2; ii++) {
-	long jj;
-	for (jj=0; jj<nspecextrefs[ii]; jj++) {
-	  if (strlen(specextrefs[ii][jj])>0) {
-	    int kk;
-	    for (kk=0; kk<ii; kk++) {
-	      long ll;
-	      for (ll=0; ll<nspecextrefs[kk]; ll++) {
-		if (0==strcmp(specextrefs[ii][jj], specextrefs[kk][ll])) {
-		  char msg[SIMPUT_MAXSTR];
-		  sprintf(msg, "reference to spectrum '%s' is "
-			  "ambiguous (used in '%s' and '%s')",
-			  specextrefs[ii][jj],
-			  infilenames[ii], infilenames[kk]);
-		  SIMPUT_ERROR(msg);
-		  status=EXIT_FAILURE;
-		  break;
-		}
-	      }
-	      CHECK_STATUS_BREAK(status);
-	    }
-	    CHECK_STATUS_BREAK(status);
-	  }
-	}
-	CHECK_STATUS_BREAK(status);
-      }
-      CHECK_STATUS_BREAK(status);
-
-      // Images: check for duplicates.
-      for (ii=0; ii<2; ii++) {
-	long jj;
-	for (jj=0; jj<nimgextrefs[ii]; jj++) {
-	  if (strlen(imgextrefs[ii][jj])>0) {
-	    int kk;
-	    for (kk=0; kk<ii; kk++) {
-	      long ll;
-	      for (ll=0; ll<nimgextrefs[kk]; ll++) {
-		if (0==strcmp(imgextrefs[ii][jj], imgextrefs[kk][ll])) {
-		  char msg[SIMPUT_MAXSTR];
-		  sprintf(msg, "reference to image '%s' is "
-			  "ambiguous (used in '%s' and '%s')",
-			  imgextrefs[ii][jj],
-			  infilenames[ii], infilenames[kk]);
-		  SIMPUT_ERROR(msg);
-		  status=EXIT_FAILURE;
-		  break;
-		}
-	      }
-	      CHECK_STATUS_BREAK(status);
-	    }
-	    CHECK_STATUS_BREAK(status);
-	  }
-	}
-	CHECK_STATUS_BREAK(status);
-      }
-      CHECK_STATUS_BREAK(status);
-
-      // Timing extensions: check for duplicates.
-      for (ii=0; ii<2; ii++) {
-	long jj;
-	for (jj=0; jj<nlcextrefs[ii]; jj++) {
-	  if (strlen(lcextrefs[ii][jj])>0) {
-	    int kk;
-	    for (kk=0; kk<ii; kk++) {
-	      long ll;
-	      for (ll=0; ll<nlcextrefs[kk]; ll++) {
-		if (0==strcmp(lcextrefs[ii][jj], lcextrefs[kk][ll])) {
-		  char msg[SIMPUT_MAXSTR];
-		  sprintf(msg, "reference to timing extension '%s' is "
-			  "ambiguous (used in '%s' and '%s')",
-			  lcextrefs[ii][jj],
-			  infilenames[ii], infilenames[kk]);
-		  SIMPUT_ERROR(msg);
-		  status=EXIT_FAILURE;
-		  break;
-		}
-	      }
-	      CHECK_STATUS_BREAK(status);
-	    }
-	    CHECK_STATUS_BREAK(status);
-	  }
-	}
-	CHECK_STATUS_BREAK(status);
-      }
-      CHECK_STATUS_BREAK(status);
-
-      // Go through the lists and, load the HDU data, and store it
-      // in the new output file.
-      // Spectra.
-      for (ii=0; ii<2; ii++) {
-	long jj;
-	for (jj=0; jj<nspecextrefs[ii]; jj++) {
-	  if (strlen(specextrefs[ii][jj])>0) {
-	    char filename[SIMPUT_MAXSTR];
-	    if ('['==specextrefs[ii][jj][0]) {
-	      strcpy(filename, infilenames[ii]);
-	      strcat(filename, specextrefs[ii][jj]);
-	    } else {
-	      strcpy(filename, specextrefs[ii][jj]);
-	    }
-
-	    // Copy the HDU.
-	    fitsfile* fptr=NULL;
-	    fits_open_file(&fptr, filename, READONLY, &status);
-	    fits_copy_hdu(fptr, outcat->fptr, 0, &status);
-	    fits_close_file(fptr, &status);
-	    CHECK_STATUS_BREAK(status);
-	  }
-	}
-	CHECK_STATUS_BREAK(status);
-      }
-      CHECK_STATUS_BREAK(status);
-
-      // Images.
-      for (ii=0; ii<2; ii++) {
-	long jj;
-	for (jj=0; jj<nimgextrefs[ii]; jj++) {
-	  if (strlen(imgextrefs[ii][jj])>0) {
-	    char filename[SIMPUT_MAXSTR];
-	    if ('['==imgextrefs[ii][jj][0]) {
-	      strcpy(filename, infilenames[ii]);
-	      strcat(filename, imgextrefs[ii][jj]);
-	    } else {
-	      strcpy(filename, imgextrefs[ii][jj]);
-	    }
-
-	    // Copy the HDU.
-	    fitsfile* fptr=NULL;
-	    fits_open_file(&fptr, filename, READONLY, &status);
-	    fits_copy_hdu(fptr, outcat->fptr, 0, &status);
-	    fits_close_file(fptr, &status);
-	    CHECK_STATUS_BREAK(status);
-	  }
-	}
-	CHECK_STATUS_BREAK(status);
-      }
-      CHECK_STATUS_BREAK(status);
-
-      // Timing extensions.
-      for (ii=0; ii<2; ii++) {
-	long jj;
-	for (jj=0; jj<nlcextrefs[ii]; jj++) {
-	  if (strlen(lcextrefs[ii][jj])>0) {
-	    char filename[SIMPUT_MAXSTR];
-	    if ('['==lcextrefs[ii][jj][0]) {
-	      strcpy(filename, infilenames[ii]);
-	      strcat(filename, lcextrefs[ii][jj]);
-	    } else {
-	      strcpy(filename, lcextrefs[ii][jj]);
-	    }
-
-	    // Copy the HDU.
-	    fitsfile* fptr=NULL;
-	    fits_open_file(&fptr, filename, READONLY, &status);
-	    fits_copy_hdu(fptr, outcat->fptr, 0, &status);
-	    fits_close_file(fptr, &status);
-	    CHECK_STATUS_BREAK(status);
-	  }
-	}
-	CHECK_STATUS_BREAK(status);
-      }
-      CHECK_STATUS_BREAK(status);
-
-    }
-    // END of copy extensions to the new output file.
-
-  } while(0); // END of ERROR HANDLING Loop.
-
-  // --- Clean up ---
-  headas_chat(3, "\ncleaning up ...\n");
-
-  // Release memory.
-  if (NULL!=ids) free(ids);
-  
-  freeSimputCtlg(&incat[0], &status);
-  freeSimputCtlg(&incat[1], &status);
-  freeSimputCtlg(&outcat, &status);
-
-  int ii;
-  for (ii=0; ii<2; ii++) {
-    if (NULL!=specextrefs[ii]) {
-      long jj;
-      for (jj=0; jj<nspecextrefs[ii]; jj++) {
-	if (NULL!=specextrefs[ii][jj]) {
-	  free(specextrefs[ii][jj]);
-	}
-      }
-      free(specextrefs[ii]);
-    }
-  }
-  for (ii=0; ii<2; ii++) {
-    if (NULL!=imgextrefs[ii]) {
-      long jj;
-      for (jj=0; jj<nimgextrefs[ii]; jj++) {
-	if (NULL!=imgextrefs[ii][jj]) {
-	  free(imgextrefs[ii][jj]);
-	}
-      }
-      free(imgextrefs[ii]);
-    }
-  }
-  for (ii=0; ii<2; ii++) {
-    if (NULL!=lcextrefs[ii]) {
-      long jj;
-      for (jj=0; jj<nlcextrefs[ii]; jj++) {
-	if (NULL!=lcextrefs[ii][jj]) {
-	  free(lcextrefs[ii][jj]);
-	}
-      }
-      free(lcextrefs[ii]);
-    }
-  }
-
-  if (EXIT_SUCCESS==status) {
-    headas_chat(3, "finished successfully!\n\n");
-    return(EXIT_SUCCESS);
-  } else {
-    return(EXIT_FAILURE);
-  }
 }
 
 
 int simputmerge_getpar(struct Parameters* const par)
 {
-  // String input buffer.
-  char* sbuffer=NULL;
+	// String input buffer.
+	char* sbuffer=NULL;
 
-  // Error status.
-  int status=EXIT_SUCCESS; 
+	// Error status.
+	int status=EXIT_SUCCESS;
 
-  // Read all parameters via the ape_trad_ routines.
+	// Read all parameters via the ape_trad_ routines.
 
-  status=ape_trad_query_file_name("Infile1", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("failed reading the name of the input file 1");
-    return(status);
-  } 
-  strcpy(par->Infile1, sbuffer);
-  free(sbuffer);
+	status=ape_trad_query_file_name("Infile1", &sbuffer);
+	if (EXIT_SUCCESS!=status) {
+		SIMPUT_ERROR("failed reading the name of the input file 1");
+		return(status);
+	}
+	strcpy(par->Infile1, sbuffer);
+	free(sbuffer);
 
-  status=ape_trad_query_file_name("Infile2", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("failed reading the name of the input file 2");
-    return(status);
-  } 
-  strcpy(par->Infile2, sbuffer);
-  free(sbuffer);
+	status=ape_trad_query_file_name("Infile2", &sbuffer);
+	if (EXIT_SUCCESS!=status) {
+		SIMPUT_ERROR("failed reading the name of the input file 2");
+		return(status);
+	}
+	strcpy(par->Infile2, sbuffer);
+	free(sbuffer);
 
-  status=ape_trad_query_file_name("Outfile", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("failed reading the name of the output file");
-    return(status);
-  } 
-  strcpy(par->Outfile, sbuffer);
-  free(sbuffer);
+	status=ape_trad_query_file_name("Outfile", &sbuffer);
+	if (EXIT_SUCCESS!=status) {
+		SIMPUT_ERROR("failed reading the name of the output file");
+		return(status);
+	}
+	strcpy(par->Outfile, sbuffer);
+	free(sbuffer);
 
-  status=ape_trad_query_bool("FetchExtensions", &par->FetchExtensions);
-  if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("failed reading the FetchExtensions parameter");
-    return(status);
-  }
+	status=ape_trad_query_bool("FetchExtensions", &par->FetchExtensions);
+	if (EXIT_SUCCESS!=status) {
+		SIMPUT_ERROR("failed reading the FetchExtensions parameter");
+		return(status);
+	}
 
-  status=ape_trad_query_bool("clobber", &par->clobber);
-  if (EXIT_SUCCESS!=status) {
-    SIMPUT_ERROR("failed reading the clobber parameter");
-    return(status);
-  }
+	status=ape_trad_query_bool("clobber", &par->clobber);
+	if (EXIT_SUCCESS!=status) {
+		SIMPUT_ERROR("failed reading the clobber parameter");
+		return(status);
+	}
 
-  return(status);
+	return(status);
 }
 
