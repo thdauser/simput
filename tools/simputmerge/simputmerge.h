@@ -48,10 +48,13 @@ typedef struct{
 }simput_refs;
 
 typedef struct{
-	int type;
 	char* ref;
 	char* orig_ref;
-	uniqueSimputident* ident;
+}tdata;
+
+typedef struct{
+	int type;
+	char* ref;
 	void* data;
 }simput_data;
 

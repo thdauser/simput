@@ -66,6 +66,10 @@ node *find_elmt_best(tree *tree_ptr, void *data, int *depdth){
 
 node *find_elmt(tree *tree_ptr, void *data){
 
+  if (tree_ptr->nelem==0){
+	  return NULL;
+  }
+
   int depdth=TREE_MINDEPDTH;
   node *ptr=find_elmt_best(tree_ptr, data, &depdth);
 

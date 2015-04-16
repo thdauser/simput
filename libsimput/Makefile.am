@@ -22,12 +22,12 @@ lib_LTLIBRARIES=libsimput.la
 
 # Sources:
 libsimput_la_SOURCES=datastruct.c fileaccess.c datahandling.c vector.c	\
-                    arf.c rmf.c parinput.c $(FSRC)
+                    arf.c rmf.c parinput.c simput_tree.c $(FSRC)
 libsimput_la_LIBADD=@top_builddir@/extlib/heasp/libhdsp.la
 
-libsimput_la_LDFLAGS = -version-info 2:0:1
+libsimput_la_LDFLAGS = -version-info 2:0:2
 
 ############ HEADERS #################
 
 # Define the headers that will be installed in $(includedir):
-include_HEADERS=simput.h common.h vector.h arf.h rmf.h parinput.h
+include_HEADERS=simput.h common.h vector.h arf.h rmf.h parinput.h simput_tree.h

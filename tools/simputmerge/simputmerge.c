@@ -19,6 +19,7 @@
 */
 
 #include "simputmerge.h"
+#include "simput_tree.h"
 
 // TODO: - add PSD to possible extensions?
 
@@ -86,11 +87,26 @@ static int compare_unique_ident(uniqueSimputident *id1, uniqueSimputident *id2){
 	}
 } **/
 
+
+int comp_elem(void* d1,void* d2){
+	tdata *cd1 = (tdata*)d1;
+	tdata *cd2 = (tdata*)d2;
+	return strcmp(cd1->orig_ref,cd2->orig_ref);
+}
+
+void free_elem(void *d){
+	tdata *cd = (tdata*)d;
+	free(cd->orig_ref);
+	free(cd->ref);
+	free(cd);
+	return;
+}
+
+/**
 static simput_data* find_src_in_buffer(char *ref, simput_data** buf, int *status){
 
 
 	for (int ii=0; ii< GLOBAL_COUNTER; ii++){
-		// if (compare_unique_ident (buf[ii]->ident,ident) == 0){
 		if (strcmp(buf[ii]->orig_ref,ref) == 0){
 			return buf[ii];
 		}
@@ -99,20 +115,26 @@ static simput_data* find_src_in_buffer(char *ref, simput_data** buf, int *status
 	// if we do not find the src in the buffer, we return NULL
 	return NULL;
 }
-
+**/
 static void append_src_to_buffer(simput_data* src,simput_data*** buf,int *status){
 	GLOBAL_COUNTER++;
 	*buf = realloc(*buf,GLOBAL_COUNTER * sizeof(simput_data*));
 	CHECK_NULL_VOID(*buf, *status, "memory (re)allocation failed")
 
 	(*buf)[GLOBAL_COUNTER-1] = src;
+	return;
+}
 
-	printf("[%i] appending extension %s \n",GLOBAL_COUNTER,src->orig_ref);
-
+static tdata* get_empty_elem(char* ref,int *status){
+	tdata *src = NULL;
+	src = (tdata*) malloc (sizeof(tdata));
+	CHECK_NULL_RET(src,*status,"memory allocation failed",NULL);
+	src->orig_ref = strdup(ref);
+	return src;
 }
 
 static char* add_single_data_to_buffer(char* filename, char *ref,
-		simput_data*** buf, int type, int *status){
+		tree* mtree, simput_data*** buf,int type, int *status){
 
 	char new_ref[SIMPUT_MAXSTR];
 
@@ -127,12 +149,15 @@ static char* add_single_data_to_buffer(char* filename, char *ref,
 	// this information is not used currently, as the function is not working yet
 	// uniqueSimputident *ident = get_simput_ident(new_ref,type,status);
 
-	simput_data *src = find_src_in_buffer(new_ref,*buf,status);
-	if(	 src == NULL){
-		// load source
-		src = (simput_data*) malloc (sizeof(simput_data));
-		CHECK_NULL_RET(src,*status,"memory allocation failed",NULL);
+	tdata *new_elem = get_empty_elem(new_ref,status);
 
+	node *ptr=NULL;
+	ptr = find_elmt(mtree, new_elem);
+
+	if(	 ptr == NULL){
+		// load source
+
+		simput_data* src = (simput_data*) malloc (sizeof(simput_data));
 		switch (type) {
 
 		case SIMPUT_SPEC_TYPE:
@@ -165,14 +190,20 @@ static char* add_single_data_to_buffer(char* filename, char *ref,
 		// src->ident = ident;
 
 		// need to find an unused reference for this data
-		src->ref = get_unused_ref(type);
-		src->orig_ref = strdup(new_ref);
+		new_elem->ref = get_unused_ref(type);
+		src->ref = strdup(new_elem->ref);
+
+		ptr = add_elmt(mtree, new_elem);
+		CHECK_NULL_RET(ptr,*status,"failed to add element",NULL);
 
 		append_src_to_buffer(src,buf,status);
 
+	} else {
+		//free(new_elem);
+		//tdata *
+		new_elem = (tdata*)ptr->data;
 	}
-
-	return src->ref;
+	return ((tdata*)new_elem)->ref;
 }
 
 static int is_fileref_given(char *str){
@@ -183,7 +214,8 @@ static int is_fileref_given(char *str){
 	}
 }
 
-simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, simput_data*** buf, int *status){
+simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree,
+		simput_data*** data_buffer, int *status){
 
 	simput_refs* refs=(simput_refs*)malloc(sizeof(simput_refs));
 	CHECK_NULL_RET(refs, *status,"memory allocation for SimputSrc failed", NULL);
@@ -193,7 +225,7 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, simput_data
 	// SPECTRUM
 	if (is_fileref_given(insrc->spectrum) == 1){
 		refs->spectrum = add_single_data_to_buffer(incat->filename,insrc->spectrum,
-				buf,SIMPUT_SPEC_TYPE,status);
+				mtree,data_buffer,SIMPUT_SPEC_TYPE,status);
 		CHECK_STATUS_RET(*status,NULL);
 	} else {
 		refs->spectrum = strdup(insrc->spectrum);
@@ -202,7 +234,7 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, simput_data
 	// IMAGE
 	if (is_fileref_given(insrc->image) == 1){
 		refs->image = add_single_data_to_buffer(incat->filename,insrc->image,
-				buf,SIMPUT_IMG_TYPE,status);
+				mtree,data_buffer,SIMPUT_IMG_TYPE,status);
 		CHECK_STATUS_RET(*status,NULL);
 	} else {
 		refs->image = strdup(insrc->image);
@@ -211,7 +243,7 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, simput_data
 	// LIGHTCURVE
 	if (is_fileref_given(insrc->timing) == 1){
 		refs->timing = add_single_data_to_buffer(incat->filename,insrc->timing,
-				buf,SIMPUT_LC_TYPE,status);
+				mtree,data_buffer,SIMPUT_LC_TYPE,status);
 		CHECK_STATUS_RET(*status,NULL);
 	} else {
 		refs->timing = strdup(insrc->timing);
@@ -290,7 +322,7 @@ static void write_merge_data(simput_data** buf, char *filename, int *status){
 
 	for (int ii=0; ii<GLOBAL_COUNTER;ii++){
 		write_single_merge_data(buf[ii],filename,status);
-		printf("[%i] writing %s \n",ii,buf[ii]->ref);
+//		printf("[%i] writing %s \n",ii,buf[ii]->ref);
 	}
 
 }
@@ -320,6 +352,7 @@ int simputmerge_main()
 	set_toolversion("0.03");
 
 	simput_data** data_buffer=NULL;
+	tree* mtree=get_tree(&comp_elem, &free_elem);
 
 	do { // Beginning of ERROR HANDLING Loop.
 
@@ -357,7 +390,7 @@ int simputmerge_main()
 				}
 
 				simput_refs *refs=NULL;
-				refs = add_data_to_buffer(insrc,incat[ii],&data_buffer, &status);
+				refs = add_data_to_buffer(insrc,incat[ii], mtree, &data_buffer, &status);
 				CHECK_NULL_BREAK(refs,status,"adding data to buffer failed");
 
 				// Copy the entry from the input to the output catalog.
@@ -400,8 +433,9 @@ int simputmerge_main()
 	// --- Clean up ---
 	headas_chat(3, "\ncleaning up ...\n");
 
-	freeSimputCtlg(&incat[0], &status);
-	freeSimputCtlg(&incat[1], &status);
+	for(int ii=0;ii<num_cat;ii++){
+		freeSimputCtlg(&incat[ii], &status);
+	}
 	freeSimputCtlg(&outcat, &status);
 
 
