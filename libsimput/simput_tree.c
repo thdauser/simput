@@ -1,8 +1,9 @@
 #include "simput_tree.h"
 
 long iterate_tree_depdth(node *n);
+node *find_node(node *nd, void *data, int (*cmp)(void*, void*), int *depdth);
 long get_tree_depdth(tree *tree_ptr);
-node *find_elmt_best(tree *tree_ptr, void *data);
+node *find_elmt_best(tree *tree_ptr, void *data, int *depdth);
 
 long iterate_tree_depdth(node *n){
   
@@ -34,26 +35,30 @@ long get_tree_depdth(tree *tree_ptr){
   return d;
 }
 
-node *find_node(node *nd, void *data, int (*cmp)(void*, void*)){
+
+node *find_node(node *nd, void *data, int (*cmp)(void*, void*), int *depdth){
 
   node *ptr=nd;
   int cval=cmp(data, nd->data);
 
   if(cval<0 && nd->left!=NULL){
-    ptr=find_node(nd->left, data, cmp);
+    (*depdth)++;
+    ptr=find_node(nd->left, data, cmp, depdth);
   }else if(cval>0 && nd->right!=NULL){
-    ptr=find_node(nd->right, data, cmp);
+    (*depdth)++;
+    ptr=find_node(nd->right, data, cmp, depdth);
   }
 
   return ptr;
 }
 
-node *find_elmt_best(tree *tree_ptr, void *data){
+node *find_elmt_best(tree *tree_ptr, void *data, int *depdth){
 
   node *ptr=tree_ptr->treeptr;
 
   if(ptr!=NULL){
-    ptr=find_node(ptr, data, tree_ptr->cmp);
+    (*depdth)++;
+    ptr=find_node(ptr, data, tree_ptr->cmp, depdth);
   }
 
   return ptr;
@@ -61,7 +66,8 @@ node *find_elmt_best(tree *tree_ptr, void *data){
 
 node *find_elmt(tree *tree_ptr, void *data){
 
-  node *ptr=find_elmt_best(tree_ptr, data);
+  int depdth=TREE_MINDEPDTH;
+  node *ptr=find_elmt_best(tree_ptr, data, &depdth);
 
   if(tree_ptr->cmp(ptr->data, data)){
     ptr=NULL;
@@ -86,7 +92,8 @@ node* get_node(void *data, node *parent){
 
 node *add_elmt(tree *tree_ptr, void *data){
   
-  node *ptr=find_elmt_best(tree_ptr, data);
+  int depdth=TREE_MINDEPDTH;
+  node *ptr=find_elmt_best(tree_ptr, data, &depdth);
   
   if(ptr==NULL){
     tree_ptr->treeptr=get_node(data, NULL);
@@ -113,7 +120,9 @@ node *add_elmt(tree *tree_ptr, void *data){
   }
   
   tree_ptr->nelem++;
-  tree_ptr->maxdepdth=get_tree_depdth(tree_ptr);
+  if(depdth>tree_ptr->maxdepdth){
+    tree_ptr->maxdepdth=depdth;
+  }
   
   return ptr;  
 }

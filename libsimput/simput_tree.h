@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#define TREE_MINDEPDTH 1
+
 /** Type definitions */
 
 /** Node structure definition */
