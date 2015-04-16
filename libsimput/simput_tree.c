@@ -108,20 +108,26 @@ node *add_elmt(tree *tree_ptr, void *data){
       }else{
 	ptr->left=get_node(data, ptr);
       }
-      ptr=ptr->left;
+      if(ptr->left!=NULL){
+	ptr=ptr->left;
+      }
     }else if(cval>0){
       if(ptr==tree_ptr->treeptr){
 	ptr->right=get_node(data, tree_ptr->treeptr);
       }else{
 	ptr->right=get_node(data, ptr);
       }
-      ptr=ptr->right;
+      if(ptr->right!=NULL){
+	ptr=ptr->right;
+      }
     }
   }
   
-  tree_ptr->nelem++;
-  if(depdth>tree_ptr->maxdepdth){
-    tree_ptr->maxdepdth=depdth;
+  if(ptr!=NULL){
+    tree_ptr->nelem++;
+    if(depdth>tree_ptr->maxdepdth){
+      tree_ptr->maxdepdth=depdth;
+    }
   }
   
   return ptr;  
