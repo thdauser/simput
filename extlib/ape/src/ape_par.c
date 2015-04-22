@@ -723,6 +723,27 @@ int ape_par_get_mode(const ApePar * par, char * mode_string) {
   return status;
 }
 
+int ape_par_set_mode(ApePar * par, const char * mode_string) {
+  int status = eOK;
+
+  /* Check arguments. */
+  if (0 == mode_string) {
+    status = eNullPointer;
+  }
+  if (eOK == status && 0 == par) status = eNullPointer;
+
+  if (eOK == status) {
+    char code_string [APE_PAR_MODE_CODE_LEN] = "";
+
+    /* Set the actual code string. */
+    status = string2mode(mode_string, code_string);
+    if (eOK == status) {
+      status = ape_par_set_field(par, eMode, code_string);
+    }
+  }
+  return status;
+}
+
 int ape_par_get_eff_mode(const ApePar * par, const char * auto_string, char * mode_string) {
   int status = eOK;
   int prompt_style = eDefaultPrompt;
@@ -995,6 +1016,12 @@ int ape_par_set_value_string(ApePar * par, const char * value) {
   while (begin < end && 0 != isspace(*begin)) ++begin;
   while (begin < end && 0 != isspace(*(end - 1))) --end;
 
+  /* Allow for a value which is all spaces: */
+  if (begin == end) {
+    begin = value;
+    end = value + strlen(value);
+  }
+
   status = ape_util_copy_range(begin, end, &value_copy);
   if (eOK == status) {
     status = ape_par_set_field(par, eValue, value_copy);
@@ -1248,7 +1275,7 @@ static void describe_status(char ** field, int * field_status, int status) {
       break;
     case eValueAboveMax:
       if (0 == treat_as_string) fmt = "Parameter %s: value %s is greater than maximum value %s.\n";
-      else fmt = "Parameter %s: as a string, value \"%s\" is less than maximum value \"%s\".\n";
+      else fmt = "Parameter %s: as a string, value \"%s\" is greater than maximum value \"%s\".\n";
       ape_msg_error(fmt, name, value, max);
       break;
     case eInvalidRange:
@@ -1589,8 +1616,7 @@ static int compare_as(char type, const char * s1, const char * s2, int * result)
           status = ape_util_s2l(s2, &value2);
         }
         if (eOK == status) {
-          int comparison = value1 - value2;
-          *result = comparison < 0 ? -1 : (comparison > 0 ? 1 : 0);
+          *result = value1 < value2 ? -1 : (value1 > value2 ? 1 : 0);
         }
       }
       break;
@@ -2228,6 +2254,23 @@ void ape_par_test(void) {
     /* Clean up. */
     ape_par_destroy(par);
   }
+
+  /* Test ape_par_get_string */
+  { ApePar * par = 0;
+    int status = ape_par_create(&par, "correct par name, s, a,   \" \"    , , , \"Quoted prompt\"");
+    if (0 == par) {
+      ape_test_failed("When about to test ape_par_get_string for single space, unexpected problem creating a test parameter object.\n");
+    } else {
+      const char expected[] = " ";
+      char * result = 0;
+      status = ape_par_get_string(par, &result);
+      ape_test_cmp_string("ape_par_get_string called for single space", result, expected, status, eOK);
+      free(result); result = 0;
+  }
+
+    /* Clean up. */
+    ape_par_destroy(par);
+  }
   { ApePar * par = 0;
     int status = ape_par_create(&par, "sa, s, a, opTIon1, OPTion1|OPTION2|option3, , sa enumerated");
     if (0 == par) {
@@ -2609,7 +2652,7 @@ void ape_par_test(void) {
         ape_test_failed("ape_par_test: assignment of string \"bb\" to par type failed with status %d.\n", status);
       }
 
-      /* Error case: include two known but contradicatory characters. */
+      /* Error case: include two known but contradictory characters. */
       status = ape_par_set_field(par, eType, "si");
       if (eOK == status) {
         status = ape_par_get_type(par, type_string);
@@ -2619,6 +2662,61 @@ void ape_par_test(void) {
       }
     } else {
       ape_test_failed("Setup for ape_par_get_type(par, type_string) failed with status %d.\n", status);
+    }
+    ape_par_destroy(par);
+  }
+
+  /* Test ape_par_set_mode. */
+  { const char * par_text = "testpar,    B , a, , , , \"Test parameter\"";
+    ApePar * par = 0;
+    int status = ape_par_create(&par, par_text);
+    if (eOK == status) {
+      char mode_string[APE_PAR_MODE_CODE_LEN] = "";
+
+      /* Success cases: identify all known modes. */
+      status = ape_par_set_mode(par, "ql");
+      if (eOK == status) {
+        status = ape_par_get_mode(par, mode_string);
+        ape_test_cmp_string("ape_par_set_mode for mode \"ql\"", mode_string, "ql", status, eOK);
+      } else {
+        ape_test_failed("ape_par_test: assignment of string \"ql\" to par mode failed with status %d.\n", status);
+      }
+
+      status = ape_par_set_mode(par, " l h");
+      if (eOK == status) {
+        status = ape_par_get_mode(par, mode_string);
+        ape_test_cmp_string("ape_par_set_mode for mode \" l h\"", mode_string, "hl", status, eOK);
+      } else {
+        ape_test_failed("ape_par_test: assignment of string \" l h\" to par mode failed with status %d.\n", status);
+      }
+
+      /* Set up for and test error cases. */
+      status = ape_par_set_field(par, eMode, "hl");
+      if (eOK != status) {
+
+        ape_test_failed("ape_par_test: failed to set up error test case for ape_par_set_mode with status %d.\n", status);
+
+      } else {
+
+        /* Error case: blank mode string . */
+        status = ape_par_set_mode(par, "");
+        ape_par_get_mode(par, mode_string);
+        ape_test_cmp_string("ape_par_set_mode for mode \"\"", mode_string, "hl", status, eUnknownMode);
+
+        /* Error case: include two known but contradictory characters. */
+        status = ape_par_set_mode(par, "qh");
+        ape_par_get_mode(par, mode_string);
+        ape_test_cmp_string("ape_par_set_mode for mode \"\"", mode_string, "hl", status, eUnknownMode);
+
+        /* Error case: include unknown characters. */
+        status = ape_par_set_mode(par, "az");
+        ape_par_get_mode(par, mode_string);
+        ape_test_cmp_string("ape_par_set_mode for mode \"\"", mode_string, "hl", status, eFormatError);
+
+      }
+
+    } else {
+      ape_test_failed("Setup for ape_par_set_mode(par, mode_string) failed with status %d.\n", status);
     }
     ape_par_destroy(par);
   }
@@ -2648,7 +2746,7 @@ void ape_par_test(void) {
         status = ape_par_get_mode(par, mode_string);
         ape_test_cmp_string("ape_par_get_mode for mode \"\"", mode_string, "", status, eUnknownMode);
       } else {
-        ape_test_failed("ape_par_test: assignment of string \"rq\" to par mode failed with status %d.\n", status);
+        ape_test_failed("ape_par_test: assignment of string \"\" to par mode failed with status %d.\n", status);
       }
 
       /* Error case: include unknown characters. */
@@ -2657,7 +2755,7 @@ void ape_par_test(void) {
         status = ape_par_get_mode(par, mode_string);
         ape_test_cmp_string("ape_par_get_mode for mode \"az\"", mode_string, "a", status, eFormatError);
       } else {
-        ape_test_failed("ape_par_test: assignment of string \"rq\" to par mode failed with status %d.\n", status);
+        ape_test_failed("ape_par_test: assignment of string \"az\" to par mode failed with status %d.\n", status);
       }
 
       /* Error case: include duplicated but known characters. */
@@ -2669,7 +2767,7 @@ void ape_par_test(void) {
         ape_test_failed("ape_par_test: assignment of string \"qq\" to par mode failed with status %d.\n", status);
       }
 
-      /* Error case: include two known but contradicatory characters. */
+      /* Error case: include two known but contradictory characters. */
       status = ape_par_set_field(par, eMode, "qh");
       if (eOK == status) {
         status = ape_par_get_mode(par, mode_string);
@@ -2785,7 +2883,8 @@ void ape_par_test(void) {
         ape_test_failed("ape_par_prompt returned status %d, not eOK as expected.\n", status);
       }
 
-      /* Get input, expected value is a single space, which blanks out the parameter. */
+      /* Get input, expected value is two spaces, which is preserved now (instead of blanking out
+         the parameter which was the old behavior). */
       status = ape_par_prompt(par);
       /* For cosmetic reasons, print a carriage return here. */
       ape_msg_debug("\n");
@@ -2793,7 +2892,7 @@ void ape_par_test(void) {
       if (eOK == status) {
         char * value = 0;
         status = ape_par_get_field(par, eValue, &value);
-        ape_test_cmp_string("ape_par_prompt", value, "", status, eOK);
+        ape_test_cmp_string("ape_par_prompt", value, "  ", status, eOK);
         free(value); value = 0;
       } else {
         ape_test_failed("ape_par_prompt returned status %d, not eOK as expected.\n", status);
@@ -2868,8 +2967,10 @@ void ape_par_test(void) {
          clarifying the test. */
       status = ape_par_set_field(par, eValue, "1");
       if (eOK == status) {
+        /* Note that due to the precision limits of doubles, this value must round up in the 15th decimal
+           place in order to trigger the correct overflow/underflow status message. */
         status = ape_par_set_field(par, ePrompt,
-          "'Test re-prompts: enter -8000000000, 8000000000, blah, -1, 3, 1., 2'");
+          "'Test re-prompts: enter -9223372036854779999, 9223372036854779999, blah, -1, 3, 1., 2'");
       }
       if (eOK == status) {
         status = ape_par_set_field(par, eMin, "0");
@@ -3203,6 +3304,37 @@ void ape_par_test(void) {
     free(line); line = 0;
     ape_par_destroy(ape_par); ape_par = 0;
   }
+  { ApePar * ape_par = 0;
+    int status = eOK;
+    const char * const_line = "sq, s, q,   , , , , prompt";
+    char * line = 0;
+    status = ape_par_create(&ape_par, const_line);
+    if (eOK == status) {
+      const_line = "sq, s, q,   \"\", , , , prompt";
+      status = quote_field(ape_par, eValue);
+      if (eOK == status) line = ape_par_get_line(ape_par);
+      ape_test_cmp_string("quote_field", line, const_line, status, eOK);
+    } else {
+      ape_test_failed("Could not set up to test quote_field, status is %d.\n", status);
+    }
+    free(line); line = 0;
+    ape_par_destroy(ape_par); ape_par = 0;
+  }
+  { ApePar * ape_par = 0;
+    int status = eOK;
+    const char * const_line = "sq, s, q, \"\"  , , , , prompt";
+    char * line = 0;
+    status = ape_par_create(&ape_par, const_line);
+    if (eOK == status) {
+      status = quote_field(ape_par, eValue);
+      if (eOK == status) line = ape_par_get_line(ape_par);
+      ape_test_cmp_string("quote_field", line, const_line, status, eOK);
+    } else {
+      ape_test_failed("Could not set up to test quote_field, status is %d.\n", status);
+    }
+    free(line); line = 0;
+    ape_par_destroy(ape_par); ape_par = 0;
+  }
   /* Test ape_par_set_value_string. */
   { ApePar * ape_par = 0;
     int status = eOK;
@@ -3228,6 +3360,22 @@ void ape_par_test(void) {
     if (eOK == status) {
       const_line = "iq, i, q, 10, , , prompt";
       status = ape_par_set_value_string(ape_par, "10");
+      if (eOK == status) line = ape_par_get_line(ape_par);
+      ape_test_cmp_string("ape_par_set_value_string", line, const_line, status, eOK);
+    } else {
+      ape_test_failed("Could not set up to test ape_par_set_value_string, status is %d.\n", status);
+    }
+    free(line); line = 0;
+    ape_par_destroy(ape_par); ape_par = 0;
+  }
+  { ApePar * ape_par = 0;
+    int status = eOK;
+    const char * const_line = "sq, s, q, , , , prompt";
+    char * line = 0;
+    status = ape_par_create(&ape_par, const_line);
+    if (eOK == status) {
+      const_line = "sq, s, q, \"  \", , , prompt";
+      status = ape_par_set_value_string(ape_par, "  ");
       if (eOK == status) line = ape_par_get_line(ape_par);
       ape_test_cmp_string("ape_par_set_value_string", line, const_line, status, eOK);
     } else {
@@ -3564,9 +3712,6 @@ static int quote_field(const ApePar * ape_par, ParFieldId field_id) {
     char * trailing_quote = 0;
     char * tmp_field1 = 0;
     char * tmp_field2 = 0;
-
-    /* Don't quote blank values. */
-    if ('\0' == *token_list[eTokenValue]) return status;
 
     /* Handle escaped characters. (Remove one level of backslashes from special escape sequences.) */
     status = collapse_escape(token_list[eTokenValue], "'\",\\", &tmp_field1);
@@ -4028,6 +4173,27 @@ static const char * find_unquoted(const char * s, const char * delim) {
 
 /*
  * $Log: ape_par.c,v $
+ * Revision 1.106  2014/05/23 22:15:03  peachey
+ * Improve and simplify the comparison of long values still further.
+ * Pick large integers such that they give the same underflow/overflow errors on 32 and
+ * 64 bit systems.
+ *
+ * Revision 1.105  2014/05/23 12:56:51  peachey
+ * Correct bug where two longs were being subtracted and then stored in an int.
+ *
+ * Revision 1.104  2013/09/06 19:12:45  peachey
+ * Correct error message typo.
+ *
+ * Revision 1.103  2013/04/15 16:41:07  irby
+ * Add ape_par_set_mode and test cases.
+ *
+ * Revision 1.102  2012/09/17 21:48:03  irby
+ * In ape_par_set_value_string(), allow for a value which is all spaces.  Add
+ * test of ape_par_get_string() for a single space.  In testing for prompted
+ * values (synchronizing with new ape_test-input), expected result is now two
+ * spaces.  In quote_field(), *do* quote blank values now.  Add extra tests of
+ * quote_field().
+ *
  * Revision 1.101  2011/02/18 19:34:52  irby
  * Clarify that eInvalidName refers to a bad entry in the par file.
  *

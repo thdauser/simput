@@ -73,7 +73,7 @@ static int convert_ape_status_to_pil(int ape_status) {
     { eVarNotSet, PIL_UNSPECIFIED_ERROR },
     { eLineTooLong, PIL_LINE_ERROR },
     { eTooManyArguments, PIL_LINE_TOO_MANY },
-    { eParameterDuplicated, PIL_BOGUS_CMDLINE },
+    { eParameterDuplicated, PIL_UNSPECIFIED_ERROR },
     /* 20 */
     { eParNotFound, PIL_NOT_FOUND },
     { eUnnamedPar, PIL_BAD_NAME },
@@ -559,6 +559,11 @@ int PILGetRealVector(const char * parameter, int length, double * output) {
 
 /*
  * $Log: pil.c,v $
+ * Revision 1.19  2012/03/21 19:47:55  peachey
+ * Consider eParameterDuplicated to be a PIL_UNSPECIFIED_ERROR, since it
+ * can happen in two cases: a parameter duplicated on the command line or
+ * duplicated in the file.
+ *
  * Revision 1.18  2011/02/18 19:39:16  irby
  * Update the lookup table for converting Ape error codes to PIL codes.
  *

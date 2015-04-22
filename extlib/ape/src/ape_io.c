@@ -877,7 +877,6 @@ static time_t get_mod_time(const char * file_name) {
 int ape_io_read(const char * file_name, ApeParFile ** par_file) {
   ApeList ** cont = 0;
   int status = eOK;
-  int parse_status = eOK;
   FILE * fp = 0;
 
   /* Make sure output parameter file pointer is valid. */
@@ -910,7 +909,9 @@ int ape_io_read(const char * file_name, ApeParFile ** par_file) {
     /* Make sure file actually opened. */
     if (0 == fp) {
       ape_msg_debug("ape_io_read: unable to open file \"%s\" for reading.\n", file_name);
-      status = eFileReadError;
+      /* Consider this a "not found" error because there is no way to tell what caused fopen to fail.
+         The most likely cause is a missing file. */
+      status = eFileNotFound;
     }
   }
 
@@ -977,7 +978,8 @@ int ape_io_read(const char * file_name, ApeParFile ** par_file) {
           (newline != next_char) && (linefeed != next_char) && (carriage_return != next_char)) {
           next_char = fgetc(fp);
         }
-        parse_status = eLineTooLong;
+        status = eLineTooLong;
+        continue;
       }
 
       /* Extract the parameter from the container. */
@@ -996,18 +998,22 @@ int ape_io_read(const char * file_name, ApeParFile ** par_file) {
       }
     }
   }
+
   if (eOK == status && 0 != ferror(fp)) {
     ape_msg_error("error reading from file \"%s\".\n", file_name);
     status = eFileReadError;
   }
+
+  if (eOK == status) {
+    /* Check for valid parameter file format, but do not insist that values are correct. */
+    status = ape_io_check_file_format(*par_file, 0);
+  }
+
   /* Clean up. */
   if (eOK != status) {
     ape_io_destroy_file(*par_file); *par_file = 0;
   }
   if(0 != fp) fclose(fp);
-
-  /* Report parse errors but don't destroy the output. */
-  if (eOK == status) status = parse_status;
 
   return status;
 }
@@ -1103,8 +1109,9 @@ int ape_io_read_file_path(const char * file_name, ApeList * path, ApeParFile ** 
 /* TODO: Why does this change the unit test output? */
 /*      ApeListIterator end = ape_list_end(path); */
 
-      /* Iterate over the paths, try to open the given file in each directory until there is success. */
-      for (itor = ape_list_begin(path); eOK != status && itor != ape_list_end(path); itor = ape_list_next(itor)) {
+      /* Iterate over the paths; try to open the file in each directory until there is success. The only error
+         encountered that is recoverable is file-not-found. */
+      for (itor = ape_list_begin(path); eFileNotFound == status && itor != ape_list_end(path); itor = ape_list_next(itor)) {
         /* Get name of next directory from the path. */
         const char * dir = (const char *) ape_list_get(itor);
         char * full_file_name;
@@ -1112,7 +1119,7 @@ int ape_io_read_file_path(const char * file_name, ApeList * path, ApeParFile ** 
         /* It is an error if at any point a component of a path is null. */
         if (0 == dir) {
           status = eNullPointer;
-          break;
+          continue;
         } else if (0 != is_blank(dir)) {
           /* Blank path components are OK -- just skip them. */
           status = eFileNotFound;
@@ -1352,7 +1359,10 @@ static int classify_arg(char ** par_name, int end_par, int arg_index, char * arg
 /* Return flag indicating whether this character type contains a non-trivial string
    which is *not* a parameter name. */
 static char is_significant_value(unsigned char type) {
-  return EQUALS == type || (EQUALS | VALUE) == type || VALUE == type;
+  /* Make a mask of all the type flags except parameter. */
+  const unsigned char mask = EQUALS | VALUE | PLUS | MINUS;
+  /* A significant value contains one or more bits from the mask, but does *not* contain the PAR bit. */
+  return 0 != ((mask & type) && !(PAR & type));
 }
 
 /* \brief Check for invalid parameter assignments, that is constructions of the form par = value where
@@ -1561,7 +1571,6 @@ int ape_io_apply_command_line(ApeParFile * par_file, int argc, char ** argv) {
             0 == is_significant_value(arg_type[arg_index + 1]))) {
             /* PAR=VALUE. Adjust value to point to the first significant character after EQUALS. */
             ++value[arg_index];
-            while (0 != isspace(*value[arg_index])) ++value[arg_index];
           } else if ((PAR | EQUALS) == arg_type[arg_index] && 0 != is_significant_value(arg_type[arg_index + 1])) {
             /* PAR= VALUE or PAR= =VALUE or PAR= =. */
             arg_type[arg_index + 1] = DONE;
@@ -2369,6 +2378,24 @@ static void test_apply_command_line(void) {
     par_value[4] = "yes";
     test_one_command_line(sizeof(argv) / sizeof(char *), argv, sizeof(par_name) / sizeof(char *), par_name, par_value, eOK);
   }
+  /* Test value with leading +/- */
+  { char * argv[] = { "par1= ", "+80" };
+    memcpy((void *) par_value, default_par_value, sizeof(default_par_value));
+    par_value[1] = "+80";
+    test_one_command_line(sizeof(argv) / sizeof(char *), argv, sizeof(par_name) / sizeof(char *), par_name, par_value, eOK);
+  }
+  { char * argv[] = { "par1= ", "-80" };
+    memcpy((void *) par_value, default_par_value, sizeof(default_par_value));
+    par_value[1] = "-80";
+    test_one_command_line(sizeof(argv) / sizeof(char *), argv, sizeof(par_name) / sizeof(char *), par_name, par_value, eOK);
+  }
+  /* Bug reported 2012-06-11 in ftlist, traced to ape. */
+  { char * argv[] = { "par2= ", "parfive=yes" };
+    memcpy((void *) par_value, default_par_value, sizeof(default_par_value));
+    par_value[2] = " ";
+    par_value[6] = "yes";
+    test_one_command_line(sizeof(argv) / sizeof(char *), argv, sizeof(par_name) / sizeof(char *), par_name, par_value, eOK);
+  }
   /* Test partial matching. */
   { char * argv[] = { "parfi=yes" };
     memcpy((void *) par_value, default_par_value, sizeof(default_par_value));
@@ -2538,9 +2565,9 @@ void ape_io_test(void) {
   /* Attempt to read a non-existent parameter file. */
   ape_msg_debug("ape_io_test: verify attempting to read a non-existent parameter file fails as expected.\n");
   status = ape_io_read("non-existent.par", &par_file);
-  if (eFileReadError != status ) {
+  if (eFileNotFound != status) {
     ape_test_failed("ape_io_read(\"non-existent.par\") returned status %d, not %d as expected.\n", status,
-      eFileReadError);
+      eFileNotFound);
   } else if (0 != par_file) {
     ape_test_failed("ape_io_read(\"non-existent.par\") returned non-0 par file pointer.\n");
   }
@@ -2578,6 +2605,7 @@ void ape_io_test(void) {
       "frh, fr, h, , , , file name readable hidden",
       "fwh, fw, h, , , , file name writable hidden",
       "ih, i, h, , , , int hidden",
+      "lh, i, h, , , , long hidden",
       "rh, r, h, , , , real hidden",
       "#sh, s, h, , , , string hidden # already appeared above.",
       "#",
@@ -2671,6 +2699,9 @@ void ape_io_test(void) {
       "rhnone, r, h, none, , , real hidden none",
       "rhundef, r, h, unDef, , , real hidden undef",
       "rhundefined, r, h, unDefined, , , real hidden undefined",
+      "#",
+      "# String parameter types with special values.",
+      "shspace, s, h, \" \", , , single space",
       "#",
       "mode, s, h, ql, , , \"Mode for automatic parameters\"",
       0
@@ -3360,6 +3391,30 @@ void ape_io_test(void) {
     ape_io_destroy_file(file); file = 0;
   }
 
+  /* Test ape_io_check_file_format for dupliated mode parameter. */
+  { const char * par_string[] = {
+      "p0, s, h, , , , parameter 0",
+      "p1, s, h, , , , parameter 1",
+      "p2, s, h, , , , parameter 2",
+      "p3, s, h, , , , parameter 3",
+      "mode, b, h, no, , , mode of automatic parameters",
+      "mode, s, h, ql, , , mode of automatic parameters",
+      0
+    };
+    ApeParFile * file = 0;
+    status = create_test_file("dup_mode.par", par_string, &file);
+    if (eOK == status) {
+      status = ape_io_check_file_format(file, 0);
+      if (eParameterDuplicated != status) {
+        ape_test_failed("ape_io_check_file_format(file containing duplicated mode) returned status %d, not %d as expected.\n",
+          status, eParameterDuplicated);
+      }
+    } else {
+      ape_test_failed("Unable to set up to test ape_io_check_file_format (status was %d.)\n", status);
+    }
+    ape_io_destroy_file(file); file = 0;
+  }
+
   /* Test ability to handle a file larger than the buffer size. */
   { const char * par_string[] = {
       "p0, s, h, \"A value for p0\", , , parameter 0",
@@ -3437,30 +3492,6 @@ void ape_io_test(void) {
       status = eOK;
     }
 
-    /* Compare strings in written file to the expected values. */
-    if (eOK == status) {
-      const char * expected_text[] = {
-        "p0, s, h, \"A value for p0\", , , parameter 0",
-        "p1, s, h, \"A value for p1\", , , parameter 1",
-        0,
-        "p3, s, h, \"A value for p3\", , , parameter 3",
-        0
-      };
-      char ** actual_text = 0;
-
-      /* Construct expected value for the long parameter (p2). */
-      char line[APE_BUF_SIZE] = "";
-      strcpy(line, "p2, s, h, \"");
-      strncat(line, large_value, APE_BUF_SIZE - strlen(line) - 1);
-
-      /* Assign expected line for p2. */
-      expected_text[2] = line;
-
-      status = get_par_strings(file, &actual_text);
-      ape_test_cmp_string_array("Comparing read to written parameter value larger than buffer size", actual_text, expected_text,
-        status, eOK);
-      ape_util_free_string_array(actual_text);
-    }
     ape_io_destroy_file(file); file = 0;
   }
 }
@@ -3471,6 +3502,47 @@ void ape_io_test(void) {
 
 /*
  * $Log: ape_io.c,v $
+ * Revision 1.87  2014/05/23 12:59:58  peachey
+ * Sorted out rats' nest of changes to unit tests that accumulated since
+ * 2009. This involved small tweaks to code that creates test files from
+ * scratch, and changes to reference parameter files and log files..
+ *
+ * Revision 1.86  2012/09/17 21:43:11  irby
+ * In ape_io_apply_command_line(), include whitespace as significant characters
+ * after EQUALS ("par equals value" or "par equals").  Modify command line test
+ * from previous revision: the whitespace in "par2= " is now preserved.
+ *
+ * Revision 1.85  2012/06/14 02:51:59  jpeachey
+ * Correct bug in which parameter values assigned a value of whitespace
+ * were instead inheriting parameter values from farther to the right
+ * on the command line, i.e., par2=" " parfive="yes" was assigning
+ * "yes" both to par2 and parfive.
+ *
+ * Revision 1.84  2012/03/21 19:45:54  peachey
+ * In ape_io_read:
+ * * Set status to eFileNotFound if fopen fails.
+ * * Do not preserve truncated file content in the case of line too long.
+ *   eLineTooLong is now treated like any other error.
+ * * Call ape_io_check_file_format before returning, if no error was already
+ *   detected (will cause ape_trad_init to fail when unrecoverable errors
+ *   occur).
+ *
+ * In ape_io_read_path: fail if an error other than eFileNotFound is
+ * encountered while searching for the parameter file.
+ *
+ * Test code changed to remain correct for the new logic.
+ *
+ * Revision 1.83  2012/03/21 17:08:36  peachey
+ * Add test that confirms that mode parameters duplicated in the file are
+ * handled correctly.
+ *
+ * Revision 1.82  2011/07/26 20:43:44  irby
+ * Rework is_significant_value() to return a positive for *any* case (not
+ * just those previously listed) in which the type is neither a PAR or
+ * UNKNOWN (blank).  This allows for the new cases of VALUE|PLUS and
+ * VALUE|MINUS e.g. "par= +80" or "par= -80" which were until now
+ * generating incorrect output.  Add tests for these cases.
+ *
  * Revision 1.81  2011/03/02 22:18:58  irby
  * Fixed previous revision, which did not allow for the scenario in which a
  * command line *value* ambiguously matches a parameter name.  Added several

@@ -42,6 +42,12 @@ int ape_binary_plist(int argc, char ** argv);
 */
 int ape_binary_pquery(int argc, char ** argv);
 
+/** \brief Perform pquery2 action, for prompting for an individual parameter as needed.
+    \param argc Number of command line arguments, not including executable name.
+    \param argv Command line arguments, not including argv[0] == executable name.
+*/
+int ape_binary_pquery2(int argc, char ** argv);
+
 /** \brief Perform pset action, for setting individual parameter values.
     \param argc Number of command line arguments, *not* including name of executable.
     \param argv Command line arguments, *not* including name of executable.
@@ -74,6 +80,11 @@ int ape_binary_performance(int argc, char ** argv);
 
 /*
  * $Log: ape_binary.h,v $
+ * Revision 1.7  2012/04/16 18:51:27  irby
+ * Extend support for building a pquery binary: add new ape_binary_pquery()
+ * which wraps to previously-existing ape_binary_pquery2() but toggles the
+ * call to ape_io_revert_unlearned() (i.e. call for pquery2, not for pquery).
+ *
  * Revision 1.6  2007/07/26 16:16:19  peachey
  * Add ape_binary_performance, for measuring Ape's speed.
  *

@@ -34,10 +34,17 @@ static FILE * out_stream(void) {
   return s_stdout;
 }
 
+static void write_err(const char * msg) {
+  fprintf(error_stream(), "%s", msg);
+  fflush(error_stream());
+}
+
 static void write_out(const char * msg) {
   fprintf(out_stream(), "%s", msg);
   fflush(out_stream());
 }
+
+static void (*s_err_handler)(const char *) = &write_err;
 
 static void (*s_out_handler)(const char *) = &write_out;
 
@@ -55,11 +62,12 @@ char ape_msg_get_debug_mode(void) { return s_debug_mode; }
 
 /* Forward an error message to error stream. */
 void ape_msg_error(const char * fmt, ...) {
+  char msg[MSG_BUF_SIZE] = "";
   va_list ap;
   va_start(ap, fmt);
-  vfprintf(error_stream(), fmt, ap);
+  vsprintf(msg, fmt, ap);
   va_end(ap);
-  fflush(error_stream());
+  (*s_err_handler)(msg);
 }
 
 /* Forward an informational message to error stream. */
@@ -97,6 +105,11 @@ void ape_msg_set_err_stream(FILE * new_stream) {
   s_stderr = new_stream;
   /* Attempt to make stream unbuffered. */
   setbuf(s_stderr, 0);
+}
+
+void ape_msg_set_err_handler(void (*func)(const char *)) {
+  if (0 == func) s_err_handler = &write_err;
+  else s_err_handler = func;
 }
 
 /* Reset the output stream to point to the new_stream. If new_stream is 0, de facto output messages will be
@@ -151,13 +164,28 @@ void ape_msg_test() {
   ape_msg_set_out_handler(null_writer);
 
   /* Write message which shouldn't be seen to test the redirect. */
-  ape_msg_out("THIS MESSAGE SHOULD BE REDIRECTED TO NOWHERE, AND SHOULD NEVER APPEAR!.\n");
+  ape_msg_out("THIS OUTPUT MESSAGE SHOULD BE REDIRECTED TO NOWHERE, AND SHOULD NEVER APPEAR!.\n");
 
   /* Set output stream handler to 0 (default handler). */
   ape_msg_set_out_handler(0);
 
   /* Write message which shouldn't be seen to test the redirect. */
   ape_msg_out("This message should go to the default output stream.\n");
+
+  /* Set error stream handler to use the null handler. */
+  ape_msg_set_err_handler(null_writer);
+
+  /* Write message which shouldn't be seen to test the redirect. */
+  ape_msg_error("THIS ERROR MESSAGE SHOULD BE REDIRECTED TO NOWHERE, AND SHOULD NEVER APPEAR!.\n");
+
+  /* Set error stream handler to 0 (default handler). */
+  ape_msg_set_err_handler(0);
+
+  /* Write message which shouldn't be seen to test the redirect. */
+  ape_msg_out("This output message should go to the default output stream.\n");
+
+  /* Write message which shouldn't be seen to test the redirect. */
+  ape_msg_error("This error message should go to the default output stream.\n");
 
 }
 
@@ -167,6 +195,11 @@ void ape_msg_test() {
 
 /*
  * $Log: ape_msg.c,v $
+ * Revision 1.9  2013/09/06 19:14:49  peachey
+ * Add ape_msg_set_err_handler function, parallel to ape_msg_set_out_handler.
+ * The new function allows the client code to supply a custom error handling
+ * function.
+ *
  * Revision 1.8  2006/06/16 01:18:48  peachey
  * Add ape_msg_get_debug_mode, for getting current debug mode.
  *

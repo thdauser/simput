@@ -58,6 +58,14 @@ int ape_session_get_par_names(ApeSession * session, char *** par_name);
 */
 int ape_session_get_type(ApeSession * session, const char * par_name, char * par_type);
 
+/** \brief Get the mode of the given parameter.
+    \param session The session containing parameters.
+    \param par_name The name of the parameter.
+    \param par_mode The parameter mode, e.g. "i", "fr" etc. Client needs to allocate/manage space for at least
+    APE_PAR_TYPE_CODE_LEN characters. The first character is guaranteed to specify the mode, either b, d, f, i, r, s.
+*/
+int ape_session_get_mode(ApeSession * session, const char * par_name, char * par_mode);
+
 /** \brief Prompt for the named parameter if necessary, then interpret the parameter value as a boolean,
     stored as a character holding 1 for true and 0 for false.
     \param par_name The name of the parameter whose value is sought.
@@ -158,6 +166,13 @@ int ape_session_get_string(ApeSession * session, const char * par_name, char ** 
 */
 int ape_session_get_string_case(ApeSession * session, const char * par_name, char ** value, char case_code);
 
+/** \brief Set the mode of the given parameter.
+    \param session The session containing parameters.
+    \param par_name The name of the parameter.
+    \param par_mode The parameter mode, e.g. "i", "fr" etc. 
+*/
+int ape_session_set_mode(ApeSession * session, char * par_name, const char * par_mode);
+
 /** \brief Set the value of the named parameter, as a bool.
     \param par_name The name of the parameter whose value is being set.
     \param value The new value for the parameter.
@@ -224,6 +239,9 @@ int ape_session_find_par(ApeSession * session, const char * par_name, ApePar ** 
 
 /*
  * $Log: ape_session.h,v $
+ * Revision 1.6  2013/04/15 16:37:59  irby
+ * Add ape_session_get_mode/ape_session_set_mode.
+ *
  * Revision 1.5  2010/11/12 20:49:15  irby
  * Add ape_session_set_short() (wraps to ape_session_set_int).
  *

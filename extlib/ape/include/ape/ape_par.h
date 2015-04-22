@@ -199,6 +199,12 @@ int ape_par_get_enum_string(const ApePar * par, char *** range);
 */
 int ape_par_set_field(ApePar * par, ParFieldId id, const char * field_text);
 
+/** \brief Set the innate mode of the parameter.
+    \param par Pointer to the parameter object whose mode is sought.
+    \param mode_string Pointer to a character array to hold the input mode.
+*/
+int ape_par_set_mode(ApePar * par, const char * mode_string);
+
 /** \brief Set the value field of the parameter, using the text to replace the field text completely.
     Also, flag the parameter as being modified. To set the value without flagging it as modified, call
     ape_par_set_field. A parameter which has been modified will have effective mode 'h'.
@@ -288,6 +294,9 @@ int ape_par_register_get_text(ApeParGetTextFunc client_get_text);
 
 /*
  * $Log: ape_par.h,v $
+ * Revision 1.31  2013/04/15 16:41:07  irby
+ * Add ape_par_set_mode and test cases.
+ *
  * Revision 1.30  2011/02/01 18:01:46  jpeachey
  * Add support and tests for functions to convert string values into int
  * and short types, and to convert a parameter value into short type.

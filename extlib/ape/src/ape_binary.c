@@ -348,7 +348,22 @@ int ape_binary_plist(int argc, char ** argv) {
   return status;
 }
 
+/* Switches to toggle pquery v. pquery2 behavior: */
+static char s_revert_unlearned = 1;
+static const char * s_pquery_name = "pquery2";
+
 int ape_binary_pquery(int argc, char ** argv) {
+  int status = eOK;
+  s_revert_unlearned = 0;
+  s_pquery_name = "pquery";
+  /* pquery = pquery2, except it writes unlearned parameters (i.e. does not revert). */
+  status = ape_binary_pquery2(argc, argv);
+  s_revert_unlearned = 1;
+  s_pquery_name = "pquery2";
+  return status;
+}
+
+int ape_binary_pquery2(int argc, char ** argv) {
   int status = eOK;
   int new_argc = 0;
   char ** new_argv = 0;
@@ -372,7 +387,9 @@ int ape_binary_pquery(int argc, char ** argv) {
 
   /* Issue usage message and return if basic conditions were not met. */
   if (eOK != status) {
-    usage("pquery2 [ -f ] tool-or-par-file-name parameter-name [ command line arguments ]");
+    char usage_string [1024] = "";
+    sprintf(usage_string,"%s [ -f ] tool-or-par-file-name parameter-name [ command line arguments ]",s_pquery_name);
+    usage(usage_string);
     return status;
   }
 
@@ -391,7 +408,7 @@ int ape_binary_pquery(int argc, char ** argv) {
     new_argc = 1;
     status = read_par_file(new_argc, new_argv, is_file, &par_file);
     if (eOK != status)
-      ape_msg_error("pquery2: unable to initialize tool/parameter file \"%s\".\n", new_argv[0]);
+      ape_msg_error("%s: unable to initialize tool/parameter file \"%s\".\n", s_pquery_name, new_argv[0]);
   }
 
   /* Clone the original parameter file. */
@@ -422,7 +439,7 @@ int ape_binary_pquery(int argc, char ** argv) {
   if (eOK == status) {
     status = read_par_file(new_argc, new_argv, is_file, &par_file);
     if (eOK != status)
-      ape_msg_error("pquery2: unable to initialize tool/parameter file \"%s\".\n", new_argv[0]);
+      ape_msg_error("%s: unable to initialize tool/parameter file \"%s\".\n", s_pquery_name, new_argv[0]);
   }
 
   if (eOK == status) {
@@ -435,7 +452,7 @@ int ape_binary_pquery(int argc, char ** argv) {
     if (eOK == status) {
       par = (ApePar *) ape_list_get(itor);
     } else {
-      ape_msg_error("pquery2: unable to prompt for parameter \"%s\".\n", par_name);
+      ape_msg_error("%s: unable to prompt for parameter \"%s\".\n", s_pquery_name, par_name);
     }
   }
 
@@ -459,7 +476,7 @@ int ape_binary_pquery(int argc, char ** argv) {
     ape_msg_out("%s\n", value);
   }
 
-  if (eOK == status) {
+  if (eOK == status && 0 != s_revert_unlearned) {
     /* Revert unlearned parameters. This gives the "pquery2" behavior, whereas pquery does write
        even unlearned parameters. */
     status = ape_io_revert_unlearned(par_file, orig_par_file);
@@ -584,7 +601,11 @@ int ape_binary_punlearn(int argc, char ** argv) {
     /* Get the system parameter file. */
     if (eOK == status) {
       status = ape_trad_get_sys_pfile(&sys_pfile);
-      if (eOK != status) ape_msg_error("punlearn: cannot find a system parameter file for \"%s\".\n", argv[0]);
+      if (eFileNotFound == status) {
+        ape_msg_error("punlearn: cannot find a system parameter file for \"%s\".\n", argv[0]);
+      } else if (eOK != status) {
+        ape_msg_error("punlearn: could not load system parameter file for \"%s\". Cannot unlearn.\n", argv[0]);
+      }
     }
 
     /* Get the name of the system parameter file. */
@@ -891,8 +912,8 @@ void ape_binary_test(void) {
           status, expected_status);
     }
 
-    /* Confirm that pquery rewrites parameter file with modified learned parameters, but unmodified hidden parameters. */
-    { char * argv[] = { "pquery", "ape_test.par", "sql", "sql=pquery-learned", "sh=pquery-should-not-learn", 0 };
+    /* Confirm that pquery rewrites parameter file with modified learned parameters *and* modified hidden parameters. */
+    { char * argv[] = { "pquery", "ape_test.par", "sql", "sql=pquery-learned", "sh=pquery-should-learn", 0 };
       int argc = sizeof(argv) / sizeof(argv[0]) - 1;
       int status = eOK;
       int expected_status = eOK;
@@ -922,27 +943,27 @@ void ape_binary_test(void) {
 
       status = ape_binary_run(argc, argv, &binary);
       if (expected_status != status)
-        ape_test_failed("ape_binary_run(\"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-not-learn\") "
+        ape_test_failed("ape_binary_run(\"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-learn\") "
           "returned %d, not %d as expected.\n", status, expected_status);
       status = read_par_file(1, argv + 1, 1, &par_file);
       if (expected_status != status) {
-        ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-not-learn\" "
+        ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-learn\" "
           "could not read parameter file.\n", status, expected_status);
       } else {
         ApeListIterator itor = 0;
         status = ape_io_find_par("sql", par_file, &itor);
         if (expected_status != status) {
-          ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-not-learn\" "
+          ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-learn\" "
             "could not find parameter \"sql\".\n", status, expected_status);
         } else {
           ApePar * par = (ApePar *) ape_list_get(itor);
           char * value = 0;
           status = ape_par_get_string(par, &value);
           if (expected_status != status) {
-            ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-not-learn\" "
+            ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-learn\" "
               "could not get value of parameter \"sql\".\n", status, expected_status);
           } else if (0 != strcmp(value, "pquery-learned")) {
-            ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-not-learn\" "
+            ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-learn\" "
               "value of \"sql\" was not \"pquery-learned\".\n", status, expected_status);
           }
           free(value); value = 0;
@@ -950,17 +971,153 @@ void ape_binary_test(void) {
         itor = 0;
         status = ape_io_find_par("sh", par_file, &itor);
         if (expected_status != status) {
-          ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-not-learn\" "
+          ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-learn\" "
             "could not find parameter \"sh\".\n", status, expected_status);
         } else {
           ApePar * par = (ApePar *) ape_list_get(itor);
           char * value = 0;
           status = ape_par_get_string(par, &value);
           if (expected_status != status) {
-            ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-not-learn\" "
+            ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-learn\" "
+              "could not get value of parameter \"sh\".\n", status, expected_status);
+          } else if (0 == strcmp(value, sh_init_value)) {
+            ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-learn\" "
+              "value of \"sh\" was incorrect.\n", status, expected_status);
+          }
+          free(value); value = 0;
+        }
+      }
+      ape_io_destroy_file(par_file); par_file = 0;
+      free(sh_init_value); sh_init_value = 0;
+      ape_io_set_pfiles(orig_pfiles);
+      free(orig_pfiles); orig_pfiles = 0;
+    }
+  }
+
+  /* Test pquery2. */
+  if (eOK == status) {
+    ApeBinary binary;
+    binary.func = &ape_binary_pquery2;
+    binary.name = "pquery2";
+    binary.usage = "binary-or-par-file-name parameter-name [ cmd-line-args ]";
+    binary.min_argc = 2;
+    binary.max_argc = -1;
+
+    /* Test displaying usage. */
+    { char * argv[] = { "pquery2", 0 };
+      int argc = sizeof(argv) / sizeof(argv[0]) - 1;
+      int status = ape_binary_run(argc, argv, &binary);
+      int expected_status = 1;
+      if (expected_status != status)
+        ape_test_failed("ape_binary_run(\"pquery2\") returned %d, not %d as expected.\n", status, expected_status);
+    }
+    { char * argv[] = { "pquery2", "ape_test", 0 };
+      int argc = sizeof(argv) / sizeof(argv[0]) - 1;
+      int status = ape_binary_run(argc, argv, &binary);
+      int expected_status = 1;
+      if (expected_status != status)
+        ape_test_failed("ape_binary_run(\"pquery2 ape_test\") returned %d, not %d as expected.\n", status, expected_status);
+    }
+
+    /* Test error for unknown parameter file. */
+    { char * argv[] = { "pquery2", "fooble", "sh", 0 };
+      int argc = sizeof(argv) / sizeof(argv[0]) - 1;
+      int status = ape_binary_run(argc, argv, &binary);
+      int expected_status = 1;
+      if (expected_status != status)
+        ape_test_failed("ape_binary_run(\"pquery2 fooble sh\") returned %d, not %d as expected.\n", status, expected_status);
+    }
+
+    /* Test error for unknown parameter. */
+    { char * argv[] = { "pquery2", "ape_test.par", "fooble", 0 };
+      int argc = sizeof(argv) / sizeof(argv[0]) - 1;
+      int status = ape_binary_run(argc, argv, &binary);
+      int expected_status = 1;
+      if (expected_status != status)
+        ape_test_failed("ape_binary_run(\"pquery2 ape_test.par fooble\") returned %d, not %d as expected.\n",
+          status, expected_status);
+    }
+
+    /* Test success case. */
+    { char * argv[] = { "pquery2", "ape_test.par", "sh", 0 };
+      int argc = sizeof(argv) / sizeof(argv[0]) - 1;
+      int status = ape_binary_run(argc, argv, &binary);
+      int expected_status = eOK;
+      if (expected_status != status)
+        ape_test_failed("ape_binary_run(\"pquery2 ape_test.par sh\") returned %d, not %d as expected.\n",
+          status, expected_status);
+    }
+
+    /* Confirm that pquery2 rewrites parameter file with modified learned parameters, but unmodified hidden parameters. */
+    { char * argv[] = { "pquery2", "ape_test.par", "sql", "sql=pquery2-learned", "sh=pquery2-should-not-learn", 0 };
+      int argc = sizeof(argv) / sizeof(argv[0]) - 1;
+      int status = eOK;
+      int expected_status = eOK;
+      char * sh_init_value = 0;
+      ApeParFile * par_file = 0;
+      char * orig_pfiles = 0;
+
+      /* Test with PFILES set to just the current directory, to make sure this works even if only one par file is found. */
+      ape_io_get_pfiles(&orig_pfiles);
+      ape_io_set_pfiles(".");
+
+      /* Read the parameter file. */
+      status = read_par_file(1, argv + 1, 1, &par_file);
+      if (eOK == status) {
+        ApeListIterator itor = 0;
+        /* Fetch initial values of sh parameter, that may be wrongly affected by this test. */
+        status = ape_io_find_par("sh", par_file, &itor);
+        if (eOK == status) {
+          ApePar * par = (ApePar *) ape_list_get(itor);
+          ape_par_get_string(par, &sh_init_value);
+        }
+        itor = 0;
+      }
+
+      /* Clean up. */
+      ape_io_destroy_file(par_file); par_file = 0;
+
+      status = ape_binary_run(argc, argv, &binary);
+      if (expected_status != status)
+        ape_test_failed("ape_binary_run(\"pquery2 ape_test.par sql sql=pquery2-learned sh=pquery2-should-not-learn\") "
+          "returned %d, not %d as expected.\n", status, expected_status);
+      status = read_par_file(1, argv + 1, 1, &par_file);
+      if (expected_status != status) {
+        ape_test_failed("after \"pquery2 ape_test.par sql sql=pquery2-learned sh=pquery2-should-not-learn\" "
+          "could not read parameter file.\n", status, expected_status);
+      } else {
+        ApeListIterator itor = 0;
+        status = ape_io_find_par("sql", par_file, &itor);
+        if (expected_status != status) {
+          ape_test_failed("after \"pquery2 ape_test.par sql sql=pquery2-learned sh=pquery2-should-not-learn\" "
+            "could not find parameter \"sql\".\n", status, expected_status);
+        } else {
+          ApePar * par = (ApePar *) ape_list_get(itor);
+          char * value = 0;
+          status = ape_par_get_string(par, &value);
+          if (expected_status != status) {
+            ape_test_failed("after \"pquery2 ape_test.par sql sql=pquery2-learned sh=pquery2-should-not-learn\" "
+              "could not get value of parameter \"sql\".\n", status, expected_status);
+          } else if (0 != strcmp(value, "pquery2-learned")) {
+            ape_test_failed("after \"pquery2 ape_test.par sql sql=pquery2-learned sh=pquery2-should-not-learn\" "
+              "value of \"sql\" was not \"pquery2-learned\".\n", status, expected_status);
+          }
+          free(value); value = 0;
+        }
+        itor = 0;
+        status = ape_io_find_par("sh", par_file, &itor);
+        if (expected_status != status) {
+          ape_test_failed("after \"pquery2 ape_test.par sql sql=pquery2-learned sh=pquery2-should-not-learn\" "
+            "could not find parameter \"sh\".\n", status, expected_status);
+        } else {
+          ApePar * par = (ApePar *) ape_list_get(itor);
+          char * value = 0;
+          status = ape_par_get_string(par, &value);
+          if (expected_status != status) {
+            ape_test_failed("after \"pquery2 ape_test.par sql sql=pquery2-learned sh=pquery2-should-not-learn\" "
               "could not get value of parameter \"sh\".\n", status, expected_status);
           } else if (0 != strcmp(value, sh_init_value)) {
-            ape_test_failed("after \"pquery ape_test.par sql sql=pquery-learned sh=pquery-should-not-learn\" "
+            ape_test_failed("after \"pquery2 ape_test.par sql sql=pquery2-learned sh=pquery2-should-not-learn\" "
               "value of \"sh\" was incorrect.\n", status, expected_status);
           }
           free(value); value = 0;
@@ -1104,6 +1261,14 @@ void ape_binary_test(void) {
 
 /*
  * $Log: ape_binary.c,v $
+ * Revision 1.32  2012/04/16 18:51:28  irby
+ * Extend support for building a pquery binary: add new ape_binary_pquery()
+ * which wraps to previously-existing ape_binary_pquery2() but toggles the
+ * call to ape_io_revert_unlearned() (i.e. call for pquery2, not for pquery).
+ *
+ * Revision 1.31  2012/03/21 21:19:27  peachey
+ * Give more accurate error messages for punlearn init failures.
+ *
  * Revision 1.30  2007/11/16 18:16:54  peachey
  * Fix a host of issues related to error checking and reporting. Only
  * pcheck now calls ape_io_check_file_format to check the parameter

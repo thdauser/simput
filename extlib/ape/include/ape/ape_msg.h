@@ -50,6 +50,11 @@ void ape_msg_out(const char * fmt, ...);
 */
 void ape_msg_set_err_stream(FILE * new_stream);
 
+/** \brief Set the function which handles output from ape_msg_error.
+    \param func The new handler function.
+*/
+void ape_msg_set_err_handler(void (*func)(const char *));
+
 /** \brief Redirect output destined for stdout to the given stream.
     \param new_stream Stream to use for output.
 */
@@ -75,6 +80,11 @@ void ape_msg_warn(unsigned int chatter, const char * fmt, ...);
 
 /*
  * $Log: ape_msg.h,v $
+ * Revision 1.7  2013/09/06 19:14:49  peachey
+ * Add ape_msg_set_err_handler function, parallel to ape_msg_set_out_handler.
+ * The new function allows the client code to supply a custom error handling
+ * function.
+ *
  * Revision 1.6  2006/06/16 01:18:48  peachey
  * Add ape_msg_get_debug_mode, for getting current debug mode.
  *

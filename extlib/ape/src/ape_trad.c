@@ -95,6 +95,14 @@ int ape_trad_get_type(const char * par_name, char * par_type) {
   return status;
 }
 
+int ape_trad_get_mode(const char * par_name, char * par_mode) {
+  int status = ape_trad_check_init();
+  if (eOK == status) {
+    status = ape_session_get_mode(s_default_session, par_name, par_mode);
+  }
+  return status;
+}
+
 int ape_trad_query_bool(const char * par_name, char * value) {
   int status = ape_trad_check_init();
   if (eOK == status) {
@@ -223,6 +231,14 @@ int ape_trad_get_string_case(const char * par_name, char ** value, char case_cod
   return status;
 }
 
+int ape_trad_set_mode(char * par_name, const char * par_mode) {
+  int status = ape_trad_check_init();
+  if (eOK == status) {
+    status = ape_session_set_mode(s_default_session, par_name, par_mode);
+  }
+  return status;
+}
+
 int ape_trad_set_bool(const char * par_name, char value) {
   int status = ape_trad_check_init();
   if (eOK == status) {
@@ -324,6 +340,8 @@ static int ape_trad_get_byte(const char * par_name, signed char * par_value) {
   }
   return status;
 }
+FCALLSCFUN2(INT, ape_trad_get_mode, APE_TRAD_GET_MODE, ape_trad_get_mode, STRING, PSTRING)
+
 FCALLSCFUN2(INT, ape_trad_get_byte, APE_TRAD_GET_BYTE, ape_trad_get_byte, STRING, BYTEV)
 
 FCALLSCFUN2(INT, ape_trad_get_int, APE_TRAD_GET_INT, ape_trad_get_int, STRING, INTV)
@@ -380,6 +398,7 @@ static int ape_trad_get_file_name_cf(const char * par_name, char * value) {
 }
 FCALLSCFUN2(INT, ape_trad_get_file_name_cf, APE_TRAD_GET_FILE_NAME, ape_trad_get_file_name, STRING, STRING)
 
+FCALLSCFUN2(INT, ape_trad_set_mode, APE_TRAD_SET_MODE, ape_trad_set_mode, STRING, STRING)
 
 FCALLSCFUN2(INT, ape_trad_set_bool, APE_TRAD_SET_BOOL, ape_trad_set_bool, STRING, INT)
 
@@ -440,7 +459,7 @@ void ape_trad_test(void) {
   { int argc = 1;
     char * argv[] = { "non-existent-task" };
     status = ape_trad_init(argc, argv);
-    if (eFileReadError != status) {
+    if (eFileNotFound != status) {
       ape_test_failed("ape_trad_init(1, argv == \"%s\") returned status %d, not %d as expected.\n",
         argv[0], status, eInvalidArgument);
     }
@@ -625,6 +644,13 @@ void ape_trad_test(void) {
 
 /*
  * $Log: ape_trad.c,v $
+ * Revision 1.52  2013/04/15 16:40:03  irby
+ * Add ape_trad_get_mode/ape_trad_set_mode (incl. cfortran wrappers so we
+ * can invoke from e.g. xselect).
+ *
+ * Revision 1.51  2012/03/21 19:46:55  peachey
+ * Check for eFileNotFound rather than eFileReadError in test code.
+ *
  * Revision 1.50  2011/01/21 21:29:54  irby
  * Add test for parameter whose default value is a single space.  Test by
  * making sure a parameter file open/close with no other action leaves the

@@ -23,6 +23,7 @@ static int s_status = eOK;
 int ape_test(int argc, char ** argv) {
   /* Handle for output file. */
   FILE * out_file = 0;
+  FILE * null_file = 0;
 
   /* Interpret environment. */
   s_status = ape_util_interpret_env();
@@ -48,8 +49,13 @@ int ape_test(int argc, char ** argv) {
     ape_msg_set_err_stream(out_file);
     ape_msg_set_out_stream(out_file);
 
-    /* Redirect prompts to this file also. */
-    ape_par_redirect_prompt_stream(out_file);
+    /* Redirect prompts to a null file if possible. */
+    null_file = fopen("/dev/null", "w");
+    if (0 != null_file) {
+      ape_msg_debug("Output was redirected to log file. Redirected prompts to a null stream\n"
+        "to make output more consistent between different platforms.\n");
+      ape_par_redirect_prompt_stream(null_file);
+    }
   }
 
   /* Test i/o facility. */
@@ -86,7 +92,8 @@ int ape_test(int argc, char ** argv) {
   ape_msg_set_out_stream(stdout);
   ape_msg_set_err_stream(stderr);
 
-  /* Close log file. */
+  /* Close output null and log files. */
+  if (0 != null_file) fclose(null_file);
   if (0 != out_file) fclose(out_file);
 
   /* Issue final status message. */
@@ -216,6 +223,10 @@ void ape_test_set_status(int status) {
 
 /*
  * $Log: ape_test.c,v $
+ * Revision 1.17  2014/05/27 14:02:34  peachey
+ * Redirect prompts to a null file (/dev/null) to make output more
+ * consistent across platforms. Regenerated (Unix) reference output accordingly.
+ *
  * Revision 1.16  2010/06/02 19:22:10  peachey
  * Add initial (partial) implementation of ape_session module.
  *

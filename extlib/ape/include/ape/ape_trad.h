@@ -47,6 +47,13 @@ int ape_trad_get_par_names(char *** par_name);
 */
 int ape_trad_get_type(const char * par_name, char * par_type);
 
+/** \brief Get the mode of the given parameter.
+    \param par_name The name of the parameter.
+    \param par_mode The parameter mode, e.g. "-", "--" etc. Client needs to allocate/manage space for at least
+    APE_PAR_TYPE_CODE_LEN characters. The first character is guaranteed to specify the type, either b, d, f, i, r, s.
+*/
+int ape_trad_get_mode(const char * par_name, char * par_mode);
+
 /** \brief Prompt for the named parameter if necessary, then interpret the parameter value as a boolean,
     stored as a character holding 1 for true and 0 for false.
     \param par_name The name of the parameter whose value is sought.
@@ -147,6 +154,12 @@ int ape_trad_get_string(const char * par_name, char ** value);
 */
 int ape_trad_get_string_case(const char * par_name, char ** value, char case_code);
 
+/** \brief Set the mode of the given parameter.
+    \param par_name The name of the parameter.
+    \param par_mode The parameter mode, e.g. "i", "fr" etc. 
+*/
+int ape_trad_set_mode(char * par_name, const char * par_mode);
+
 /** \brief Set the value of the named parameter, as a bool.
     \param par_name The name of the parameter whose value is being set.
     \param value The new value for the parameter.
@@ -213,6 +226,10 @@ int ape_trad_find_par(const char * par_name, ApePar ** par);
 
 /*
  * $Log: ape_trad.h,v $
+ * Revision 1.20  2013/04/15 16:40:05  irby
+ * Add ape_trad_get_mode/ape_trad_set_mode (incl. cfortran wrappers so we
+ * can invoke from e.g. xselect).
+ *
  * Revision 1.19  2010/11/12 20:47:44  irby
  * Add ape_trad_set_short() and cfortran macros for ape_trad_set_double,
  * ape_trad_set_long, and ape_trad_set_short.  Also, add string & filename

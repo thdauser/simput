@@ -1,5 +1,6 @@
 /** \file ape_session.c
-    \brief Implementation of traditional XPI/PIL-compliant interface.
+    \brief Implementation of high-level interface to an entire interactive session, including system
+      and local paramter files, and all other parameter file objects needed to perform the various
     \author James Peachey, HEASARC/EUD/GSFC.
 */
 #include "ape/ape_error.h"
@@ -176,53 +177,65 @@ int ape_session_init(ApeSession ** session, int argc, char ** argv) {
   if (eOK == status) {
     ApeList * loc_path = 0;
     ApeList * sys_path = 0;
+    int system_status = eFileNotFound;
+    int local_status = eFileNotFound;
 
     /* Get the system par file path, if any. */
-    status = ape_io_get_sys_path(&sys_path);
-    if (eOK == status) {
-      /* Ignore the status because it's OK if this fails. */
-      ape_io_read_file_path(pfile_name, sys_path, &new_session->system);
+    system_status = ape_io_get_sys_path(&sys_path);
+    if (eOK == system_status) {
+      /* Ignore "file-not-found" status because it's OK if this fails. */
+      system_status = ape_io_read_file_path(pfile_name, sys_path, &new_session->system);
     }
 
     /* Get the local par file path, if any. */
-    status = ape_io_get_loc_path(&loc_path);
-    if (eOK == status) {
+    local_status = ape_io_get_loc_path(&loc_path);
+
+    if (eOK == local_status) {
       /* Try to open a parameter file on the local path. */
-      status = ape_io_read_file_path(pfile_name, loc_path, &new_session->local);
-      if (eOK != status) {
-        ApeListIterator itor = ape_list_begin(loc_path);
-        if (itor != ape_list_end(loc_path)) {
-          char * full_file_name = 0;
+      local_status = ape_io_read_file_path(pfile_name, loc_path, &new_session->local);
+    }
 
-          /* Local path contains at least one directory, so clone the system file. */
-          status = ape_io_clone_file(new_session->system, &new_session->local);
+    if (eOK != local_status && eOK == system_status) {
+      /* Clone system file to produce local file. */
+      ApeListIterator itor = ape_list_begin(loc_path);
+      if (itor != ape_list_end(loc_path)) {
+        char * full_file_name = 0;
 
-          if (eOK == status) {
-            const char * dir_name = (const char *) ape_list_get(itor);
-            /* Get the name of the local parameter file. */
-            status = ape_util_append_file_name(dir_name, pfile_name, &full_file_name);
-          }
+        /* Local path contains at least one directory, so clone the system file. */
+        local_status = ape_io_clone_file(new_session->system, &new_session->local);
 
-          if (eOK == status) {
-            /* Ignore the status because it's OK if this fails. */
-            ape_io_set_file_name(new_session->local, full_file_name);
-          }
-          free(full_file_name); full_file_name = 0;
+        if (eOK == local_status) {
+          const char * dir_name = (const char *) ape_list_get(itor);
+          /* Get the name of the local parameter file. */
+          local_status = ape_util_append_file_name(dir_name, pfile_name, &full_file_name);
         }
+
+        if (eOK == local_status) {
+          /* Ignore the status because it's OK if this fails. */
+          ape_io_set_file_name(new_session->local, full_file_name);
+        }
+        free(full_file_name); full_file_name = 0;
       }
     }
-    /* Some amount of error above may be tolerated. If something unrecoverable happened it will be detected below. */
-    status = eOK;
 
-    if (0 == new_session->local && 0 == new_session->system) {
-      /* No luck searching the paths: try the parameter file name by itself. */
-      status = ape_io_read(pfile_name, &new_session->local);
+    if (eFileNotFound == local_status && eFileNotFound == system_status) {
+      /* No luck searching the paths: try the parameter file name by itself; treat this as "local" with no "system". */
+      local_status = ape_io_read(pfile_name, &new_session->local);
     }
-  }
-
-  if (eOK == status) {
-    /* Merge the system and local parameter files to create a file which has the best set of parameter values. */
-    status = ape_io_merge_par_files(new_session->system, new_session->local, &new_session->merged);
+    
+    if (eOK == local_status && eOK == system_status) {
+      /* Merge the system and local parameter files to create a file which has the best set of parameter values. */
+      status = ape_io_merge_par_files(new_session->system, new_session->local, &new_session->merged);
+    } else if (eOK == local_status && eFileNotFound == system_status) {
+      /* Clone the local parameter file to create the "current" parameter file. */
+      status = ape_io_clone_file(new_session->local, &new_session->merged);
+    } else if (eOK == system_status) {
+      /* Ignore problems with the local file if the system file is sound. */
+      /* Clone the system parameter file to create the "current" parameter file. */
+      status = ape_io_clone_file(new_session->system, &new_session->merged);
+    } else {
+      status = eOK != system_status ? system_status : local_status;
+    }
   }
 
   if (eOK == status) {
@@ -363,6 +376,20 @@ int ape_session_get_type(ApeSession * session, const char * par_name, char * par
   if (eOK == status) status = find_par(session, par_name, &par);
 
   if (eOK == status) status = ape_par_get_type(par, par_type);
+
+  return status;
+}
+
+int ape_session_get_mode(ApeSession * session, const char * par_name, char * par_mode) {
+  int status = eOK;
+  ApePar * par = 0;
+
+  if (0 != par_mode) *par_mode = 0;
+  else status = eNullPointer;
+
+  if (eOK == status) status = find_par(session, par_name, &par);
+
+  if (eOK == status) status = ape_par_get_mode(par, par_mode);
 
   return status;
 }
@@ -703,6 +730,16 @@ int ape_session_get_string_case(ApeSession * session, const char * par_name, cha
   return status;
 }
 
+int ape_session_set_mode(ApeSession * session, char * par_name, const char * par_mode) {
+  int status = eOK;
+  ApePar * par = 0;
+
+  status = find_par(session, par_name, &par);
+  if (eOK == status) status = ape_par_set_mode(par, par_mode);
+
+  return status;
+}
+
 int ape_session_set_bool(ApeSession * session, const char * par_name, char value) {
   ApePar * par = 0;
   int status = find_par(session, par_name, &par);
@@ -897,7 +934,7 @@ void ape_session_test(void) {
     char * argv[] = { "non-existent-task" };
     ApeSession * session = 0;
     status = ape_session_init(&session, argc, argv);
-    if (eFileReadError != status) {
+    if (eFileNotFound != status) {
       ape_test_failed("ape_session_init(&session, 1, argv == \"%s\") returned status %d, not %d as expected.\n",
         argv[0], status, eInvalidArgument);
     }
@@ -1109,6 +1146,21 @@ void ape_session_test(void) {
 
 /*
  * $Log: ape_session.c,v $
+ * Revision 1.12  2013/04/15 16:38:00  irby
+ * Add ape_session_get_mode/ape_session_set_mode.
+ *
+ * Revision 1.11  2012/03/21 21:21:44  peachey
+ * Recover from all errors in local parameter file.
+ *
+ * Revision 1.10  2012/03/21 20:26:15  peachey
+ * Make description of file consistent with header file ape_session.h.
+ *
+ * Revision 1.9  2012/03/21 19:52:33  peachey
+ * Tighten up logic during session start-up. Track the status of the
+ * "system" and "local" parameter files separately, and use them to create
+ * the "merged" parameter file correctly in every contingency. Only tolerate
+ * eFileNotFound errors. All others cause the session start-up to fail.
+ *
  * Revision 1.8  2011/01/21 21:29:54  irby
  * Add test for parameter whose default value is a single space.  Test by
  * making sure a parameter file open/close with no other action leaves the
