@@ -175,3 +175,51 @@ double getVectorDimensionValue(const Vector* const vec, const int dimension)
   }
 }
 
+void rotate_coord_system(float c1_ra,
+			 float c1_dec,
+			 float c2_ra,
+			 float c2_dec,
+			 float *ra,
+			 float *dec,
+			 float *res_ra,
+			 float *res_dec,
+			 long n_coords
+			 ){
+			    
+  // Calculate coordinate shift
+  float dra, ddec;
+  float sinra, sindec, cosra, cosdec, sindecr, cosdecr, x, y, z, tx, ty, tz;
+  dra=(c2_ra-c1_ra)*M_PI/180.;
+  ddec=(c1_dec-c2_dec)*M_PI/180.;
+  
+  long ii;
+  
+  // Rotate all coordinates
+  for(ii=0; ii<n_coords; ii++){
+    // first rotate around RA
+    res_ra[ii]=(ra[ii]*M_PI/180.)+dra;
+    res_dec[ii]=dec[ii]*M_PI/180.;
+	
+    sindec=sin(res_dec[ii]);
+    cosdec=cos(res_dec[ii]);
+  
+    sinra=sin(res_ra[ii]);
+    cosra=cos(res_ra[ii]);
+  
+    sindecr=sin(ddec);
+    cosdecr=cos(ddec);
+    
+    x=cosra*cosdec;
+    y=sinra*cosdec;
+    z=sindec;
+    
+    tx=x*cosdecr+z*sindecr;
+    ty=y;
+    tz=-x*sindecr+z*cosdecr;
+    
+    res_dec[ii]=180.*sin(tz)/M_PI;
+    res_ra[ii]=180.*tan(ty/tx)/M_PI;
+    
+  }
+  
+}
