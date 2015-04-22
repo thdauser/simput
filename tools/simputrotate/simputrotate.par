@@ -1,0 +1,6 @@
+Infile,f,lq,"simput.fits",,,"input SIMPUT catalog file"
+Outfile,f,lq,"simput2.fits",,,"output SIMPUT catalog file"
+C1_RA,r,h,0.0,0.0,360.0,"right ascension (deg) of CS1"
+C1_Dec,r,h,0.0,-90.0,90.0,"declination (deg) of CS1"
+C2_RA,r,h,0.0,0.0,360.0,"right ascension (deg) of CS2"
+C2_Dec,r,h,0.0,-90.0,90.0,"declination (deg) of CS2"

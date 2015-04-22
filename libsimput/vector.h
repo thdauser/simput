@@ -92,5 +92,18 @@ void calculate_ra_dec(/** Direction. Does not have to be normalized. */
     x-value, k=1 -> y-value, k=2 -> z-value). */
 double getVectorDimensionValue(const Vector* const vec, const int dimension);
 
+/** Function rotates the coordinate array ra, dec from system c1 to system c2.
+    The result is written into the pre-allocated arrays res_ra, res_dec.*/
+void rotate_coord_system(float c1_ra,
+			 float c1_dec,
+			 float c2_ra,
+			 float c2_dec,
+			 float *ra,
+			 float *dec,
+			 float *res_ra,
+			 float *res_dec,
+			 long n_coords
+			 );
+
 
 #endif /* VECTOR_H */
