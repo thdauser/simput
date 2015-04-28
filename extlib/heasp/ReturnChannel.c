@@ -92,7 +92,6 @@ he response matrix */
       channel[i] += rmf->FirstChannel;
       
     }
-    printf("channel=%ld, energy=%f\n", channel[i], energy);
     
   }
 
