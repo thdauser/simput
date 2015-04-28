@@ -48,7 +48,7 @@ void ReturnChannel(struct RMF *rmf, float energy, int NumberPhoton, long *channe
   for (i=0; i<rmf->NumberGroups[energybin]; i++) {
     igrp = i + rmf->FirstGroup[energybin];
     for (j=0; j<rmf->NumberChannelGroups[igrp]; j++) {
-      ichan = j + rmf->FirstChannelGroup[igrp];
+      ichan = j + rmf->FirstChannelGroup[igrp]-rmf->FirstChannel;
       sumresponse[ichan] = rmf->Matrix[j+rmf->FirstElement[igrp]];
     }
   }
@@ -71,22 +71,28 @@ void ReturnChannel(struct RMF *rmf, float energy, int NumberPhoton, long *channe
     lower = 0;
     upper = rmf->NumberChannels-1;
 
-    while((upper-lower)>1){
-    
-      middle=(upper+lower)/2;
-    
-      if(sumresponse[middle]>RandomNumber[i]){
-	upper=middle;
-      }else{
-	lower=middle;
-      }   
+    if ( RandomNumber[i] <= sumresponse[upper] ) {
+      while ( upper - lower > 1 ) {
+	middle = (upper + lower)/2;
+	if ( RandomNumber[i] < sumresponse[middle] ) {
+	  upper = middle;
+	} else {
+	  lower = middle;
+	}
+      }
+      if ( RandomNumber[i] > sumresponse[lower] ) {
+	channel[i] = upper;
+      } else {
+	channel[i] = lower;
+      }
+
+  /* correct the channel number for the first channel number in use in t
+he response matrix */
+
+      channel[i] += rmf->FirstChannel;
+      
     }
-    if((sumresponse[lower]>RandomNumber[i]) || (sumresponse[upper+1]<RandomNumber[i])){
-      puts("ReturnChannel.c: Binary search did not find the requested channel.");
-      printf("lower=%ld, middle=%ld, upper=%ld\n", lower, middle, upper);
-    }else{
-      channel[i]=lower+rmf->FirstChannel;
-    }
+    printf("channel=%ld, energy=%f\n", channel[i], energy);
     
   }
 
