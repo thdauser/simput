@@ -187,27 +187,27 @@ void rotate_coord_system(float c1_ra,
 			 ){
 			    
   // Calculate coordinate shift
-  float dra, ddec;
-  float sinra, sindec, cosra, cosdec, sindecr, cosdecr, x, y, z, tx, ty, tz;
+  double dra, ddec;
+  double sinra, sindec, cosra, cosdec, sindecr, cosdecr, x, y, z, tx, ty, tz;
   dra=(c2_ra-c1_ra)*M_PI/180.;
-  ddec=(c1_dec-c2_dec)*M_PI/180.;
+  ddec=(c2_dec-c1_dec)*M_PI/180.;
   
   long ii;
   
   // Rotate all coordinates
   for(ii=0; ii<n_coords; ii++){
-    // first rotate around RA
-    res_ra[ii]=(ra[ii]*M_PI/180.)+dra;
+    // first rotate to RA=0
+    res_ra[ii]=(ra[ii]*M_PI/180.)-c1_ra*M_PI/180.;
     res_dec[ii]=dec[ii]*M_PI/180.;
-	
+    // rotate in DEC
     sindec=sin(res_dec[ii]);
     cosdec=cos(res_dec[ii]);
   
     sinra=sin(res_ra[ii]);
     cosra=cos(res_ra[ii]);
   
-    sindecr=sin(ddec);
-    cosdecr=cos(ddec);
+    sindecr=sin(-ddec);
+    cosdecr=cos(-ddec);
     
     x=cosra*cosdec;
     y=sinra*cosdec;
@@ -216,9 +216,9 @@ void rotate_coord_system(float c1_ra,
     tx=x*cosdecr+z*sindecr;
     ty=y;
     tz=-x*sindecr+z*cosdecr;
-    
-    res_dec[ii]=180.*sin(tz)/M_PI;
-    res_ra[ii]=180.*tan(ty/tx)/M_PI;
+    // now convert to RA, DEC and rotate to end position in RA
+    res_dec[ii]=180.*asin(tz)/M_PI;
+    res_ra[ii]=180.*atan(ty/tx)/M_PI+c2_ra;
     
   }
   
