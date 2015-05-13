@@ -218,7 +218,7 @@ void rotate_coord_system(float c1_ra,
     tz=-x*sindecr+z*cosdecr;
     // now convert to RA, DEC and rotate to end position in RA
     res_dec[ii]=180.*asin(tz)/M_PI;
-    res_ra[ii]=180.*atan(ty/tx)/M_PI+c2_ra;
+    res_ra[ii]=180.*atan2(ty,tx)/M_PI+c2_ra;
     
   }
   
