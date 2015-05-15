@@ -72,7 +72,7 @@ double angdist(double l1, double b1, double l2, double b2) {
   double sindl=sin(l2-l1);
   double cosdl=cos(l2-l1);
   #else
-  #ifdef __APPLE__ && __MACH__
+  #if defined(__APPLE__) && defined(__MACH__)
   double sinb1,cosb1,sinb2,cosb2,sindl,cosdl;
   __sincos(b1,&sinb1,&cosb1);
   __sincos(b2,&sinb2,&cosb2);
