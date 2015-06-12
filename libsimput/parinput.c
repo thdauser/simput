@@ -101,7 +101,7 @@ void query_simput_parameter_file_name_buffer(char *name, char * const field, int
     field[0]='\0';
   } else {
     strncpy(field,buf,buflen-1);
-    field[buflen]='\0';
+    field[buflen-1]='\0';
   }
 }
 
@@ -122,7 +122,7 @@ void query_simput_parameter_string_buffer(char *name, char * const field, int bu
   char *buf=NULL;
   *status=ape_trad_query_string(name, &buf);
   strncpy(field,buf,buflen-1);
-  field[buflen]='\0';
+  field[buflen-1]='\0';
   free(buf);
 }
 
