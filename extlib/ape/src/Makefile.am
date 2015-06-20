@@ -1,4 +1,4 @@
-AM_CFLAGS=-I@top_srcdir@/extlib/ape/include
+AM_CFLAGS=-I@top_srcdir@/extlib/ape/include -DUSE_READLINE
 
 ########### LIBRARIES #################
 
