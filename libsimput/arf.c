@@ -32,12 +32,12 @@ struct ARF* getARF(int* const status)
   arf->LowEnergy       =NULL;
   arf->HighEnergy      =NULL;
   arf->EffArea         =NULL;
-  strcpy(arf->ARFVersion, "");
-  strcpy(arf->Telescope, "");
-  strcpy(arf->Instrument, "");
-  strcpy(arf->Detector, "");
-  strcpy(arf->Filter, "");
-  strcpy(arf->ARFExtensionName, "");
+  arf->ARFVersion[0]='\0';
+  arf->Telescope[0]='\0';
+  arf->Instrument[0]='\0';
+  arf->Detector[0]='\0';
+  arf->Filter[0]='\0';
+  arf->ARFExtensionName[0]='\0';
   
   return(arf);
 }

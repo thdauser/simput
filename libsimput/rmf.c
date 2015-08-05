@@ -47,16 +47,16 @@ struct RMF* getRMF(int* const status)
   rmf->ChannelHighEnergy  =NULL;
   rmf->AreaScaling        =0.0;
   rmf->ResponseThreshold  =0.0;
-  strcpy(rmf->ChannelType, "");
-  strcpy(rmf->RMFVersion, "");
-  strcpy(rmf->EBDVersion, "");
-  strcpy(rmf->Telescope, "");
-  strcpy(rmf->Instrument, "");
-  strcpy(rmf->Detector, "");
-  strcpy(rmf->Filter, "");
-  strcpy(rmf->RMFType, "");
-  strcpy(rmf->RMFExtensionName, "");
-  strcpy(rmf->EBDExtensionName, "");
+  rmf->ChannelType[0]='\0';
+  rmf->RMFVersion[0]='\0';
+  rmf->EBDVersion[0]='\0';
+  rmf->Telescope[0]='\0';
+  rmf->Instrument[0]='\0';
+  rmf->Detector[0]='\0';
+  rmf->Filter[0]='\0';
+  rmf->RMFType[0]='\0';
+  rmf->RMFExtensionName[0]='\0';
+  rmf->EBDExtensionName[0]='\0';
   
   return(rmf);
 }

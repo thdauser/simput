@@ -165,7 +165,7 @@ SimputCtlg* openSimputCtlg(const char* const filename,
       cat->filename=(char*)malloc((strlen(rootname)+1)*sizeof(char));
       CHECK_NULL_BREAK(cat->filename, *status, 
 		       "memory allocation for filename failed");
-      strcpy(cat->filepath, "");
+      cat->filepath[0]='\0';
       strcpy(cat->filename, rootname);
     } else {
       lastslash++;
@@ -514,7 +514,7 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
 	break;
       }
     } else {
-      strcpy(src_name[0], "");
+      src_name[0]='\0';
     }
 
     fits_read_col(cat->fptr, TDOUBLE, cat->cra, row, 1, 1, &ra, &ra, &anynul, status);
@@ -595,7 +595,7 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
 	break;
       }
     } else {
-      strcpy(image[0], "");
+      image[0]='\0';
     }
 
     if (cat->ctiming>0) {
@@ -606,7 +606,7 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
 	break;
       }
     } else {
-      strcpy(timing[0], "");
+      timing[0]='\0';
     }
 
     // Create a new SimputSource data structure.
@@ -1094,7 +1094,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 	break;
       }
     } else { 
-      strcpy(name[0], "");
+      name[0]='\0';
     }
 
     // Multiply with unit scaling factor.
@@ -1333,7 +1333,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 	  break;
 	}
       } else { 
-	strcpy(name[0], "");
+	name[0]='\0';
       }
 
       // Multiply with unit scaling factor.
@@ -3407,7 +3407,7 @@ int getSimputExtType(SimputCtlg* const cat,
   fits_read_key(fptr, TSTRING, "HDUCLAS2", &hduclas2, comment, &opt_status);
   fits_clear_errmark();
   if (EXIT_SUCCESS!=opt_status) {
-    strcpy(hduclas2, "");
+    hduclas2[0]='\0';
     opt_status=EXIT_SUCCESS;
   }
   
