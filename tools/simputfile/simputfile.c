@@ -19,7 +19,7 @@
 */
 
 #include "simputfile.h"
-
+#include <strings.h>
 
 int simputfile_main()
 {
@@ -43,17 +43,14 @@ int simputfile_main()
     status=simputfile_getpar(&par);
     CHECK_STATUS_BREAK(status);
 
-    if ((0==strcmp(par.LCFile, "none"))||
-	(0==strcmp(par.LCFile, "NONE"))) {
-      strcpy(par.LCFile, "");
+    if (0==strcasecmp(par.LCFile, "none")) {
+      par.LCFile[0]='\0';
     }
-    if ((0==strcmp(par.PSDFile, "none"))||
-	(0==strcmp(par.PSDFile, "NONE"))) {
-      strcpy(par.PSDFile, "");
+    if (0==strcasecmp(par.PSDFile, "none")) {
+      par.PSDFile[0]='\0';
     }
-    if ((0==strcmp(par.ImageFile, "none"))||
-	(0==strcmp(par.ImageFile, "NONE"))) {
-      strcpy(par.ImageFile, "");
+    if (0==strcasecmp(par.ImageFile, "none")) {
+      par.ImageFile[0]='\0';
     }
 
     // Check the input type for the power spectrum: individual 
