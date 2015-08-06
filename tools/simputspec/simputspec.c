@@ -641,6 +641,15 @@ int simputspec_getpar(struct Parameters* const par)
   strcpy(par->XSPECFile, sbuffer);
   free(sbuffer);
 
+  status=ape_trad_query_string("XSPECPostCmd", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the name of the XSPEC spectrum file failed");
+    return(status);
+  }
+  strcpy(par->XSPECPostCmd, sbuffer);
+  free(sbuffer);
+
+
   status=ape_trad_query_string("ASCIIFile", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the ASCII spectrum file failed");
