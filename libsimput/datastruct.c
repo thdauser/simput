@@ -77,10 +77,12 @@ SimputSrc* newSimputSrcV(const long src_id,
   }
   src->src_id = src_id;
 
-  src->src_name=(char*)malloc((strlen(src_name)+1)*sizeof(char));
-  CHECK_NULL_RET(src->src_name, *status,
-		 "memory allocation for source name failed", src);
-  strcpy(src->src_name, src_name);
+  if(src_name!=NULL){
+    src->src_name=(char*)malloc((strlen(src_name)+1)*sizeof(char));
+    CHECK_NULL_RET(src->src_name, *status,
+		  "memory allocation for source name failed", src);
+    strcpy(src->src_name, src_name);
+  }
 
   src->ra      = ra;
   src->dec     = dec;
