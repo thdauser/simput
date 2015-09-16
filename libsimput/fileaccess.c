@@ -1345,10 +1345,12 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 
       // Copy the name (ID) of the spectrum from the string buffer
       // to the data structure.
-      spec->name=(char*)malloc((strlen(name[0])+1)*sizeof(char));
-      CHECK_NULL_BREAK(spec->name, *status, 
-		       "memory allocation for name string failed");
-      strcpy(spec->name, name[0]);
+      if(name[0]!=NULL){
+	spec->name=(char*)malloc((strlen(name[0])+1)*sizeof(char));
+	CHECK_NULL_BREAK(spec->name, *status, 
+			"memory allocation for name string failed");
+	strcpy(spec->name, name[0]);
+      }
 
       // Store the file reference to the spectrum for later comparisons.
       spec->fileref=
