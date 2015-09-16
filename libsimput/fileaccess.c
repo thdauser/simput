@@ -514,7 +514,7 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
 	break;
       }
     } else {
-      src_name[0]='\0';
+      src_name[0][0]='\0';
     }
 
     fits_read_col(cat->fptr, TDOUBLE, cat->cra, row, 1, 1, &ra, &ra, &anynul, status);
@@ -595,7 +595,7 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
 	break;
       }
     } else {
-      image[0]='\0';
+      image[0][0]='\0';
     }
 
     if (cat->ctiming>0) {
@@ -606,7 +606,7 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
 	break;
       }
     } else {
-      timing[0]='\0';
+      timing[0][0]='\0';
     }
 
     // Create a new SimputSource data structure.
@@ -1094,7 +1094,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 	break;
       }
     } else { 
-      name[0]='\0';
+      name[0][0]='\0';
     }
 
     // Multiply with unit scaling factor.
@@ -1333,7 +1333,7 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 	  break;
 	}
       } else { 
-	name[0]='\0';
+	name[0][0]='\0';
       }
 
       // Multiply with unit scaling factor.
@@ -1345,13 +1345,11 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 
       // Copy the name (ID) of the spectrum from the string buffer
       // to the data structure.
-      if(name[0]!=NULL){
-	spec->name=(char*)malloc((strlen(name[0])+1)*sizeof(char));
-	CHECK_NULL_BREAK(spec->name, *status, 
-			"memory allocation for name string failed");
-	strcpy(spec->name, name[0]);
-      }
-
+      spec->name=(char*)malloc((strlen(name[0])+1)*sizeof(char));
+      CHECK_NULL_BREAK(spec->name, *status, 
+		      "memory allocation for name string failed");
+      strcpy(spec->name, name[0]);
+      
       // Store the file reference to the spectrum for later comparisons.
       spec->fileref=
 	(char*)malloc((strlen(filename)+strlen(name[0])+11)*sizeof(char));
