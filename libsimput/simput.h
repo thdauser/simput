@@ -45,6 +45,8 @@
 #define SIMPUT_SPEC_TYPE (0)
 #define SIMPUT_IMG_TYPE (1)
 #define SIMPUT_LC_TYPE (2)
+#define SIMPUT_PSD_TYPE (3)
+
 
 /////////////////////////////////////////////////////////////////
 // Type Declarations.

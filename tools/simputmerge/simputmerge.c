@@ -66,7 +66,10 @@ static char* get_unused_ref(int type){
 	case SIMPUT_IMG_TYPE:
 		sprintf(ref,"[IMG_%010i,1]",GLOBAL_IMG_COUNTER);
 		break;
-	case SIMPUT_LC_TYPE:
+	case (SIMPUT_LC_TYPE):
+		sprintf(ref,"[TIM_%010i,1]",GLOBAL_LC_COUNTER);
+		break;
+	case (SIMPUT_PSD_TYPE):
 		sprintf(ref,"[TIM_%010i,1]",GLOBAL_LC_COUNTER);
 		break;
 	}
@@ -185,6 +188,14 @@ static char* add_single_data_to_buffer(char* filename, char *ref,
 			src->data = loadSimputLC(new_ref, status);
 			CHECK_STATUS_RET(*status,NULL);
 			break;
+
+		case SIMPUT_PSD_TYPE:
+			GLOBAL_LC_COUNTER++;   // use the same counter??? (extension is named the same!
+			src->data = (SimputPSD*) malloc(sizeof(SimputPSD));
+			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
+			src->data = loadSimputPSD(new_ref, status);
+			CHECK_STATUS_RET(*status,NULL);
+			break;
 		}
 		src->type=type;
 		// src->ident = ident;
@@ -240,10 +251,34 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 		refs->image = strdup(insrc->image);
 	}
 
-	// LIGHTCURVE
+	// LIGHTCURVE or PSD
 	if (is_fileref_given(insrc->timing) == 1){
-		refs->timing = add_single_data_to_buffer(incat->filename,insrc->timing,
-				mtree,data_buffer,SIMPUT_LC_TYPE,status);
+
+		fitsfile* fptr=NULL;
+
+		char new_ref[SIMPUT_MAXSTR];
+		strcpy(new_ref, incat->filename);
+		strcat(new_ref, insrc->timing);
+
+		fits_open_table(&fptr,new_ref, READONLY, status);
+	    if (EXIT_SUCCESS!=*status) {
+	      char msg[SIMPUT_MAXSTR];
+	      sprintf(msg, "could not open FITS table in file '%s'", insrc->timing);
+	      SIMPUT_ERROR(msg);
+	      return NULL;
+	    }
+	    int opt_status, ncol;
+	    fits_get_colnum(fptr, CASEINSEN, "FLUX", &ncol, &opt_status);
+		if (NULL!=fptr) fits_close_file(fptr, status);
+
+
+		if (opt_status==EXIT_SUCCESS) {
+			refs->timing = add_single_data_to_buffer(incat->filename,insrc->timing,
+					mtree,data_buffer,SIMPUT_LC_TYPE,status);
+		} else { // assume oif not LC it's PSD
+			refs->timing = add_single_data_to_buffer(incat->filename,insrc->timing,
+					mtree,data_buffer,SIMPUT_PSD_TYPE,status);
+		}
 		CHECK_STATUS_RET(*status,NULL);
 	} else {
 		refs->timing = strdup(insrc->timing);
@@ -314,6 +349,13 @@ static void write_single_merge_data(simput_data* buf, char* filename, int *statu
 				extract_extname(buf->ref,status),
 				extver, status);
 		break;
+
+	case SIMPUT_PSD_TYPE:
+		saveSimputPSD(buf->data, filename,
+				extract_extname(buf->ref,status),
+				extver, status);
+		break;
+
 	}
 
 }
