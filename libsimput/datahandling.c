@@ -31,6 +31,13 @@ void setSimputARF(SimputCtlg* const cat, struct ARF* const arf)
 }
 
 
+void setSimputConstantARF(SimputCtlg* const cat, double low_energy, double high_energy, double eff_area, char* telescope, int* const status)
+{
+  cat->arf=getconstantARF(low_energy, high_energy, eff_area, telescope, status);
+}
+
+
+
 void loadSimputARF(SimputCtlg* const cat, char* const filename, int* const status)
 {
   cat->arf=loadARF(filename, status);

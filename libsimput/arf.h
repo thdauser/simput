@@ -41,6 +41,9 @@
     NULL-initialized pointers. */
 struct ARF* getARF(int* const status);
 
+/** get a constant ARF structure */
+struct ARF* getconstantARF(double low_energy, double high_energy, double eff_area, char* telescope, int* const status);
+
 /** Load an ARF from a response file. */
 struct ARF* loadARF(char* filename, int* const status);
 
