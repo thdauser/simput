@@ -371,6 +371,26 @@ typedef struct {
 
 } SimputPhList;
 
+/** Just a single SIMPUT photon.
+    This structure is used in the getSimputPhotonAnySource, which
+    implements a one-photon-at-a-time generator as the simplest
+    possible interface for external programs. */
+typedef struct{
+  /** counted from the beginning of the simulation [s] */
+  double time;
+  /** [keV] */
+  float energy;
+  /** [rad] */
+  double dec;
+  double ra;
+  /** currently unused, but defined here for future use*/
+  double polarization;
+  /** 1 if no lightcurves is avaiable to generate photons at this
+      time. */
+  int lightcurve_status;
+}
+SimputPhoton;
+
 
 /////////////////////////////////////////////////////////////////
 // Function Declarations.
@@ -742,6 +762,49 @@ int getSimputPhoton(SimputCtlg* const cat,
 		    double* const dec,
 		    int* const status);
 
+/** Initialize an array and pre-compute photons for
+    getSimputPhotonAnySource. */
+SimputPhoton* startSimputPhotonAnySource(SimputCtlg* const cat,
+					 const double mjdref,
+					 int* const status);
+
+/** Produce a photon for any source in a SIMPUT catalog.
+    This is similar to getSimputPhoton, but while getSimputPhoton
+    calculates the next photon for a particular source in the catalog,
+    this routine returns the next photon seen from any source.
+    (The parameter source_index is an output for diagnostic purposes,
+    not an input.)
+    Note also that there is no input "prevtime" as the photons are
+    initialized by startSimputPhotonAnySource
+
+    Use the following steps to draw photons:
+    - call startSimputPhotonAnySource once.
+    - call getSimputPhotonAnySource as often as needed.
+    - call closeSimputPhotonAnySource one.
+
+    See getSimputPhoton for the meaning of the error status. */
+int getSimputPhotonAnySource(SimputCtlg* const cat,
+			     SimputPhoton *next_photons,
+			     const double mjdref,
+			     /** [s]. */
+			     double* const time,
+			     /** [keV]. */
+			     float* const energy,
+			     /** [rad]. */
+			     double* const ra,
+			     /** [rad]. */
+			     double* const dec,
+			     /** currently unused and set to 0 */
+			     double* const polarization,
+			     /** index number in SIMPUT catalog for the
+			         source that produced this photon **/
+			     long* const source_index,
+			     int* const status);
+
+/** The call to startSimputPhotonAnySource allocates an array that
+    pre-computes one photon per source. This routine will free the
+    memory. */
+void closeSimputPhotonAnySource(SimputPhoton *next_photons);
 
 /** Determine the extension type of a particular FITS file HDU. */
 int getSimputExtType(SimputCtlg* const cat, 

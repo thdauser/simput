@@ -18,6 +18,7 @@
    Copyright 2007-2014 Christian Schmid, FAU
 */
 
+#include <float.h>
 #include "common.h"
 
 
@@ -1950,6 +1951,106 @@ int getSimputPhoton(SimputCtlg* const cat,
   return(0);
 }
 
+int precompute_photon (SimputCtlg *cat, long sourcenumber,
+		       double mjdref, double prevtime,
+		       SimputPhoton *next_photons,
+		       int* const status)
+{
+  int lightcurve_status;
+  double time;
+  float energy;
+  double ra;
+  double dec;
+  SimputSrc* src = NULL;
+
+  src = getSimputSrc(cat, sourcenumber, status);
+  CHECK_STATUS_RET(*status, 0);
+
+  lightcurve_status = getSimputPhoton(cat, src,
+				      prevtime, mjdref,
+				      &time, &energy, &ra, &dec,
+				      status);
+  CHECK_STATUS_RET(*status, 0);
+
+  // sourcenumber starts at index 1, but C array start at index 0
+  next_photons[sourcenumber-1].time = time;
+  next_photons[sourcenumber-1].energy = energy;
+  next_photons[sourcenumber-1].ra = ra;
+  next_photons[sourcenumber-1].dec = dec;
+  next_photons[sourcenumber-1].lightcurve_status = lightcurve_status;
+  next_photons[sourcenumber-1].polarization = 0;
+  return 0;
+}
+
+
+SimputPhoton* startSimputPhotonAnySource(SimputCtlg* const cat,
+				const double mjdref,
+				int* const status)
+{
+  long ii, n_sources;
+  n_sources = getSimputCtlgNSources(cat);
+
+  SimputPhoton* next_photons = malloc(n_sources * sizeof(*next_photons));
+  CHECK_NULL_RET(next_photons, *status,
+		 "memory allocation for photon cache failed", NULL);
+  for (ii=1; ii < (n_sources+1); ii++) {
+    precompute_photon(cat, ii, mjdref, 0., next_photons, status);
+    CHECK_STATUS_RET(*status, NULL);
+  }
+  return next_photons;
+}
+
+
+int getSimputPhotonAnySource(SimputCtlg* const cat,
+			     SimputPhoton *next_photons,
+			     const double mjdref,
+			     double* const time,
+			     float* const energy,
+			     double* const ra,
+			     double* const dec,
+			     double* const polarization,
+			     long* const source_index,
+			     int* const status)
+{
+  long ii, n_sources, next_index, number_valid_photons;
+  double min_time = DBL_MAX;
+  n_sources = getSimputCtlgNSources(cat);
+
+  CHECK_NULL_RET(next_photons, *status,
+		   "next_photons has not been initialized", 1);
+
+  // From the list of pre-generated photons, find the next one
+  for (ii=0; ii < n_sources; ii++) {
+    if ((next_photons[ii].time < min_time) && (next_photons[ii].lightcurve_status == 0)){
+      min_time = next_photons[ii].time;
+      next_index = ii;
+      number_valid_photons++;
+    }
+  }
+  if (number_valid_photons == 0){
+    return 1;
+  }
+
+  *time = next_photons[next_index].time;
+  *energy = next_photons[next_index].energy;
+  *ra = next_photons[next_index].ra;
+  *dec = next_photons[next_index].dec;
+  *polarization = next_photons[next_index].polarization;
+  *source_index = next_index + 1; //FTIS file index starts at 1
+
+  // Replace the photon in the precomputed list with the next one.
+  precompute_photon(cat, *source_index, mjdref, *time, next_photons, status);
+
+  return 0;
+}
+
+void closeSimputPhotonAnySource(SimputPhoton *next_photons)
+{
+  if (next_photons!=NULL){
+    free(next_photons);
+    next_photons = NULL;
+  }
+}
 
 float getSimputSrcExt(SimputCtlg* const cat,
 		      const SimputSrc* const src,
