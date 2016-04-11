@@ -104,6 +104,7 @@ AC_CONFIG_FILES([Makefile
 		 tools/simputmultispec/Makefile
 		 tools/simputrotate/Makefile
 		 tools/simputsrc/Makefile
+		 tools/simputmulticell/Makefile
 		 tools/simputverify/Makefile])
 
 

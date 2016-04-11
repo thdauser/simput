@@ -864,6 +864,7 @@ int simputmultispec_main() {
     struct param_input ipar[num_param];
     set_input_par(ipar, &input_par, num_param, &status);
     CHECK_STATUS_BREAK(status);
+
     // ************************************************************ //
 
     SimputImg* ctsImg = loadSimputImg_map(input_par.ImageFile, &status);
@@ -934,10 +935,9 @@ int simputmultispec_getpar(struct Parameters* const par) {
   int status=EXIT_SUCCESS;
 
   query_simput_parameter_file_name("simput",&(par->Simput), &status);
-
   query_simput_parameter_string("ISISFile", &(par->ISISFile), &status );
   query_simput_parameter_string("XSPECFile", &(par->XSPECFile), &status );
-  query_simput_parameter_string("ISISPrep", &(par->ISISPrep), &status );
+  //query_simput_parameter_string("ISISPrep", &(par->ISISPrep), &status );
   query_simput_parameter_file_name("ImageFile", &(par->ImageFile), &status );
 
   query_simput_parameter_float("RA", &par->RA, &status );
