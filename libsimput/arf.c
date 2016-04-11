@@ -43,24 +43,24 @@ struct ARF* getARF(int* const status)
 }
 
 
-struct ARF* getconstantARF(double low_energy, double high_energy, double eff_area, char* telescope, int* const status)
+struct ARF* getARFfromarrays(long NumberEnergyBins, float low_energy[], float high_energy[], float eff_area[], char* telescope, int* const status)
 {
   struct ARF* arf=getARF(status);
   CHECK_STATUS_RET(*status, arf);
 
-  arf->NumberEnergyBins=1;
+  arf->NumberEnergyBins=NumberEnergyBins;
 
   arf->LowEnergy = (float*)malloc(arf->NumberEnergyBins*sizeof(float));
   CHECK_NULL_RET(arf->LowEnergy, *status, "memory allocation for ARF failed", arf);
-  arf->LowEnergy[0] = (float) low_energy;
+  arf->LowEnergy = low_energy;
 
   arf->HighEnergy = (float*)malloc(arf->NumberEnergyBins*sizeof(float));
   CHECK_NULL_RET(arf->HighEnergy, *status, "memory allocation for ARF failed", arf);
-  arf->HighEnergy[0] = (float) high_energy;
+  arf->HighEnergy = high_energy;
 
   arf->EffArea = (float*)malloc(arf->NumberEnergyBins*sizeof(float));
   CHECK_NULL_RET(arf->EffArea, *status, "memory allocation for ARF failed", arf);
-  arf->EffArea[0] = (float) eff_area;
+  arf->EffArea = eff_area;
 
   strcpy(arf->ARFVersion,"1.0");          /* SPECRESP extension format version */
   strcpy(arf->Telescope, telescope);

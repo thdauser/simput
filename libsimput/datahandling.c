@@ -32,9 +32,9 @@ void setSimputARF(SimputCtlg* const cat, struct ARF* const arf)
 }
 
 
-void setSimputConstantARF(SimputCtlg* const cat, double low_energy, double high_energy, double eff_area, char* telescope, int* const status)
+void setSimputARFfromarrays(SimputCtlg* const cat, long NumberEnergyBins, float low_energy[], float high_energy[], float eff_area[], char* telescope, int* const status)
 {
-  cat->arf=getconstantARF(low_energy, high_energy, eff_area, telescope, status);
+  cat->arf=getARFfromarrays(NumberEnergyBins, low_energy, high_energy, eff_area, telescope, status);
 }
 
 
@@ -2012,9 +2012,14 @@ int getSimputPhotonAnySource(SimputCtlg* const cat,
 			     long* const source_index,
 			     int* const status)
 {
-  long ii, n_sources, next_index, number_valid_photons;
+  long ii, n_sources, next_index;
+  long number_valid_photons = 0;
   double min_time = DBL_MAX;
   n_sources = getSimputCtlgNSources(cat);
+
+  if (n_sources < 1){
+    return 1;
+  }
 
   CHECK_NULL_RET(next_photons, *status,
 		   "next_photons has not been initialized", 1);

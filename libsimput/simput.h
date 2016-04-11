@@ -587,19 +587,20 @@ float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
     routines are used. */
 void setSimputARF(SimputCtlg* const cat, struct ARF* const arf);
 
-/** Set the instrument ARF wit ha constant effective area. This
+/** Set the instrument ARF from input arrays. This
     information is required to obtain a mission-specific spectrum from
     the mission-independent format.
-    This method sets the effective area independent of the energy, which
-    is useful is SIMPUT is used to generate photons for an external
-    instrument model that calculates energy dependent reflection, QE, etc.
-    itself. */
-void setSimputConstantARF(SimputCtlg* const cat, 
-			  double low_energy,
-			  double high_energy,
-			  double eff_area,
-			  char* telescope,
-			  int* const status);
+    Note that all generated photon energies will be randomized within each
+    ARF bin. Thus, even for a constant ARF (when the calling function takes
+    care of the phontons lost at specific energies), you need to define 
+    narrow energy bins. */
+void setSimputARFfromarrays(SimputCtlg* const cat,
+			    long NumberEnergyBins, 
+			    float low_energy[],
+			    float high_energy[],
+			    float eff_area[],
+			    char* telescope,
+			    int* const status);
 
 /** Load and set the instrument ARF containing the effective
     area. This information is required to obtain a mission-specific
