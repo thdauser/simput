@@ -121,7 +121,7 @@ static simput_data* find_src_in_buffer(char *ref, simput_data** buf, int *status
 **/
 static void append_src_to_buffer(simput_data* src,simput_data*** buf,int *status){
 	GLOBAL_COUNTER++;
-	*buf = realloc(*buf,GLOBAL_COUNTER * sizeof(simput_data*));
+	*buf = (simput_data**) realloc(*buf,GLOBAL_COUNTER * sizeof(simput_data*));
 	CHECK_NULL_VOID(*buf, *status, "memory (re)allocation failed")
 
 	(*buf)[GLOBAL_COUNTER-1] = src;
@@ -364,10 +364,37 @@ static void write_merge_data(simput_data** buf, char *filename, int *status){
 
 	for (int ii=0; ii<GLOBAL_COUNTER;ii++){
 		write_single_merge_data(buf[ii],filename,status);
-//		printf("[%i] writing %s \n",ii,buf[ii]->ref);
 	}
 
 }
+
+static void freeSimputData(simput_data** dat){
+	if (dat != NULL){
+		for (int ii=0; ii<GLOBAL_COUNTER; ii++){
+			if (dat[ii] != NULL){
+				switch (dat[ii]->type) {
+				case SIMPUT_SPEC_TYPE:
+					// SimputMIdpSpec** buf = &(dat[ii]->data);
+					freeSimputMIdpSpec( (SimputMIdpSpec**) &(dat[ii]->data) );
+					break;
+				case SIMPUT_IMG_TYPE:
+					freeSimputImg( (SimputImg**) &(dat[ii]->data));
+					break;
+				case SIMPUT_LC_TYPE:
+					freeSimputLC( (SimputLC**) &(dat[ii]->data));
+					break;
+				case SIMPUT_PSD_TYPE:
+					freeSimputPSD( (SimputPSD**) &(dat[ii]->data));
+					break;
+				}
+				free(dat[ii]->ref);
+			}
+			free(dat[ii]);
+		}
+	}
+
+}
+
 
 int simputmerge_main() 
 {
@@ -474,6 +501,8 @@ int simputmerge_main()
 
 	// --- Clean up ---
 	headas_chat(3, "\ncleaning up ...\n");
+
+	freeSimputData(data_buffer);
 
 	for(int ii=0;ii<num_cat;ii++){
 		freeSimputCtlg(&incat[ii], &status);

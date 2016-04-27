@@ -1088,13 +1088,13 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     }
 
     if (cname>0) {
-      fits_read_col(fptr, TSTRING, cname, 1, 1, 1, "", name, &anynul, status);
-      if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed reading designator of spectrum");
-	break;
-      }
+    	fits_read_col(fptr, TSTRING, cname, 1, 1, 1, "", name, &anynul, status);
+    	if (EXIT_SUCCESS!=*status) {
+    		SIMPUT_ERROR("failed reading designator of spectrum");
+    		break;
+    	}
     } else { 
-      name[0][0]='\0';
+    	name[0][0]='\0';
     }
 
     // Multiply with unit scaling factor.
@@ -1106,7 +1106,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
     // Copy the name (ID) of the spectrum from the string buffer
     // to the data structure.
-    spec->name = (char*)malloc((strlen(name[0])+1)*sizeof(char));
+    spec->name = (char*)malloc((strlen(name[0]))*sizeof(char)+1);
     CHECK_NULL_BREAK(spec->name, *status, 
 		     "memory allocation for name string failed");
     strcpy(spec->name, name[0]);

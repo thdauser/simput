@@ -394,7 +394,7 @@ SimputMIdpSpec* newSimputMIdpSpec(int* const status)
 }
 
 
-void freeSimputMIdpSpec(SimputMIdpSpec** const spec)
+void freeSimputMIdpSpec(SimputMIdpSpec** spec)
 {
   if (NULL!=*spec) {
     if (NULL!=(*spec)->energy) {

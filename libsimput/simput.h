@@ -519,7 +519,7 @@ SimputMIdpSpec* newSimputMIdpSpec(int* const status);
 /** Destructor for the SimputMIdpSpec. Calls destructor routines for
     all contained elements, releases the allocated memory, and finally
     sets the pointer to NULL. */
-void freeSimputMIdpSpec(SimputMIdpSpec** const spec);
+void freeSimputMIdpSpec(SimputMIdpSpec** spec);
 
 /** Load the SimputMIdpSpec from the specified file. */
 SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
