@@ -168,6 +168,9 @@ static char* add_single_data_to_buffer(char* filename, char *ref,
 			src->data = (SimputMIdpSpec*) malloc(sizeof(SimputMIdpSpec));
 			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
 			SimputMIdpSpec* buf = loadSimputMIdpSpec(new_ref,status);
+			buf->name = realloc(buf->name,sizeof(char)*100);
+			CHECK_NULL_RET(buf->name,*status,"memory allocation failed",NULL);
+
 			sprintf(buf->name,"spec_%010i",GLOBAL_SPEC_COUNTER);
 			CHECK_STATUS_RET(*status,NULL);
 			src->data = buf;
