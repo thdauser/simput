@@ -26,7 +26,7 @@ AC_PROG_LIBTOOL
 # "-pg" for the compiler and linker to include information for gprof (Profiler)
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # "-O0" for zero optimization
-CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC -Dg77Fortran -fbounds-check"
+CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC -Dg77Fortran"
 #LDFLAGS="$LDFLAGS -g -W -Wall"
 # FCFLAGS="-O0"
 
