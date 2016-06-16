@@ -3840,7 +3840,7 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPostCmd, floa
         	fprintf(cmdfile, "%s\n", XSPECPostCmd);
     	}
 
-    	fprintf(cmdfile, "dummyrsp %f %f %d log\n",
+    	fprintf(cmdfile, "dummyrsp %f %f %d lin\n",
     			Elow, Eup, (int)((Eup-Elow)/Estep));
     	fprintf(cmdfile, "setplot device /null\n");
 
