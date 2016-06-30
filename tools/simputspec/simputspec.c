@@ -106,6 +106,10 @@ int simputspec_main()
 	(0==strcmp(par.XSPECFile, "NONE"))) {
       strcpy(par.XSPECFile, "");
     }
+    if ((0==strcmp(par.XSPECPrep, "none"))||
+        (0==strcmp(par.XSPECPrep, "NONE"))) {
+      strcpy(par.XSPECPrep, "");
+    }
     if ((0==strcmp(par.PHAFile, "none"))||
 	(0==strcmp(par.PHAFile, "NONE"))) {
       strcpy(par.PHAFile, "");
@@ -168,7 +172,7 @@ int simputspec_main()
     // to produce the spectrum.
     if (strlen(par.XSPECFile)>0) {
 
-    	write_xspecSpec_file(par.Simput, par.XSPECFile, par.XSPECPostCmd,
+    	write_xspecSpec_file(par.Simput, par.XSPECFile, par.XSPECPrep, par.XSPECPostCmd,
     			par.Elow, par.Eup, par.Estep, &status);
 
     } // END of running Xspec.
@@ -639,6 +643,14 @@ int simputspec_getpar(struct Parameters* const par)
     return(status);
   }
   strcpy(par->XSPECFile, sbuffer);
+  free(sbuffer);
+
+  status=ape_trad_query_string("XSPECPrep", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the name of the XSPEC prep file failed");
+    return(status);
+  }
+  strcpy(par->XSPECPrep, sbuffer);
   free(sbuffer);
 
   status=ape_trad_query_string("XSPECPostCmd", &sbuffer);

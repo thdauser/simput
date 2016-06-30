@@ -681,7 +681,7 @@ static void ms_save_spec_xspec(SimputMIdpSpec *spec, struct Parameters par,
 //	write_isisSpec_fits_file(par.Simput, par.ISISFile, par.ISISPrep,ISISsetPar,
 //			par.Elow, par.Eup, par.Estep, 0.0, 0.0, 0.0, 0.0, 0.0, status);
 
-	write_xspecSpec_file(par.Simput, par.XSPECFile, XSPECsetPar,
+	write_xspecSpec_file(par.Simput, par.XSPECFile, par.XSPECPrep, XSPECsetPar,
 			par.Elow, par.Eup, par.Estep, status);
 
 
@@ -937,6 +937,7 @@ int simputmultispec_getpar(struct Parameters* const par) {
   query_simput_parameter_file_name("simput",&(par->Simput), &status);
   query_simput_parameter_string("ISISFile", &(par->ISISFile), &status );
   query_simput_parameter_string("XSPECFile", &(par->XSPECFile), &status );
+  query_simput_parameter_string("XSPECPrep", &(par->XSPECPrep), &status );
   //query_simput_parameter_string("ISISPrep", &(par->ISISPrep), &status );
   query_simput_parameter_file_name("ImageFile", &(par->ImageFile), &status );
 

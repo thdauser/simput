@@ -3817,7 +3817,7 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 
 }
 
-void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPostCmd, float Elow,
+void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *XSPECPostCmd, float Elow,
 		float Eup,	float Estep, int *status){
 
 	FILE* cmdfile=NULL;
@@ -3834,6 +3834,11 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPostCmd, floa
 
     	// Write the header.
     	fprintf(cmdfile, "query yes\n");
+
+        if (strlen(XSPECPrep)!=0) {
+                fprintf(cmdfile, "@%s\n", XSPECPrep);
+        }
+        
     	fprintf(cmdfile, "@%s\n", XSPECFile);
 
     	if (strlen(XSPECPostCmd)!=0) {

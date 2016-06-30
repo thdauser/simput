@@ -83,6 +83,9 @@ struct Parameters {
 
   /** File name of the input Xspec spectral model. */
   char XSPECFile[SIMPUT_MAXSTR];
+  /** File name for optional preperation script (f. e. to load additional
+   models). */
+  char XSPECPrep[SIMPUT_MAXSTR];
 
   /** File name of the input ASCII spectrum. */
   char ASCIIFile[SIMPUT_MAXSTR];

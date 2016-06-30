@@ -51,6 +51,9 @@ struct Parameters {
   /* File name of the input Xspec spectral model. */
   char *XSPECFile;
 
+   /* File name of the additional Xspec script. */
+   char *XSPECPrep;
+
 
   // Param to handle the param info to read from the input file
   char *ParamFile;

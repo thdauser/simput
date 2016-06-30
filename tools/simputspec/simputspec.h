@@ -77,6 +77,7 @@ struct Parameters {
   char ISISPostCmd[SIMPUT_MAXSTR];
 
   /** File name of the Xspec spectral model. */
+  char XSPECPrep[SIMPUT_MAXSTR];
   char XSPECFile[SIMPUT_MAXSTR];
   char XSPECPostCmd[SIMPUT_MAXSTR];
 

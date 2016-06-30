@@ -116,7 +116,7 @@ int simputfile_main()
 	    "rflSpin=%f rflFlux=%e "
 	    "NH=%e "
 	    "Emin=%f Emax=%f "
-	    "ISISFile=%s ISISPrep=%s XSPECFile=%s PHAFile=%s ASCIIFile=%s "
+	    "ISISFile=%s ISISPrep=%s XSPECFile=%s XSPECPrep=%s PHAFile=%s ASCIIFile=%s "
 	    "chatter=%d history=%s",
 	    par.Simput,
 	    par.Elow, par.Eup, par.Estep,
@@ -126,7 +126,7 @@ int simputfile_main()
 	    par.rflSpin, par.rflFlux,
 	    par.NH,
 	    par.Emin, par.Emax, 
-	    par.ISISFile, par.ISISPrep, par.XSPECFile, par.PHAFile, par.ASCIIFile,
+	    par.ISISFile, par.ISISPrep, par.XSPECFile, par.XSPECPrep, par.PHAFile, par.ASCIIFile,
 	    par.chatter, shistory);
     status=system(command);
     CHECK_STATUS_BREAK(status);
@@ -345,6 +345,14 @@ int simputfile_getpar(struct Parameters* const par)
     return(status);
   }
   strcpy(par->XSPECFile, sbuffer);
+  free(sbuffer);
+
+  status=ape_trad_query_string("XSPECPrep", &sbuffer);
+  if (EXIT_SUCCESS!=status) {
+    SIMPUT_ERROR("reading the name of the XSPEC prep file failed");
+    return(status);
+  }
+  strcpy(par->XSPECPrep, sbuffer);
   free(sbuffer);
 
   status=ape_trad_query_string("ASCIIFile", &sbuffer);
