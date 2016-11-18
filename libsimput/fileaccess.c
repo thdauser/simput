@@ -2032,11 +2032,11 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 	}
       }
 
-    } else {
+    } else { // END of if (cphase>0) (periodic light curves)
       lc->phase0 =0.;
       lc->period =0.;
       lc->dperiod=0.;
-    }
+    } 
 
     // Optional keywords.
     opt_status=EXIT_SUCCESS;
@@ -2067,123 +2067,168 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       SIMPUT_ERROR("could not determine number of entries in light curve");
       break;
     }
-
+   
+    // We correct the number of rows to take into account the
+    // part of the light curve after the last spectrum given:
+    if (cphase>0) {
+      int nrows_old=lc->nentries;
+      lc->nentries=nrows_old+1; // We add an extra row where we
+                                 // will store the first phase again
+    } 
+    // Now lc->nentries does not stand for the number of entries in the
+    // fits table any more, but the number of entries in the loaded lightcurve
+    
     char msg[SIMPUT_MAXSTR];
     sprintf(msg, "light curve '%s' contains %ld data points\n", 
 	    filename, lc->nentries);
     SIMPUT_INFO(msg);
-
-    // Allocate memory for the arrays.
+    
+    // Allocate memory for the arrays.                                                                                                                                            
+ 
     if (ctime>0) {
       lc->time =(double*)malloc(lc->nentries*sizeof(double));
-      CHECK_NULL_BREAK(lc->time, *status, 
-		       "memory allocation for light curve failed");
+      CHECK_NULL_BREAK(lc->time, *status,
+                       "memory allocation for light curve failed");
     }
     if (cphase>0) {
       lc->phase=(double*)malloc(lc->nentries*sizeof(double));
-      CHECK_NULL_BREAK(lc->phase, *status, 
-		       "memory allocation for light curve failed");
+      CHECK_NULL_BREAK(lc->phase, *status,
+                       "memory allocation for light curve failed");
     }
     lc->flux   =(float*)malloc(lc->nentries*sizeof(float));
-    CHECK_NULL_BREAK(lc->flux, *status, 
-		     "memory allocation for light curve failed");
+    CHECK_NULL_BREAK(lc->flux, *status,
+                     "memory allocation for light curve failed");
     if (cspectrum>0) {
       lc->spectrum=(char**)malloc(lc->nentries*sizeof(char*));
-      CHECK_NULL_BREAK(lc->spectrum, *status, 
-		       "memory allocation for light curve failed");
-      // String buffer.
+      CHECK_NULL_BREAK(lc->spectrum, *status,
+                       "memory allocation for light curve failed");
+      // String buffer.                                                                                                                                                           
+ 
       spectrum[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
-      CHECK_NULL_BREAK(spectrum[0], *status, 
-		       "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(spectrum[0], *status,
+                       "memory allocation for string buffer failed");
     }
     if (cimage>0) {
       lc->spectrum=(char**)malloc(lc->nentries*sizeof(char*));
-      CHECK_NULL_BREAK(lc->spectrum, *status, 
-		       "memory allocation for light curve failed");
-      // String buffer.
+      CHECK_NULL_BREAK(lc->spectrum, *status,
+                       "memory allocation for light curve failed");
+      // String buffer.                                                                                                                                                           
+ 
       image[0]=(char*)malloc(SIMPUT_MAXSTR*sizeof(char));
-      CHECK_NULL_BREAK(image[0], *status, 
-		       "memory allocation for string buffer failed");
+      CHECK_NULL_BREAK(image[0], *status,
+                       "memory allocation for string buffer failed");
     }
 
-
-    // Read the data from the table.
+    // Read the data from the table.                                                                                                                                            
     int anynul=0;
 
-    // TIME
+    // In principle, the number of entries in the fits table is the same as the
+    // number of entries the light curve will have.
+    int nfitsentries=lc->nentries;
+    if (cphase>0) {  // In this case lc->nentries is one more than entries we have
+                     // in the fits table. 
+      nfitsentries--;
+    }
+    // TIME                                                                                                                                                                       
     if (ctime>0) {
-      fits_read_col(fptr, TDOUBLE, ctime, 1, 1, lc->nentries, 
-		    0, lc->time, &anynul, status);
+      fits_read_col(fptr, TDOUBLE, ctime, 1, 1, nfitsentries,
+                    0, lc->time, &anynul, status);
       if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed reading time values from light curve");
-	break;
+        SIMPUT_ERROR("failed reading time values from light curve");
+        break;
       }
-
-      // Multiply with unit scaling factor.
+      // Multiply with unit scaling factor.                                                                                                                                        
       long row;
-      for (row=0; row<lc->nentries; row++) {
-	lc->time[row]*=ftime;
+      for (row=0; row<nfitsentries; row++) {
+        lc->time[row]*=ftime;
       }
     }
 
-    // PHASE
+    // PHASE                                                                                                                                                                       
     if (cphase>0) {
-      fits_read_col(fptr, TDOUBLE, cphase, 1, 1, lc->nentries, 
-		    0, lc->phase, &anynul, status);
+      // We take the phases in the fits file:
+      fits_read_col(fptr, TDOUBLE, cphase, 1, 1, nfitsentries,
+                    0, lc->phase, &anynul, status);
+      // we add the first one at the end:
+      lc->phase[lc->nentries-1]=(lc->phase[0]+1.); 
       if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed reading phase values from light curve");
-	break;
+        SIMPUT_ERROR("failed reading phase values from light curve");
+        break;
       }
     }
 
-    // FLUX
-    fits_read_col(fptr, TFLOAT, cflux, 1, 1, lc->nentries, 
-		  0, lc->flux, &anynul, status);
+    // FLUX                    
+    // We take the phases in the fits file: 
+    fits_read_col(fptr, TFLOAT, cflux, 1, 1, nfitsentries,
+                  0, lc->flux, &anynul, status);
+    // we add the first one at the end:  
+    if (cphase>0) {
+      lc->flux[lc->nentries-1]=lc->flux[0]; 
+    }
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("failed reading flux values from light curve");
       break;
     }
 
-    // SPECTRUM
+    // SPECTRUM                                                                                                                                                                    
     if (cspectrum>0) {
       long row;
-      for (row=0; row<lc->nentries; row++) {
-	fits_read_col(fptr, TSTRING, cspectrum, row+1, 1, 1, 
-		      "", spectrum, &anynul, status);
-	if (EXIT_SUCCESS!=*status) {
-	  SIMPUT_ERROR("failed reading spectrum references from light curve");
-	  break;
-	}
+      // We take the phases in the fits file:
+      for (row=0; row<nfitsentries; row++) {
+        fits_read_col(fptr, TSTRING, cspectrum, row+1, 1, 1,
+                      "", spectrum, &anynul, status);
+        if (EXIT_SUCCESS!=*status) {
+          SIMPUT_ERROR("failed reading spectrum references from light curve");
+          break;
+        }
 
-	lc->spectrum[row]=
-	  (char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
-	CHECK_NULL_BREAK(lc->spectrum[row], *status,
-			 "memory allocation for spectrum string failed");
-	strcpy(lc->spectrum[row], spectrum[0]);
-      }      
+        lc->spectrum[row]=
+          (char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
+        CHECK_NULL_BREAK(lc->spectrum[row], *status,
+                         "memory allocation for spectrum string failed");
+        strcpy(lc->spectrum[row], spectrum[0]);
+	// Now we add the first spectrum again at the end:
+	if(row==0){
+	  lc->spectrum[lc->nentries-1]=(char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
+	  CHECK_NULL_BREAK(lc->spectrum[lc->nentries-1], *status,
+			   "memory allocation for spectrum string failed");
+	  strcpy(lc->spectrum[lc->nentries-1], spectrum[0]);
+	}
+      }
+
+      
       CHECK_STATUS_BREAK(*status);
     }
-
-    // IMAGE
+    
+    // IMAGE                                                                                                                                                                       
     if (cimage>0) {
       long row;
-      for (row=0; row<lc->nentries; row++) {
-	fits_read_col(fptr, TSTRING, cimage, row+1, 1, 1, 
-		      "", image, &anynul, status);
-	if (EXIT_SUCCESS!=*status) {
-	  SIMPUT_ERROR("failed reading image references from light curve");
-	  break;
-	}
+      // We take the phases in the fits file:
+      for (row=0; row<nfitsentries; row++) {
+        fits_read_col(fptr, TSTRING, cimage, row+1, 1, 1,
+                      "", image, &anynul, status);
+        if (EXIT_SUCCESS!=*status) {
+          SIMPUT_ERROR("failed reading image references from light curve");
+          break;
+        }
 
-	lc->image[row]=
-	  (char*)malloc((strlen(image[0])+1)*sizeof(char));
-	CHECK_NULL_BREAK(lc->image[row], *status,
-			 "memory allocation for image string failed");
-	strcpy(lc->image[row], image[0]);
-      }      
+        lc->image[row]=
+          (char*)malloc((strlen(image[0])+1)*sizeof(char));
+        CHECK_NULL_BREAK(lc->image[row], *status,
+                         "memory allocation for image string failed");
+        strcpy(lc->image[row], image[0]);
+	// Now we add the first spectrum again at the end:   
+	if(row==0){
+	  lc->image[lc->nentries-1]=
+	    (char*)malloc((strlen(image[0])+1)*sizeof(char));
+	  CHECK_NULL_BREAK(lc->image[row], *status,
+			   "memory allocation for image string failed");
+	  strcpy(lc->image[lc->nentries-1], image[0]);
+	}
+      }
       CHECK_STATUS_BREAK(*status);
     }
-    // END of reading the data from the FITS table.
+    // END of reading the data from the FITS table.   
 
     // Store the file reference to the timing extension for later comparisons.
     lc->fileref=
