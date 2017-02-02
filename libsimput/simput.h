@@ -511,6 +511,16 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
 			 char* const specref,
 			 int* const status);
 
+/** Determines the reference to the next spectrum in the light curve.
+    For a given time, it just take the spectrum corresponding to the
+    next bin and returns a reference to it. */
+void getSimputSrcSpecRefNext(SimputCtlg* const cat,
+			     const SimputSrc* const src,
+			     const double prevtime,
+			     const double mjdref,
+			     char* const specref,
+			     int* const status);
+
 /** Constructor for the SimputMIdpSpec data structure. Allocates
     memory, initializes elements with their default values and
     pointers with NULL. */

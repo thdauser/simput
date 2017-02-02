@@ -674,6 +674,77 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
   }
 }
 
+void getSimputSrcSpecRefNext(SimputCtlg* const cat,
+			     const SimputSrc* const src,
+			     const double prevtime,
+			     const double mjdref,
+			     char* const specref,
+			     int* const status)
+{
+  // Initialize with an empty string.                                                                                                                                            
+  strcpy(specref, "");
+
+  // Determine the timing extension.                                                                                                                                            
+  char timeref[SIMPUT_MAXSTR];
+  getSrcTimeRef(cat, src, timeref);
+  CHECK_STATUS_VOID(*status);
+
+  int timetype=getSimputExtType(cat, timeref, status);
+  CHECK_STATUS_VOID(*status);
+
+  if (EXTTYPE_LC==timetype) {
+    // Get the respective light curve.                                                                                                                                            
+    SimputLC* lc=getSimputLC(cat, src, timeref, prevtime, mjdref, status);
+    CHECK_STATUS_VOID(*status);
+
+    // Check if there is a spectrum column in the light curve.                                                                                                                    
+    if (NULL!=lc->spectrum) {
+      // Determine the current light curve bin.                                                                                                                                   
+      long long nperiods;
+      long bin=getLCBin(lc, prevtime, mjdref, &nperiods, status);
+      CHECK_STATUS_VOID(*status);
+
+      // Check if a spectrum is defined in the next light curve bin.
+      if ((0==strcmp(lc->spectrum[bin+1], "NULL")) ||
+          (0==strcmp(lc->spectrum[bin+1], " ")) ||
+          (0==strlen(lc->spectrum[bin+1]))) {
+        SIMPUT_ERROR("in the current implementation light curves "
+                     "must not contain blank entries in a given "
+                     "spectrum column");
+        *status=EXIT_FAILURE;
+        return;
+      }
+
+      // Copy the reference to the next spectrum.
+      strcpy(specref, lc->spectrum[bin+1]);
+
+      // Determine the relative location with respect to the                                                                                                                      
+      // location of the light curve.                                                                                                                                             
+      if ('['==specref[0]) {
+        char* firstbrack=strchr(timeref, '[');
+        strcpy(firstbrack, specref);
+        strcpy(specref, timeref);
+      } else if (('/'!=specref[0])&&(NULL!=strchr(timeref, '/'))) {
+        char* lastslash=strrchr(timeref, '/');
+        lastslash++;
+        strcpy(lastslash, specref);
+        strcpy(specref, timeref);
+      }
+
+      return;
+    }
+  }
+  else{
+    // If this function is being executed, a light curve is 
+    // supposed to exist in the simput cataloge. If no 
+    // light curve is avaliable there is an error somewhere:
+    SIMPUT_ERROR("There is no light curve with a spectrum "
+		 " column avaliable");
+    *status=EXIT_FAILURE;
+    return;
+  }
+}
+
 
 static void getSrcImagRef(SimputCtlg* const cat,
 			  const SimputSrc* const src,
@@ -851,7 +922,6 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
 					     int* const status)
 {
   SimputSpec* spec=NULL;
-
   // Check if the ARF is defined.
   CHECK_NULL_RET(cat->arf, *status, "instrument ARF undefined", spec);
 
@@ -1686,6 +1756,36 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 				double* const dec,
 				int* const status)
 {
+  // Determine if we have a Light Curve or a single spectrum is                                                                      
+  // given:                                                                                                    
+
+  // We set a flag indicating wether we have a spectra-based
+  // lightcurve or not:
+  int speclightcurve=0;
+
+  // Determine the timing extension.                                                                                                 
+  char timeref[SIMPUT_MAXSTR];
+  getSrcTimeRef(cat, src, timeref);
+  CHECK_STATUS_VOID(*status);
+
+  int timetype=getSimputExtType(cat, timeref, status);
+  CHECK_STATUS_VOID(*status);
+
+  // We declare a light curve for future possible use:
+  SimputLC* lc;
+  if (EXTTYPE_LC==timetype) {
+    // Get the respective light curve.                                                                                               
+    lc=getSimputLC(cat, src, timeref, currtime, mjdref, status);
+    CHECK_STATUS_VOID(*status);
+
+    // Check if there is a spectrum column in the light curve.                                                                       
+    if (NULL!=lc->spectrum) {
+      // In this case we should use 2 spectra in each light curve
+      // bin in order to interpolate information from both spectra.
+      speclightcurve=1;
+    }
+  }
+
   // Determine the references to the spectrum and 
   // image for the updated photon arrival time.
   char specref[SIMPUT_MAXSTR];
@@ -1695,7 +1795,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   getSrcImagRef(cat, src, currtime, mjdref, imagref, status);
   CHECK_STATUS_VOID(*status);
 
-  
+
   // Determine the extension type of the spectrum and the image
   // reference.
   int spectype=getSimputExtType(cat, specref, status);
@@ -1711,6 +1811,11 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
     phl=getSimputPhList(cat, specref, status);
     CHECK_STATUS_VOID(*status);
   } else if (EXTTYPE_PHLIST==imagtype) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "Image-based Light curves is a feature not "
+	    "fully support right now. We are currently working on it");
+    SIMPUT_WARNING(msg);
+
     phl=getSimputPhList(cat, imagref, status);
     CHECK_STATUS_VOID(*status);
   }
@@ -1761,48 +1866,115 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   // ---
   // If the spectrum does NOT refer to a photon list, determine the 
   // photon energy from a spectrum.
-  if (EXTTYPE_MIDPSPEC==spectype) {
-    // Determine the spectrum.
-    SimputSpec* spec=getSimputSpec(cat, specref, status);
-    CHECK_STATUS_VOID(*status);
+  
+  // Determine if we have a Light Curve or a single spectrum is 
+  // given:
 
-    // Get a random number in the interval [0,1].
-    double rnd=getRndNum(status);
-    CHECK_STATUS_VOID(*status);
-    assert(rnd>=0.);
-    assert(rnd<=1.);
+  // Get a random number in the interval [0,1].                                                                                                                                  
+  // We will use it afterwards for obtaining the photon energy:
+  double rnd=getRndNum(status);
+  CHECK_STATUS_VOID(*status);
+  assert(rnd>=0.);
+  assert(rnd<=1.);
 
-    // Multiply with the total photon rate (i.e. the spectrum
-    // does not have to be normalized).
-    rnd*=spec->distribution[cat->arf->NumberEnergyBins-1];
+  if (speclightcurve) {
+    // If we have a lightcurve, we take the next spectrum too in 
+    // order to perform the interpolation. We first suppose that
+    // all spectra are equally binned:
 
-    // Determine the corresponding point in the spectral 
-    // distribution (using binary search).
-    long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
-    while (upper>lower) {
-      mid=(lower+upper)/2;
-      if (spec->distribution[mid]<rnd) {
-	lower=mid+1;
-      } else {
-	upper=mid;
+    if (EXTTYPE_MIDPSPEC==spectype) {
+      //We first determine the second spectrum name:
+      char specref_next[SIMPUT_MAXSTR];
+      getSimputSrcSpecRefNext(cat, src, currtime, mjdref, specref_next, status);
+      CHECK_STATUS_VOID(*status);
+
+      // Determine the spectra.               
+      SimputSpec* spec=getSimputSpec(cat, specref, status);
+      SimputSpec* spec_next=getSimputSpec(cat, specref_next, status);
+      CHECK_STATUS_VOID(*status);
+
+      // We determine the interpolation factors between the
+      // two spectra. For this purppose, we need the time of 
+      //previous and next phases:
+      long long nperiods;
+      long bin_prev_spec=getLCBin(lc, currtime, mjdref, &nperiods, status);
+      long bin_next_spec=bin_prev_spec+1;
+           CHECK_STATUS_VOID(*status);
+      assert(bin_next_spec < lc->nentries);
+
+      double time_prev_spec=lc->phase[bin_prev_spec]*lc->period;
+      double time_next_spec=lc->phase[bin_next_spec]*lc->period;
+     
+
+      // We declare and compute the interpolation factors:
+      double af=(time_next_spec-currtime)/(time_next_spec-time_prev_spec);
+      double bf=1.-af;
+      
+      // Multiply the random number with total photon rate 
+      // (i.e. the spectrum does not have to be normalized).
+      rnd*=(af*spec->distribution[cat->arf->NumberEnergyBins-1]+
+	    bf*spec_next->distribution[cat->arf->NumberEnergyBins-1]);
+      
+      // Determine the corresponding point in the spectral                                                                                                                       
+      // distribution (using binary search).                                                                                                                                    
+      long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
+      while (upper>lower) {
+        mid=(lower+upper)/2;
+        if ((af*spec->distribution[mid]+bf*spec_next->distribution[mid])<rnd) {
+          lower=mid+1;
+        } else {
+          upper=mid;
+        }
       }
-    }
 
-    // Return the corresponding photon energy.
-    *energy=
-      cat->arf->LowEnergy[lower] + 
-      getRndNum(status)*
-      (cat->arf->HighEnergy[lower]-cat->arf->LowEnergy[lower]);
-    CHECK_STATUS_VOID(*status);
-  }
+      // Return the corresponding photon energy.                                                                                                                                 
+      *energy=
+        cat->arf->LowEnergy[lower] +
+        getRndNum(status)*
+        (cat->arf->HighEnergy[lower]-cat->arf->LowEnergy[lower]);
+      CHECK_STATUS_VOID(*status);
+    }
+  } else { 
+    // If there is no lightcurve we follow the usual process:
+
+    if (EXTTYPE_MIDPSPEC==spectype) {
+      // Determine the spectrum.
+      SimputSpec* spec=getSimputSpec(cat, specref, status);
+      CHECK_STATUS_VOID(*status);
+      
+      // Multiply the random number with the total photon rate 
+      // (i.e. the spectrum does not have to be normalized).
+      rnd*=spec->distribution[cat->arf->NumberEnergyBins-1];
+
+      // Determine the corresponding point in the spectral                                                                                                                        
+      // distribution (using binary search).                                                                                                                                  
+      long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
+      while (upper>lower) {
+	mid=(lower+upper)/2;
+	if (spec->distribution[mid]<rnd) {
+	  lower=mid+1;
+	} else {
+	  upper=mid;
+	}
+      }
+
+      // Return the corresponding photon energy.                                                                                                                                    
+      *energy=
+	cat->arf->LowEnergy[lower] +
+	getRndNum(status)*
+	(cat->arf->HighEnergy[lower]-cat->arf->LowEnergy[lower]);
+      CHECK_STATUS_VOID(*status); 
+    }
+  }  
+  
   // END of determine the photon energy.
   // --- 
-
-
+  
+  
   // ---
   // If the image does NOT refer to a photon list, determine the
   // spatial information.
-
+  
   // Point-like sources.
   if (EXTTYPE_NONE==imagtype) {
     *ra =src->ra;
