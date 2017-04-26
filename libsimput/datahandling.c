@@ -280,6 +280,27 @@ static inline double getLCTime(const SimputLC* const lc,
 }
 
 
+/** Gives the reference time of the begining of our real light curve,
+    referenced to the begininf of the loaded light curve, which may
+    contain extra entries to consider a full period in the
+    calculations. */
+static inline double getRefTime0(const SimputLC* const lc)
+{
+  // First we check wether the phase of the first entry
+  // in the lc corresponds to phase 0.0
+  if (lc->phase[0]==0.0){
+    return 0.;
+  } else {
+    // In this case, the spectrum of phase 0 is not given, so an extra
+    // entry corresponding to the last entry given by the usera has
+    // previously been added at the beginning of thw light-curve.
+    // This extra entry has negative phase, so the time between this entry
+    // and the phase 0.0 can be calculated as:
+    return (1+lc->phase[0])*lc->period;
+  }
+}
+
+
 /** Determine the index of the bin of the light curve that corresponds
     to the specified time. For periodic light curves the function
     stores the number of periods since the specified origin of the
@@ -318,7 +339,10 @@ static inline long getLCBin(const SimputLC* const lc,
   } else {
     // Periodic light curve.
     // Make a first guess on the number of passed periods.
-    double dt=time-getLCTime(lc, 0, 0, mjdref);
+    // In some cases the first entry in the lc does not correspond to the
+    // phase 0.0, so it's time is <0.0 and an extra term has to be added
+    // to set the start at 0.0:
+    double dt=time-(getLCTime(lc, 0, 0, mjdref)+getRefTime0(lc));
     double phase;
     if (fabs(lc->dperiod)<1.e-20) {
       phase=lc->phase0+dt/lc->period;
@@ -326,18 +350,18 @@ static inline long getLCBin(const SimputLC* const lc,
       phase=lc->phase0+log(1.+dt*lc->dperiod/lc->period)/lc->dperiod;
     }
     *nperiods=(long long)phase;
-
+  
     // Correct the first guess such that the requested time lies within the
     // covered period. Deviations with respect to the first guess can 
     // introduced by a \dot{P} (DPERIOD).
-    while (getLCTime(lc, 0, (*nperiods)+1, mjdref) <= time) {
+    while (getLCTime(lc, 0, (*nperiods)+1, mjdref)+getRefTime0(lc) <= time) {
       (*nperiods)++;
     }
-    while (getLCTime(lc, 0, *nperiods, mjdref) > time) {
+    while (getLCTime(lc, 0, *nperiods, mjdref)+getRefTime0(lc) > time) {
       (*nperiods)--;
     }
   }
-
+  
   // Determine the index of the light curve bin (using binary search).
   long lower=0, upper=lc->nentries-2, mid;
   while (upper>lower) {
@@ -348,7 +372,7 @@ static inline long getLCBin(const SimputLC* const lc,
       upper=mid;
     }
   }
-
+ 
   return(lower);
 }
 
@@ -1905,11 +1929,10 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       double time_prev_spec=lc->phase[bin_prev_spec]*lc->period;
       double time_next_spec=lc->phase[bin_next_spec]*lc->period;
      
-
       // We declare and compute the interpolation factors:
       double af=(time_next_spec-currtime)/(time_next_spec-time_prev_spec);
       double bf=1.-af;
-      
+
       // Multiply the random number with total photon rate 
       // (i.e. the spectrum does not have to be normalized).
       rnd*=(af*spec->distribution[cat->arf->NumberEnergyBins-1]+

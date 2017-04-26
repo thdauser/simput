@@ -2060,7 +2060,6 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       break;
     }
 
-
     // Determine the number of rows in the table.
     fits_get_num_rows(fptr, &lc->nentries, status);
     if (EXIT_SUCCESS!=*status) {
@@ -2068,16 +2067,41 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       break;
     }
    
-    // We correct the number of rows to take into account the
-    // part of the light curve after the last spectrum given:
+    // We correct the number of entries in the stored light curve.
+    // In principle, the number of entries in the lc will be one more than 
+    // the number of rows in the fits table so that we take into account the
+    // last part of the lc. Further corrections may be needed.
+    int nfitsentries=lc->nentries;
+    int anynul=0;
+
+    // Flag indicating wether the first phase is 0.0
+    int first_phase_no0=0;
+
     if (cphase>0) {
-      int nrows_old=lc->nentries;
-      lc->nentries=nrows_old+1; // We add an extra row where we
-                                 // will store the first phase again
+      // We add an extra row where we will store the first phase again
+      lc->nentries++;
+
+      // There is an extra correction, corresponding to the case 
+      // where phase0.0 spectrum is not given. In this situation, the 
+      // last phase given in the fits file should be taken into account
+      // in first place to generate photons in the first part of the lc.
+      double *first_phase=(double*)malloc(sizeof(double));
+      fits_read_col(fptr, TDOUBLE, cphase, 1, 1, 1,
+                    0, first_phase, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+        SIMPUT_ERROR("failed reading phase values from light curve");
+        break;
+      }
+
+      if (*first_phase!=0.0){
+	// phase 0.0 is not given, so we add a new entry
+	lc->nentries++;
+	first_phase_no0=1;
+      }
     } 
     // Now lc->nentries does not stand for the number of entries in the
     // fits table any more, but the number of entries in the loaded lightcurve
-    
+
     char msg[SIMPUT_MAXSTR];
     sprintf(msg, "light curve '%s' contains %ld data points\n", 
 	    filename, lc->nentries);
@@ -2120,15 +2144,6 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     }
 
     // Read the data from the table.                                                                                                                                            
-    int anynul=0;
-
-    // In principle, the number of entries in the fits table is the same as the
-    // number of entries the light curve will have.
-    int nfitsentries=lc->nentries;
-    if (cphase>0) {  // In this case lc->nentries is one more than entries we have
-                     // in the fits table. 
-      nfitsentries--;
-    }
     // TIME                                                                                                                                                                       
     if (ctime>0) {
       fits_read_col(fptr, TDOUBLE, ctime, 1, 1, nfitsentries,
@@ -2146,24 +2161,44 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 
     // PHASE                                                                                                                                                                       
     if (cphase>0) {
-      // We take the phases in the fits file:
+      // We take the phases in the fits file. They are allocated at the 
+      // begining of the array lc->phase.
       fits_read_col(fptr, TDOUBLE, cphase, 1, 1, nfitsentries,
                     0, lc->phase, &anynul, status);
       // we add the first one at the end:
-      lc->phase[lc->nentries-1]=(lc->phase[0]+1.); 
+      lc->phase[lc->nentries-1]=(lc->phase[0]+1.);
+      // In case that phase0.0 is not given, we need an extra correction:
+      if (first_phase_no0){
+	// We shift the phases one cell:
+	for (int ii=0;ii<nfitsentries;ii++){
+	  lc->phase[lc->nentries-2-ii]=lc->phase[lc->nentries-3-ii];
+	}
+	// We add the last phase given in the fits at the begining:
+	lc->phase[0]=(lc->phase[lc->nentries-2]-1.);
+      }
+
       if (EXIT_SUCCESS!=*status) {
         SIMPUT_ERROR("failed reading phase values from light curve");
         break;
-      }
+	}
     }
 
     // FLUX                    
     // We take the phases in the fits file: 
     fits_read_col(fptr, TFLOAT, cflux, 1, 1, nfitsentries,
                   0, lc->flux, &anynul, status);
-    // we add the first one at the end:  
     if (cphase>0) {
+      // we add the first one at the end:
       lc->flux[lc->nentries-1]=lc->flux[0]; 
+      //In case that phase0.0 is not given, we need an extra correction:
+      if (first_phase_no0){
+        // We shift the fluxes one cell:
+        for (int ii=0;ii<nfitsentries;ii++){
+          lc->flux[lc->nentries-2-ii]=lc->flux[lc->nentries-3-ii];
+        }
+        // We add the last flux given in the fits at the begining:
+        lc->flux[0]=(lc->flux[lc->nentries-2]);
+      }
     }
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("failed reading flux values from light curve");
@@ -2182,17 +2217,34 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
           break;
         }
 
-        lc->spectrum[row]=
-          (char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
-        CHECK_NULL_BREAK(lc->spectrum[row], *status,
-                         "memory allocation for spectrum string failed");
-        strcpy(lc->spectrum[row], spectrum[0]);
-	// Now we add the first spectrum again at the end:
+	// We allocate spectra accordingly whether the first phase in 
+	// the fits file is phase 0.0 or not:
+	if (first_phase_no0){
+	  lc->spectrum[row+1]=
+            (char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
+          CHECK_NULL_BREAK(lc->spectrum[row+1], *status,
+                           "memory allocation for spectrum string failed");
+	          strcpy(lc->spectrum[row+1], spectrum[0]);
+	} else {
+	  lc->spectrum[row]=
+	    (char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
+	  CHECK_NULL_BREAK(lc->spectrum[row], *status,
+			   "memory allocation for spectrum string failed");
+	  strcpy(lc->spectrum[row], spectrum[0]);
+	}
+
+	// Now we add the extra spectrums at the end or the begining
 	if(row==0){
 	  lc->spectrum[lc->nentries-1]=(char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
 	  CHECK_NULL_BREAK(lc->spectrum[lc->nentries-1], *status,
 			   "memory allocation for spectrum string failed");
 	  strcpy(lc->spectrum[lc->nentries-1], spectrum[0]);
+	} 
+	else if (row==nfitsentries-1 && first_phase_no0){
+	  lc->spectrum[0]=(char*)malloc((strlen(spectrum[0])+1)*sizeof(char));
+          CHECK_NULL_BREAK(lc->spectrum[0], *status,
+                           "memory allocation for spectrum string failed");
+          strcpy(lc->spectrum[0], spectrum[0]);
 	}
       }
 
@@ -2200,10 +2252,11 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       CHECK_STATUS_BREAK(*status);
     }
     
+
     // IMAGE                                                                                                                                                                       
     if (cimage>0) {
       long row;
-      // We take the phases in the fits file:
+      // We take the images in the fits file:
       for (row=0; row<nfitsentries; row++) {
         fits_read_col(fptr, TSTRING, cimage, row+1, 1, 1,
                       "", image, &anynul, status);
@@ -2217,7 +2270,7 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
         CHECK_NULL_BREAK(lc->image[row], *status,
                          "memory allocation for image string failed");
         strcpy(lc->image[row], image[0]);
-	// Now we add the first spectrum again at the end:   
+	// Now we add the first image again at the end:
 	if(row==0){
 	  lc->image[lc->nentries-1]=
 	    (char*)malloc((strlen(image[0])+1)*sizeof(char));
