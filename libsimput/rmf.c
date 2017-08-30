@@ -87,6 +87,7 @@ struct RMF* loadRMF(char* const filename, int* const status)
   // 1 should actually also not be used, but can be handled by the simulation.
   long bincount;
   double min_sum=1.;
+  double total_sum = 0.0;
   for (bincount=0; bincount<rmf->NumberEnergyBins; bincount++) {
     double sum=0.;
     long chancount;
@@ -101,11 +102,15 @@ struct RMF* loadRMF(char* const filename, int* const status)
     if (sum<min_sum) {
       min_sum=sum;
     }
+    total_sum += sum/rmf->NumberEnergyBins;
   }
 
-  if (min_sum<0.999999) {
+  if (total_sum<0.995) {
     SIMPUT_WARNING("RMF is not normalized");
+    printf(" (total average sum of each RMF row %e) \n",total_sum);
   }
+
+
 
   // Close the open FITS file.
   fits_close_file(fptr, status);

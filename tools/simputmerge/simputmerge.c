@@ -447,7 +447,11 @@ int simputmerge_main()
 
 			incat[ii]=openSimputCtlg(infilenames[ii], READONLY, 0, 0, 0, 0, &status);
 			CHECK_STATUS_BREAK(status);
+		}
 
+
+		// Loop over both source catalogs.
+		for (int ii=0; ii<num_cat; ii++) {
 			long jj;
 			for (jj=0; jj<incat[ii]->nentries; jj++) {
 
