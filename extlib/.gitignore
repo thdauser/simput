@@ -19,6 +19,10 @@ fftw/tools/fftw-wisdom
 fftw/tools/fftw-wisdom-to-conf
 fftw/tools/fftw-wisdom.1
 fftw/tools/fftw_wisdom.1
+fftw/ltmain.sh
+fftw/m4/libtool.m4
+fftw/m4/ltoptions.m4
+fftw/m4/ltversion.m4
 wcslib/C/fitshdr.c
 wcslib/C/libwcs.so*
 wcslib/C/libwcs.so

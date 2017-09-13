@@ -270,10 +270,11 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 	      SIMPUT_ERROR(msg);
 	      return NULL;
 	    }
-	    int opt_status, ncol;
+	    int opt_status = EXIT_SUCCESS;
+	    int ncol;
 	    fits_get_colnum(fptr, CASEINSEN, "FLUX", &ncol, &opt_status);
-		if (NULL!=fptr) fits_close_file(fptr, status);
 
+	    if (NULL!=fptr) fits_close_file(fptr, status);
 
 		if (opt_status==EXIT_SUCCESS) {
 			refs->timing = add_single_data_to_buffer(incat->filename,insrc->timing,

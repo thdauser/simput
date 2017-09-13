@@ -2022,9 +2022,9 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
 	// Check if dperiod is too small such that the applied formula
 	// that is used for handling the period change, is guaranteed
 	// to work properly.
-	if (fabs(lc->dperiod)<1.e-20) {
+	if (fabs(lc->dperiod)<0) {
 	  char msg[SIMPUT_MAXSTR];
-	  sprintf(msg, "value of DPERIOD of the light curve '%s' is too small (%e)", 
+	  sprintf(msg, "value of DPERIOD of the light curve '%s' is negative (%e)",
 		  filename, lc->dperiod);
 	  SIMPUT_ERROR(msg);
 	  *status=EXIT_FAILURE;
