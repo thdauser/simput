@@ -1090,7 +1090,7 @@ static SimputImg* getSimputImg(SimputCtlg* const cat,
 			       char* const filename,
 			       int* const status)
 {
-  const long maximgs=200;
+  const long maximgs=1000;
 
   // Check if the source catalog contains an image buffer.
   if (NULL==cat->imgbuff) {
@@ -1123,7 +1123,7 @@ static SimputImg* getSimputImg(SimputCtlg* const cat,
   // The requested image is not contained in the storage.
   // Therefore we must load it from the specified location.
   if (sb->nimgs>=maximgs) {
-    SIMPUT_ERROR("too many images in the internal storage");
+    SIMPUT_ERROR("too many images (>1000) in the internal storage");
     *status=EXIT_FAILURE;
     return(NULL);
   }
