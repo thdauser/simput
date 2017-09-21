@@ -3861,21 +3861,21 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 			// Define the spectral model and set the parameters.
 			switch(ii) {
 			case 0:
-				fprintf(cmdfile, "fit_fun(\"phabs(1)*powerlaw(1)\");\n");
+				fprintf(cmdfile, "fit_fun(\"tbabs(1)*powerlaw(1)\");\n");
 				fprintf(cmdfile, "set_par(\"powerlaw(1).PhoIndex\", %e);\n",
 						plPhoIndex);
 				break;
 			case 1:
-				fprintf(cmdfile, "fit_fun(\"phabs(1)*bbody(1)\");\n");
+				fprintf(cmdfile, "fit_fun(\"tbabs(1)*bbody(1)\");\n");
 				fprintf(cmdfile, "set_par(\"bbody(1).kT\", %e);\n", bbkT);
 				break;
 			case 2:
-				fprintf(cmdfile, "fit_fun(\"phabs(1)*egauss(1)\");\n");
+				fprintf(cmdfile, "fit_fun(\"tbabs(1)*egauss(1)\");\n");
 				fprintf(cmdfile, "set_par(\"egauss(1).center\", 6.4);\n");
 				fprintf(cmdfile, "set_par(\"egauss(1).sigma\", %e);\n", flSigma);
 				break;
 			case 3:
-				fprintf(cmdfile, "fit_fun(\"phabs(1)*relline(1)\");\n");
+				fprintf(cmdfile, "fit_fun(\"tbabs(1)*relline(1)\");\n");
 				fprintf(cmdfile, "set_par(\"relline(1).lineE\", 6.4);\n");
 				fprintf(cmdfile, "set_par(\"relline(1).a\", %f);\n", rflSpin);
 				break;
@@ -3886,7 +3886,7 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 			CHECK_STATUS_VOID(*status);
 
 			// Absorption is the same for all spectral components.
-			fprintf(cmdfile, "set_par(\"phabs(1).nH\", %e);\n", NH);
+			fprintf(cmdfile, "set_par(\"tbabs(1).nH\", %e);\n", NH);
 
 			// Evaluate the spectral model and store the data in a temporary
 			// FITS file.

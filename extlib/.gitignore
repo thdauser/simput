@@ -39,3 +39,4 @@ wcslib/wcslib.pc
 wcslib/utils/fitshdr
 wcslib/utils/HPXcvt
 wcslib/utils/wcsware
+wcslib/pgsbox/libpgsbox.so.4.25.1
