@@ -3954,7 +3954,7 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *X
     	// Write the header.
     	fprintf(cmdfile, "query yes\n");
 
-        if (strlen(XSPECPrep)!=0) {
+        if ( (strlen(XSPECPrep)!=0) && (strcmp(XSPECPrep,"none")!=0) && (strcmp(XSPECPrep,"NONE")!=0) ) {
                 fprintf(cmdfile, "@%s\n", XSPECPrep);
         }
         
