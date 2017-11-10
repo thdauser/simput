@@ -70,3 +70,7 @@ simputdistcheck: dist
 .PHONY: test
 test:
 	cd test && ./test_simput.csh
+
+.PHONY: mac_dependencies
+mac_dependencies:
+	cd mac_dependencies && ./simput_lib_correct.sh @prefix@
