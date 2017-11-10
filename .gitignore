@@ -30,3 +30,5 @@ doc
 .deps
 .libs
 labnh.fit
+.DS_Store
+.project

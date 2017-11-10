@@ -1,5 +1,8 @@
 cfitsio/cfitsio.pc
 cfitsio/libcfitsio.so*
+cfitsio/libcfitsio.2.3.37.dylib
+cfitsio/libcfitsio.2.dylib
+cfitsio/libcfitsio.dylib
 fftw/doc/html/*
 fftw/doc/stamp-vti
 fftw/doc/version.texi
@@ -41,3 +44,5 @@ wcslib/utils/HPXcvt
 wcslib/utils/wcsware
 wcslib/pgsbox/libpgsbox.so.4.25.1
 wcslib/wcsconfig_utils.h
+wcslib/C/libwcs.4.25.1.dylib
+wcslib/C/libwcs.dylib
