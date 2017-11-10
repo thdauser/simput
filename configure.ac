@@ -60,6 +60,17 @@ case "$build_os" in
 esac
 AM_CONDITIONAL([IS_OSX], [test x$IS_OSX = xtrue])
 
+OSX_VERSION_MAJOR=""
+OSX_VERSION_MINOR=""
+case $build_os in
+  darwin*)
+  OSX_VERSION_MAJOR=`sw_vers -productVersion | awk -F '.' '{print $1}'`
+  OSX_VERSION_MINOR=`sw_vers -productVersion | awk -F '.' '{print $2}'`
+  ;;
+esac
+AC_SUBST(OSX_VERSION_MAJOR)
+AC_SUBST(OSX_VERSION_MINOR)
+
 # Check for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([limit.h math.h stdio.h stdlib.h stdarg.h string.h])
