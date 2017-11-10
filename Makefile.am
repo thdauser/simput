@@ -76,6 +76,6 @@ mac_dependencies:
 	cd mac_dependencies && ./simput_lib_correct.sh @prefix@
 
 install-exec-hook:
-        @if [ 0$(OSX_VERSION_MINOR) -gt 10  ]; then\
-                echo "XXXXX Complicated Mac Version";\
-        fi
+	@if [ 0$(OSX_VERSION_MINOR) -gt 10  ]; then\
+		echo "XXXXX Complicated Mac Version";\
+	fi
