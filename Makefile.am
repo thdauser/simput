@@ -71,11 +71,10 @@ simputdistcheck: dist
 test:
 	cd test && ./test_simput.csh
 
-.PHONY: mac_dependencies
-mac_dependencies:
-	cd mac_dependencies && ./simput_lib_correct.sh @prefix@
-
+crit_mac_version=10
 install-exec-hook:
-	@if [ 0$(OSX_VERSION_MINOR) -gt 10  ]; then\
-		echo "XXXXX Complicated Mac Version";\
+	@if [ 0$(OSX_VERSION_MINOR) -gt $(crit_mac_version)  ]; then\
+		echo "\n  ***  Mac Version $(OSX_VERSION_MAJOR).$(OSX_VERSION_MINOR) detected *** ";\
+		echo "\n   ... trying to solve known problems with this installation with this script:\n\n ";\
+		./mac_solve_simput_dependencies.sh @prefix@;\
 	fi

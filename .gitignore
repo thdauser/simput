@@ -16,6 +16,8 @@ config.log
 config.status
 config.guess
 config.sub
+config.h
+config.h.in
 libtool
 stamp-h1
 depcomp
@@ -32,3 +34,4 @@ doc
 labnh.fit
 .DS_Store
 .project
+*.log

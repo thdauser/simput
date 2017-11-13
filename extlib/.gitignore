@@ -26,6 +26,13 @@ fftw/ltmain.sh
 fftw/m4/libtool.m4
 fftw/m4/ltoptions.m4
 fftw/m4/ltversion.m4
+fftw/INSTALL
+fftw/compile
+fftw/config.guess
+fftw/config.sub
+fftw/depcomp
+fftw/install-sh
+fftw/missing
 wcslib/C/fitshdr.c
 wcslib/C/libwcs.so*
 wcslib/C/libwcs.so
