@@ -3742,6 +3742,16 @@ void read_isisSpec_fits_file(char *fname, SimputMIdpSpec* simputspec,
 	// END of loop over the different spectral components.
 }
 
+static int check_xspec_linecont(char* buf){
+
+	if (buf && *buf && buf[strlen(buf)-1]=='\n' && strlen(buf)>1 && buf[strlen(buf)-2]=='-' ){
+		return 1;
+	} else {
+		return 0;
+	}
+
+}
+
 void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 	// The spectrum is contained in a .qdp file produced by XSPEC/PLT,
 	// and has to be loaded from there.
@@ -3757,11 +3767,14 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 	// Determine the number of rows.
 	long nlines=0;
 	char c=0;
+	char prev_c=0;
 	while(!feof(xspecfile)) {
 		c=fgetc(xspecfile);
-		if ('\n'==c) {
+		// if we have a line continuatiion, length is one less
+		if ('\n'==c && prev_c!='-'){
 			nlines++;
 		}
+		prev_c = c;
 	}
 	// Check if the last line has been empty.
 	if('\n'==c) {
@@ -3800,12 +3813,16 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 		return;
 	}
 	// Read the actual data.
-	long ii;
-	for (ii=0; ii<nlines; ii++) {
-		float fbuffer;
-		char linebuffer[SIMPUT_MAXSTR];
-		if(fgets(linebuffer, SIMPUT_MAXSTR, xspecfile)!=NULL){
-			if(sscanf(linebuffer, "%f %f %f",
+	long ii=0;
+	char linebuffer[SIMPUT_MAXSTR];
+	int linecont=0;
+	float fbuffer;
+
+	while( (fgets(linebuffer, SIMPUT_MAXSTR, xspecfile)!=NULL) && (ii<nlines) ){
+
+		// was there a line continuation before?
+		if(linecont==0){
+			if (sscanf(linebuffer, "%f %f %f",
 					&(simputspec->energy[ii]),
 					&fbuffer,
 					&(simputspec->fluxdensity[ii]))!=3) {
@@ -3813,8 +3830,11 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 				*status=EXIT_FAILURE;
 				return;
 			}
+			ii++;
 		}
+		linecont=check_xspec_linecont(linebuffer);
 	}
+
 	CHECK_STATUS_VOID(*status);
 
 	// Close the file.
@@ -3842,7 +3862,7 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 	// Write the header.
 	fprintf(cmdfile, "require(\"isisscripts\");\n");
 	fprintf(cmdfile, "()=xspec_abund(\"wilm\");\n");
-	fprintf(cmdfile, "use_localmodel(\"relline\");\n");
+	fprintf(cmdfile, "use_localmodel(\"relxill\");\n");
 
 	// Define the energy grid.
 	fprintf(cmdfile, "variable lo=[%f:%f:%f];\n", Elow, Eup, Estep);
