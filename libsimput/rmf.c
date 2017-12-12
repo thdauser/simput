@@ -85,24 +85,33 @@ struct RMF* loadRMF(char* const filename, int* const status)
   // In that case the RSP probably also contains the mirror ARF, what should 
   // not be the case for this simulation. Row sums with a value of less than
   // 1 should actually also not be used, but can be handled by the simulation.
-  long bincount;
+  long igrp;
   double min_sum=1.;
   double total_sum = 0.0;
-  for (bincount=0; bincount<rmf->NumberEnergyBins; bincount++) {
-    double sum=0.;
-    long chancount;
-    for (chancount=0; chancount<rmf->NumberChannels; chancount++) {
-      sum+=ReturnRMFElement(rmf, chancount, bincount);
+
+  double sumresp;
+  long ie, i, j;
+  for (ie=0; ie<rmf->NumberEnergyBins; ie++) {
+
+    /* sum up the response in this energy */
+
+    sumresp = 0.0;
+
+    for (i=0; i<rmf->NumberGroups[ie]; i++) {
+       igrp = i + rmf->FirstGroup[ie];
+       for (j=0; j<rmf->NumberChannelGroups[igrp]; j++) {
+         sumresp += rmf->Matrix[j+rmf->FirstElement[igrp]];
+       }
     }
-    if (sum>1.000001) {
+   if (sumresp>1.000001) {
       SIMPUT_ERROR("RMF contains rows with a sum > 1.0 (probably contains ARF)");
       *status=EXIT_FAILURE;
       return(rmf);
     }
-    if (sum<min_sum) {
-      min_sum=sum;
+    if (sumresp<min_sum) {
+      min_sum=sumresp;
     }
-    total_sum += sum/rmf->NumberEnergyBins;
+    total_sum += sumresp/rmf->NumberEnergyBins;
   }
 
   if (total_sum<0.995) {
