@@ -25,6 +25,7 @@
 
 #include "simput.h"
 #include "common.h"
+#include "parinput.h"
 
 #define TOOLSUB simputfile_main
 #include "headas_main.c"
@@ -133,6 +134,13 @@ struct Parameters {
   int chatter;
   char clobber;
   char history;
+
+  /** number of bins of the spectrum **/
+  int nbins;
+  /** should the bins be spaced logarithmically? **/
+  int logegrid;
+
+
 };
 
 

@@ -59,7 +59,7 @@ int simputspec_main()
 
   // Register HEATOOL
   set_toolname("simputspec");
-  set_toolversion("0.11");
+  set_toolversion("0.12");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -149,6 +149,15 @@ int simputspec_main()
     }
     // END of checking the input type for the spectrum.
 
+    // need to check how the energy grid for the spectrum should be calculated
+    if (par.Estep > 1e-6){
+    	SIMPUT_WARNING(" ** deprecated use of the Estep parameter ** \n    use Nbins instead to define the energy grid.");
+    	par.nbins = (par.Eup - par.Elow) / par.Estep;
+    	par.logegrid = 0;
+    	printf(" -> given Estep=%.4e converted to nbins=%i on a linear grid \n",par.Estep,par.nbins);
+    }
+
+
     // ---- END of Initialization ----
 
 
@@ -161,7 +170,7 @@ int simputspec_main()
     if ((strlen(par.ISISFile)>0) || (use_components>0)) {
 
     	write_isisSpec_fits_file(par.Simput, par.ISISFile, par.ISISPrep,
-    			par.ISISPostCmd, par.Elow, par.Eup, par.Estep,
+    			par.ISISPostCmd, par.Elow, par.Eup, par.nbins, par.logegrid,
 				par.plPhoIndex, par.bbkT, par.flSigma, par.rflSpin, par.NH,
 				&status);
 
@@ -173,7 +182,7 @@ int simputspec_main()
     if (strlen(par.XSPECFile)>0) {
 
     	write_xspecSpec_file(par.Simput, par.XSPECFile, par.XSPECPrep, par.XSPECPostCmd,
-    			par.Elow, par.Eup, par.Estep, &status);
+    			par.Elow, par.Eup, par.nbins, par.logegrid, &status);
 
     } // END of running Xspec.
 
@@ -677,6 +686,10 @@ int simputspec_getpar(struct Parameters* const par)
   }
   strcpy(par->PHAFile, sbuffer);
   free(sbuffer);
+
+  query_simput_parameter_bool("logEgrid", &par->logegrid, &status );
+  query_simput_parameter_int("Nbins", &par->nbins, &status );
+
 
   return(status);
 }

@@ -70,6 +70,9 @@ struct Parameters {
   int chatter;
   int clobber;
   int history;
+
+  int nbins;
+  int logegrid;
 };
 
 // Parameter provider function

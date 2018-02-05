@@ -32,7 +32,7 @@ int simputfile_main()
 
   // Register HEATOOL
   set_toolname("simputfile");
-  set_toolversion("0.20");
+  set_toolversion("0.21");
 
 
   do { // Beginning of ERROR HANDLING Loop.
@@ -94,6 +94,7 @@ int simputfile_main()
       strcpy(shistory, "yes");
     }
 
+
     // Call 'simputsrc' to produce a SIMPUT catalog with a 
     // single point-like source.
     sprintf(command, 
@@ -105,11 +106,24 @@ int simputfile_main()
     status=system(command);
     CHECK_STATUS_BREAK(status);
 
+    // need to check how the energy grid for the spectrum should be calculated
+    if (par.Estep > 1e-6){
+    	SIMPUT_WARNING(" ** deprecated use of the Estep parameter ** \n    use Nbins instead to define the energy grid.");
+    	par.nbins = (par.Eup - par.Elow) / par.Estep;
+    	par.logegrid = 0;
+    	printf(" -> given Estep=%.4e converted to nbins=%i on a linear grid \n",par.Estep,par.nbins);
+    }
+
+  /**  if (0==par.logegrid) {
+           strcpy(slogegrid, "no");
+         } else {
+           strcpy(slogegrid, "yes");
+    } */
     // Call 'simputspec' to produce a spectrum and assign it
     // to the source.
     sprintf(command, 
 	    "simputspec Simput=%s "
-	    "Elow=%f Eup=%f Estep=%f "
+	    "Elow=%f Eup=%f Nbins=%i logEgrid=%s "
 	    "plPhoIndex=%f plFlux=%e "
 	    "bbkT=%f bbFlux=%e "
 	    "flSigma=%e flFlux=%e "
@@ -119,7 +133,7 @@ int simputfile_main()
 	    "ISISFile=%s ISISPrep=%s XSPECFile=%s XSPECPrep=%s PHAFile=%s ASCIIFile=%s "
 	    "chatter=%d history=%s",
 	    par.Simput,
-	    par.Elow, par.Eup, par.Estep,
+	    par.Elow, par.Eup, par.nbins, ((par.logegrid==0)?"no":"yes"),
 	    par.plPhoIndex, par.plFlux,
 	    par.bbkT, par.bbFlux,
 	    par.flSigma, par.flFlux,
@@ -520,6 +534,9 @@ int simputfile_getpar(struct Parameters* const par)
     SIMPUT_ERROR("reading the history parameter failed");
     return(status);
   }
+
+  query_simput_parameter_bool("logEgrid", &par->logegrid, &status );
+  query_simput_parameter_int("Nbins", &par->nbins, &status );
 
   return(status);
 }

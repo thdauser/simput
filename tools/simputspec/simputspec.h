@@ -86,6 +86,13 @@ struct Parameters {
 
   /** File name of the input PHA spectrum. */
   char PHAFile[SIMPUT_MAXSTR];
+
+  /** number of bins of the spectrum **/
+  int nbins;
+  /** should the bins be spaced logarithmically? **/
+  int logegrid;
+
+
 };
 
 

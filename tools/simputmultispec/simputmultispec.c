@@ -660,7 +660,7 @@ static void ms_save_spec_isis(SimputMIdpSpec *spec, struct Parameters par,
 	get_setPar_string_isis(&ISISsetPar, data_par, li, status);
 	printf("%s\n",ISISsetPar);
 	write_isisSpec_fits_file(par.Simput, par.ISISFile, par.ISISPrep,ISISsetPar,
-			par.Elow, par.Eup, par.Estep, 0.0, 0.0, 0.0, 0.0, 0.0, status);
+			par.Elow, par.Eup, par.nbins, par.logegrid, 0.0, 0.0, 0.0, 0.0, 0.0, status);
 	free(ISISsetPar);
 
 	CHECK_STATUS_VOID(*status);
@@ -682,7 +682,7 @@ static void ms_save_spec_xspec(SimputMIdpSpec *spec, struct Parameters par,
 //			par.Elow, par.Eup, par.Estep, 0.0, 0.0, 0.0, 0.0, 0.0, status);
 
 	write_xspecSpec_file(par.Simput, par.XSPECFile, par.XSPECPrep, XSPECsetPar,
-			par.Elow, par.Eup, par.Estep, status);
+			par.Elow, par.Eup, par.nbins, par.logegrid, status);
 
 
 	free(XSPECsetPar);
@@ -938,7 +938,7 @@ int simputmultispec_getpar(struct Parameters* const par) {
   query_simput_parameter_string("ISISFile", &(par->ISISFile), &status );
   query_simput_parameter_string("XSPECFile", &(par->XSPECFile), &status );
   query_simput_parameter_string("XSPECPrep", &(par->XSPECPrep), &status );
-  //query_simput_parameter_string("ISISPrep", &(par->ISISPrep), &status );
+  query_simput_parameter_string("ISISPrep", &(par->ISISPrep), &status );
   query_simput_parameter_file_name("ImageFile", &(par->ImageFile), &status );
 
   query_simput_parameter_float("RA", &par->RA, &status );
@@ -965,7 +965,19 @@ int simputmultispec_getpar(struct Parameters* const par) {
   query_simput_parameter_float("Emin", &par->Emin, &status );
   query_simput_parameter_float("Emax", &par->Emax, &status );
 
+  query_simput_parameter_bool("logEgrid", &par->logegrid, &status );
+  query_simput_parameter_int("Nbins", &par->nbins, &status );
+
     // ***************************** //
+
+  // need to check how the energy grid for the spectrum should be calculated
+  if (par->Estep > 1e-6){
+  	SIMPUT_WARNING(" ** deprecated use of the Estep parameter ** \n    use Nbins instead to define the energy grid.");
+  	par->nbins = (par->Eup - par->Elow) / par->Estep;
+  	par->logegrid = 0;
+  	printf(" -> given Estep=%.4e converted to nbins=%i on a linear grid \n",par->Estep,par->nbins);
+  }
+
 
   return(status);
 }

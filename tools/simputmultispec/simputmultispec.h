@@ -130,6 +130,9 @@ struct Parameters {
   int chatter;
   int clobber;
   int history;
+
+  int nbins;
+  int logegrid;
 };
 
 struct node{

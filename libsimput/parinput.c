@@ -56,7 +56,7 @@ void query_simput_parameter(char* name, const int type, void *retval, int* statu
   }
 
   if (*status!=EXIT_SUCCESS) {
-    fprintf(stderr,"Failed to read parameter %s from the command line.",name);
+    fprintf(stderr,"Failed to read parameter %s from the command line. \n",name);
   }
 }
 

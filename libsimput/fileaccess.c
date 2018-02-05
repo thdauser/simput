@@ -3843,7 +3843,7 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 }
 
 void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
-		char *ISISPostCmd, float Elow, float Eup, float Estep,
+		char *ISISPostCmd, float Elow, float Eup, int nbins, int logegrid,
 		float plPhoIndex, float bbkT, float flSigma, float rflSpin, float NH,
 		int *status){
 
@@ -3865,8 +3865,15 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 	fprintf(cmdfile, "use_localmodel(\"relxill\");\n");
 
 	// Define the energy grid.
-	fprintf(cmdfile, "variable lo=[%f:%f:%f];\n", Elow, Eup, Estep);
-	fprintf(cmdfile, "variable hi=make_hi_grid(lo);\n");
+	fprintf(cmdfile, "variable lo, hi; \n");
+
+	if (logegrid) {
+		fprintf(cmdfile, "(lo,hi) = log_grid(%e,%e,%i); ", Elow, Eup, nbins);
+	} else {
+		fprintf(cmdfile, "(lo,hi) = linear_grid(%e,%e,%i); ", Elow, Eup, nbins);
+	}
+
+
 	fprintf(cmdfile, "variable fluxdensity;\n");
 	fprintf(cmdfile, "variable spec;\n");
 
@@ -3922,11 +3929,11 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 	} else {
 		// An ISIS parameter file with an explizit spectral
 		// model is given.
-		if(strlen(ISISPrep)!=0){
+		if(strlen(ISISPrep)>0){
 			fprintf(cmdfile, "require(\"%s\");\n", ISISPrep);
 		}
 		fprintf(cmdfile, "load_par(\"%s\");\n", ISISFile);
-		if(strlen(ISISPostCmd) != 0){
+		if(strlen(ISISPostCmd) > 0){
 			fprintf(cmdfile, "%s\n",ISISPostCmd);
 		}
 		fprintf(cmdfile, "fluxdensity=eval_fun_keV(lo, hi)/(hi-lo);\n");
@@ -3957,7 +3964,7 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 }
 
 void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *XSPECPostCmd, float Elow,
-		float Eup,	float Estep, int *status){
+		float Eup,	int nbins, int logegrid,  int *status){
 
 	FILE* cmdfile=NULL;
 	char cmdfilename[L_tmpnam]="";
@@ -3984,8 +3991,11 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *X
         	fprintf(cmdfile, "%s\n", XSPECPostCmd);
     	}
 
-    	fprintf(cmdfile, "dummyrsp %f %f %d lin\n",
-    			Elow, Eup, (int)((Eup-Elow)/Estep));
+    	if (logegrid){
+    		fprintf(cmdfile, "dummyrsp %f %f %d log\n", Elow, Eup, nbins);
+    	} else {
+    		fprintf(cmdfile, "dummyrsp %f %f %d lin\n", Elow, Eup, nbins);
+    	}
     	fprintf(cmdfile, "setplot device /null\n");
 
     	fprintf(cmdfile, "setplot command wdata %s.qdp\n", fname);

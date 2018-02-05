@@ -852,13 +852,13 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status);
 /** Writes and executes an isis script for calculating a spectrum from a
     given file or from the parameters given (if file==""). */
 void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
-		char *ISISPostCmd, float Elow, float Eup, float Estep,
+		char *ISISPostCmd, float Elow, float Eup, int nbins, int logegrid,
 		float plPhoIndex, float bbkT, float flSigma, float rflSpin, float NH,
 		int *status);
 
 /** Write and executes a XSPEC script for calculating a spectrum */
 void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *XSPECPostCmd, float Elow,
-		float Eup,	float Estep, int *status);
+		float Eup, int nbins, int logegrid, int *status);
 
 /** Get a unique descriptor of a FITS File, including extended file name syntax**/
 uniqueSimputident* get_simput_ident(char* filename, int type, int *status);

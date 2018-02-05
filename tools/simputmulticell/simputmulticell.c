@@ -387,7 +387,7 @@ static void addSpecCombiToCat(struct Parameters* par, par_info *data_par, img_li
 
 	// Write xspec file
 	write_xspecSpec_file(par->Simput, par->XSPECFile, par->XSPECPrep, XSPECsetPar,
-			par->Elow, par->Eup, par->Estep, status);
+			par->Elow, par->Eup, par->nbins, par->logegrid, status);
 	free(XSPECsetPar);
 	CHECK_STATUS_VOID(*status);
 
@@ -437,7 +437,7 @@ static void addSpecToCat(struct Parameters* par,struct param_input *ipar,double*
 
 	// Write xspec file
 	write_xspecSpec_file(par->Simput, par->XSPECFile, par->XSPECPrep, XSPECsetPar,
-			par->Elow, par->Eup, par->Estep, status);
+			par->Elow, par->Eup, par->nbins, par->logegrid, status);
 	free(XSPECsetPar);
 	CHECK_STATUS_VOID(*status);
 
@@ -591,8 +591,7 @@ void simputmulticell_getpar(struct Parameters* const par, int* status) {
 	query_simput_parameter_file_name("simput",&(par->Simput), status);
 	query_simput_parameter_string("ISISFile", &(par->ISISFile), status );
 	query_simput_parameter_string("XSPECFile", &(par->XSPECFile), status );
-        query_simput_parameter_string("XSPECPrep", &(par->XSPECPrep), status );
-	//query_simput_parameter_string("ISISPrep", &(par->ISISPrep), &status );
+    query_simput_parameter_string("XSPECPrep", &(par->XSPECPrep), status );
 
 	// *** PARAMETER information *** //
 	query_simput_parameter_string("ParamFile", &(par->ParamFile), status );
@@ -617,6 +616,19 @@ void simputmulticell_getpar(struct Parameters* const par, int* status) {
 
 	query_simput_parameter_float("Emin", &par->Emin, status );
 	query_simput_parameter_float("Emax", &par->Emax, status );
+
+	query_simput_parameter_bool("logEgrid", &par->logegrid, status );
+	query_simput_parameter_int("Nbins", &par->nbins, status );
+
+
+	// need to check how the energy grid for the spectrum should be calculated
+	if (par->Estep > 1e-6){
+		SIMPUT_WARNING(" ** deprecated use of the Estep parameter ** \n    use Nbins instead to define the energy grid.");
+		par->nbins = (par->Eup - par->Elow) / par->Estep;
+		par->logegrid = 0;
+		printf(" -> given Estep=%.4e converted to nbins=%i on a linear grid \n",par->Estep,par->nbins);
+	}
+
 }
 
 void freeParStrings(struct Parameters* par){
