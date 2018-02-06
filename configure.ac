@@ -66,8 +66,6 @@ case $build_os in
   darwin*)
   OSX_VERSION_MAJOR=`sw_vers -productVersion | awk -F '.' '{print $1}'`
   OSX_VERSION_MINOR=`sw_vers -productVersion | awk -F '.' '{print $2}'`
-  CFLAGS="$CFLAGS -headerpad_max_install_names"
-  LDFLAGS="$LDFLAGS -headerpad_max_install_names"
   ;;
 esac
 AC_SUBST(OSX_VERSION_MAJOR)
