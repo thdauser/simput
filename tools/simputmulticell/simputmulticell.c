@@ -247,7 +247,7 @@ static TableCellDistrib* newTableCellDistrib(char* paramFile,char* paramInputNam
 
 	//Get number of rows
 	char comment[FLEN_COMMENT];
-	fits_read_key(distrib->fptr, TINT, "NAXIS2", &(distrib->nrows), comment, status);
+	fits_read_key(distrib->fptr, TLONGLONG, "NAXIS2", &(distrib->nrows), comment, status);
 	CHECK_STATUS_RET(*status, NULL);
 
 	// Create the index array
@@ -398,10 +398,16 @@ static void addSpecCombiToCat(struct Parameters* par, par_info *data_par, img_li
 	// Set the name of the spectrum
 	spec->name = (char*) malloc (maxStrLenCat*sizeof(char));
 	CHECK_NULL_VOID(spec->name,*status,"memory allocation failed");
+	strcpy(spec->name,"");
 	snprintf(spec->name,maxStrLenCat,"spec");
 	for (int ii=0;ii<li->num_param;ii++){
-		snprintf(spec->name,maxStrLenCat,"%s_%d",spec->name,li->pval_ar[ii]);
+		sprintf(spec->name,"%s_%d",spec->name,li->pval_ar[ii]);
 	}
+	if ((int)strlen(spec->name) > maxStrLenCat) {
+		SIMPUT_ERROR("'NAME' of spectrum contains more than 64 characters");
+		*status = EXIT_FAILURE;
+	}
+	CHECK_STATUS_VOID(*status);
 
 	// Finally store it in the FITS table
 	saveSimputMIdpSpec(spec,par->Simput,"SPECTRUM",1,status);
@@ -537,12 +543,19 @@ int simputmulticell_main() {
 
 				// add source to catalog
 				// Get BASE name fomr the Param Combi (in the list)
-				snprintf(spec_name,maxStrLenCat,"");
+				strcpy(spec_name,"");
 				for (int ii=0;ii<num_param;ii++){
-					snprintf(spec_name,maxStrLenCat,"%s_%d",spec_name,id_array[ii]);
+					sprintf(spec_name,"%s_%d",spec_name,id_array[ii]);
 				}
 				snprintf(path_fspec,SIMPUT_MAXSTR,"[SPECTRUM,1][NAME=='spec%s']",spec_name);
 			}
+
+			if ((int)strlen(spec_name) > maxStrLenCat) {
+				SIMPUT_ERROR("'NAME' of spectrum contains more than 64 characters");
+				status = EXIT_FAILURE;
+			}
+			CHECK_STATUS_BREAK(status);
+
 			snprintf(src_name,SIMPUT_MAXSTR,"src_%d",src_id);
 			// Add source
 			if (!strcmp(par.InputType, "IMAGE")) flux*=1e-14; //Cannot have very small numbers in image due to SIMPUT automatic image summation
