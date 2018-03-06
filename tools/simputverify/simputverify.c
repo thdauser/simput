@@ -59,169 +59,170 @@ int simputverify_main()
     long ii;
     for (ii=0; ii<cat->nentries; ii++) {
 
-      // Flag, whether the source refers to a spectrum.
-      int has_spectrum=0;
+    	// Flag, whether the source refers to a spectrum.
+    	int has_spectrum=0;
 
-      // Load the source from the catalog.
-      SimputSrc* src=loadSimputSrc(cat, ii+1, &status);
-      CHECK_STATUS_BREAK(status);
+    	// Load the source from the catalog.
+    	SimputSrc* src=loadSimputSrc(cat, ii+1, &status);
+    	CHECK_STATUS_BREAK(status);
 
-      // Try and load the spectrum.
-      char filename[SIMPUT_MAXSTR];
-      if ((strlen(src->spectrum)>0) &&
-	  (0!=strcmp(src->spectrum, "NULL"))) {
-	if ('['==src->spectrum[0]) {
-	  strcpy(filename, par.Simput);
-	  strcat(filename, src->spectrum);
-	} else {
-	  strcpy(filename, src->spectrum);
-	}
+    	// Try and load the spectrum.
+    	char filename[SIMPUT_MAXSTR];
+    	if ((strlen(src->spectrum)>0) &&
+    			(0!=strcmp(src->spectrum, "NULL"))) {
+    		if ('['==src->spectrum[0]) {
+    			strcpy(filename, par.Simput);
+    			strcat(filename, src->spectrum);
+    		} else {
+    			strcpy(filename, src->spectrum);
+    		}
 
-	// Determine the type of the spectrum extension.
-	int exttype=getSimputExtType(cat, filename, &status);
-	CHECK_STATUS_BREAK(status);
-	switch (exttype) {
-	case EXTTYPE_MIDPSPEC:
-	  spec=loadSimputMIdpSpec(filename, &status);
-	  CHECK_STATUS_BREAK(status);
-	  freeSimputMIdpSpec(&spec);
-	  break;
 
-	case EXTTYPE_PHLIST:
-	  phl=openSimputPhList(filename, READONLY, &status);
-	  CHECK_STATUS_BREAK(status);
-	  freeSimputPhList(&phl, &status);
-	  CHECK_STATUS_BREAK(status);
-	  break;
+    		// Determine the type of the spectrum extension.
+    		int exttype=getSimputExtType(cat, filename, &status);
+    		CHECK_STATUS_BREAK(status);
+    		switch (exttype) {
+    		case EXTTYPE_MIDPSPEC:
+    			spec=loadSimputMIdpSpec(filename, &status);
+    			CHECK_STATUS_BREAK(status);
+    			freeSimputMIdpSpec(&spec);
+    			break;
 
-	default:
-	  status=EXIT_FAILURE;
-	  char msg[SIMPUT_MAXSTR];
-	  sprintf(msg, "spectrum reference '%s' in catalog line '%ld' "
-		  "refers to unknown extension type", src->spectrum, ii+1);
-	  SIMPUT_ERROR(msg);
-	}
-	CHECK_STATUS_BREAK(status);
+    		case EXTTYPE_PHLIST:
+    			phl=openSimputPhList(filename, READONLY, &status);
+    			CHECK_STATUS_BREAK(status);
+    			freeSimputPhList(&phl, &status);
+    			CHECK_STATUS_BREAK(status);
+    			break;
 
-	has_spectrum=1;
-      }
+    		default:
+    			status=EXIT_FAILURE;
+    			char msg[SIMPUT_MAXSTR];
+    			sprintf(msg, "spectrum reference '%s' in catalog line '%ld' "
+    					"refers to unknown extension type", src->spectrum, ii+1);
+    			SIMPUT_ERROR(msg);
+    		}
+    		CHECK_STATUS_BREAK(status);
 
-      // Try and load the image.
-      if ((strlen(src->image)>0) &&
-	  (0!=strcmp(src->image, "NULL"))) {
-	if ('['==src->image[0]) {
-	  strcpy(filename, par.Simput);
-	  strcat(filename, src->image);
-	} else {
-	  strcpy(filename, src->image);
-	}
+    		has_spectrum=1;
+    	}
 
-	// Determine the type of the spectrum extension.
-	int exttype=getSimputExtType(cat, filename, &status);
-	CHECK_STATUS_BREAK(status);
-	switch (exttype) {
-	case EXTTYPE_IMAGE:
-	  img=loadSimputImg(filename, &status);
-	  CHECK_STATUS_BREAK(status);
-	  freeSimputImg(&img);
-	  break;
+    	// Try and load the image.
+    	if ((strlen(src->image)>0) &&
+    			(0!=strcmp(src->image, "NULL"))) {
+    		if ('['==src->image[0]) {
+    			strcpy(filename, par.Simput);
+    			strcat(filename, src->image);
+    		} else {
+    			strcpy(filename, src->image);
+    		}
 
-	case EXTTYPE_PHLIST:
-	  phl=openSimputPhList(filename, READONLY, &status);
-	  CHECK_STATUS_BREAK(status);
-	  freeSimputPhList(&phl, &status);
-	  CHECK_STATUS_BREAK(status);
-	  break;
+    		// Determine the type of the spectrum extension.
+    		int exttype=getSimputExtType(cat, filename, &status);
+    		CHECK_STATUS_BREAK(status);
+    		switch (exttype) {
+    		case EXTTYPE_IMAGE:
+    			img=loadSimputImg(filename, &status);
+    			CHECK_STATUS_BREAK(status);
+    			freeSimputImg(&img);
+    			break;
 
-	default:
-	  status=EXIT_FAILURE;
-	  char msg[SIMPUT_MAXSTR];
-	  sprintf(msg, "image reference '%s' in catalog line '%ld' "
-		  "refers to unknown extension type", src->image, ii+1);
-	  SIMPUT_ERROR(msg);
-	}
-	CHECK_STATUS_BREAK(status);
-      }
+    		case EXTTYPE_PHLIST:
+    			phl=openSimputPhList(filename, READONLY, &status);
+    			CHECK_STATUS_BREAK(status);
+    			freeSimputPhList(&phl, &status);
+    			CHECK_STATUS_BREAK(status);
+    			break;
 
-      // Try and load the timing extension.
-      if ((strlen(src->timing)>0) &&
-	  (0!=strcmp(src->timing, "NULL"))) {
-	if ('['==src->timing[0]) {
-	  strcpy(filename, par.Simput);
-	  strcat(filename, src->timing);
-	} else {
-	  strcpy(filename, src->timing);
-	}
+    		default:
+    			status=EXIT_FAILURE;
+    			char msg[SIMPUT_MAXSTR];
+    			sprintf(msg, "image reference '%s' in catalog line '%ld' "
+    					"refers to unknown extension type", src->image, ii+1);
+    			SIMPUT_ERROR(msg);
+    		}
+    		CHECK_STATUS_BREAK(status);
+    	}
 
-	// Determine the type of the timing extension.
-	int exttype=getSimputExtType(cat, filename, &status);
-	CHECK_STATUS_BREAK(status);
-	switch (exttype) {
-	case EXTTYPE_LC:
-	  lc=loadSimputLC(filename, &status);
-	  CHECK_STATUS_BREAK(status);
-	  
-	  // Check whether the light curve refers to further SPECTRUM 
-	  // and IMAGE extensions.
-	  if (NULL!=lc->spectrum) {
-	    long jj;
-	    for (jj=0; jj<lc->nentries; jj++) {
-	      if ((strlen(lc->spectrum[jj])>0) &&
-		  (0!=strcmp(lc->spectrum[jj], "NULL"))) {
-		char filename2[SIMPUT_MAXSTR];
-		if ('['==lc->spectrum[jj][0]) {
-		  strcpy(filename2, lc->fileref);
-		  char* firstbracket=strchr(filename2, '[');
-		  if (NULL!=firstbracket) {
-		    firstbracket[-1]='\0';
-		  }
-		  strcat(filename2, lc->spectrum[jj]);
-		} else {
-		  strcpy(filename2, lc->spectrum[jj]);
-		}
-		
-		// Determine extension type and open the extension.
-		int exttype=getSimputExtType(cat, filename2, &status);
-		CHECK_STATUS_BREAK(status);
-		switch (exttype) {
-		case EXTTYPE_MIDPSPEC:
-		  spec=loadSimputMIdpSpec(filename2, &status);
-		  CHECK_STATUS_BREAK(status);
-		  freeSimputMIdpSpec(&spec);
-		  break;
+    	// Try and load the timing extension.
+    	if ((strlen(src->timing)>0) &&
+    			(0!=strcmp(src->timing, "NULL"))) {
+    		if ('['==src->timing[0]) {
+    			strcpy(filename, par.Simput);
+    			strcat(filename, src->timing);
+    		} else {
+    			strcpy(filename, src->timing);
+    		}
 
-		case EXTTYPE_PHLIST:
-		  phl=openSimputPhList(filename2, READONLY, &status);
-		  CHECK_STATUS_BREAK(status);
-		  freeSimputPhList(&phl, &status);
-		  CHECK_STATUS_BREAK(status);
-		  break;
+    		// Determine the type of the timing extension.
+    		int exttype=getSimputExtType(cat, filename, &status);
+    		CHECK_STATUS_BREAK(status);
+    		switch (exttype) {
+    		case EXTTYPE_LC:
+    			lc=loadSimputLC(filename, &status);
+    			CHECK_STATUS_BREAK(status);
 
-		default:
-		  status=EXIT_FAILURE;
-		  char msg[SIMPUT_MAXSTR];
-		  sprintf(msg, "spectrum reference '%s' in line '%ld' of "
-			  "light curve '%s' refers to unknown extension type", 
-			  lc->spectrum[jj], jj+1, filename);
-		  SIMPUT_ERROR(msg);
-		}
-		CHECK_STATUS_BREAK(status);
-		
-		has_spectrum=1;
-	      }
-	    }
-	    CHECK_STATUS_BREAK(status);
-	  }
-	  if (NULL!=lc->image) {
-	    long jj;
-	    for (jj=0; jj<lc->nentries; jj++) {
-	      if ((strlen(lc->image[jj])>0) &&
-		  (0!=strcmp(lc->image[jj], "NULL"))) {
-		char filename2[SIMPUT_MAXSTR];
-		if ('['==lc->image[jj][0]) {
-		  strcpy(filename2, lc->fileref);
-		  char* firstbracket=strchr(filename2, '[');
-		  if (NULL!=firstbracket) {
+    			// Check whether the light curve refers to further SPECTRUM
+    			// and IMAGE extensions.
+    			if (NULL!=lc->spectrum) {
+    				long jj;
+    				for (jj=0; jj<lc->nentries; jj++) {
+    					if ((strlen(lc->spectrum[jj])>0) &&
+    							(0!=strcmp(lc->spectrum[jj], "NULL"))) {
+    						char filename2[SIMPUT_MAXSTR];
+    						if ('['==lc->spectrum[jj][0]) {
+    							strcpy(filename2, lc->fileref);
+    							char* firstbracket=strchr(filename2, '[');
+    							if (NULL!=firstbracket) {
+    								firstbracket[0]='\0';
+    							}
+    							strcat(filename2, lc->spectrum[jj]);
+    						} else {
+    							strcpy(filename2, lc->spectrum[jj]);
+    						}
+
+    						// Determine extension type and open the extension.
+    						int exttype=getSimputExtType(cat, filename2, &status);
+    						CHECK_STATUS_BREAK(status);
+    						switch (exttype) {
+    						case EXTTYPE_MIDPSPEC:
+    							spec=loadSimputMIdpSpec(filename2, &status);
+    							CHECK_STATUS_BREAK(status);
+    							freeSimputMIdpSpec(&spec);
+    							break;
+
+    						case EXTTYPE_PHLIST:
+    							phl=openSimputPhList(filename2, READONLY, &status);
+    							CHECK_STATUS_BREAK(status);
+    							freeSimputPhList(&phl, &status);
+    							CHECK_STATUS_BREAK(status);
+    							break;
+
+    						default:
+    							status=EXIT_FAILURE;
+    							char msg[SIMPUT_MAXSTR];
+    							sprintf(msg, "spectrum reference '%s' in line '%ld' of "
+    									"light curve '%s' refers to unknown extension type",
+										lc->spectrum[jj], jj+1, filename);
+    							SIMPUT_ERROR(msg);
+    						}
+    						CHECK_STATUS_BREAK(status);
+
+    						has_spectrum=1;
+    					}
+    				}
+    				CHECK_STATUS_BREAK(status);
+    			}
+    			if (NULL!=lc->image) {
+    				long jj;
+    				for (jj=0; jj<lc->nentries; jj++) {
+    					if ((strlen(lc->image[jj])>0) &&
+    							(0!=strcmp(lc->image[jj], "NULL"))) {
+    						char filename2[SIMPUT_MAXSTR];
+    						if ('['==lc->image[jj][0]) {
+    							strcpy(filename2, lc->fileref);
+    							char* firstbracket=strchr(filename2, '[');
+    							if (NULL!=firstbracket) {
 		    firstbracket[-1]='\0';
 		  }
 		  strcat(filename2, lc->image[jj]);
