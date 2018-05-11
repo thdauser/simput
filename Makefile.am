@@ -5,7 +5,7 @@ dist_bin_SCRIPTS+=simput-install.csh
 # In order to change this, include "." in the list of SUBDIRS.
 SUBDIRS=extlib libsimput tools sample 
 
-dist_noinst_DATA=INSTALL.txt
+dist_noinst_DATA=INSTALL.txt mac_solve_simput_dependencies.sh
 EXTRA_DIST=test
 
 # Define the headers that will be installed in $(includedir):
