@@ -1286,6 +1286,9 @@ float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
     if ((emin<binmax) && (emax>binmin)) {
       float min=MAX(binmin, emin);
       float max=MIN(binmax, emax);
+      if (binmin==binmax){
+    	  printf(" *** Warning: energy grid of spectrum not monotonically increasing (getSimputMIdpSpecBandFlux) \n");
+      }
       assert(max>min);
       flux+=(max-min)*spec->fluxdensity[ii]*spec->energy[ii];
     }
