@@ -40,7 +40,7 @@ test:
 provide:
   stage: deploy
   script:
-    - echo "git push /data/git/simput.git HEAD:master"
+    - git push /data/git/simput.git HEAD:master
   only:
     - master
     - gitlab-ci
