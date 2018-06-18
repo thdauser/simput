@@ -1,0 +1,46 @@
+# SIMPUT CI jobs
+#
+# build, test, and deploy SIMPUT
+
+before_script:
+  - source /data/system/software/softwarescript.bash && source /data/system/software/softwarescript_Xray.bash
+  - export SIMPUT=`pwd`
+  - export HEADASNOQUERY=
+  - export HEADASPROMPT=/dev/null
+
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - autoreconf --install
+    - ./configure --prefix=$SIMPUT
+    - make
+    - make install
+  only:
+    - master
+    - gitlab-ci
+  artifacts:
+    expire_in: 30 min
+    paths:
+      - ./*
+
+test:
+  stage: test
+  script:
+    - . $HEADAS/headas-init.sh
+    - make test
+  only:
+    - master
+    - gitlab-ci
+
+provide:
+  stage: deploy
+  script:
+    - echo "git push /data/git/simput.git HEAD:master"
+  only:
+    - master
+    - gitlab-ci
