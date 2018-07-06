@@ -1930,8 +1930,8 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
     opt_status=EXIT_SUCCESS;
     fits_get_colnum(fptr, CASEINSEN, "IMAGE", &cimage, &opt_status);
     opt_status=EXIT_SUCCESS;
-    fits_clear_errmark();
-
+    fits_clear_errmark();	
+    
     // Check, whether there is either a TIME or a PHASE column (but not both).
     if ((0==ctime)&&(0==cphase)) {
       SIMPUT_ERROR("table extension contains neither 'TIME' nor 'PHASE' column");
@@ -1941,6 +1941,31 @@ SimputLC* loadSimputLC(const char* const filename, int* const status)
       SIMPUT_ERROR("table extension contains both 'TIME' and 'PHASE' column");
       *status=EXIT_FAILURE;
       return(lc);
+    }
+
+    // We check that the phase and time columns are of the correct type:
+    int typecode=-1;
+    long repeat=-1;
+    long width=-1;
+    // Check the phase:
+    if (cphase){
+      fits_get_coltype(fptr, cphase, &typecode, &repeat, &width, status);
+      if (repeat!=1){
+	SIMPUT_ERROR("'PHASE' column should contain scalar values, not arrays");
+	*status=EXIT_FAILURE;
+	return(lc);
+      }
+      *status=EXIT_SUCCESS;
+    }
+    // Check the time:
+    else { // We have already check that there is either phase or time column
+      fits_get_coltype(fptr, ctime, &typecode, &repeat, &width, status);
+      if (repeat!=1){
+	SIMPUT_ERROR("'TIME' column should contain scalar values, not arrays");
+	*status=EXIT_FAILURE;
+	return(lc);
+      }
+      *status=EXIT_SUCCESS;
     }
 
     // Determine the unit conversion factors.
