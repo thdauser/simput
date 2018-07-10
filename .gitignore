@@ -35,3 +35,6 @@ labnh.fit
 .DS_Store
 .project
 *.log
+.autotools
+.cproject
+.settings
