@@ -392,6 +392,36 @@ typedef struct{
 SimputPhoton;
 
 
+// Structure for the names colomn and row of a spectrum extension
+typedef struct {
+  // number of names
+  long n;
+  // length of one name including the null character
+  int namelen;
+  // buffer containing all names concatenated
+  char *namebuff;
+  // pointers to all the individual strings
+  char **name;
+  // the rows
+  long *row;
+} SpecNameCol_t;
+
+// Structure for the cached openend ffptr for faster spectrum access
+typedef struct {
+  // number of openend extensions
+  long n;
+  // the filenames of the opened fitsfiles
+  char **filename;
+  // the names of the openend extensions
+  char **extname;
+  // the versions of the openend extensions
+  int *extver;
+  // fits filepointer to the openend fitsfiles
+  fitsfile **ext;
+  // names and rows of the spectra of the openend files
+  SpecNameCol_t **namecol;
+} SimputSpecExtCache;
+
 /////////////////////////////////////////////////////////////////
 // Function Declarations.
 /////////////////////////////////////////////////////////////////
@@ -862,5 +892,15 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *X
 
 /** Get a unique descriptor of a FITS File, including extended file name syntax**/
 uniqueSimputident* get_simput_ident(char* filename, int type, int *status);
+
+
+SimputSpecExtCache *newSimputSpecExtCache(int* const status);
+
+void destroySpecCacheBuff(SimputSpecExtCache *cache);
+
+void initSpecCache();
+
+void destroySpecCache();
+
 
 #endif /* SIMPUT_H */

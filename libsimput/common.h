@@ -50,6 +50,9 @@
 /** Common string length. */
 #define SIMPUT_MAXSTR (1025)
 
+// Maximal number of spectrum extensions to cache
+#define SPEC_MAX_CACHE (10)
+
 
 /** Chatter level:
 

@@ -1041,3 +1041,119 @@ void freeSimputPhListBuffer(struct SimputPhListBuffer** pb,
 }
 
 
+// Create a new cache struct holding the opened ffptr to the extensions
+// holding the spectra
+SimputSpecExtCache *newSimputSpecExtCache(int* const status)
+{
+  SimputSpecExtCache *speccache;
+  speccache = (SimputSpecExtCache *) malloc(sizeof(SimputSpecExtCache));
+  CHECK_NULL_RET(speccache, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+  speccache->n = 0;
+
+  speccache->filename = (char **) calloc(SPEC_MAX_CACHE, sizeof(char *));
+  CHECK_NULL_RET(speccache->filename, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+
+  speccache->extname = (char **) calloc(SPEC_MAX_CACHE, sizeof(char *));
+  CHECK_NULL_RET(speccache->extname, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+  speccache->ext = (fitsfile **) calloc(SPEC_MAX_CACHE, sizeof(fitsfile *));
+  CHECK_NULL_RET(speccache->ext, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+  speccache->extver = (int *) calloc(SPEC_MAX_CACHE, sizeof(int));
+  CHECK_NULL_RET(speccache->extver, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+  speccache->namecol = (SpecNameCol_t **) calloc(SPEC_MAX_CACHE, sizeof(SpecNameCol_t *));
+  CHECK_NULL_RET(speccache->namecol, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+
+  return speccache;
+}
+
+SpecNameCol_t *newSpecNameCol(long n, int namelen, int* const status)
+{
+  SpecNameCol_t *specname = (SpecNameCol_t *) malloc(sizeof(SpecNameCol_t));
+  CHECK_NULL_RET(specname, *status,
+      "memory allocation for SpecNameCol failed", NULL);
+
+  specname->n = n;
+
+  // namelen includes the null character of one string
+  specname->namelen = namelen;
+
+  specname->namebuff = (char *) malloc( (namelen * n) * sizeof(char) );
+  CHECK_NULL_RET(specname->namebuff, *status,
+      "memory allocation for SpecNameCol failed", NULL);
+
+  specname->name = (char **) malloc(n * sizeof(char *));
+  CHECK_NULL_RET(specname->name, *status,
+      "memory allocation for SpecNameCol failed", NULL);
+
+  specname->row = (long *) malloc(n * sizeof(long));
+  CHECK_NULL_RET(specname->row, *status,
+      "memory allocation for SpecNameCol failed", NULL);
+
+  // Point the pointers to their corresponding string
+  for (long ii=0; ii<n; ii++)
+  {
+    specname->name[ii] = specname->namebuff + ii * namelen;
+  }
+
+  return specname;
+}
+
+
+/*
+ * Destroy a SpecNameCol
+ */
+void destroySpecNameCol(SpecNameCol_t *cols)
+{
+  free(cols->namebuff);
+  free(cols->name);
+  free(cols->row);
+  free(cols);
+}
+
+/*
+ * Destroy the nth cached spectrum extension
+ */
+void destroyNthSpecCache(SimputSpecExtCache *cache, long n)
+{
+  int status = 0;
+  free(cache->filename[n]);
+  cache->filename[n] = NULL;
+  free(cache->extname[n]);
+  cache->extname[n] = NULL;
+  fits_close_file(cache->ext[n], &status);
+  if ( status != EXIT_SUCCESS )
+  {
+    SIMPUT_WARNING("Could not close cached spectrum extension properly");
+  }
+  cache->ext[n] = NULL;
+  destroySpecNameCol(cache->namecol[n]);
+  cache->namecol[n] = NULL;
+}
+
+/*
+ * Destroy entire spectrum cache
+ */
+void destroySpecCacheBuff(SimputSpecExtCache *cache)
+{
+  for (long ii=0; ii<cache->n; ii++)
+  {
+    destroyNthSpecCache(cache, ii);
+  }
+  free(cache->filename);
+  free(cache->extname);
+  free(cache->extver);
+  free(cache->ext);
+  free(cache);
+}
+

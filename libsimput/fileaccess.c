@@ -20,6 +20,9 @@
 
 #include "common.h"
 
+// Pointer to the spectrum cache
+// This is initialized when the first spectrum is read
+static SimputSpecExtCache *SpecCache = NULL;
 
 static void read_unit(fitsfile* const fptr, const int column, 
 		      char* unit, int* const status)
@@ -936,6 +939,13 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
   SimputMIdpSpec* spec=newSimputMIdpSpec(status);
   CHECK_STATUS_RET(*status, spec);
+
+  if ( SpecCache == NULL )
+  {
+    headas_chat(5, "Initializing spectrum cache\n");
+    initSpecCache();
+  }
+
 
   // Open the specified FITS file. The filename must uniquely identify
   // the spectrum contained in a binary table via the extended filename 
@@ -2955,7 +2965,7 @@ void saveSimputPSD(SimputPSD* const psd, const char* const filename,
 
 
 SimputImg* loadSimputImg(const char* const filename, int* const status)
-{
+{ 
   // Image input buffer.
   double* image1d=NULL;
 
@@ -4041,5 +4051,30 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *X
     	CHECK_STATUS_VOID(*status);
 }
 
+
+
+/*
+ * Initialize the spectrum cache
+ */
+void initSpecCache()
+{
+  int status = 0;
+  SpecCache = newSimputSpecExtCache(&status);
+  if ( status != EXIT_SUCCESS )
+  {
+    SIMPUT_WARNING("Could not allocate spectrum cache");
+    SpecCache = NULL;
+  }
+}
+
+
+/*
+ * Destroy the spectrum cache
+ */
+void destroySpecCache()
+{
+  destroySpecCacheBuff(SpecCache);
+  SpecCache = NULL;
+}
 
 
