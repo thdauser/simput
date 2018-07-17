@@ -121,6 +121,19 @@
   }
 
 
+#define FITSERROR								\
+  do {										\
+    if ( *status )								\
+    {										\
+      fprintf(stderr, "Fits error encountered:\n");				\
+      fits_report_error(stderr, *status);					\
+      fprintf(stderr, "Aborting (%s:%d)\n", __FILE__, __LINE__);		\
+      exit(EXIT_FAILURE);							\
+    }										\
+  } while (0) ;
+
+
+
 /** Macro returning the maximum of 2 values. */
 #define MAX(a, b) ( (a)>(b) ? (a) : (b) )
 
