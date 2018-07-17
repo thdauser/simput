@@ -416,6 +416,12 @@ typedef struct {
   char **extname;
   // the versions of the openend extensions
   int *extver;
+  // column number of the name column (which is optional, so set to 0 if non existing)
+  int *cname;
+  // column number of the energy column
+  int *cenergy;
+  // column number of the fluxdensity column
+  int *cflux;
   // fits filepointer to the openend fitsfiles
   fitsfile **ext;
   // names and rows of the spectra of the openend files
