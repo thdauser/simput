@@ -398,11 +398,9 @@ typedef struct {
   long n;
   // length of one name including the null character
   int namelen;
-  // buffer containing all names concatenated
-  char *namebuff;
   // pointers to all the individual strings
   char **name;
-  // the rows
+  // the rows, starting with 0
   long *row;
 } SpecNameCol_t;
 
@@ -912,5 +910,6 @@ void initSpecCache();
 
 void destroySpecCache();
 
+void openNthSpecCache(char *fname, char *extname, int extver, long n, int *status);
 
 #endif /* SIMPUT_H */

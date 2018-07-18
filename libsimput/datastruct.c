@@ -1104,10 +1104,6 @@ SpecNameCol_t *newSpecNameCol(long n, int namelen, int* const status)
   // namelen includes the null character of one string
   specname->namelen = namelen;
 
-  specname->namebuff = (char *) malloc( (namelen * n) * sizeof(char) );
-  CHECK_NULL_RET(specname->namebuff, *status,
-      "memory allocation for SpecNameCol failed", NULL);
-
   specname->name = (char **) malloc(n * sizeof(char *));
   CHECK_NULL_RET(specname->name, *status,
       "memory allocation for SpecNameCol failed", NULL);
@@ -1119,7 +1115,9 @@ SpecNameCol_t *newSpecNameCol(long n, int namelen, int* const status)
   // Point the pointers to their corresponding string
   for (long ii=0; ii<n; ii++)
   {
-    specname->name[ii] = specname->namebuff + ii * namelen;
+    specname->name[ii] = calloc(namelen, sizeof(char));
+    CHECK_NULL_RET(specname->name[ii], *status,
+        "memory allocation for SpecNameCol failed", NULL);
   }
 
   return specname;
@@ -1131,7 +1129,10 @@ SpecNameCol_t *newSpecNameCol(long n, int namelen, int* const status)
  */
 void destroySpecNameCol(SpecNameCol_t *cols)
 {
-  free(cols->namebuff);
+  for (long ii=0; ii<cols->n; ii++)
+  {
+    free(cols->name[ii]);
+  }
   free(cols->name);
   free(cols->row);
   free(cols);

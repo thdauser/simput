@@ -23,6 +23,7 @@
 // Pointer to the spectrum cache
 // This is initialized when the first spectrum is read
 static SimputSpecExtCache *SpecCache = NULL;
+static char **NamePtr = NULL;
 
 static void read_unit(fitsfile* const fptr, const int column, 
 		      char* unit, int* const status)
@@ -931,6 +932,7 @@ uniqueSimputident* get_simput_ident(char* filename, int type, int *status){
 	return ident;
 }
 
+
 SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 				   int* const status)
 {
@@ -944,6 +946,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   {
     headas_chat(5, "Initializing spectrum cache\n");
     initSpecCache();
+    openNthSpecCache("/home/weber/Desktop/test/vec/tde.simput", "SPECTRUM", 1, 0, status);
   }
 
 
@@ -4077,4 +4080,168 @@ void destroySpecCache()
   SpecCache = NULL;
 }
 
+/*
+ * Test whether a fits file is already openend in the cache
+ */
+long specIsCached(char *fname, char *extname)
+{
+  headas_chat(5, "Testing whether extension %s of fitsfile %s is already in openend", fname, extname);
+  for (long ii=0; ii<SpecCache->n; ii++)
+  {
+    if ( strcmp(fname, SpecCache->filename[ii]) == 0 &&
+	  strcmp(extname, SpecCache->extname[ii]) == 0 )
+    {
+      return ii;
+    }
+  }
+  return -1;
+}
 
+
+/*
+ * function to sort the names column in the order strcmp, necessary for the bsearch
+ * Note: The exact alignment of the strings afterwards is not known,
+ * however, that doesn't matter because bsearch then also uses strcmp do find the
+ * correct string again
+ */
+static int cmpNameCol(const void *a, const void *b)
+{
+  long i1 = *((long *) a);
+  long i2 = *((long *) b);
+
+  return strcmp( NamePtr[i1],
+      NamePtr[i2] );
+}
+
+
+/*
+ * Open a fits file with the specified extension in the nth spectrum 'slot'
+ */
+void openNthSpecCache(char *fname, char *extname, int extver, long n, int *status)
+{
+  headas_chat(5, "Opening extension %s of file %s into spectrum cache\n", extname, fname);
+
+  long numrows;
+  int namelen = 0;
+  int anynull = 0;
+
+  SpecCache->extver[n] = extver;
+
+  SpecCache->filename[n] = (char *) malloc( (strlen(fname)+1) * sizeof(char));
+  CHECK_NULL_VOID(SpecCache->filename[n], *status, "Could not allocate string buffer");
+  strcpy(SpecCache->filename[n], fname);
+
+  SpecCache->extname[n] = (char *) malloc( (strlen(extname)+1) * sizeof(char));
+  CHECK_NULL_VOID(SpecCache->extname[n], *status, "Could not allocate string buffer");
+  strcpy(SpecCache->extname[n], extname);
+
+  headas_chat(5, "Opening %s\n", fname);
+  fits_open_file(&(SpecCache->ext[n]), fname, READONLY, status);
+  FITSERROR;
+
+  headas_chat(5, "Moving ffptr to extension %s\n", extname);
+  fits_movnam_hdu(SpecCache->ext[n], BINARY_TBL, extname, SpecCache->extver[n], status);
+  FITSERROR;
+
+  headas_chat(5, "Getting column number of the NAME column\n");
+  fits_get_colnum(SpecCache->ext[n], CASEINSEN, "NAME", &(SpecCache->cname[n]), status);
+  if ( *status )
+  {
+    headas_chat(5, "Column NAME in the spectrum extension %s of file %s doesn't exist, ignoring\n", extname, fname);
+    headas_chat(5, "Resetting cfitsio error stack\n");
+    fits_clear_errmsg();
+    *status = EXIT_SUCCESS;
+    SpecCache->cname[n] = 0;
+  } else {
+    int naxis;
+    long naxes;
+    fits_read_tdim(SpecCache->ext[n], SpecCache->cname[n], 2, &naxis, &naxes, status);
+    FITSERROR;
+    namelen = naxes+1;
+    headas_chat(5, "Length of the names in this file: %ld\n", namelen);
+  }
+
+  headas_chat(5, "Getting column number of the ENERGY column\n");
+  fits_get_colnum(SpecCache->ext[n], CASEINSEN, "ENERGY", &(SpecCache->cenergy[n]), status);
+  FITSERROR;
+
+  headas_chat(5, "Getting column number of the FLUXDENSITY column\n");
+  fits_get_colnum(SpecCache->ext[n], CASEINSEN, "FLUXDENSITY", &(SpecCache->cflux[n]), status);
+  if ( *status != EXIT_SUCCESS )
+  {
+    *status = EXIT_SUCCESS;
+    fits_clear_errmsg();
+    char *msg = (char *) malloc(SIMPUT_MAXSTR * sizeof(char));
+    if ( msg == NULL )
+    {
+      fprintf(stderr, "Couldn't allocate memory for error message. That's dumb. I will die now\n");
+      exit (EXIT_FAILURE);
+    }
+    sprintf(msg, "The FLUXDENSITY column in file %s extension %s is not called FLUXDENSITY, trying FLUX now", fname, extname);
+    SIMPUT_WARNING(msg);
+    free(msg);
+    
+    fits_get_colnum(SpecCache->ext[n], CASEINSEN, "FLUX", &(SpecCache->cflux[n]), status);
+    FITSERROR;
+    headas_chat(5, "Success\n");
+  }
+
+  headas_chat(5, "Getting number of entries in this spectrum extension:\n");
+  fits_get_num_rows(SpecCache->ext[n], &numrows, status);
+  FITSERROR;
+  headas_chat(5, "%ld\n", numrows);
+  SpecCache->nspec[n] = numrows;
+
+  if ( namelen )
+  {
+    headas_chat(5, "Allocating the namecol struct for %ld entries with %d chars\n", numrows, namelen);
+    SpecCache->namecol[n] = newSpecNameCol(numrows, namelen, status);
+    CHECK_NULL_VOID(SpecCache->namecol[n], *status, "Error creating the namecol struct");
+  } else {
+    SpecCache->namecol[n] = NULL;
+  }
+
+  // Actually reading the columns
+  if ( namelen )
+  {
+    char **tmpstr;
+    SpecCache->namecol[n]->n = numrows;
+    headas_chat(5, "Reading the names column\n");
+    fits_read_col(SpecCache->ext[n], TSTRING, SpecCache->cname[n], 1, 1, numrows, NULL, SpecCache->namecol[n]->name, &anynull, status);
+    FITSERROR;
+
+    // Fill up the rows for sorting and comparing
+    for (long ii=0; ii<SpecCache->namecol[n]->n; ii++)
+    {
+      SpecCache->namecol[n]->row[ii] = ii;
+    }
+
+    headas_chat(5, "Sorting the names\n");
+    NamePtr = SpecCache->namecol[n]->name;
+    qsort(SpecCache->namecol[n]->row, SpecCache->namecol[n]->n, sizeof(long), &cmpNameCol);
+    NamePtr = NULL;
+
+    tmpstr = (char **) malloc(SpecCache->namecol[n]->n * sizeof(char *));
+    CHECK_NULL_VOID(tmpstr, *status, "Could not allocate temporary string array");
+    for (long ii=0; ii<SpecCache->namecol[n]->n; ii++)
+    {
+      tmpstr[ii] = (char *) malloc(SpecCache->namecol[n]->namelen * sizeof(char));
+      CHECK_NULL_VOID(tmpstr[ii], *status, "Could not allocate temporary string array");
+      strcpy(tmpstr[ii], SpecCache->namecol[n]->name[SpecCache->namecol[n]->row[ii]]);
+      free(SpecCache->namecol[n]->name[SpecCache->namecol[n]->row[ii]]);
+    }
+    free(SpecCache->namecol[n]->name);
+    SpecCache->namecol[n]->name = tmpstr;
+  }
+  /*
+  printf("filenamen[%ld]: %s\n", n, SpecCache->filename[n]);
+  printf("extname[%ld]: %s\n", n, SpecCache->extname[n]);
+  printf("extver[%ld]: %d\n", n, SpecCache->extver[n]);
+  printf("namecol:\n");
+  for ( long ii=0; ii<SpecCache->namecol[n]->n; ii++)
+  {
+    printf("\tnamecol[%ld]->name[%ld]: %s\n", n, ii, SpecCache->namecol[n]->name[ii]);
+    printf("\tnamecol[%ld]->row[%ld]: %ld\n", n, ii, SpecCache->namecol[n]->row[ii]);
+  }
+  */
+}
