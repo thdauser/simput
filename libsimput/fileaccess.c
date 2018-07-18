@@ -4245,3 +4245,79 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
   }
   */
 }
+
+/*
+ * Function to scan the entire filename of a fits file, including the extended filename syntax,
+ * and write the real filename, the extension name and the extension version reffered to by the
+ * extended filename syntax to the addresses pointed to respectively and in the end return
+ * a pointer to an allocated string containing the expression of the extended filename syntax
+ * used to filter the row in the spectrum extension, NULL upon error
+ */
+char *scanSpecFileName(char *filename, char **basename, char **extname, int *extver, int *status)
+{
+  // Another string buffer
+  char strbuff[SIMPUT_MAXSTR];
+  // Temporary pointer
+  char *tmpstr;
+  // string holding an expression to work on
+  char *expr;
+  char *expr2;
+
+  headas_chat(5, "\nObtaining the real filename: ");
+  tmpstr = strndup(filename, strchr(filename, '[') - filename);
+  *basename = (char *) malloc( (strlen(tmpstr) + 1) * sizeof(char));
+  CHECK_NULL_RET(*basename, *status, "Error allocating string buffer", NULL);
+  strcpy(*basename, tmpstr);
+  headas_chat(5, "%s\n", *basename);
+
+  expr = strndup( strchr(filename, '[')+1, strchr( strchr(filename, '[') , ']') - strchr(filename, '[') - 1 );
+
+  headas_chat(5, "Testing whether the extension version is provided ... ");
+  if ( strchr(expr, ',') != NULL )
+  {
+    headas_chat(5, "yes\n");
+    if ( sscanf( strchr(expr, ',') + 1, "%d", extver) == EOF )
+    {
+      sprintf(strbuff, "Error scanning extended filesyntax for extension version in %s\n", filename);
+      SIMPUT_ERROR(strbuff);
+      return NULL;
+    } else {
+      headas_chat(5, "Extension version: %d\n", *extver);
+      *(strchr(expr, ',')) = '\0';
+      headas_chat(5, "Scanning for extension name\n");
+      if ( sscanf(expr, "%s", strbuff) == EOF )
+      {
+        sprintf(strbuff, "Error scanning extended filesyntax for extension name in %s\n", filename);
+        SIMPUT_ERROR(strbuff);
+	return NULL;
+      } else {
+	*extname = (char *) malloc( (strlen(strbuff) + 1) * sizeof(char));
+	CHECK_NULL_RET(*extname, *status, "Error allocating string buffer", NULL);
+	strcpy(*extname, strbuff);
+	headas_chat(5, "Extension name: %s\n", *extname);
+      }
+    }
+  } else {
+    headas_chat(5, "no, falling back to extension version 0\n");
+    *extver = 0;
+    headas_chat(5, "Scanning for extension name\n");
+    if ( sscanf(expr, "%s", strbuff) == EOF )
+    {
+      sprintf(strbuff, "Error scanning extended filesyntax for extension version in %s\n", filename);
+      SIMPUT_ERROR(strbuff);
+      return NULL;
+    } else {
+      *extname = (char *) malloc( (strlen(strbuff) + 1) * sizeof(char));
+      CHECK_NULL_RET(*extname, *status, "Error allocating string buffer", NULL);
+      strcpy(*extname, strbuff);
+      headas_chat(5, "Extension name: %s\n", *extname);
+    }
+  }
+
+  free(expr);
+  free(tmpstr);
+
+  expr2 = strchr(filename, '[') + 1;
+  expr2 = strchr(expr2, '[') + 1;
+  return strndup(expr2, strlen(expr2)-1);
+}

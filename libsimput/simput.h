@@ -912,4 +912,5 @@ void destroySpecCache();
 
 void openNthSpecCache(char *fname, char *extname, int extver, long n, int *status);
 
+char *scanSpecFileName(char *filename, char **basename, char **extname, int *extver, int *status);
 #endif /* SIMPUT_H */
