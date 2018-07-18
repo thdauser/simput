@@ -1077,6 +1077,10 @@ SimputSpecExtCache *newSimputSpecExtCache(int* const status)
   CHECK_NULL_RET(speccache->cflux, *status,
       "memory allocation for SimputSpecExtCache failed", NULL);
 
+  speccache->nspec = (long *) calloc(SPEC_MAX_CACHE, sizeof(long));
+  CHECK_NULL_RET(speccache->nspec, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
   speccache->extver = (int *) calloc(SPEC_MAX_CACHE, sizeof(int));
   CHECK_NULL_RET(speccache->extver, *status,
       "memory allocation for SimputSpecExtCache failed", NULL);
@@ -1146,6 +1150,7 @@ void destroyNthSpecCache(SimputSpecExtCache *cache, long n)
   cache->cname[n] = 0;
   cache->cenergy[n] = 0;
   cache->cflux[n] = 0;
+  cache->nspec[n] = 0;
   fits_close_file(cache->ext[n], &status);
   if ( status != EXIT_SUCCESS )
   {
@@ -1171,6 +1176,7 @@ void destroySpecCacheBuff(SimputSpecExtCache *cache)
   free(cache->cname);
   free(cache->cenergy);
   free(cache->cflux);
+  free(cache->nspec);
   free(cache->ext);
   free(cache);
 }

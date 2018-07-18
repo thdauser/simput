@@ -422,6 +422,8 @@ typedef struct {
   int *cenergy;
   // column number of the fluxdensity column
   int *cflux;
+  // number of spectra in the extension
+  long *nspec;
   // fits filepointer to the openend fitsfiles
   fitsfile **ext;
   // names and rows of the spectra of the openend files
