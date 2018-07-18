@@ -902,6 +902,8 @@ uniqueSimputident* get_simput_ident(char* filename, int type, int *status);
 
 SimputSpecExtCache *newSimputSpecExtCache(int* const status);
 
+SpecNameCol_t *newSpecNameCol(long n, int namelen, int* const status);
+
 void destroySpecCacheBuff(SimputSpecExtCache *cache);
 
 void initSpecCache();
