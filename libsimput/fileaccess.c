@@ -946,7 +946,6 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   {
     headas_chat(5, "Initializing spectrum cache\n");
     initSpecCache();
-    openNthSpecCache("/home/weber/Desktop/test/vec/tde.simput", "SPECTRUM", 1, 0, status);
   }
 
 
