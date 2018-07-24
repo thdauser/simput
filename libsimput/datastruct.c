@@ -1061,8 +1061,8 @@ SimputSpecExtCache *newSimputSpecExtCache(int* const status)
   CHECK_NULL_RET(speccache->extname, *status,
       "memory allocation for SimputSpecExtCache failed", NULL);
 
-  speccache->ext = (fitsfile **) calloc(SPEC_MAX_CACHE, sizeof(fitsfile *));
-  CHECK_NULL_RET(speccache->ext, *status,
+  speccache->extver = (int *) calloc(SPEC_MAX_CACHE, sizeof(int));
+  CHECK_NULL_RET(speccache->extver, *status,
       "memory allocation for SimputSpecExtCache failed", NULL);
 
   speccache->cname = (int *) calloc(SPEC_MAX_CACHE, sizeof(int));
@@ -1081,8 +1081,20 @@ SimputSpecExtCache *newSimputSpecExtCache(int* const status)
   CHECK_NULL_RET(speccache->nspec, *status,
       "memory allocation for SimputSpecExtCache failed", NULL);
 
-  speccache->extver = (int *) calloc(SPEC_MAX_CACHE, sizeof(int));
-  CHECK_NULL_RET(speccache->extver, *status,
+  speccache->fenergy = (float *) calloc(SPEC_MAX_CACHE, sizeof(float));
+  CHECK_NULL_RET(speccache->fenergy, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+  speccache->fflux = (float *) calloc(SPEC_MAX_CACHE, sizeof(float));
+  CHECK_NULL_RET(speccache->fflux, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+  speccache->nbins = (long *) calloc(SPEC_MAX_CACHE, sizeof(long));
+  CHECK_NULL_RET(speccache->nbins, *status,
+      "memory allocation for SimputSpecExtCache failed", NULL);
+
+  speccache->ext = (fitsfile **) calloc(SPEC_MAX_CACHE, sizeof(fitsfile *));
+  CHECK_NULL_RET(speccache->ext, *status,
       "memory allocation for SimputSpecExtCache failed", NULL);
 
   speccache->namecol = (SpecNameCol_t **) calloc(SPEC_MAX_CACHE, sizeof(SpecNameCol_t *));
@@ -1152,10 +1164,16 @@ void destroyNthSpecCache(SimputSpecExtCache *cache, long n)
   cache->cenergy[n] = 0;
   cache->cflux[n] = 0;
   cache->nspec[n] = 0;
+  cache->fenergy[n] = 0;
+  cache->fflux[n] = 0;
+  cache->nbins[n] = 0;
+
   fits_close_file(cache->ext[n], &status);
   if ( status != EXIT_SUCCESS )
   {
     SIMPUT_WARNING("Could not close cached spectrum extension properly");
+    status = 0;
+    fits_clear_errmsg();
   }
   cache->ext[n] = NULL;
   destroySpecNameCol(cache->namecol[n]);
@@ -1178,6 +1196,9 @@ void destroySpecCacheBuff(SimputSpecExtCache *cache)
   free(cache->cenergy);
   free(cache->cflux);
   free(cache->nspec);
+  free(cache->fenergy);
+  free(cache->fflux);
+  free(cache->nbins);
   free(cache->ext);
   free(cache);
 }

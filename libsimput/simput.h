@@ -422,9 +422,15 @@ typedef struct {
   int *cflux;
   // number of spectra in the extension
   long *nspec;
+  // unit conversion factor for energy
+  float *fenergy;
+  // unit conversion factor for flux
+  float *fflux; 
+  // bins in the spectrum
+  long *nbins;
   // fits filepointer to the openend fitsfiles
   fitsfile **ext;
-  // names and rows of the spectra of the openend files
+  // names and rows of the spectra of the openend files, NULL if no NAMES column found
   SpecNameCol_t **namecol;
 } SimputSpecExtCache;
 
