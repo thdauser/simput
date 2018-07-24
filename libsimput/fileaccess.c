@@ -4123,6 +4123,9 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
   long numrows;
   int namelen = 0;
   int anynull = 0;
+  int typedecode;
+  long nenergy, nfluxdensity, width;
+  char uenergy[SIMPUT_MAXSTR], uflux[SIMPUT_MAXSTR];
 
   SpecCache->extver[n] = extver;
 
@@ -4191,6 +4194,67 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
   headas_chat(5, "%ld\n", numrows);
   SpecCache->nspec[n] = numrows;
 
+
+  headas_chat(5, "Determining table format\n");
+
+  fits_get_coltype(SpecCache->ext[n], SpecCache->cenergy[n], &typedecode,
+      &nenergy, &width, status);
+  FITSERROR;
+
+  fits_get_coltype(SpecCache->ext[n], SpecCache->cflux[n], &typedecode,
+      &nfluxdensity, &width, status);
+  FITSERROR;
+
+  // Variable length data type, different method, see the loadSimputMIdpSpec function
+  if ( nenergy == 1 )
+  {
+    long offset;
+    fits_read_descript(SpecCache->ext[n], SpecCache->cenergy[n], 1, &nenergy,
+	&offset, status);
+    FITSERROR;
+
+    fits_read_descript(SpecCache->ext[n], SpecCache->cflux[n], 1, &nfluxdensity,
+	&offset, status);
+    FITSERROR;
+  }
+
+  if (nenergy!=nfluxdensity) {
+    char msg[SIMPUT_MAXSTR];
+    sprintf(msg, "number of energy and flux entries in spectrum '%s%s' is "
+            "not equivalent", fname, extname);
+    SIMPUT_ERROR(msg);
+    *status=EXIT_FAILURE;
+    return;
+  }
+
+  SpecCache->nbins[n] = nenergy;
+  char msg[SIMPUT_MAXSTR];
+  sprintf(msg, "spectrum '%s' contains %ld data points", 
+          fname, SpecCache->nbins[n]);
+  SIMPUT_INFO(msg);
+
+  headas_chat(5, "Determining conversion factors\n");
+  read_unit(SpecCache->ext[n], SpecCache->cenergy[n], uenergy, status);
+  FITSERROR;
+  SpecCache->fenergy[n] = unit_conversion_keV(uenergy);
+  if ( SpecCache->fenergy[n] == 0. )
+  {
+    SIMPUT_ERROR("unknown units of 'ENERGY' column");
+    *status = EXIT_FAILURE;
+    return ;
+  }
+
+  read_unit(SpecCache->ext[n], SpecCache->cflux[n], uflux, status);
+  FITSERROR;
+  SpecCache->fflux[n] = unit_conversion_keV(uenergy);
+  if ( SpecCache->fflux[n] == 0. )
+  {
+    SIMPUT_ERROR("unknown units of 'FLUXDENSITY' column");
+    *status = EXIT_FAILURE;
+    return ;
+  }
+
+
   if ( namelen )
   {
     headas_chat(5, "Allocating the namecol struct for %ld entries with %d chars\n", numrows, namelen);
@@ -4232,17 +4296,23 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
     free(SpecCache->namecol[n]->name);
     SpecCache->namecol[n]->name = tmpstr;
   }
-  /*
+
+
   printf("filenamen[%ld]: %s\n", n, SpecCache->filename[n]);
   printf("extname[%ld]: %s\n", n, SpecCache->extname[n]);
   printf("extver[%ld]: %d\n", n, SpecCache->extver[n]);
+  printf("cname[%ld]: %d\n", n, SpecCache->cname[n]);
+  printf("cflux[%ld]: %d\n", n, SpecCache->cflux[n]);
+  printf("nspec[%ld]: %ld\n", n, SpecCache->nspec[n]);
+  printf("fenergy[%ld]: %f\n", n, SpecCache->fenergy[n]);
+  printf("fflux[%ld]: %f\n", n, SpecCache->fflux[n]);
+  printf("nbins[%ld]: %ld\n", n, SpecCache->nbins[n]);
   printf("namecol:\n");
   for ( long ii=0; ii<SpecCache->namecol[n]->n; ii++)
   {
     printf("\tnamecol[%ld]->name[%ld]: %s\n", n, ii, SpecCache->namecol[n]->name[ii]);
     printf("\tnamecol[%ld]->row[%ld]: %ld\n", n, ii, SpecCache->namecol[n]->row[ii]);
   }
-  */
 }
 
 /*
