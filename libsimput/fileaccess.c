@@ -4390,3 +4390,70 @@ char *scanSpecFileName(char *filename, char **basename, char **extname, int *ext
   expr2 = strchr(expr2, '[') + 1;
   return strndup(expr2, strlen(expr2)-1);
 }
+
+/*
+ * Read a MId spectrum from the indth cached spectrum from the row in row row
+ */
+SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status)
+{
+  printf("\n\n\nREADING\n");
+  SimputMIdpSpec *spec;
+  char buff[SIMPUT_MAXSTR];
+  int anynull = 0;
+
+  if ( SpecCache == NULL )
+  {
+    sprintf(buff, "Error reading cached spectrum: Cache not initialized\nFalling back to old method\n");
+    SIMPUT_WARNING(buff);
+    return NULL;
+  }
+
+  printf("Allocating spectrum\n");
+  spec = newSimputMIdpSpec(status);
+  CHECK_STATUS_RET(*status, NULL);
+
+  spec->nentries = SpecCache->nbins[ind];
+  
+  spec->energy = (float *) malloc(spec->nentries * sizeof(float));
+  CHECK_NULL_RET(spec->energy, *status, "Error allocating space for spectrum", NULL);
+  spec->fluxdensity = (float *) malloc(spec->nentries * sizeof(float));
+  CHECK_NULL_RET(spec->fluxdensity, *status, "Error allocating space for spectrum", NULL);
+
+  // Read the data
+  fits_read_col_flt(SpecCache->ext[ind], SpecCache->cenergy[ind], row, 1, SpecCache->nbins[ind], 0., spec->energy, &anynull, status);
+  FITSERROR;
+
+  fits_read_col_flt(SpecCache->ext[ind], SpecCache->cflux[ind], row, 1, SpecCache->nbins[ind], 0., spec->fluxdensity, &anynull, status);
+  FITSERROR;
+  
+  if ( SpecCache->cname[ind] )
+  {
+    spec->name = (char *) calloc(SpecCache->namecol[ind]->namelen, sizeof(char));
+    CHECK_NULL_RET(spec->name, *status, "Error allocating string buffer", NULL);
+    fits_read_col_str(SpecCache->ext[ind], SpecCache->cname[ind], row,
+	1, 1, "\0", &(spec->name), &anynull, status);
+    FITSERROR;
+  }
+
+  printf("\n\n\nBLA\n\n\n");
+
+  for (long ii=0; ii<spec->nentries; ii++)
+  {
+    spec->energy[ii] *= SpecCache->fenergy[ind];
+  }
+  for (long ii=0; ii<spec->nentries; ii++)
+  {
+    spec->fluxdensity[ii] *= SpecCache->fflux[ind];
+  }
+
+  spec->fileref = (char *) malloc( (strlen(fname)+1) * sizeof(char));
+  CHECK_NULL_RET(spec->fileref, *status, "Error allocating string buffer", NULL);
+  strcpy(spec->fileref, fname);
+
+  printf("\n\n\nDEBUGGING THE READ SPECTRUM:\n");
+  printf("nentries: %ld\n", spec->nentries);
+  printf("name: %s\n", spec->name);
+  printf("fileref: %s\n", spec->fileref);
+
+  return spec;
+}

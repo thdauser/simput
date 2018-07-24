@@ -919,4 +919,7 @@ void destroySpecCache();
 void openNthSpecCache(char *fname, char *extname, int extver, long n, int *status);
 
 char *scanSpecFileName(char *filename, char **basename, char **extname, int *extver, int *status);
+
+// Read one spectrum of the cached openend spectrum extensions
+SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status);
 #endif /* SIMPUT_H */
