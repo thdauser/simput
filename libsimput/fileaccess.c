@@ -4082,13 +4082,14 @@ void destroySpecCache()
 /*
  * Test whether a fits file is already openend in the cache
  */
-long specIsCached(char *fname, char *extname)
+long specIsCached(char *fname, char *extname, int extver)
 {
   headas_chat(5, "Testing whether extension %s of fitsfile %s is already in openend", fname, extname);
   for (long ii=0; ii<SpecCache->n; ii++)
   {
     if ( strcmp(fname, SpecCache->filename[ii]) == 0 &&
-	  strcmp(extname, SpecCache->extname[ii]) == 0 )
+	  strcmp(extname, SpecCache->extname[ii]) == 0 &&
+	  extver == SpecCache->extver[ii] )
     {
       return ii;
     }
