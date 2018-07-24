@@ -4538,7 +4538,7 @@ long getSpecRow(char *expr, long ind)
       return -1;
     }
     headas_chat(5,"Row is %ld\n", row);
-    return row+1;
+    return row;
   } else if ( (pos = strstr(expr, "NAME==")) != NULL )
   {
     char **ii;
