@@ -947,8 +947,6 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   {
     headas_chat(5, "Initializing spectrum cache\n");
     initSpecCache();
-    printf("SpecCache->n: %ld\n", SpecCache->n);
-  }
 
   if ( SpecCache )
   {
