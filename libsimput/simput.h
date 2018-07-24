@@ -922,4 +922,8 @@ char *scanSpecFileName(char *filename, char **basename, char **extname, int *ext
 
 // Read one spectrum of the cached openend spectrum extensions
 SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status);
+
+long specIsCached(char *fname, char *extname, int extver);
+
+long getSpecRow(char *expr, long ind);
 #endif /* SIMPUT_H */

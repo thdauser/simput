@@ -939,14 +939,67 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   // String buffer.
   char* name[1]={NULL};
 
-  SimputMIdpSpec* spec=newSimputMIdpSpec(status);
+  SimputMIdpSpec* spec;
   CHECK_STATUS_RET(*status, spec);
+
 
   if ( SpecCache == NULL )
   {
     headas_chat(5, "Initializing spectrum cache\n");
     initSpecCache();
+    printf("SpecCache->n: %ld\n", SpecCache->n);
   }
+
+  if ( SpecCache )
+  {
+    char *basename, *extname;
+    int extver;
+    char msg[SIMPUT_MAXSTR];
+    char *expr;
+    long ind;
+    long row;
+
+    do {
+
+      expr = scanSpecFileName((char *) filename, &basename, &extname, &extver, status);
+      if ( *status )
+      {
+        sprintf(msg, "Error scanning filename, can not use caching, falling back to default");
+        SIMPUT_WARNING(msg);
+	*status = EXIT_SUCCESS;
+	break ;
+      }
+
+      headas_chat(5, "Checking whether %s is already cached\n", filename);
+      ind = specIsCached(basename, extname, extver);
+
+      if ( ind == -1 )
+      {
+	headas_chat(5, "No, have to open\n");
+	ind = 0;
+	openNthSpecCache(basename, extname, extver, ind, status);
+      } else {
+	headas_chat(5, "Yes, not opening again\n");
+      }
+
+      row = getSpecRow(expr, ind);
+
+      spec = readCacheSpec(ind, row, (char *) filename, status);
+
+      return spec;
+    } while (0) ;
+
+    free(basename);
+    free(extname);
+  }
+
+
+  /*
+    readCacheSpec(0, 5, filename, status);
+    *status = 0;
+    */
+
+  spec=newSimputMIdpSpec(status);
 
 
   // Open the specified FITS file. The filename must uniquely identify
@@ -4084,12 +4137,14 @@ void destroySpecCache()
  */
 long specIsCached(char *fname, char *extname, int extver)
 {
-  headas_chat(5, "Testing whether extension %s of fitsfile %s is already in openend", fname, extname);
+  headas_chat(5, "Testing whether extension %s of fitsfile %s is already in openend\n", extname, fname);
   for (long ii=0; ii<SpecCache->n; ii++)
   {
-    if ( strcmp(fname, SpecCache->filename[ii]) == 0 &&
-	  strcmp(extname, SpecCache->extname[ii]) == 0 &&
-	  extver == SpecCache->extver[ii] )
+    if (
+	extver == SpecCache->extver[ii] &&
+	strcmp(fname, SpecCache->filename[ii]) == 0 &&
+	  strcmp(extname, SpecCache->extname[ii]) == 0
+	  )
     {
       return ii;
     }
@@ -4111,6 +4166,13 @@ static int cmpNameCol(const void *a, const void *b)
 
   return strcmp( NamePtr[i1],
       NamePtr[i2] );
+}
+
+/*
+ * Just a wrapper for a strcmp function in order to be compatible with bsearch
+ */
+static int myStrCmp(const void *s1, const void *s2) {
+    return strcmp(*(char **) s1, *(char **) s2);
 }
 
 
@@ -4282,7 +4344,10 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
 
     headas_chat(5, "Sorting the names\n");
     NamePtr = SpecCache->namecol[n]->name;
-    qsort(SpecCache->namecol[n]->row, SpecCache->namecol[n]->n, sizeof(long), &cmpNameCol);
+    qsort(SpecCache->namecol[n]->row,
+	SpecCache->namecol[n]->n,
+	sizeof(long),
+	&cmpNameCol);
     NamePtr = NULL;
 
     tmpstr = (char **) malloc(SpecCache->namecol[n]->n * sizeof(char *));
@@ -4297,8 +4362,12 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
     free(SpecCache->namecol[n]->name);
     SpecCache->namecol[n]->name = tmpstr;
   }
+  if ( SpecCache->n < SPEC_MAX_CACHE - 1 )
+  {
+    SpecCache->n++;
+  }
 
-
+/*
   printf("filenamen[%ld]: %s\n", n, SpecCache->filename[n]);
   printf("extname[%ld]: %s\n", n, SpecCache->extname[n]);
   printf("extver[%ld]: %d\n", n, SpecCache->extver[n]);
@@ -4314,6 +4383,7 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
     printf("\tnamecol[%ld]->name[%ld]: %s\n", n, ii, SpecCache->namecol[n]->name[ii]);
     printf("\tnamecol[%ld]->row[%ld]: %ld\n", n, ii, SpecCache->namecol[n]->row[ii]);
   }
+  */
 }
 
 /*
@@ -4397,7 +4467,6 @@ char *scanSpecFileName(char *filename, char **basename, char **extname, int *ext
  */
 SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status)
 {
-  printf("\n\n\nREADING\n");
   SimputMIdpSpec *spec;
   char buff[SIMPUT_MAXSTR];
   int anynull = 0;
@@ -4409,7 +4478,6 @@ SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status)
     return NULL;
   }
 
-  printf("Allocating spectrum\n");
   spec = newSimputMIdpSpec(status);
   CHECK_STATUS_RET(*status, NULL);
 
@@ -4436,8 +4504,6 @@ SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status)
     FITSERROR;
   }
 
-  printf("\n\n\nBLA\n\n\n");
-
   for (long ii=0; ii<spec->nentries; ii++)
   {
     spec->energy[ii] *= SpecCache->fenergy[ind];
@@ -4451,10 +4517,53 @@ SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status)
   CHECK_NULL_RET(spec->fileref, *status, "Error allocating string buffer", NULL);
   strcpy(spec->fileref, fname);
 
-  printf("\n\n\nDEBUGGING THE READ SPECTRUM:\n");
-  printf("nentries: %ld\n", spec->nentries);
-  printf("name: %s\n", spec->name);
-  printf("fileref: %s\n", spec->fileref);
-
   return spec;
+}
+
+
+long getSpecRow(char *expr, long ind)
+{
+  long row;
+  char *pos;
+  char msg[SIMPUT_MAXSTR];
+  char *name;
+
+  headas_chat(5, "Checking whether row or name was provided ... ");
+  if ( (pos = strstr(expr, "#row==")) != NULL )
+  {
+    headas_chat(5, "row\n");
+    pos += strlen("#row==");
+    if ( sscanf(pos, "%ld", &row) == EOF )
+    {
+      sprintf(msg, "Error getting row number");
+      SIMPUT_ERROR(msg);
+      return -1;
+    }
+    headas_chat(5,"Row is %ld\n", row);
+    return row+1;
+  } else if ( (pos = strstr(expr, "NAME==")) != NULL )
+  {
+    char **ii;
+    headas_chat(5, "name\n");
+    name = pos + strlen("NAME==") + 1;
+    name[strlen(name)-1] = '\0';
+    headas_chat(5, "Name to search for: \"%s\"\n", name);
+
+    NamePtr = SpecCache->namecol[ind]->name;
+    ii = (char **) bsearch((const void *) &name,
+	(const void *) SpecCache->namecol[ind]->name,
+	(size_t) SpecCache->namecol[ind]->n,
+	sizeof(char *),
+	myStrCmp);
+    NamePtr = NULL;
+
+    row = SpecCache->namecol[ind]->row[ii - SpecCache->namecol[ind]->name];
+    headas_chat(5, "Position: %ld\n", row);
+    return row+1;
+  } else {
+    headas_chat(5, "nothing, returning -1\n");
+    return -1;
+  }
+
+  return -1;
 }
