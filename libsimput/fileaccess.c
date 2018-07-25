@@ -20,6 +20,9 @@
 
 #include "common.h"
 
+
+
+
 // Pointer to the spectrum cache
 // This is initialized when the first spectrum is read
 static SimputSpecExtCache *SpecCache = NULL;
@@ -940,8 +943,6 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
   char* name[1]={NULL};
 
   SimputMIdpSpec* spec;
-  CHECK_STATUS_RET(*status, spec);
-
 
   if ( SpecCache == NULL )
   {
@@ -974,8 +975,14 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
       if ( ind == -1 )
       {
-	headas_chat(5, "No, have to open\n");
-	ind = 0;
+	headas_chat(5, "No, have to open, looking for where to open\n");
+	ind = getNextSpecCache();
+	headas_chat(5, "Opening to index %ld\n", ind);
+	if ( SpecCache->filename[ind] != NULL )
+	{
+	  headas_chat(5, "Index %ld was in use, clearing\n", ind);
+	  destroyNthSpecCache(SpecCache, ind);
+	}
 	openNthSpecCache(basename, extname, extver, ind, status);
       } else {
 	headas_chat(5, "Yes, not opening again\n");
@@ -983,22 +990,30 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
       row = getSpecRow(expr, ind);
 
+
       spec = readCacheSpec(ind, row, (char *) filename, status);
+
+      if ( spec == NULL || *status != EXIT_SUCCESS )
+      {
+	sprintf(msg, "Error using the spectru cache, falling back to default\n");
+	SIMPUT_WARNING(msg);
+	*status = EXIT_SUCCESS;
+	break;
+      }
+
+      free(basename);
+      free(extname);
 
       return spec;
     } while (0) ;
-
     free(basename);
     free(extname);
+  } else {
+    headas_chat(5, "Falling back to default reading method\n");
   }
 
-
-  /*
-    readCacheSpec(0, 5, filename, status);
-    *status = 0;
-    */
-
   spec=newSimputMIdpSpec(status);
+  CHECK_STATUS_RET(*status, spec);
 
 
   // Open the specified FITS file. The filename must uniquely identify
@@ -4112,6 +4127,12 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *X
  */
 void initSpecCache()
 {
+  if ( SPEC_MAX_CACHE < 1 )
+  {
+    headas_chat(5, "Spectrum caching disabled at compiletime\n");
+    SpecCache = NULL;
+    return ;
+  }
   int status = 0;
   SpecCache = newSimputSpecExtCache(&status);
   if ( status != EXIT_SUCCESS )
@@ -4136,7 +4157,7 @@ void destroySpecCache()
  */
 long specIsCached(char *fname, char *extname, int extver)
 {
-  headas_chat(5, "Testing whether extension %s of fitsfile %s is already in openend\n", extname, fname);
+  headas_chat(5, "Testing whether extension %s version %d of fitsfile %s is already in openend\n", extname, extver, fname);
   for (long ii=0; ii<SpecCache->n; ii++)
   {
     if (
@@ -4361,10 +4382,11 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
     free(SpecCache->namecol[n]->name);
     SpecCache->namecol[n]->name = tmpstr;
   }
-  if ( SpecCache->n < SPEC_MAX_CACHE - 1 )
+  if ( SpecCache->n < SPEC_MAX_CACHE  )
   {
     SpecCache->n++;
   }
+  SpecCache->last = n;
 
 /*
   printf("filenamen[%ld]: %s\n", n, SpecCache->filename[n]);
@@ -4565,4 +4587,13 @@ long getSpecRow(char *expr, long ind)
   }
 
   return -1;
+}
+
+long getNextSpecCache()
+{
+  if ( SpecCache->last < SPEC_MAX_CACHE - 1)
+  {
+    return SpecCache->last+1;
+  }
+  return 0;
 }

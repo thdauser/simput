@@ -408,6 +408,8 @@ typedef struct {
 typedef struct {
   // number of openend extensions
   long n;
+  // index of the last opened cache
+  long last;
   // the filenames of the opened fitsfiles
   char **filename;
   // the names of the openend extensions
@@ -918,6 +920,8 @@ void destroySpecCache();
 
 void openNthSpecCache(char *fname, char *extname, int extver, long n, int *status);
 
+void destroyNthSpecCache(SimputSpecExtCache *cache, long n);
+
 char *scanSpecFileName(char *filename, char **basename, char **extname, int *extver, int *status);
 
 // Read one spectrum of the cached openend spectrum extensions
@@ -926,4 +930,6 @@ SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status);
 long specIsCached(char *fname, char *extname, int extver);
 
 long getSpecRow(char *expr, long ind);
+
+long getNextSpecCache();
 #endif /* SIMPUT_H */

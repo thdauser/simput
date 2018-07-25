@@ -1051,6 +1051,7 @@ SimputSpecExtCache *newSimputSpecExtCache(int* const status)
       "memory allocation for SimputSpecExtCache failed", NULL);
 
   speccache->n = 0;
+  speccache->last = -1;
 
   speccache->filename = (char **) calloc(SPEC_MAX_CACHE, sizeof(char *));
   CHECK_NULL_RET(speccache->filename, *status,
@@ -1168,6 +1169,7 @@ void destroyNthSpecCache(SimputSpecExtCache *cache, long n)
   cache->fflux[n] = 0;
   cache->nbins[n] = 0;
 
+  headas_chat(5, "Closing the fitsfile\n");
   fits_close_file(cache->ext[n], &status);
   if ( status != EXIT_SUCCESS )
   {
