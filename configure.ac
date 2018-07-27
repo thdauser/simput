@@ -26,8 +26,7 @@ AC_PROG_LIBTOOL
 # "-pg" for the compiler and linker to include information for gprof (Profiler)
 # "-std=c99 -D_GNU_SOURCE" for C99 syntax standards
 # "-O0" for zero optimization
-CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC -Dg77Fortran"
-#LDFLAGS="$LDFLAGS -g -W -Wall"
+CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC -Dg77Fortran -headerpad_max_install_names"
 # FCFLAGS="-O0"
 
 # Conditional compilation of Fortran code.
@@ -51,7 +50,7 @@ AC_SEARCH_LIBS(beep, ncurses, [], [AC_MSG_ERROR([library ncurses not found!])], 
 AC_SEARCH_LIBS(readline, readline, [], [AC_MSG_ERROR([library readline not found!])], [])
 
 dir="`pwd`"
-LDFLAGS="$LDFLAGS -g -W -Wall -L$dir/extlib/cfitsio -L$dir/extlib/wcslib/C -L$dir/extlib/fftw"
+LDFLAGS="$LDFLAGS -g -W -Wall -L$dir/extlib/cfitsio -L$dir/extlib/wcslib/C -L$dir/extlib/fftw -headerpad_max_install_names"
 LIBS="$LIBS -lcfitsio -lfftw3 -lwcs"
 
 case "$build_os" in
