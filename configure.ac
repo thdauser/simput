@@ -43,6 +43,9 @@ AC_ARG_ENABLE([galabs],
 	          [galabs=true], [galabs=false])
 AM_CONDITIONAL([GALABS], [test x$galabs = xtrue])
 
+# make ar better behaved 
+AC_SUBST([ARFLAGS],[rvU])
+
 # Check for libraries.
 AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([library math not found!])], [])
 # ncurses and readline (required by ape library).
