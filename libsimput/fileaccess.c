@@ -990,12 +990,17 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
       row = getSpecRow(expr, ind);
 
-
-      spec = readCacheSpec(ind, row, (char *) filename, status);
+      if (row>=0) {
+	 spec = readCacheSpec(ind, row, (char *) filename, status);
+      } else {
+	 // not found
+	 spec=NULL;
+	 *status=EXIT_FAILURE;
+      }
 
       if ( spec == NULL || *status != EXIT_SUCCESS )
       {
-	sprintf(msg, "Error using the spectru cache, falling back to default\n");
+	sprintf(msg, "Error using the spectrum cache, falling back to default\n");
 	SIMPUT_WARNING(msg);
 	*status = EXIT_SUCCESS;
 	break;
@@ -1008,9 +1013,9 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
     } while (0) ;
     free(basename);
     free(extname);
-  } else {
-    headas_chat(5, "Falling back to default reading method\n");
-  }
+  } 
+
+  headas_chat(5, "Falling back to default reading method\n");
 
   spec=newSimputMIdpSpec(status);
   CHECK_STATUS_RET(*status, spec);
@@ -4129,7 +4134,7 @@ void initSpecCache()
 {
   if ( SPEC_MAX_CACHE < 1 )
   {
-    headas_chat(5, "Spectrum caching disabled at compiletime\n");
+    headas_chat(5, "Spectrum caching disabled at compile time\n");
     SpecCache = NULL;
     return ;
   }
@@ -4163,11 +4168,11 @@ long specIsCached(char *fname, char *extname, int extver)
     if (
 	extver == SpecCache->extver[ii] &&
 	strcmp(fname, SpecCache->filename[ii]) == 0 &&
-	  strcmp(extname, SpecCache->extname[ii]) == 0
-	  )
-    {
-      return ii;
-    }
+	strcmp(extname, SpecCache->extname[ii]) == 0
+	)
+       {
+	  return ii;
+       }
   }
   return -1;
 }
@@ -4409,8 +4414,8 @@ void openNthSpecCache(char *fname, char *extname, int extver, long n, int *statu
 
 /*
  * Function to scan the entire filename of a fits file, including the extended filename syntax,
- * and write the real filename, the extension name and the extension version reffered to by the
- * extended filename syntax to the addresses pointed to respectively and in the end return
+ * and write the real filename, the extension name and the extension version referred to by the
+ * extended filename syntax to the addresses pointed to respectively, and in the end return
  * a pointer to an allocated string containing the expression of the extended filename syntax
  * used to filter the row in the spectrum extension, NULL upon error
  */
@@ -4422,65 +4427,93 @@ char *scanSpecFileName(char *filename, char **basename, char **extname, int *ext
   char *tmpstr;
   // string holding an expression to work on
   char *expr;
-  char *expr2;
-
+  
   headas_chat(5, "\nObtaining the real filename: ");
   tmpstr = strndup(filename, strchr(filename, '[') - filename);
+  CHECK_NULL_RET(tmpstr,*status,"scanSpecFileName: Error allocating tmpstr",NULL);
+
   *basename = (char *) malloc( (strlen(tmpstr) + 1) * sizeof(char));
   CHECK_NULL_RET(*basename, *status, "Error allocating string buffer", NULL);
   strcpy(*basename, tmpstr);
   headas_chat(5, "%s\n", *basename);
-
+  
   expr = strndup( strchr(filename, '[')+1, strchr( strchr(filename, '[') , ']') - strchr(filename, '[') - 1 );
 
+  CHECK_NULL_RET(expr,*status,"scanSpecFileName: Error allocating expr",NULL);
+  
   headas_chat(5, "Testing whether the extension version is provided ... ");
-  if ( strchr(expr, ',') != NULL )
-  {
-    headas_chat(5, "yes\n");
-    if ( sscanf( strchr(expr, ',') + 1, "%d", extver) == EOF )
-    {
-      sprintf(strbuff, "Error scanning extended filesyntax for extension version in %s\n", filename);
-      SIMPUT_ERROR(strbuff);
-      return NULL;
-    } else {
-      headas_chat(5, "Extension version: %d\n", *extver);
-      *(strchr(expr, ',')) = '\0';
-      headas_chat(5, "Scanning for extension name\n");
-      if ( sscanf(expr, "%s", strbuff) == EOF )
-      {
-        sprintf(strbuff, "Error scanning extended filesyntax for extension name in %s\n", filename);
-        SIMPUT_ERROR(strbuff);
+  if ( strchr(expr, ',') != NULL ) {
+     headas_chat(5, "yes\n");
+     if ( sscanf( strchr(expr, ',') + 1, "%d", extver) == EOF ) {
+	sprintf(strbuff, "Error scanning extended filesyntax for extension version in %s\n", filename);
+	SIMPUT_ERROR(strbuff);
 	return NULL;
-      } else {
+     } else {
+	headas_chat(5, "Extension version: %d\n", *extver);
+	*(strchr(expr, ',')) = '\0';
+	headas_chat(5, "Scanning for extension name\n");
+	if ( sscanf(expr, "%s", strbuff) == EOF ) {
+	   sprintf(strbuff, "Error scanning extended filesyntax for extension name in %s\n", filename);
+	   SIMPUT_ERROR(strbuff);
+	   return NULL;
+	} else {
+	   *extname = (char *) malloc( (strlen(strbuff) + 1) * sizeof(char));
+	   CHECK_NULL_RET(*extname, *status, "Error allocating string buffer", NULL);
+	   strcpy(*extname, strbuff);
+	   headas_chat(5, "Extension name: %s\n", *extname);
+	}
+     }
+  } else {
+     headas_chat(5, "no, falling back to extension version 0\n");
+     *extver = 0;
+     headas_chat(5, "Scanning for extension name\n");
+     if ( sscanf(expr, "%s", strbuff) == EOF ) {
+	sprintf(strbuff, "Error scanning extended filesyntax for extension version in %s\n", filename);
+	SIMPUT_ERROR(strbuff);
+	return NULL;
+     } else {
 	*extname = (char *) malloc( (strlen(strbuff) + 1) * sizeof(char));
 	CHECK_NULL_RET(*extname, *status, "Error allocating string buffer", NULL);
 	strcpy(*extname, strbuff);
 	headas_chat(5, "Extension name: %s\n", *extname);
-      }
-    }
-  } else {
-    headas_chat(5, "no, falling back to extension version 0\n");
-    *extver = 0;
-    headas_chat(5, "Scanning for extension name\n");
-    if ( sscanf(expr, "%s", strbuff) == EOF )
-    {
-      sprintf(strbuff, "Error scanning extended filesyntax for extension version in %s\n", filename);
-      SIMPUT_ERROR(strbuff);
-      return NULL;
-    } else {
-      *extname = (char *) malloc( (strlen(strbuff) + 1) * sizeof(char));
-      CHECK_NULL_RET(*extname, *status, "Error allocating string buffer", NULL);
-      strcpy(*extname, strbuff);
-      headas_chat(5, "Extension name: %s\n", *extname);
-    }
+     }
   }
 
   free(expr);
   free(tmpstr);
 
-  expr2 = strchr(filename, '[') + 1;
-  expr2 = strchr(expr2, '[') + 1;
-  return strndup(expr2, strlen(expr2)-1);
+  char *expr2 = strchr(filename, '[');
+  // shouldn't happen, but better safe than sorry
+  CHECK_NULL_RET(expr2,*status,"File does not conform to extended syntax",NULL);
+  expr2++; // move to start of selection string
+
+  char *expr3=strchr(expr2,'[');
+
+  char *retval;
+  if (expr3==NULL) {
+     // file has only one [] in the FITS selection string
+
+     // bail out the string is [] or ] is missing, 
+     // (note C's shortcircuiting, check strlen first, so the
+     // 2nd check will only happen if strlen>=1)
+     if (strlen(expr2)<1 || expr2[strlen(expr2)-1]!=']') {
+	SIMPUT_ERROR("Malformed FITS selection string");
+	*status=EXIT_FAILURE;
+	return(NULL);
+     }
+     retval=strndup(expr2,strlen(expr2)-1);
+  } else {
+     // expr3 points at [. So character before that must be ]
+     if (*(expr3-1)!=']') {
+	SIMPUT_ERROR("Malformed FITS selection string");
+	*status=EXIT_FAILURE;
+	return(NULL);
+     }
+     retval=strndup(expr2,(size_t) (expr3-expr2-2));
+  }
+
+  CHECK_NULL_RET(retval,*status,"scanSpecFileName: Error allocating retval",NULL);
+  return retval;
 }
 
 /*
@@ -4562,28 +4595,29 @@ long getSpecRow(char *expr, long ind)
     }
     headas_chat(5,"Row is %ld\n", row);
     return row;
-  } else if ( (pos = strstr(expr, "NAME==")) != NULL )
-  {
-    char **ii;
-    headas_chat(5, "name\n");
-    name = pos + strlen("NAME==") + 1;
-    name[strlen(name)-1] = '\0';
-    headas_chat(5, "Name to search for: \"%s\"\n", name);
-
-    NamePtr = SpecCache->namecol[ind]->name;
-    ii = (char **) bsearch((const void *) &name,
-	(const void *) SpecCache->namecol[ind]->name,
-	(size_t) SpecCache->namecol[ind]->n,
-	sizeof(char *),
-	myStrCmp);
-    NamePtr = NULL;
-
-    row = SpecCache->namecol[ind]->row[ii - SpecCache->namecol[ind]->name];
-    headas_chat(5, "Position: %ld\n", row);
-    return row+1;
   } else {
-    headas_chat(5, "nothing, returning -1\n");
-    return -1;
+     if ( (pos = strstr(expr, "NAME==")) != NULL ) {
+	char **ii;
+	headas_chat(5, "name\n");
+	name = pos + strlen("NAME==") + 1;
+	name[strlen(name)-1] = '\0';
+	headas_chat(5, "Name to search for: \"%s\"\n", name);
+	
+	NamePtr = SpecCache->namecol[ind]->name;
+	ii = (char **) bsearch((const void *) &name,
+			       (const void *) SpecCache->namecol[ind]->name,
+			       (size_t) SpecCache->namecol[ind]->n,
+			       sizeof(char *),
+			       myStrCmp);
+	NamePtr = NULL;
+
+	row = SpecCache->namecol[ind]->row[ii - SpecCache->namecol[ind]->name];
+	headas_chat(5, "Position: %ld\n", row);
+	return row+1;
+     } else {
+	headas_chat(5, "nothing, returning -1\n");
+	return -1;
+     }
   }
 
   return -1;
