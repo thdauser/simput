@@ -4512,8 +4512,6 @@ char *scanSpecFileName(char *filename, char **basename, char **extname, int *ext
      retval=strndup(expr2,(size_t) (expr3-expr2-2));
   }
 
-  printf("XXXXXX%sXXXXXX\n",retval);
-  
   CHECK_NULL_RET(retval,*status,"scanSpecFileName: Error allocating retval",NULL);
   return retval;
 }
