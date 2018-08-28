@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: ttab3.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: ttab3.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * ttab3 tests the -TAB routines using PGPLOT for graphical display.  It
@@ -54,9 +54,9 @@ int main()
   const double crval[] = {135.0, 95.0};
 
   char text[80];
-  int ci, i, ilat, ilng, j, k, m, stat[K2][K1], status;
+  int ci, i, ilat, ilng, j, k, m, stat[K2*K1], status;
   float xr[361], yr[361];
-  double *dp, world[361][2], x[K1], xy[361][2], y[K2];
+  double world[361][2], x[K1], xy[361][2], y[K2];
   struct tabprm tab;
   struct prjprm prj;
 
@@ -127,8 +127,7 @@ int main()
      as to provide continuity. */
   prj.bounds = 0;
 
-  status = bonx2s(&prj, K1, K2, 1, 2, x, y, tab.coord, tab.coord+1,
-                  stat[0]);
+  status = bonx2s(&prj, K1, K2, 1, 2, x, y, tab.coord, tab.coord+1, stat);
 
 
   /* Draw meridians. */
@@ -146,11 +145,11 @@ int main()
     world[0][0] = 0.0;
     world[180][0] = 0.0;
 
-    status = tabs2x(&tab, 181, 2, world[0], xy[0], stat[0]);
+    status = tabs2x(&tab, 181, 2, world[0], xy[0], stat);
 
     k = 0;
     for (j = 0; j < 181; j++) {
-      if (stat[0][j]) {
+      if (stat[j]) {
         if (k > 1) cpgline(k, xr, yr);
         k = 0;
         continue;
@@ -176,11 +175,11 @@ int main()
       world[j][1] = (double)ilat;
     }
 
-    status = tabs2x(&tab, 361, 2, world[0], xy[0], stat[0]);
+    status = tabs2x(&tab, 361, 2, world[0], xy[0], stat);
 
     k = 0;
     for (j = 0; j < 361; j++) {
-      if (stat[0][j]) {
+      if (stat[j]) {
         if (k > 1) cpgline(k, xr, yr);
         k = 0;
         continue;
@@ -195,6 +194,9 @@ int main()
   }
 
   cpgend();
+
+  /* Defeat spurious reporting of memory leaks. */
+  tabfree(&tab);
 
   return 0;
 }

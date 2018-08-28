@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: fitshdr_f.c,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+  $Id: fitshdr_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -35,14 +35,14 @@
 /* Fortran name mangling. */
 #include <wcsconfig_f77.h>
 #define keyidput_ F77_FUNC(keyidput, KEYIDPUT)
-#define keyidget_ F77_FUNC(keyidget, KEYIDGET)
-#define keyget_   F77_FUNC(keyget,   KEYGET)
-#define fitshdr_  F77_FUNC(fitshdr,  FITSHDR)
-#define freekeys_ F77_FUNC(freekeys, FREEKEYS)
-
 #define keyidptc_ F77_FUNC(keyidptc, KEYIDPTC)
+#define keyidget_ F77_FUNC(keyidget, KEYIDGET)
 #define keyidgtc_ F77_FUNC(keyidgtc, KEYIDGTC)
 #define keyidgti_ F77_FUNC(keyidgti, KEYIDGTI)
+#define keyget_   F77_FUNC(keyget,   KEYGET)
+#define freekeys_ F77_FUNC(freekeys, FREEKEYS)
+
+#define fitshdr_  F77_FUNC(fitshdr,  FITSHDR)
 
 #define KEYID_NAME   100
 #define KEYID_COUNT  101
@@ -71,7 +71,8 @@ int keyidput_(int *keyid, const int *i, const int *what, const void *value)
 
   switch (*what) {
   case KEYID_NAME:
-    strncpy(kidp->name, cvalp, 12);
+    strncpy(kidp->name, cvalp, 8);
+    kidp->name[8] = '\0';
     wcsutil_null_fill(12, kidp->name);
     break;
   default:
@@ -240,6 +241,16 @@ int keyget_(
 
 /*--------------------------------------------------------------------------*/
 
+int freekeys_(int *keys)
+
+{
+  free(*((struct fitskey **)keys));
+  *keys = 0;
+  return 0;
+}
+
+/*--------------------------------------------------------------------------*/
+
 int fitshdr_(
   const char header[],
   const int *nkeyrec,
@@ -251,14 +262,4 @@ int fitshdr_(
 {
   return fitshdr(header, *nkeyrec, *nkeyids, (struct fitskeyid *)keyids,
                  nreject, (struct fitskey **)keys);
-}
-
-/*--------------------------------------------------------------------------*/
-
-int freekeys_(int *keys)
-
-{
-  free(*((struct fitskey **)keys));
-  *keys = 0;
-  return 0;
 }

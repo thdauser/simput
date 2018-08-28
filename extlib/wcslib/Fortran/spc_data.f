@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,16 +22,17 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: spc_data.f,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: spc_data.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
       BLOCK DATA SPC_BLOCK_DATA
 
-      CHARACTER SPC_ERRMSG(0:4)*80
+      CHARACTER SPC_ERRMSG(-1:4)*80
 
       COMMON /SPC_DATA/ SPC_ERRMSG
 
       DATA SPC_ERRMSG /
+     :  'No change (not an error)',
      :  'Success',
      :  'Null spcprm pointer passed',
      :  'Invalid spectral parameters',

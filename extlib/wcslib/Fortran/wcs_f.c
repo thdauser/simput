@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,25 +22,33 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcs_f.c,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+  $Id: wcs_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <stdio.h>
 #include <string.h>
 
+#include <wcserr.h>
 #include <wcsutil.h>
 #include <wcs.h>
 
 /* Fortran name mangling. */
 #include <wcsconfig_f77.h>
-#define wcsini_  F77_FUNC(wcsini,  WCSINI)
+#define wcsput_  F77_FUNC(wcsput,  WCSPUT)
+#define wcsptc_  F77_FUNC(wcsptc,  WCSPTC)
+#define wcsptd_  F77_FUNC(wcsptd,  WCSPTD)
+#define wcspti_  F77_FUNC(wcspti,  WCSPTI)
+#define wcsget_  F77_FUNC(wcsget,  WCSGET)
+#define wcsgtc_  F77_FUNC(wcsgtc,  WCSGTC)
+#define wcsgtd_  F77_FUNC(wcsgtd,  WCSGTD)
+#define wcsgti_  F77_FUNC(wcsgti,  WCSGTI)
+
 #define wcsnpv_  F77_FUNC(wcsnpv,  WCSNPV)
 #define wcsnps_  F77_FUNC(wcsnps,  WCSNPS)
+#define wcsini_  F77_FUNC(wcsini,  WCSINI)
+#define wcsinit_ F77_FUNC(wcsinit, WCSINIT)
 #define wcssub_  F77_FUNC(wcssub,  WCSSUB)
 #define wcscompare_  F77_FUNC(wcscompare,  WCSCOMPARE)
-#define wcscopy_ F77_FUNC(wcscopy, WCSCOPY)
-#define wcsput_  F77_FUNC(wcsput,  WCSPUT)
-#define wcsget_  F77_FUNC(wcsget,  WCSGET)
 #define wcsfree_ F77_FUNC(wcsfree, WCSFREE)
 #define wcsprt_  F77_FUNC(wcsprt,  WCSPRT)
 #define wcsperr_ F77_FUNC(wcsperr, WCSPERR)
@@ -50,13 +58,8 @@
 #define wcss2p_  F77_FUNC(wcss2p,  WCSS2P)
 #define wcsmix_  F77_FUNC(wcsmix,  WCSMIX)
 #define wcssptr_ F77_FUNC(wcssptr, WCSSPTR)
-
-#define wcsptc_  F77_FUNC(wcsptc,  WCSPTC)
-#define wcsptd_  F77_FUNC(wcsptd,  WCSPTD)
-#define wcspti_  F77_FUNC(wcspti,  WCSPTI)
-#define wcsgtc_  F77_FUNC(wcsgtc,  WCSGTC)
-#define wcsgtd_  F77_FUNC(wcsgtd,  WCSGTD)
-#define wcsgti_  F77_FUNC(wcsgti,  WCSGTI)
+#define wcscopy_ F77_FUNC(wcscopy, WCSCOPY)
+#define wcslib_version_ F77_FUNC(wcslib_version, WCSLIB_VERSION)
 
 #define WCS_FLAG     100
 #define WCS_NAXIS    101
@@ -121,50 +124,6 @@
 
 /*--------------------------------------------------------------------------*/
 
-int wcsini_(const int *naxis, int *wcs)
-
-{
-  return wcsini(1, *naxis, (struct wcsprm *)wcs);
-}
-
-/*--------------------------------------------------------------------------*/
-
-int wcsnpv_(int *npvmax) { return wcsnpv(*npvmax); }
-int wcsnps_(int *npsmax) { return wcsnps(*npsmax); }
-
-/*--------------------------------------------------------------------------*/
-
-int wcssub_(const int *wcssrc, int *nsub, int axes[], int *wcsdst)
-
-{
-  return wcssub(1, (const struct wcsprm *)wcssrc, nsub, axes,
-                (struct wcsprm *)wcsdst);
-}
-
-/*--------------------------------------------------------------------------*/
-
-int wcscompare_(
-  const int *cmp,
-  const double *tol,
-  const int *wcs1,
-  const int *wcs2,
-  int *equal)
-
-{
-  return wcscompare(*cmp, *tol, (const struct wcsprm *)wcs1,
-                    (const struct wcsprm *)wcs2, equal);
-}
-
-/*--------------------------------------------------------------------------*/
-
-int wcscopy_(const int *wcssrc, int *wcsdst)
-
-{
-  return wcscopy(1, (const struct wcsprm *)wcssrc, (struct wcsprm *)wcsdst);
-}
-
-/*--------------------------------------------------------------------------*/
-
 int wcsput_(
   int *wcs,
   const int *what,
@@ -189,47 +148,56 @@ int wcsput_(
   i0 = *i - 1;
   j0 = *j - 1;
 
-  wcsp->flag = 0;
-
   switch (*what) {
   case WCS_FLAG:
     wcsp->flag = *ivalp;
     break;
   case WCS_NAXIS:
     wcsp->naxis = *ivalp;
+    wcsp->flag = 0;
     break;
   case WCS_CRPIX:
     wcsp->crpix[i0] = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_PC:
     k = (i0)*(wcsp->naxis) + (j0);
     *(wcsp->pc+k) = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_CDELT:
     wcsp->cdelt[i0] = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_CRVAL:
     wcsp->crval[i0] = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_CUNIT:
     strncpy(wcsp->cunit[i0], cvalp, 72);
     wcsutil_null_fill(72, wcsp->cunit[i0]);
+    wcsp->flag = 0;
     break;
   case WCS_CTYPE:
     strncpy(wcsp->ctype[i0], cvalp, 72);
     wcsutil_null_fill(72, wcsp->ctype[i0]);
+    wcsp->flag = 0;
     break;
   case WCS_LONPOLE:
     wcsp->lonpole = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_LATPOLE:
     wcsp->latpole = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_RESTFRQ:
     wcsp->restfrq = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_RESTWAV:
     wcsp->restwav = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_NPV:
   case WCS_NPVMAX:
@@ -240,6 +208,7 @@ int wcsput_(
     (wcsp->pv + wcsp->npv)->m = *j;
     (wcsp->pv + wcsp->npv)->value = *dvalp;
     (wcsp->npv)++;
+    wcsp->flag = 0;
     break;
   case WCS_NPS:
   case WCS_NPSMAX:
@@ -251,16 +220,20 @@ int wcsput_(
     strncpy((wcsp->ps + wcsp->nps)->value, cvalp, 72);
     wcsutil_null_fill(72, (wcsp->ps + wcsp->nps)->value);
     (wcsp->nps)++;
+    wcsp->flag = 0;
     break;
   case WCS_CD:
     k = (i0)*(wcsp->naxis) + (j0);
     *(wcsp->cd+k) = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_CROTA:
     wcsp->crota[i0] = *dvalp;
+    wcsp->flag = 0;
     break;
   case WCS_ALTLIN:
     wcsp->altlin = *ivalp;
+    wcsp->flag = 0;
     break;
   case WCS_VELREF:
     wcsp->velref = *ivalp;
@@ -366,6 +339,7 @@ int wcspti_(int *wcs, const int *what, const int *value, const int *i,
 int wcsget_(const int *wcs, const int *what, void *value)
 
 {
+  unsigned int l;
   int i, j, k, naxis;
   char   *cvalp;
   int    *ivalp;
@@ -613,21 +587,21 @@ int wcsget_(const int *wcs, const int *what, void *value)
   case WCS_LIN:
     /* Copy the contents of the linprm struct. */
     iwcsp = (int *)(&(wcsp->lin));
-    for (k = 0; k < LINLEN; k++) {
+    for (l = 0; l < LINLEN; l++) {
       *(ivalp++) = *(iwcsp++);
     }
     break;
   case WCS_CEL:
     /* Copy the contents of the celprm struct. */
     iwcsp = (int *)(&(wcsp->cel));
-    for (k = 0; k < CELLEN; k++) {
+    for (l = 0; l < CELLEN; l++) {
       *(ivalp++) = *(iwcsp++);
     }
     break;
   case WCS_SPC:
     /* Copy the contents of the spcprm struct. */
     iwcsp = (int *)(&(wcsp->spc));
-    for (k = 0; k < SPCLEN; k++) {
+    for (l = 0; l < SPCLEN; l++) {
       *(ivalp++) = *(iwcsp++);
     }
     break;
@@ -635,11 +609,11 @@ int wcsget_(const int *wcs, const int *what, void *value)
     /* Copy the contents of the wcserr struct. */
     if (wcsp->err) {
       iwcsp = (int *)(wcsp->err);
-      for (k = 0; k < ERRLEN; k++) {
+      for (l = 0; l < ERRLEN; l++) {
         *(ivalp++) = *(iwcsp++);
       }
     } else {
-      for (k = 0; k < ERRLEN; k++) {
+      for (l = 0; l < ERRLEN; l++) {
         *(ivalp++) = 0;
       }
     }
@@ -668,6 +642,55 @@ int wcsgti_(const int *wcs, const int *what, int *value)
 
 /*--------------------------------------------------------------------------*/
 
+int wcsnpv_(int *npvmax) { return wcsnpv(*npvmax); }
+int wcsnps_(int *npsmax) { return wcsnps(*npsmax); }
+
+/*--------------------------------------------------------------------------*/
+
+int wcsini_(const int *naxis, int *wcs)
+
+{
+  return wcsini(1, *naxis, (struct wcsprm *)wcs);
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcsinit_(
+  const int *naxis,
+  int *wcs,
+  int *npvmax,
+  int *npsmax,
+  int *ndpmax)
+
+{
+  return wcsinit(1, *naxis, (struct wcsprm *)wcs, *npvmax, *npsmax, *ndpmax);
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcssub_(const int *wcssrc, int *nsub, int axes[], int *wcsdst)
+
+{
+  return wcssub(1, (const struct wcsprm *)wcssrc, nsub, axes,
+                (struct wcsprm *)wcsdst);
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcscompare_(
+  const int *cmp,
+  const double *tol,
+  const int *wcs1,
+  const int *wcs2,
+  int *equal)
+
+{
+  return wcscompare(*cmp, *tol, (const struct wcsprm *)wcs1,
+                    (const struct wcsprm *)wcs2, equal);
+}
+
+/*--------------------------------------------------------------------------*/
+
 int wcsfree_(int *wcs)
 
 {
@@ -676,14 +699,14 @@ int wcsfree_(int *wcs)
 
 /*--------------------------------------------------------------------------*/
 
-int wcsprt_(int *wcs)
+int wcsprt_(const int *wcs)
 
 {
   /* This may or may not force the Fortran I/O buffers to be flushed.  If
    * not, try CALL FLUSH(6) before calling WCSPRT in the Fortran code. */
   fflush(NULL);
 
-  return wcsprt((struct wcsprm *)wcs);
+  return wcsprt((const struct wcsprm *)wcs);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -695,17 +718,9 @@ int wcsperr_(int *wcs, const char prefix[72])
 
 {
   char prefix_[72];
-  int  i;
 
   strncpy(prefix_, prefix, 72);
-  if (prefix_[71] == ' ') {
-    for (i = 70; i >= 0; i--) {
-      if (prefix_[i] != ' ') break;
-      prefix_[i] = '\0';
-    }
-  } else {
-    prefix_[71] = '\0';
-  }
+  wcsutil_null_fill(72, prefix_);
 
   /* This may or may not force the Fortran I/O buffers to be flushed. */
   /* If not, try CALL FLUSH(6) before calling WCSPERR in the Fortran code. */
@@ -795,4 +810,21 @@ int wcssptr_(struct wcsprm *wcs, int *i, char ctype[9])
   wcsutil_blank_fill(9, ctype);
 
   return status;
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcscopy_(const int *wcssrc, int *wcsdst)
+
+{
+  return wcscopy(1, (const struct wcsprm *)wcssrc, (struct wcsprm *)wcsdst);
+}
+
+/*--------------------------------------------------------------------------*/
+
+void wcslib_version_(char *wcsver, int nchr)
+
+{
+  strncpy(wcsver, wcslib_version(0x0), nchr);
+  wcsutil_blank_fill(nchr, wcsver);
 }

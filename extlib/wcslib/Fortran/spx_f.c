@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,11 +22,12 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: spx_f.c,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+  $Id: spx_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <string.h>
 
+#include <wcserr.h>
 #include <spx.h>
 
 /* Fortran name mangling. */
@@ -41,7 +42,7 @@
 int spxget_(const int *spx, const int *what, void *value)
 
 {
-  int  k;
+  unsigned int l;
   int  *ivalp;
   const int *ispxp;
   const struct spxprm *spxp;
@@ -55,11 +56,11 @@ int spxget_(const int *spx, const int *what, void *value)
     /* Copy the contents of the wcserr struct. */
     if (spxp->err) {
       ispxp = (int *)(spxp->err);
-      for (k = 0; k < ERRLEN; k++) {
+      for (l = 0; l < ERRLEN; l++) {
         *(ivalp++) = *(ispxp++);
       }
     } else {
-      for (k = 0; k < ERRLEN; k++) {
+      for (l = 0; l < ERRLEN; l++) {
         *(ivalp++) = 0;
       }
     }

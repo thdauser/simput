@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,13 +22,19 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcshdr.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: twcshdr.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * twcshdr illustrates the steps required to read WCS information (including
 * -TAB coordinates) from a FITS header using the CFITSIO library
 *
 * Options:
+*   -a<alt>:
+*       Specify an alternate coordinate representation to be used (ignored if
+*       there is only one).  Can also be specified as a 0-relative index in
+*       the range 0 to 26, where the alternates are sequenced alphabetically
+*       following the primary representation.
+*
 *   -h: Uses wcshdo() to translate the wcsprm struct into a FITS header and
 *       prints it.
 *
@@ -45,7 +51,10 @@
 *
 *===========================================================================*/
 
+#include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include <fitsio.h>
 
@@ -55,12 +64,12 @@
 int main(int argc, char *argv[])
 
 {
-  char *header, *hptr;
+  char *alt = 0x0, *header, *hptr;
   int  dohdr = 0, dopixel = 0, doworld = 0;
-  int  i, nkeyrec, nreject, nwcs, stat[NWCSFIX], status = 0;
+  int  alts[27], i, ialt, nkeyrec, nreject, nwcs, stat[NWCSFIX], status = 0;
   double imgcrd[2], phi, pixcrd[2], theta, world[2];
   fitsfile *fptr;
-  struct wcsprm *wcs;
+  struct wcsprm *wcs, *wcsi;
 
 
   /* Parse options. */
@@ -68,17 +77,28 @@ int main(int argc, char *argv[])
     if (!argv[i][1]) break;
 
     switch (argv[i][1]) {
+    case 'a':
+      /* Select an alternate WCS. */
+      alt = argv[i]+2;
+      break;
+
     case 'h':
+      /* Print header using wcshdo(). */
       dohdr = 1;
       break;
+
     case 'p':
+      /* Transform pixel coordinate. */
       dopixel = 1;
       break;
+
     case 'w':
+      /* Transform world coordinate. */
       doworld = 1;
       break;
+
     default:
-      fprintf(stderr, "Usage: twcshdr [-h | -p | -w] <file>\n");
+      fprintf(stderr, "Usage: twcshdr [-a<alt>] [-h | -p | -w] <file>\n");
       return 1;
     }
   }
@@ -101,7 +121,7 @@ int main(int argc, char *argv[])
   /*-----------------------------------------------------------------------*/
 
   /* Parse the primary header of the FITS file. */
-  if ((status = wcspih(header, nkeyrec, WCSHDR_all, 2, &nreject, &nwcs,
+  if ((status = wcspih(header, nkeyrec, WCSHDR_all, -3, &nreject, &nwcs,
                        &wcs))) {
     fprintf(stderr, "wcspih ERROR %d: %s.\n", status,wcshdr_errmsg[status]);
   }
@@ -125,6 +145,49 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  /* Sort out alternates. */
+  i = 0;
+  if (alt) {
+    if ('0' <= *alt && *alt <= '9') {
+      if ((i = atoi(alt)) > nwcs-1) {
+        wcsfprintf(stderr, "WARNING, no alternate coordinate "
+          "representation \"%s\".\n", alt);
+        return 1;
+      }
+
+    } else {
+      wcsidx(nwcs, &wcs, alts);
+
+      ialt = toupper(*alt);
+      if (strlen(alt) > 1) {
+        wcsfprintf(stderr, "WARNING, alternate specifier \"%s\" is "
+          "invalid.\n", alt);
+        return 1;
+
+      } else if (*alt == ' ') {
+        if (alts[0] == -1) {
+          wcsfprintf(stderr, "WARNING, no primary coordinate "
+            "representation.\n");
+          return 1;
+        }
+
+      } else if (ialt < 'A' || ialt > 'Z') {
+        wcsfprintf(stderr, "WARNING, alternate specifier \"%s\" is "
+          "invalid.\n", alt);
+        return 1;
+
+      } else {
+        if ((i = alts[ialt - 'A' + 1]) == -1) {
+          wcsfprintf(stderr, "WARNING, no alternate coordinate "
+            "representation \"%s\".\n", alt);
+          return 1;
+        }
+      }
+    }
+  }
+
+  wcsi = wcs + i;
+
   /*-----------------------------------------------------------------------*/
   /* The wcsprm struct is now ready for use.                               */
   /*-----------------------------------------------------------------------*/
@@ -135,18 +198,18 @@ int main(int argc, char *argv[])
 
   /* Initialize the wcsprm struct, also taking control of memory allocated by
    * fits_read_wcstab(). */
-  if ((status = wcsset(wcs))) {
+  if ((status = wcsset(wcsi))) {
     fprintf(stderr, "wcsset ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   }
 
   if (dohdr) {
-    if ((status = wcshdo(WCSHDO_all, wcs, &nkeyrec, &header))) {
+    if ((status = wcshdo(WCSHDO_all, wcsi, &nkeyrec, &header))) {
       return 1;
     }
 
     hptr = header;
-    printf("\n\n");
+    printf("\n");
     for (i = 0; i < nkeyrec; i++, hptr += 80) {
       printf("%.80s\n", hptr);
     }
@@ -156,8 +219,8 @@ int main(int argc, char *argv[])
   } else if (dopixel) {
     while (1) {
       printf("Enter pixel coordinates: ");
-      if (scanf("%lf%*[ ,]%lf", pixcrd, pixcrd+1) != wcs->naxis) break;
-      status = wcsp2s(wcs, 1, 2, pixcrd, imgcrd, &phi, &theta, world, stat);
+      if (scanf("%lf%*[ ,]%lf", pixcrd, pixcrd+1) != wcsi->naxis) break;
+      status = wcsp2s(wcsi, 1, 2, pixcrd, imgcrd, &phi, &theta, world, stat);
       printf("  (%20.15f, %20.15f) ->\n  (%20.15f, %20.15f)\n\n",
         pixcrd[0], pixcrd[1], world[0], world[1]);
     }
@@ -165,15 +228,15 @@ int main(int argc, char *argv[])
   } else if (doworld) {
     while (1) {
       printf("Enter world coordinates: ");
-      if (scanf("%lf%*[ ,]%lf", world, world+1) != wcs->naxis) break;
-      status = wcss2p(wcs, 1, 2, world, &phi, &theta, imgcrd, pixcrd, stat);
+      if (scanf("%lf%*[ ,]%lf", world, world+1) != wcsi->naxis) break;
+      status = wcss2p(wcsi, 1, 2, world, &phi, &theta, imgcrd, pixcrd, stat);
       printf("  (%20.15f, %20.15f) ->\n  (%20.15f, %20.15f)\n\n",
         world[0], world[1], pixcrd[0], pixcrd[1]);
     }
 
   } else {
     /* Print the struct. */
-    if ((status = wcsprt(wcs))) {
+    if ((status = wcsprt(wcsi))) {
       return 1;
     }
   }

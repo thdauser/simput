@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,12 +22,12 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: wcshdr_data.f,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: wcshdr_data.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
       BLOCK DATA WCSHDR_BLOCK_DATA
 
-      CHARACTER WCSHDR_ERRMSG(0:3)*80
+      CHARACTER WCSHDR_ERRMSG(0:5)*80
 
       COMMON /WCSHDR_DATA/ WCSHDR_ERRMSG
 
@@ -35,6 +35,8 @@
      :  'Success',
      :  'Null wcsprm pointer passed',
      :  'Memory allocation failed',
+     :  'Invalid column selection',
+     :  'Fatal error returned by Flex parser',
      :  'Invalid tabular parameters'/
 
       END

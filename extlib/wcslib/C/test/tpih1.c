@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tpih1.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: tpih1.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * tpih1 tests wcspih(), the WCS FITS parser for image headers, and wcsfix(),
@@ -130,7 +130,8 @@ int main()
    * reported. */
   relax = WCSHDR_all;
   ctrl  = -2;
-  fprintf(stderr, "\nIllegal-WCS header keyrecords rejected by wcspih():\n");
+  fprintf(stderr, "\nIllegal or extraneous WCS header keyrecords rejected "
+                  "by wcspih():\n");
   if ((status = wcspih(header, nkeyrec, relax, ctrl, &nreject, &nwcs,
                        &wcs))) {
     fprintf(stderr, "wcspih ERROR %d: %s.\n", status, wcs_errmsg[status]);
@@ -139,7 +140,7 @@ int main()
 
 
   /* List the remaining keyrecords. */
-  printf("\n\nNon-WCS header keyrecords not used by wcspih():\n");
+  printf("\n\nNon-WCS header keyrecords ignored by wcspih():\n");
   hptr = header;
   while (*hptr) {
     printf("%.80s\n", hptr);
@@ -196,7 +197,9 @@ int main()
   }
   printf("%s", wcsprintf_buf());
 
-  status = wcsvfree(&nwcs, &wcs);
+  /* Defeat spurious reporting of memory leaks. */
+  wcsprintf_set(stdout);
+  wcsvfree(&nwcs, &wcs);
 
   return 0;
 }

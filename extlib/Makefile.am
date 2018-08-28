@@ -57,7 +57,7 @@ clean-fftw:
 ##### WCS #####
 
 wcslib_dir=wcslib
-LIBVER=4.25.1
+LIBVER=5.19.1
 
 LIBST_OSX=dylib
 LIBST_LINUX=so

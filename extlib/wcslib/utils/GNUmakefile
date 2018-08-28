@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for WCSLIB 4.25 utilities: fitshdr, HPXcvt, wcsgrid and wcsware.
+# GNU makefile for WCSLIB 5.19 utilities: fitshdr, HPXcvt, wcsgrid and wcsware.
 #
 # Summary of the main targets
 # ---------------------------
@@ -12,12 +12,12 @@
 #   1: If you need to make changes then preferably modify ../makedefs.in
 #      instead and re-run configure.
 #
-#   2: In compiling these utilities, this makefile assumes that the WCSLIB 4.25
+#   2: In compiling these utilities, this makefile assumes that the WCSLIB 5.19
 #      sources reside in ../{pgsbox,C} (as in the distribution kit).
 #
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: GNUmakefile,v 4.25.1.1 2014/12/14 14:32:48 mcalabre Exp mcalabre $
+# $Id: GNUmakefile,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 #-----------------------------------------------------------------------------
 # Get configure settings.
 include ../makedefs
@@ -108,11 +108,11 @@ $(WCSLIB) :
 
 install : build
 	-  if [ ! -d "$(BINDIR)" ] ; then \
-	     $(INSTALL) -d -m 2775 $(BINDIR) ; \
+	     $(INSTALL) -d -m 775 $(BINDIR) ; \
 	   fi
 	   $(INSTALL) -m 755 $(UTILS) $(BINDIR)
 	-  if [ ! -d "$(MANDIR)" ] ; then \
-	     $(INSTALL) -d -m 2775 $(MANDIR)/man1 ; \
+	     $(INSTALL) -d -m 775 $(MANDIR)/man1 ; \
 	   fi
 	   $(INSTALL) -m 644 $(MAN) $(MANDIR)/man1
 
@@ -131,11 +131,11 @@ fitshdr.1 : fitshdr
 
 wcsware.1 : wcsware
 	help2man --no-discard-stderr --version-string=$(LIBVER) \
-	  -n "Extract WCS keywords for an image" -N ./$< > $@
+	  -n "Extract FITS WCS keywords for an image" -N ./$< > $@
 
 wcsgrid.1 : wcsgrid
 	help2man --no-discard-stderr --version-string=$(LIBVER) \
-	  -n "Extract WCS keywords for an image" -N ./$< > $@
+	  -n "Extract FITS WCS keywords and plot graticule" -N ./$< > $@
 
 HPXcvt.1 : HPXcvt
 	help2man --no-discard-stderr --version-string=$(LIBVER) \

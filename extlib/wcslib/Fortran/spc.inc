@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,20 +22,25 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: spc.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: spc.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  SPCAIPS, SPCFREE, SPCGET, SPCGTC, SPCGTD, SPCGTI,
-     :          SPCINI, SPCPRT, SPCPTC, SPCPTD, SPCPTI, SPCPUT, SPCS2X,
-     :          SPCSET, SPCSPXE, SPCTRNE, SPCTYPE, SPCX2S, SPCXPSE
-      INTEGER   SPCAIPS, SPCFREE, SPCGET, SPCGTC, SPCGTD, SPCGTI,
-     :          SPCINI, SPCPRT, SPCPTC, SPCPTD, SPCPTI, SPCPUT, SPCS2X,
-     :          SPCSET, SPCSPXE, SPCTRNE, SPCTYPE, SPCX2S, SPCXPSE
+      EXTERNAL  SPCPUT, SPCPTC, SPCPTD, SPCPTI,
+     :          SPCGET, SPCGTC, SPCGTD, SPCGTI,
+     :          SPCINI, SPCFREE, SPCPRT, SPCPERR,
+     :          SPCSET, SPCX2S, SPCS2X,
+     :          SPCTYPE, SPCSPXE, SPCXPSE, SPCTRNE, SPCAIPS
+
+      INTEGER   SPCPUT, SPCPTC, SPCPTD, SPCPTI,
+     :          SPCGET, SPCGTC, SPCGTD, SPCGTI,
+     :          SPCINI, SPCFREE, SPCPRT, SPCPERR,
+     :          SPCSET, SPCX2S, SPCS2X,
+     :          SPCTYPE, SPCSPXE, SPCXPSE, SPCTRNE, SPCAIPS
 
 *     Deprecated functions.
-      EXTERNAL  SPCSPX, SPCTRN, SPCTYP, SPCXPS
-      INTEGER   SPCSPX, SPCTRN, SPCTYP, SPCXPS
+      EXTERNAL  SPCTYP, SPCSPX, SPCXPS, SPCTRN
+      INTEGER   SPCTYP, SPCSPX, SPCXPS, SPCTRN
 
 *     Length of the SPCPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 44 on 32-bit machines.
@@ -43,8 +48,8 @@
       PARAMETER (SPCLEN = 50)
 
 *     Codes for SPC data structure elements used by SPCPUT and SPCGET.
-      INTEGER   SPC_CODE, SPC_CRVAL, SPC_FLAG, SPC_PV, SPC_RESTFRQ,
-     :          SPC_RESTWAV, SPC_TYPE
+      INTEGER   SPC_FLAG, SPC_TYPE, SPC_CODE, SPC_CRVAL, SPC_RESTFRQ,
+     :          SPC_RESTWAV, SPC_PV
 
       PARAMETER (SPC_FLAG    = 100)
       PARAMETER (SPC_TYPE    = 101)
@@ -55,21 +60,22 @@
       PARAMETER (SPC_PV      = 106)
 
 *     Codes for SPC data structure elements used by SPCGET (only).
-      INTEGER   SPC_ERR, SPC_ISGRISM, SPC_W
+      INTEGER   SPC_W, SPC_ISGRISM, SPC_ERR
 
       PARAMETER (SPC_W       = 200)
       PARAMETER (SPC_ISGRISM = 201)
       PARAMETER (SPC_ERR     = 202)
 
 *     Error codes and messages.
-      INTEGER   SPCERR_BAD_SPEC, SPCERR_BAD_SPEC_PARAMS, SPCERR_BAD_X,
-     :          SPCERR_NULL_POINTER, SPCERR_SUCCESS
+      INTEGER   SPCERR_NO_CHANGE, SPCERR_SUCCESS, SPCERR_NULL_POINTER,
+     :          SPCERR_BAD_SPEC_PARAMS, SPCERR_BAD_X, SPCERR_BAD_SPEC
 
-      PARAMETER (SPCERR_SUCCESS         = 0)
-      PARAMETER (SPCERR_NULL_POINTER    = 1)
-      PARAMETER (SPCERR_BAD_SPEC_PARAMS = 2)
-      PARAMETER (SPCERR_BAD_X           = 3)
-      PARAMETER (SPCERR_BAD_SPEC        = 4)
+      PARAMETER (SPCERR_NO_CHANGE       = -1)
+      PARAMETER (SPCERR_SUCCESS         =  0)
+      PARAMETER (SPCERR_NULL_POINTER    =  1)
+      PARAMETER (SPCERR_BAD_SPEC_PARAMS =  2)
+      PARAMETER (SPCERR_BAD_X           =  3)
+      PARAMETER (SPCERR_BAD_SPEC        =  4)
 
-      CHARACTER SPC_ERRMSG(0:4)*80
+      CHARACTER SPC_ERRMSG(-1:4)*80
       COMMON /SPC_DATA/ SPC_ERRMSG

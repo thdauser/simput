@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,19 +22,18 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tfitshdr.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: tfitshdr.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * tfitshdr tests fitshdr(), the FITS parser for image headers, by reading a
 * test header and printing the resulting fitskey structs.
 *
-* Input comes from file 'pih.fits' using either fits_hdr2str() from CFITSIO
-* if the DO_CFITSIO preprocessor is defined, or read directly using fgets()
-* otherwise.
+* Input comes from file 'fitshdr.fits' using either fits_hdr2str() from
+* CFITSIO if the DO_CFITSIO preprocessor is defined, or read directly using
+* fgets() otherwise.
 *
-* If the DO_WCSHDR preprocessor macro is defined, wcshdr() will be called
-* first to extract all WCS-related keyrecords from the input header before
-* passing it on to fitshdr().
+* wcshdr() is called first to extract all WCS-related keyrecords from the
+* input header before passing it on to fitshdr().
 *
 *---------------------------------------------------------------------------*/
 
@@ -48,16 +47,13 @@
 #include <fitsio.h>
 #endif
 
-#ifdef DO_WCSHDR
 #include <wcshdr.h>
-#endif
-
 #include <fitshdr.h>
 
 int main()
 
 {
-  char infile[] = "pih.fits";
+  char infile[] = "fitshdr.fits";
   char text[80];
   int  i, j, k, nkeyrec, nkeyids, nreject, status;
   struct fitskey *keys, *kptr;
@@ -71,10 +67,8 @@ int main()
   FILE *fptr;
 #endif
 
-#ifdef DO_WCSHDR
   struct wcsprm *wcs;
   int  ctrl, nwcs, relax;
-#endif
 
 
   /* Set line buffering in case stdout is redirected to a file, otherwise
@@ -118,7 +112,7 @@ int main()
       k += 80;
       nkeyrec++;
 
-      if (strncmp(keyrec, "END     ", 8) == 0) {
+      if (strncmp(keyrec, "END       ", 10) == 0) {
         /* An END keyrecord was read, but read the rest of the block. */
         end = 1;
       }
@@ -132,7 +126,6 @@ int main()
   printf("Found %d header keyrecords.\n", nkeyrec);
 
 
-#ifdef DO_WCSHDR
   /* Cull recognized, syntactically valid WCS keyrecords from the header. */
   relax = WCSHDR_all;
   ctrl = -1;
@@ -141,10 +134,10 @@ int main()
     fprintf(stderr, "wcspih ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   }
+  wcsvfree(&nwcs, &wcs);
 
   /* Number remaining. */
   nkeyrec = strlen(header) / 80;
-#endif
 
 
   /* Specific keywords to be located or culled. */

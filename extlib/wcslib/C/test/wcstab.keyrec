@@ -1,7 +1,6 @@
 #-----------------------------------------------------------------------------
-#
-# WCSLIB 4.25 - an implementation of the FITS WCS standard.
-# Copyright (C) 1995-2015, Mark Calabretta
+# WCSLIB 5.19 - an implementation of the FITS WCS standard.
+# Copyright (C) 1995-2018, Mark Calabretta
 #
 # This file is part of WCSLIB.
 #
@@ -22,7 +21,7 @@
 #
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: wcstab.keyrec,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+# $Id: wcstab.keyrec,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 #-----------------------------------------------------------------------------
 #
 # List of FITS header keyrecords used by 'twcstab' to construct a FITS file
@@ -33,13 +32,13 @@
 # Lines in this file beginning with '#' are ignored by twcstab.
 #
 #-----------------------------------------------------------------------------
-SIMPLE  =                    T / Standards-conformant FITS format
+SIMPLE  =                    T / Conforms to FITS standard
 BITPIX  =                  -32 / IEEE single precision floating point
-NAXIS   =                    4 / Four image axes
-NAXIS1  =                  256 / Length of 1st image axis - fastest varying
-NAXIS2  =                  128 / Length of 2nd image axis
-NAXIS3  =                    4 / Length of 3rd image axis
-NAXIS4  =                    1 / Length of 4th image axis - slowest varying
+NAXIS   =                    4 / 4 image axes
+NAXIS1  =                  256 / Length of image axis 1 - fastest varying
+NAXIS2  =                  128 / Length of image axis 2
+NAXIS3  =                    4 / Length of image axis 3
+NAXIS4  =                    1 / Length of image axis 4 - slowest varying
 EXTEND  =                    T / Binary table extensions contain lookup tables.
 
 COMMENT  -----------------------------------------------------------------------

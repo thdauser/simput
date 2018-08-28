@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,14 +22,19 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: cel.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: cel.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  CELFREE, CELGET, CELGTC, CELGTD, CELGTI, CELINI, CELPRT,
-     :          CELPTC,  CELPTD, CELPTI, CELPUT, CELS2X, CELSET, CELX2S
-      INTEGER   CELFREE, CELGET, CELGTC, CELGTD, CELGTI, CELINI, CELPRT,
-     :          CELPTC,  CELPTD, CELPTI, CELPUT, CELS2X, CELSET, CELX2S
+      EXTERNAL  CELPUT, CELPTC,  CELPTD, CELPTI,
+     :          CELGET, CELGTC,  CELGTD, CELGTI,
+     :          CELINI, CELFREE, CELPRT, CELPERR,
+     :          CELSET, CELX2S,  CELS2X
+
+      INTEGER   CELPUT, CELPTC,  CELPTD, CELPTI,
+     :          CELGET, CELGTC,  CELGTD, CELGTI,
+     :          CELINI, CELFREE, CELPRT, CELPERR,
+     :          CELSET, CELX2S,  CELS2X
 
 *     Length of the CELPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 144 on 32-bit machines.
@@ -37,8 +42,8 @@
       PARAMETER (CELLEN = 150)
 
 *     Codes for CEL data structure elements used by CELPUT and CELGET.
-      INTEGER   CEL_FLAG, CEL_OFFSET, CEL_PHI0, CEL_PRJ, CEL_REF,
-     :          CEL_THETA0
+      INTEGER   CEL_FLAG, CEL_OFFSET, CEL_PHI0, CEL_THETA0, CEL_REF,
+     :          CEL_PRJ
 
       PARAMETER (CEL_FLAG   = 100)
       PARAMETER (CEL_OFFSET = 101)
@@ -48,7 +53,7 @@
       PARAMETER (CEL_PRJ    = 105)
 
 *     Codes for CEL data structure elements used by CELGET (only).
-      INTEGER   CEL_ERR, CEL_EULER, CEL_ISOLAT, CEL_LATPRQ
+      INTEGER   CEL_EULER, CEL_LATPRQ, CEL_ISOLAT, CEL_ERR
 
       PARAMETER (CEL_EULER  = 200)
       PARAMETER (CEL_LATPRQ = 201)
@@ -56,10 +61,9 @@
       PARAMETER (CEL_ERR    = 203)
 
 *     Error codes and messages.
-      INTEGER   CELERR_BAD_COORD_TRANS, CELERR_BAD_PARAM,
-     :          CELERR_BAD_PIX, CELERR_BAD_WORLD,
-     :          CELERR_ILL_COORD_TRANS, CELERR_NULL_POINTER,
-     :          CELERR_SUCCESS
+      INTEGER   CELERR_SUCCESS, CELERR_NULL_POINTER, CELERR_BAD_PARAM,
+     :          CELERR_BAD_COORD_TRANS, CELERR_ILL_COORD_TRANS,
+     :          CELERR_BAD_PIX, CELERR_BAD_WORLD
 
       PARAMETER (CELERR_SUCCESS         = 0)
       PARAMETER (CELERR_NULL_POINTER    = 1)

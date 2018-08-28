@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,7 +22,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tpih1.f,v 4.25.1.2 2015/01/06 01:02:37 mcalabre Exp mcalabre $
+* $Id: tpih1.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
       PROGRAM TPIH1
@@ -108,7 +108,8 @@
 
 *     Cull all WCS keyrecords from the header but report illegal ones.
       WRITE (*, 80)
- 80   FORMAT (/,'Illegal-WCS header keyrecords rejected by wcspih():')
+ 80   FORMAT (/,'Illegal or extraneous WCS header keyrecords ',
+     :          'rejected by WCSPIH:')
       RELAX = WCSHDR_all
       CTRL = -2
 
@@ -123,7 +124,7 @@
 
 *     List keyrecords that were not consumed by WCSPIH.
       WRITE (*, 100)
- 100  FORMAT (//,'Non-WCS header keyrecords not used by WCSPIH:')
+ 100  FORMAT (//,'Non-WCS header keyrecords ignored by WCSPIH:')
       DO 110 I = 1, 288001, 80
         IF (HEADER(I:I).EQ.CHAR(0)) GO TO 120
         WRITE (*, '(A)') HEADER(I:I+79)

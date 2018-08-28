@@ -1,0 +1,7 @@
+#!/bin/sh
+
+  exec 1>twcslint.out 2>&1
+
+  echo "Testing WCSLIB syntax checker for FITS WCS keyrecords (twcslint)"
+  echo "----------------------------------------------------------------"
+  ../utils/wcsware -l -p -v wcslint.fits

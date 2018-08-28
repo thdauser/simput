@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -23,7 +23,7 @@
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO,
      and: Michael Droetboom, Space Telescope Science Institute
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcs.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: twcs.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * twcs tests wcss2p() and wcsp2s() for closure on an oblique 2-D slice through
@@ -76,12 +76,15 @@ int main()
 #define NELEM 9
 
   char   ok[] = "", mismatch[] = " (WARNING, mismatch)", *s;
-  int    i, k, lat, lng, nFail1 = 0, nFail2 = 0, stat[361], status;
+  int    i, k, lat, lng, nFail1 = 0, nFail2 = 0, stat[361], status, ver[3];
   double freq, img[361][NELEM], lat1, lng1, phi[361], pixel1[361][NELEM],
          pixel2[361][NELEM], r, resid, residmax, theta[361], time,
          world1[361][NELEM], world2[361][NELEM];
   struct wcsprm *wcs;
 
+
+  printf("WCSLIB version number: %s", wcslib_version(ver));
+  printf(" (%d,%d,%d)\n\n", ver[0], ver[1], ver[2]);
 
   printf("Testing closure of WCSLIB world coordinate transformation "
          "routines (twcs.c)\n"
@@ -106,6 +109,7 @@ int main()
   printf("          int *:%5"MODZ"u\n", sizeof(int *));
   printf("        float *:%5"MODZ"u\n", sizeof(float *));
   printf("       double *:%5"MODZ"u\n", sizeof(double *));
+  printf("struct  dpkey *:%5"MODZ"u\n", sizeof(struct dpkey *));
   printf("struct pvcard *:%5"MODZ"u\n", sizeof(struct pvcard *));
   printf("struct pscard *:%5"MODZ"u\n", sizeof(struct pscard *));
 
@@ -114,6 +118,14 @@ int main()
   s = (sizeof(struct celprm) == sizeof(int)*CELLEN) ? ok : mismatch;
   printf("         celprm:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct celprm),
          CELLEN, s);
+
+  s = (sizeof(struct disprm) == sizeof(int)*DISLEN) ? ok : mismatch;
+  printf("         disprm:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct disprm),
+         DISLEN, s);
+
+  s = (sizeof(struct dpkey)  == sizeof(int)*DPLEN)  ? ok : mismatch;
+  printf("          dpkey:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct dpkey),
+         DPLEN, s);
 
   s = (sizeof(struct fitskey) == sizeof(int)*KEYLEN) ? ok : mismatch;
   printf("        fitskey:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct fitskey),
@@ -130,6 +142,14 @@ int main()
   s = (sizeof(struct prjprm) == sizeof(int)*PRJLEN) ? ok : mismatch;
   printf("         prjprm:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct prjprm),
          PRJLEN, s);
+
+  s = (sizeof(struct pscard) == sizeof(int)*PSLEN)  ? ok : mismatch;
+  printf("         pscard:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct pscard),
+         PSLEN, s);
+
+  s = (sizeof(struct pvcard) == sizeof(int)*PVLEN)  ? ok : mismatch;
+  printf("         pvcard:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct pvcard),
+         PVLEN, s);
 
   s = (sizeof(struct spcprm) == sizeof(int)*SPCLEN) ? ok : mismatch;
   printf("         spcprm:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct spcprm),
@@ -430,6 +450,8 @@ int test_errors()
   status = wcsset(&wcs);
   nFail += check_error(&wcs, status, WCSERR_BAD_CTYPE,
              "Unmatched celestial axes");
+
+  wcsfree(&wcs);
 
   return nFail;
 }

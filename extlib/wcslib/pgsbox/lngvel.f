@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* PGSBOX 4.25 - draw curvilinear coordinate axes for PGPLOT.
-* Copyright (C) 1997-2015, Mark Calabretta
+* PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
+* Copyright (C) 1997-2018, Mark Calabretta
 *
 * This file is part of PGSBOX.
 *
@@ -22,7 +22,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: lngvel.f,v 4.25.1.2 2015/01/06 01:03:14 mcalabre Exp mcalabre $
+* $Id: lngvel.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 *
 * LNGVEL defines a longitude/velocity coordinate system for PGSBOX.

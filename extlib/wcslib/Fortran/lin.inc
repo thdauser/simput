@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,45 +22,62 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: lin.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: lin.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  LINCPY, LINFREE, LINGET, LINGTD, LINGTI, LININI, LINP2X,
-     :          LINPRT, LINPTD, LINPTI, LINPUT, LINSET, LINX2P
-      INTEGER   LINCPY, LINFREE, LINGET, LINGTD, LINGTI, LININI, LINP2X,
-     :          LINPRT, LINPTD, LINPTI, LINPUT, LINSET, LINX2P
+      EXTERNAL  LINPUT, LINPTD,  LINPTI, LINGET,  LINGTD, LINGTI,
+     :          LININI, LININIT, LINDIS, LINDIST, LINCPY, LINFREE,
+     :          LINPRT, LINPERR,
+     :          LINSET, LINP2X,  LINX2P, LINWARP
+
+      INTEGER   LINPUT, LINPTD, LINPTI, LINGET, LINGTD, LINGTI,
+     :          LININI, LININIT, LINDIS, LINDIST, LINCPY, LINFREE,
+     :          LINPRT, LINPERR,
+     :          LINSET, LINP2X, LINX2P, LINWARP
 
 *     Length of the LINPRM data structure (INTEGER array) on 64-bit
-*     machines.  Only needs to be 18 on 32-bit machines.
+*     machines.  Only needs to be 22 on 32-bit machines.
       INTEGER   LINLEN
-      PARAMETER (LINLEN = 28)
+      PARAMETER (LINLEN = 36)
 
 *     Codes for LIN data structure elements used by LINPUT and LINGET.
-      INTEGER   LIN_CDELT, LIN_CRPIX, LIN_FLAG, LIN_NAXIS, LIN_PC
+      INTEGER   LIN_FLAG, LIN_NAXIS, LIN_CRPIX, LIN_PC, LIN_CDELT,
+     :          LIN_DISPRE, LIN_DISSEQ
 
       PARAMETER (LIN_FLAG   = 100)
       PARAMETER (LIN_NAXIS  = 101)
       PARAMETER (LIN_CRPIX  = 102)
       PARAMETER (LIN_PC     = 103)
       PARAMETER (LIN_CDELT  = 104)
+      PARAMETER (LIN_DISPRE = 105)
+      PARAMETER (LIN_DISSEQ = 106)
 
 *     Codes for LIN data structure elements used by LINGET (only).
-      INTEGER   LIN_ERR, LIN_IMGPIX, LIN_PIXIMG, LIN_UNITY
+      INTEGER   LIN_PIXIMG, LIN_IMGPIX, LIN_INAXIS, LIN_UNITY,
+     :          LIN_AFFINE, LIN_SIMPLE, LIN_ERR
 
       PARAMETER (LIN_PIXIMG = 200)
       PARAMETER (LIN_IMGPIX = 201)
-      PARAMETER (LIN_UNITY  = 202)
-      PARAMETER (LIN_ERR    = 203)
+      PARAMETER (LIN_INAXIS = 202)
+      PARAMETER (LIN_UNITY  = 203)
+      PARAMETER (LIN_AFFINE = 204)
+      PARAMETER (LIN_SIMPLE = 205)
+
+      PARAMETER (LIN_ERR    = 206)
 
 *     Error codes and messages.
-      INTEGER   LINERR_MEMORY, LINERR_NULL_POINTER, LINERR_SINGULAR_MTX,
-     :          LINERR_SUCCESS
+      INTEGER   LINERR_SUCCESS, LINERR_NULL_POINTER, LINERR_MEMORY,
+     :          LINERR_SINGULAR_MTX, LINERR_DISTORT_INIT,
+     :          LINERR_DISTORT, LINERR_DEDISTORT
 
       PARAMETER (LINERR_SUCCESS      = 0)
       PARAMETER (LINERR_NULL_POINTER = 1)
       PARAMETER (LINERR_MEMORY       = 2)
       PARAMETER (LINERR_SINGULAR_MTX = 3)
+      PARAMETER (LINERR_DISTORT_INIT = 4)
+      PARAMETER (LINERR_DISTORT      = 5)
+      PARAMETER (LINERR_DEDISTORT    = 6)
 
-      CHARACTER LIN_ERRMSG(0:3)*80
+      CHARACTER LIN_ERRMSG(0:6)*80
       COMMON /LIN_DATA/ LIN_ERRMSG

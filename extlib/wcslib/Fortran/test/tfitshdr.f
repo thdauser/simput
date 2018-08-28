@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,7 +22,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tfitshdr.f,v 4.25.1.2 2015/01/06 01:02:37 mcalabre Exp mcalabre $
+* $Id: tfitshdr.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
       PROGRAM TFITSHDR
@@ -31,28 +31,28 @@
 * TFITSHDR tests FITSHDR, the FITS parser for image headers, by reading
 * a test header and printing the resulting fitskey structs.
 *
-* Input comes from file 'pih.fits'.
+* Input comes from file 'fitshdr.fits'.
 *
 * WCSHDR is called first to extract all WCS-related keyrecords from the
 * input header before passing it on to FITSHDR.
 *
-* KEYS, which is meant to hold a pointer, is declared as an array of
-* length 2 to accomodate 64-bit machines for which sizeof(void *) =
-* 2*sizeof(int).
+* KEYS and WCSP, which are meant to hold pointers, are declared as
+* integer arrays of length 2 to accomodate 64-bit machines for which
+* sizeof(void *) = 2*sizeof(int).
 *-----------------------------------------------------------------------
       LOGICAL   GOTEND
       INTEGER   CTRL, I, IERR, IVAL(8), J, K, KEYNO, KEYS(2), KEYTYP,
      :          KTYP, NC, NKEYRC, NKEYID, NREJECT, NWCS, RELAX, STATUS,
-     :          ULEN, WCSP
+     :          ULEN, WCSP(2)
       DOUBLE PRECISION FVAL(2)
-      CHARACTER KEYREC*80, CVAL*72, HEADER*288001, KEYWRD*12, INFILE*9,
+      CHARACTER KEYREC*80, CVAL*72, HEADER*288001, KEYWRD*12, INFILE*12,
      :          TEXT*84
 
       INCLUDE 'wcshdr.inc'
       INCLUDE 'fitshdr.inc'
       INTEGER KEYIDS(KEYIDLEN,8)
 
-      DATA INFILE /'pih.fits'/
+      DATA INFILE /'fitshdr.fits'/
 *-----------------------------------------------------------------------
       WRITE (*, 10)
  10   FORMAT ('Testing FITS image header parser (tfitshdr.f)',/,
@@ -84,7 +84,7 @@
           K = K + 80
           NKEYRC = NKEYRC + 1
 
-          IF (KEYREC(:8).EQ.'END     ') THEN
+          IF (KEYREC(:10).EQ.'END       ') THEN
 *           An END keyrecord was read, read the rest of the block.
             GOTEND = .TRUE.
           END IF

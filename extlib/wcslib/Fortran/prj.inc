@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,16 +22,19 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: prj.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: prj.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  PRJBCHK, PRJFREE, PRJGET, PRJGTC, PRJGTD, PRJGTI,
-     :          PRJINI,  PRJPRT,  PRJPTC, PRJPTD, PRJPTI, PRJPUT,
-     :          PRJS2X,  PRJSET,  PRJX2S
-      INTEGER   PRJBCHK, PRJFREE, PRJGET, PRJGTC, PRJGTD, PRJGTI,
-     :          PRJINI,  PRJPRT,  PRJPTC, PRJPTD, PRJPTI, PRJPUT,
-     :          PRJS2X,  PRJSET,  PRJX2S
+      EXTERNAL  PRJPUT, PRJPTC, PRJPTD, PRJPTI,
+     :          PRJGET, PRJGTC, PRJGTD, PRJGTI,
+     :          PRJINI, PRJFREE, PRJPRT, PRJPERR, PRJBCHK,
+     :          PRJSET, PRJX2S,  PRJS2X
+
+      INTEGER   PRJPUT, PRJPTC, PRJPTD, PRJPTI,
+     :          PRJGET, PRJGTC, PRJGTD, PRJGTI,
+     :          PRJINI, PRJFREE, PRJPRT, PRJPERR, PRJBCHK,
+     :          PRJSET, PRJX2S,  PRJS2X
 
       EXTERNAL  AZPSET, AZPX2S, AZPS2X,    PARSET, PARX2S, PARS2X,
      :          SZPSET, SZPX2S, SZPS2X,    MOLSET, MOLX2S, MOLS2X,
@@ -44,8 +47,8 @@
      :          AIRSET, AIRX2S, AIRS2X,    PCOSET, PCOX2S, PCOS2X,
      :          CYPSET, CYPX2S, CYPS2X,    TSCSET, TSCX2S, TSCS2X,
      :          CEASET, CEAX2S, CEAS2X,    CSCSET, CSCX2S, CSCS2X,
-     :          CARSET, CARX2S, CARS2X,    QSCSET, QSCX2S, QSCS2X
-     :          MERSET, MERX2S, MERS2X,    HPXSET, HPXX2S, HPXS2X
+     :          CARSET, CARX2S, CARS2X,    QSCSET, QSCX2S, QSCS2X,
+     :          MERSET, MERX2S, MERS2X,    HPXSET, HPXX2S, HPXS2X,
      :          SFLSET, SFLX2S, SFLS2X,    XPHSET, XPHX2S, XPHS2X
 
       INTEGER   AZPSET, AZPX2S, AZPS2X,    PARSET, PARX2S, PARS2X,
@@ -59,8 +62,8 @@
      :          AIRSET, AIRX2S, AIRS2X,    PCOSET, PCOX2S, PCOS2X,
      :          CYPSET, CYPX2S, CYPS2X,    TSCSET, TSCX2S, TSCS2X,
      :          CEASET, CEAX2S, CEAS2X,    CSCSET, CSCX2S, CSCS2X,
-     :          CARSET, CARX2S, CARS2X,    QSCSET, QSCX2S, QSCS2X
-     :          MERSET, MERX2S, MERS2X,    HPXSET, HPXX2S, HPXS2X
+     :          CARSET, CARX2S, CARS2X,    QSCSET, QSCX2S, QSCS2X,
+     :          MERSET, MERX2S, MERS2X,    HPXSET, HPXX2S, HPXS2X,
      :          SFLSET, SFLX2S, SFLS2X,    XPHSET, XPHX2S, XPHS2X
 
 *     Length of the PRJPRM data structure (INTEGER array) on 64-bit
@@ -73,8 +76,8 @@
       PARAMETER (PRJ_PVN = 30)
 
 *     Codes for PRJ data structure elements used by PRJPUT and PRJGET.
-      INTEGER   PRJ_BOUNDS, PRJ_CODE, PRJ_FLAG, PRJ_PHI0, PRJ_PV,
-     :          PRJ_R0, PRJ_THETA0
+      INTEGER   PRJ_FLAG, PRJ_CODE, PRJ_R0, PRJ_PV, PRJ_PHI0,
+     :          PRJ_THETA0, PRJ_BOUNDS
 
       PARAMETER (PRJ_FLAG      = 100)
       PARAMETER (PRJ_CODE      = 101)
@@ -85,9 +88,9 @@
       PARAMETER (PRJ_BOUNDS    = 106)
 
 *     Codes for PRJ data structure elements used by PRJGET (only).
-      INTEGER   PRJ_CATEGORY, PRJ_CONFORMAL, PRJ_ERR, PRJ_GLOBAL,
-     :          PRJ_DIVERGENT, PRJ_EQUIAREAL, PRJ_N, PRJ_NAME,
-     :          PRJ_PVRANGE, PRJ_SIMPLEZEN, PRJ_W, PRJ_X0, PRJ_Y0
+      INTEGER   PRJ_NAME, PRJ_CATEGORY, PRJ_PVRANGE, PRJ_SIMPLEZEN,
+     :          PRJ_EQUIAREAL, PRJ_CONFORMAL, PRJ_GLOBAL, PRJ_DIVERGENT,
+     :          PRJ_X0, PRJ_Y0, PRJ_ERR, PRJ_W, PRJ_N
 
       PARAMETER (PRJ_NAME      = 200)
       PARAMETER (PRJ_CATEGORY  = 201)
@@ -104,9 +107,9 @@
       PARAMETER (PRJ_N         = 212)
 
 *     Projection categories.
-      INTEGER   PRJ_CONIC, PRJ_CONVENTIONAL, PRJ_CYLINDRICAL,
-     :          PRJ_HEALPIX, PRJ_POLYCONIC, PRJ_PSEUDOCYLINDRICAL,
-     :          PRJ_QUADCUBE, PRJ_ZENITHAL
+      INTEGER   PRJ_ZENITHAL, PRJ_CYLINDRICAL, PRJ_PSEUDOCYLINDRICAL,
+     :          PRJ_CONVENTIONAL, PRJ_CONIC, PRJ_POLYCONIC,
+     :          PRJ_QUADCUBE, PRJ_HEALPIX
 
       PARAMETER (PRJ_ZENITHAL          = 1)
       PARAMETER (PRJ_CYLINDRICAL       = 2)
@@ -118,8 +121,8 @@
       PARAMETER (PRJ_HEALPIX           = 8)
 
 *     Error codes and messages.
-      INTEGER   PRJERR_BAD_PARAM, PRJERR_BAD_PIX, PRJERR_BAD_WORLD,
-     :          PRJERR_NULL_POINTER, PRJERR_SUCCESS
+      INTEGER   PRJERR_SUCCESS, PRJERR_NULL_POINTER, PRJERR_BAD_PARAM,
+     :          PRJERR_BAD_PIX, PRJERR_BAD_WORLD
 
       PARAMETER (PRJERR_SUCCESS      = 0)
       PARAMETER (PRJERR_NULL_POINTER = 1)

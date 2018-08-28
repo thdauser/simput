@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,30 +22,34 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: cel_f.c,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+  $Id: cel_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <stdio.h>
+#include <string.h>
 
+#include <wcserr.h>
+#include <wcsutil.h>
 #include <cel.h>
 
 /* Fortran name mangling. */
 #include <wcsconfig_f77.h>
-#define celini_  F77_FUNC(celini,  CELINI)
 #define celput_  F77_FUNC(celput,  CELPUT)
-#define celget_  F77_FUNC(celget,  CELGET)
-#define celfree_ F77_FUNC(celfree, CELFREE)
-#define celprt_  F77_FUNC(celprt,  CELPRT)
-#define celset_  F77_FUNC(celset,  CELSET)
-#define celx2s_  F77_FUNC(celx2s,  CELX2S)
-#define cels2x_  F77_FUNC(cels2x,  CELS2X)
-
 #define celptc_  F77_FUNC(celptc,  CELPTC)
 #define celptd_  F77_FUNC(celptd,  CELPTD)
 #define celpti_  F77_FUNC(celpti,  CELPTI)
+#define celget_  F77_FUNC(celget,  CELGET)
 #define celgtc_  F77_FUNC(celgtc,  CELGTC)
 #define celgtd_  F77_FUNC(celgtd,  CELGTD)
 #define celgti_  F77_FUNC(celgti,  CELGTI)
+
+#define celini_  F77_FUNC(celini,  CELINI)
+#define celfree_ F77_FUNC(celfree, CELFREE)
+#define celprt_  F77_FUNC(celprt,  CELPRT)
+#define celperr_ F77_FUNC(celperr, CELPERR)
+#define celset_  F77_FUNC(celset,  CELSET)
+#define celx2s_  F77_FUNC(celx2s,  CELX2S)
+#define cels2x_  F77_FUNC(cels2x,  CELS2X)
 
 #define CEL_FLAG   100
 #define CEL_OFFSET 101
@@ -61,18 +65,10 @@
 
 /*--------------------------------------------------------------------------*/
 
-int celini_(int *cel)
-
-{
-  return celini((struct celprm *)cel);
-}
-
-/*--------------------------------------------------------------------------*/
-
 int celput_(int *cel, const int *what, const void *value, const int *i)
 
 {
-  int k;
+  unsigned int l;
   int *icelp;
   const int    *ivalp;
   const double *dvalp;
@@ -102,9 +98,8 @@ int celput_(int *cel, const int *what, const void *value, const int *i)
     celp->ref[*i-1] = *dvalp;
     break;
   case CEL_PRJ:
-    k = (int *)(&(celp->prj)) - (int *)celp;
-    icelp = cel + k;
-    for (k = 0; k < PRJLEN; k++) {
+    icelp = cel + ((int *)(&(celp->prj)) - (int *)celp);
+    for (l = 0; l < PRJLEN; l++) {
       *(icelp++) = *(ivalp++);
     }
     break;
@@ -135,6 +130,7 @@ int celpti_(int *cel, const int *what, const int *value, const int *i)
 int celget_(const int *cel, const int *what, void *value)
 
 {
+  unsigned int l;
   int k;
   int    *ivalp;
   double *dvalp;
@@ -166,7 +162,7 @@ int celget_(const int *cel, const int *what, void *value)
     break;
   case CEL_PRJ:
     icelp = (int *)(&(celp->prj));
-    for (k = 0; k < PRJLEN; k++) {
+    for (l = 0; l < PRJLEN; l++) {
       *(ivalp++) = *(icelp++);
     }
     break;
@@ -185,11 +181,11 @@ int celget_(const int *cel, const int *what, void *value)
     /* Copy the contents of the wcserr struct. */
     if (celp->err) {
       icelp = (int *)(celp->err);
-      for (k = 0; k < ERRLEN; k++) {
+      for (l = 0; l < ERRLEN; l++) {
         *(ivalp++) = *(icelp++);
       }
     } else {
-      for (k = 0; k < ERRLEN; k++) {
+      for (l = 0; l < ERRLEN; l++) {
         *(ivalp++) = 0;
       }
     }
@@ -218,6 +214,14 @@ int celgti_(const int *cel, const int *what, int *value)
 
 /*--------------------------------------------------------------------------*/
 
+int celini_(int *cel)
+
+{
+  return celini((struct celprm *)cel);
+}
+
+/*--------------------------------------------------------------------------*/
+
 int celfree_(int *cel)
 
 {
@@ -226,14 +230,34 @@ int celfree_(int *cel)
 
 /*--------------------------------------------------------------------------*/
 
-int celprt_(int *cel)
+int celprt_(const int *cel)
 
 {
   /* This may or may not force the Fortran I/O buffers to be flushed.  If
    * not, try CALL FLUSH(6) before calling CELPRT in the Fortran code. */
   fflush(NULL);
 
-  return celprt((struct celprm *)cel);
+  return celprt((const struct celprm *)cel);
+}
+
+/*--------------------------------------------------------------------------*/
+
+/* prefix should be null-terminated, or else of length 72 in which case
+ * trailing blanks are not significant. */
+
+int celperr_(int *cel, const char prefix[72])
+
+{
+  char prefix_[72];
+
+  strncpy(prefix_, prefix, 72);
+  wcsutil_null_fill(72, prefix_);
+
+  /* This may or may not force the Fortran I/O buffers to be flushed. */
+  /* If not, try CALL FLUSH(6) before calling CELPERR in the Fortran code. */
+  fflush(NULL);
+
+  return celperr((struct celprm *)cel, prefix_);
 }
 
 /*--------------------------------------------------------------------------*/

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,14 +22,17 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tab.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: tab.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  TABCPY, TABFREE, TABGET, TABGTD, TABGTI, TABINI, TABMEM,
-     :          TABPRT, TABPTD, TABPTI, TABPUT, TABS2X, TABSET, TABX2S
-      INTEGER   TABCPY, TABFREE, TABGET, TABGTD, TABGTI, TABINI, TABMEM,
-     :          TABPRT, TABPTD, TABPTI, TABPUT, TABS2X, TABSET, TABX2S
+      EXTERNAL  TABPUT, TABPTD, TABPTI, TABGET, TABGTD, TABGTI,
+     :          TABINI, TABMEM, TABCPY, TABCMP, TABFREE, TABPRT,
+     :          TABPERR, TABSET, TABX2S, TABS2X
+
+      INTEGER   TABPUT, TABPTD, TABPTI, TABGET, TABGTD, TABGTI,
+     :          TABINI, TABMEM, TABCPY, TABCMP, TABFREE, TABPRT,
+     :          TABPERR, TABSET, TABX2S, TABS2X
 
 *     Length of the TABPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 24 on 32-bit machines.
@@ -37,8 +40,8 @@
       PARAMETER (TABLEN = 40)
 
 *     Codes for TAB data structure elements used by TABPUT and TABGET.
-      INTEGER   TAB_COORD, TAB_CRVAL, TAB_FLAG, TAB_INDEX, TAB_K, TAB_M,
-     :          TAB_MAP
+      INTEGER   TAB_FLAG, TAB_M, TAB_K, TAB_MAP, TAB_CRVAL, TAB_INDEX,
+     :          TAB_COORD
 
       PARAMETER (TAB_FLAG    = 100)
       PARAMETER (TAB_M       = 101)
@@ -49,8 +52,8 @@
       PARAMETER (TAB_COORD   = 106)
 
 *     Codes for TAB data structure elements used by TABGET (only).
-      INTEGER   TAB_DELTA, TAB_ERR, TAB_EXTREMA, TAB_NC, TAB_P0,
-     :          TAB_SENSE
+      INTEGER   TAB_NC, TAB_SENSE, TAB_P0, TAB_DELTA, TAB_EXTREMA,
+     :          TAB_ERR
 
       PARAMETER (TAB_NC      = 200)
       PARAMETER (TAB_SENSE   = 201)
@@ -60,8 +63,8 @@
       PARAMETER (TAB_ERR     = 205)
 
 *     Error codes and messages.
-      INTEGER   TABERR_BAD_PARAMS, TABERR_BAD_WORLD, TABERR_BAD_X,
-     :          TABERR_MEMORY, TABERR_NULL_POINTER, TABERR_SUCCESS
+      INTEGER   TABERR_SUCCESS, TABERR_NULL_POINTER, TABERR_MEMORY,
+     :          TABERR_BAD_PARAMS, TABERR_BAD_X, TABERR_BAD_WORLD
 
       PARAMETER (TABERR_SUCCESS      = 0)
       PARAMETER (TABERR_NULL_POINTER = 1)

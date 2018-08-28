@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,14 +22,15 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: fitshdr.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: fitshdr.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  FITSHDR, FREEKEYS, KEYGET, KEYIDGET, KEYIDGTC, KEYIDGTI,
-     :          KEYIDPTC, KEYIDPUT
-      INTEGER   FITSHDR, FREEKEYS, KEYGET, KEYIDGET, KEYIDGTC, KEYIDGTI,
-     :          KEYIDPTC, KEYIDPUT
+      EXTERNAL  KEYIDPUT, KEYIDPTC, KEYIDGET, KEYIDGTC, KEYIDGTI,
+     :          KEYGET,   FREEKEYS, FITSHDR
+
+      INTEGER   KEYIDPUT, KEYIDPTC, KEYIDGET, KEYIDGTC, KEYIDGTI,
+     :          KEYGET,   FREEKEYS, FITSHDR
 
 *     Length of FITSKEY and FITSKEYID data structures (INTEGER arrays)
 *     on 64-bit machines.  These are the same for 32-bit machines.
@@ -38,15 +39,15 @@
       PARAMETER (KEYIDLEN = 6)
 
 *     Codes for KEYID data structure elements used by KEYIDPUT/GET.
-      INTEGER   KEYID_COUNT, KEYID_IDX, KEYID_NAME
+      INTEGER   KEYID_NAME, KEYID_COUNT, KEYID_IDX
 
       PARAMETER (KEYID_NAME    = 100)
       PARAMETER (KEYID_COUNT   = 101)
       PARAMETER (KEYID_IDX     = 102)
 
 *     Codes for KEY data structure elements used by KEYGET.
-      INTEGER   KEY_COMMENT, KEY_KEYID, KEY_KEYNO, KEY_KEYVALUE,
-     :          KEY_KEYWORD, KEY_STATUS, KEY_TYPE, KEY_ULEN
+      INTEGER   KEY_KEYNO, KEY_KEYID, KEY_STATUS, KEY_KEYWORD, KEY_TYPE,
+     :          KEY_KEYVALUE, KEY_ULEN, KEY_COMMENT
 
       PARAMETER (KEY_KEYNO     = 200)
       PARAMETER (KEY_KEYID     = 201)
@@ -57,5 +58,5 @@
       PARAMETER (KEY_ULEN      = 206)
       PARAMETER (KEY_COMMENT   = 207)
 
-      CHARACTER FITSHDR_ERRMSG(0:2)*80
+      CHARACTER FITSHDR_ERRMSG(0:3)*80
       COMMON /FITSHDR_DATA/ FITSHDR_ERRMSG

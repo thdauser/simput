@@ -1,81 +1,45 @@
 Testing WCSLIB parser for FITS image headers (tpih1.f)
 ------------------------------------------------------
 
-Found 198 non-comment header keyrecords.
+Found 151 non-comment header keyrecords.
 
 
-Illegal-WCS header keyrecords rejected by wcspih():
-CTYPE1  =                  0.0 / Illegal, CTYPEia must be string type           
-   1: A string value was expected.
-PV2_1   =                '0.0' / Illegal, PVi_ma must be numeric                
-   2: A floating-point value was expected.
-PV2_1    =                 0.0 / Illegal, "= " not in columns 9-10              
-   3: Invalid KEYWORD = VALUE syntax.
-EPOCH   = '2000.0'             / Illegal, EPOCH must be numeric                 
-   4: A floating-point value was expected.
-END                                                                             
-   5: Keyrecords following the END keyrecord were ignored.
+Illegal or extraneous WCS header keyrecords rejected by WCSPIH:
+WCSNAMEX= 'eXtraneous'         / Name of this coordinate system                 
+  Rejected (1), syntactically valid WCS keyrecord has no effect.
+LONPOLEX=                180.0 / [deg] Native longitude of the celestial pole   
+  Rejected (2), syntactically valid WCS keyrecord has no effect.
+LATPOLEX=               -999.0 / [deg] Native latitude of the celestial pole    
+  Rejected (3), syntactically valid WCS keyrecord has no effect.
+RESTFRQX=          1667.3590E6 / [Hz] OH maser line rest frequency              
+  Rejected (4), syntactically valid WCS keyrecord has no effect.
+RESTWAVX=           0.17980079 / [m] OH maser line rest wavelength              
+  Rejected (5), syntactically valid WCS keyrecord has no effect.
+EQUINOXX=               1950.0 / [yr] Equinox of equatorial coordinates         
+  Rejected (6), syntactically valid WCS keyrecord has no effect.
+RADESYSX= 'ICRS'               / Mean equatorial coordinates, IAU 1984 system   
+  Rejected (7), syntactically valid WCS keyrecord has no effect.
+SPECSYSX= 'HELIOCEN'           / Reference frame of spectral coordinates        
+  Rejected (8), syntactically valid WCS keyrecord has no effect.
+SSYSOBSX= 'GEOCENTR'           / Reference frame of observation                 
+  Rejected (9), syntactically valid WCS keyrecord has no effect.
+SSYSSRCX= 'LSRK'               / Reference frame of source redshift             
+  Rejected (10), syntactically valid WCS keyrecord has no effect.
+VELANGLX=                35.25 / Velocity orientation angle                     
+  Rejected (11), syntactically valid WCS keyrecord has no effect.
+VELOSYSX=              30000.0 / [m/s] Bary-topo velocity towards the source    
+  Rejected (12), syntactically valid WCS keyrecord has no effect.
+ZSOURCEX=               0.0456 / Redshift of the source                         
+  Rejected (13), syntactically valid WCS keyrecord has no effect.
 
 
-Non-WCS header keyrecords not used by WCSPIH:
-SIMPLE  =                    F / Standards-conformant FITS format?  NO!         
+Non-WCS header keyrecords ignored by WCSPIH:
+SIMPLE  =                    F / Conforms to FITS standard?  NO!                
 BITPIX  =                  -32 / IEEE single precision floating point           
 NAXIS   =                    0 / No image data                                  
 ALTRPIX =                  0.0 / Alternate reference pixel (not handled)        
 ALTRVAL =                  0.0 / Alternate reference value (not handled)        
-CRPIXELS=                  0.0 / Furphy, not CRPIXja                            
-PCATALOG=                  0.0 / Furphy, not PCi_ja                             
-CDELTA  =                  0.0 / Furphy, not CDELTia                            
-CDI_JA  =                  0.0 / Furphy, not CDi_ja                             
-CUNITARY=                  0.0 / Furphy, not CUNITia                            
-CTYPEXY =                  0.0 / Furphy, not CTYPEia                            
-CRVALUE =                  0.0 / Furphy, not CRVALia                            
-CNAME   =                  0.0 / Furphy, not CNAMEia                            
-PV1_1AL =                  0.0 / Furphy, not PVi_ma                             
-PV02_1  =                  0.0 / Furphy, not PVi_ma (leading zero on i)         
-PV2_01  =                  0.0 / Furphy, not PVi_ma (leading zero on m)         
-PSEUDO  =                  0.0 / Furphy, not PSi_ma                             
-EPOCHAL =                  0.0 / Furphy, not EPOCH                              
-VELREF1 =                  0.0 / Furphy, not VELREF                             
-NOVLSPEC=1                     / Not a valid value specifier (no " " in col. 10)
-INT32   =          00000012345 / Not a 64-bit integer                           
-INT32   =     -000000123456789 / Not a 64-bit integer                           
-INT32   =          -2147483648 / Not a 64-bit integer (INT_MIN)                 
-INT32   =           2147483647 / Not a 64-bit integer (INT_MAX)                 
-INT32   =    0000000000000000000000000000000000012345 / Not a very long integer 
-INT32   =       -000000000000000000000000000123456789 / Not a very long integer 
-INT64   =          -2147483649 / 64-bit integer (INT_MIN - 1)                   
-INT64   =          +2147483648 / 64-bit integer (INT_MAX + 1)                   
-INT64   =  +100000000000000000 / 64-bit integer                                 
-INT64   =  -876543210987654321 / 64-bit integer                                 
-INT64   = -9223372036854775808 / Not a very long integer (LONG_MIN)             
-INT64   = +9223372036854775807 / Not a very long integer (LONG_MAX)             
-INT64   = -000000000000000000000000000000876543210987654321 / 64-bit integer    
-INTVL   = -9223372036854775809 / Very long integer (LONG_MIN - 1)               
-INTVL   = +9223372036854775808 / Very long integer (LONG_MAX + 1)               
-INTVL   = -100000000000000000000000000000876543210987654321 / Very-long integer 
-INTVL   = +123456789012345678901234567890123456789012345678901234567890123456789
-INTVL   = 1234567890123456789012345678901234567890123456789012345678901234567890
-COMPLEX =            (137, -1) / An integer complex keyvalue                    
-COMPLEX =         (10e5, -0.1) / A floating point complex keyvalue              
-GOODSTR =     '"G''DAY"  '     / A valid string keyvalue                        
-BLANKS  =   '              '   / An all-blank string equals a single blank      
-LONGSTR = 'The loooooongest possible non-continued string value, 68 characters.'
-CONTSTR = 'The quick brown & ' / Continued string, with & (will be stripped off)
-CONTINUE  'fox jumps over the'   Relaxed handling of invalid keycomment         
-CONTINUE      ' lazy dog'                                                       
-PI      =  3.14159265358929323 / [!?] is not a valid units specification        
-CONTINUE      'Not a valid string continuation'                                 
-BadKey  =                  111 / Example of a syntax error, invalid keyword     
-BADKEY! =                  222 / Example of a syntax error, invalid keyword     
-BAD KEY =                  333 / Example of a syntax error, invalid keyword     
-BADSTR  =                  BAD / Example of a syntax error, invalid keyvalue    
-BADSTR  =                "BAD" / Example of a syntax error, invalid keyvalue    
-BADSTR  =          'BAD' 'STR' / Example syntax error, invalid string keyvalue  
-BADFLT  =              49 + 94 / Example of a syntax error, invalid keyvalue    
-BADFLT  =                 1D99 / Example of a syntax error, invalid keyvalue    
-BADCOMM =                  999   Example of a syntax error, invalid keycomment  
-END     =            'ILLEGAL' / Illegal END keyrecord                          
+END                                                                             
 
 
 Index of alternate coordinate descriptions found:
@@ -86,16 +50,16 @@ Index of alternate coordinate descriptions found:
        flag: 137
       naxis: 4
       crpix: 0x<address>
-               513          513          1025         1         
+               513.00       513.00       1025.0       1.0000    
          pc: 0x<address>
-    pc[0][]:   0.96593      0.25882      0            0         
-    pc[1][]:  -0.25882      0.96593      0            0         
-    pc[2][]:   0            0            1            0         
-    pc[3][]:   0            0            0            1         
+    pc[0][]:   0.96593      0.25882      0.0000       0.0000    
+    pc[1][]:  -0.25882      0.96593      0.0000       0.0000    
+    pc[2][]:   0.0000       0.0000       1.0000       0.0000    
+    pc[3][]:   0.0000       0.0000       0.0000       1.0000    
       cdelt: 0x<address>
-              -0.1          0.1          62500        1         
+              -0.10000      0.10000      62500.       1.0000    
       crval: 0x<address>
-               150         -30           1.3945e+09   1         
+               150.00      -30.000       1.3945e+09   1.0000    
       cunit: 0x<address>
              "deg"
              "deg"
@@ -113,19 +77,19 @@ Index of alternate coordinate descriptions found:
         npv: 3
      npvmax: 3
          pv: 0x<address>
-               0   0   0         
-               0   1   0         
-               0   2   0         
+               0   0   0.0000    
+               0   1   0.0000    
+               0   2   0.0000    
         nps: 0
      npsmax: 0
          ps: 0x0
          cd: 0x<address>
-    cd[0][]:   0            0            0            0         
-    cd[1][]:   0            0            0            0         
-    cd[2][]:   0            0            0            0         
-    cd[3][]:   0            0            0            0         
+    cd[0][]:   0.0000       0.0000       0.0000       0.0000    
+    cd[1][]:   0.0000       0.0000       0.0000       0.0000    
+    cd[2][]:   0.0000       0.0000       0.0000       0.0000    
+    cd[3][]:   0.0000       0.0000       0.0000       0.0000    
       crota: 0x<address>
-               0            15           0            0         
+               0.0000       15.000       0.0000       0.0000    
      altlin: 4
      velref: 258
         alt: ' '
@@ -149,7 +113,7 @@ Index of alternate coordinate descriptions found:
     velosys: UNDEFINED
     ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo: -4.5542e+06   2.8168e+06  -3.454e+06   
+     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
     dateobs: "1957-02-14T15:00:00"
     dateavg: "1957-02-14T16:48:00"
      mjdobs: 35883.625000
@@ -183,7 +147,7 @@ Index of alternate coordinate descriptions found:
        m_cd: 0x0
     m_crota: 0x0
 
-    m_colax: 0x<address>  (= colax)
+    m_colax: 0x0
     m_cname: 0x0
     m_crder: 0x0
     m_csyer: 0x0
@@ -194,38 +158,46 @@ Index of alternate coordinate descriptions found:
        flag: 137
       naxis: 4
       crpix: 0x<address>
-               513          513          1025         1         
+               513.00       513.00       1025.0       1.0000    
          pc: 0x<address>
-    pc[0][]:   0.96593      0.25882      0            0         
-    pc[1][]:  -0.25882      0.96593      0            0         
-    pc[2][]:   0            0            1            0         
-    pc[3][]:   0            0            0            1         
+    pc[0][]:   0.96593      0.25882      0.0000       0.0000    
+    pc[1][]:  -0.25882      0.96593      0.0000       0.0000    
+    pc[2][]:   0.0000       0.0000       1.0000       0.0000    
+    pc[3][]:   0.0000       0.0000       0.0000       1.0000    
       cdelt: 0x<address>
-              -0.1          0.1          62500        1         
+              -0.10000      0.10000      62500.       1.0000    
+     dispre: 0x0
+     disseq: 0x0
+piximg[0][]:  -0.096593    -0.025882    -0.0000      -0.0000    
+piximg[1][]:  -0.025882     0.096593     0.0000       0.0000    
+piximg[2][]:   0.0000       0.0000       62500.       0.0000    
+piximg[3][]:   0.0000       0.0000       0.0000       1.0000    
+imgpix[0][]:  -9.6593      -2.5882      -0.0000      -0.0000    
+imgpix[1][]:  -2.5882       9.6593       0.0000       0.0000    
+imgpix[2][]:   0.0000       0.0000       1.6000e-05   0.0000    
+imgpix[3][]:   0.0000       0.0000       0.0000       1.0000    
+    i_naxis: 4
       unity: 0
+     affine: 1
+     simple: 0
         err: 0x0
-piximg[0][]:  -0.096593    -0.025882    -0           -0         
-piximg[1][]:  -0.025882     0.096593     0            0         
-piximg[2][]:   0            0            62500        0         
-piximg[3][]:   0            0            0            1         
-imgpix[0][]:  -9.6593      -2.5882      -0           -0         
-imgpix[1][]:  -2.5882       9.6593       0            0         
-imgpix[2][]:   0            0            1.6e-05      0         
-imgpix[3][]:   0            0            0            1         
+     tmpcrd: 0x<address>
      m_flag: 0
     m_naxis: 0
     m_crpix: 0x0
        m_pc: 0x0
     m_cdelt: 0x0
+   m_dispre: 0x0
+   m_disseq: 0x0
 
    cel.*
       flag: 137
      offset: 0
        phi0:  0.000000
      theta0: 90.000000
-       ref:   150         -30           180         -30        
-       prj: (see below)
-     euler:   150          120          180         -0.5          0.86603   
+        ref:   150.00      -30.000       180.00      -30.000    
+        prj: (see below)
+      euler:   150.00       120.00       180.00      -0.50000      0.86603   
     latpreq: 0 (not required)
      isolat: 0
         err: 0x0
@@ -250,8 +222,8 @@ imgpix[3][]:   0            0            0            1
          x0: 0.000000
          y0: 0.000000
         err: 0x0
-        w[]:   0            0            0            0            0         
-               0            0            0            0            0         
+        w[]:   0.0000       0.0000       0.0000       0.0000       0.0000    
+               0.0000       0.0000       0.0000       0.0000       0.0000    
           m: 0
           n: 0
      prjx2s: 0x<address>
@@ -265,7 +237,7 @@ imgpix[3][]:   0            0            0            1
     restfrq: 0.000000
     restwav: 0.000000
          pv: (not used)
-          w:   0            0            0           (remainder unused)
+          w:   0.0000       0.0000       0.0000      (remainder unused)
     isGrism: 0
         err: 0x0
      spxX2P: 0x0
@@ -277,16 +249,16 @@ imgpix[3][]:   0            0            0            1
        flag: 137
       naxis: 4
       crpix: 0x<address>
-               513          513          1025         1         
+               513.00       513.00       1025.0       1.0000    
          pc: 0x<address>
-    pc[0][]:   0.86603      0.5          0            0         
-    pc[1][]:  -0.5          0.86603      0            0         
-    pc[2][]:   0            0            1            0         
-    pc[3][]:   0            0            0            1         
+    pc[0][]:   0.86603      0.50000      0.0000       0.0000    
+    pc[1][]:  -0.50000      0.86603      0.0000       0.0000    
+    pc[2][]:   0.0000       0.0000       1.0000       0.0000    
+    pc[3][]:   0.0000       0.0000       0.0000       1.0000    
       cdelt: 0x<address>
-              -0.1          0.1         -9.6353e-06   1         
+              -0.10000      0.10000     -9.6353e-06   1.0000    
       crval: 0x<address>
-               150         -30           0.21498     -2000      
+               150.00      -30.000       0.21498     -2000.0    
       cunit: 0x<address>
              "deg"
              "deg"
@@ -304,24 +276,24 @@ imgpix[3][]:   0            0            0            1
         npv: 7
      npvmax: 7
          pv: 0x<address>
-               1   1   0         
-               1   2   90        
-               1   3   195       
-               1   4  -30        
-               2   1   0         
-               2   2   180       
-               2   3   45        
+               1   1   0.0000    
+               1   2   90.000    
+               1   3   195.00    
+               1   4  -30.000    
+               2   1   0.0000    
+               2   2   180.00    
+               2   3   45.000    
         nps: 1
      npsmax: 1
          ps: 0x<address>
                4   0  UTC
          cd: 0x<address>
-    cd[0][]:   0            0            0            0         
-    cd[1][]:   0            0            0            0         
-    cd[2][]:   0            0            0            0         
-    cd[3][]:   0            0            0            0         
+    cd[0][]:   0.0000       0.0000       0.0000       0.0000    
+    cd[1][]:   0.0000       0.0000       0.0000       0.0000    
+    cd[2][]:   0.0000       0.0000       0.0000       0.0000    
+    cd[3][]:   0.0000       0.0000       0.0000       0.0000    
       crota: 0x<address>
-               0            0            0            0         
+               0.0000       0.0000       0.0000       0.0000    
      altlin: 1
      velref: 0
         alt: 'A'
@@ -335,9 +307,9 @@ imgpix[3][]:   0            0            0            1
              "Wavelength"
              "Time offset"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED      1e-11       UNDEFINED   
+             UNDEFINED     UNDEFINED      1.0000e-11  UNDEFINED   
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED      1e-12       UNDEFINED   
+             UNDEFINED     UNDEFINED      1.0000e-12  UNDEFINED   
     radesys: "FK5"
     equinox: 2000.000000
     specsys: "BARYCENT"
@@ -345,7 +317,7 @@ imgpix[3][]:   0            0            0            1
     velosys: 1500.000000
     ssyssrc: "LSRK"
     zsource:  0.002500
-     obsgeo: -4.5542e+06   2.8168e+06  -3.454e+06   
+     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
     dateobs: "1957-02-14T15:00:00"
     dateavg: "1957-02-14T16:48:00"
      mjdobs: 35883.625000
@@ -379,7 +351,7 @@ imgpix[3][]:   0            0            0            1
        m_cd: 0x0
     m_crota: 0x0
 
-    m_colax: 0x<address>  (= colax)
+    m_colax: 0x0
     m_cname: 0x0
     m_crder: 0x0
     m_csyer: 0x0
@@ -390,38 +362,46 @@ imgpix[3][]:   0            0            0            1
        flag: 137
       naxis: 4
       crpix: 0x<address>
-               513          513          1025         1         
+               513.00       513.00       1025.0       1.0000    
          pc: 0x<address>
-    pc[0][]:   0.86603      0.5          0            0         
-    pc[1][]:  -0.5          0.86603      0            0         
-    pc[2][]:   0            0            1            0         
-    pc[3][]:   0            0            0            1         
+    pc[0][]:   0.86603      0.50000      0.0000       0.0000    
+    pc[1][]:  -0.50000      0.86603      0.0000       0.0000    
+    pc[2][]:   0.0000       0.0000       1.0000       0.0000    
+    pc[3][]:   0.0000       0.0000       0.0000       1.0000    
       cdelt: 0x<address>
-              -0.1          0.1         -9.6353e-06   1         
+              -0.10000      0.10000     -9.6353e-06   1.0000    
+     dispre: 0x0
+     disseq: 0x0
+piximg[0][]:  -0.086603    -0.050000    -0.0000      -0.0000    
+piximg[1][]:  -0.050000     0.086603     0.0000       0.0000    
+piximg[2][]:  -0.0000      -0.0000      -9.6353e-06  -0.0000    
+piximg[3][]:   0.0000       0.0000       0.0000       1.0000    
+imgpix[0][]:  -8.6603      -5.0000      -0.0000      -0.0000    
+imgpix[1][]:  -5.0000       8.6603       0.0000       0.0000    
+imgpix[2][]:  -0.0000      -0.0000      -1.0379e+05  -0.0000    
+imgpix[3][]:   0.0000       0.0000       0.0000       1.0000    
+    i_naxis: 4
       unity: 0
+     affine: 1
+     simple: 0
         err: 0x0
-piximg[0][]:  -0.086603    -0.05        -0           -0         
-piximg[1][]:  -0.05         0.086603     0            0         
-piximg[2][]:  -0           -0           -9.6353e-06  -0         
-piximg[3][]:   0            0            0            1         
-imgpix[0][]:  -8.6603      -5           -0           -0         
-imgpix[1][]:  -5            8.6603       0            0         
-imgpix[2][]:  -0           -0           -1.0379e+05  -0         
-imgpix[3][]:   0            0            0            1         
+     tmpcrd: 0x<address>
      m_flag: 0
     m_naxis: 0
     m_crpix: 0x0
        m_pc: 0x0
     m_cdelt: 0x0
+   m_dispre: 0x0
+   m_disseq: 0x0
 
    cel.*
       flag: 137
      offset: 0
        phi0:  0.000000
      theta0: 90.000000
-       ref:   150         -30           195         -30        
-       prj: (see below)
-     euler:   150          120          195         -0.5          0.86603   
+        ref:   150.00      -30.000       195.00      -30.000    
+        prj: (see below)
+      euler:   150.00       120.00       195.00      -0.50000      0.86603   
     latpreq: 0 (not required)
      isolat: 0
         err: 0x0
@@ -431,7 +411,7 @@ imgpix[3][]:   0            0            0            1
        code: "SZP"
          r0: 57.295780
          pv: (0)
-              0            180          45        
+              0.0000       180.00       45.000    
        phi0:  0.000000
      theta0: 90.000000
      bounds: 7
@@ -447,8 +427,8 @@ imgpix[3][]:   0            0            0            1
          x0: 0.000000
          y0: 0.000000
         err: 0x0
-        w[]:   0.017453    -0           -0            1           -0         
-              -0            57.296      -1            0            0         
+        w[]:   0.017453    -0.0000      -0.0000       1.0000      -0.0000    
+              -0.0000       57.296      -1.0000       0.0000       0.0000    
           m: 0
           n: 0
      prjx2s: 0x<address>
@@ -458,11 +438,11 @@ imgpix[3][]:   0            0            0            1
        flag: 110
        type: "WAVE"
        code: "F2W"
-      crval:  0.215     
+      crval:  0.21498   
     restfrq: 1420405750.000000
     restwav: 0.211061
          pv: (not used)
-          w:   0            1.395e+09   -6.487e+09   (remainder unused)
+          w:   0.0000       1.3945e+09  -6.4866e+09  (remainder unused)
     isGrism: 0
         err: 0x0
      spxX2P: 0x<address>
@@ -474,15 +454,15 @@ imgpix[3][]:   0            0            0            1
        flag: 137
       naxis: 3
       crpix: 0x<address>
-               513          513          1025      
+               513.00       513.00       1025.0    
          pc: 0x<address>
-    pc[0][]:  -0.086603    -0.05         0         
-    pc[1][]:  -0.05         0.086603     0         
-    pc[2][]:   0            0           -4.5652e-05
+    pc[0][]:  -0.086603    -0.050000     0.0000    
+    pc[1][]:  -0.050000     0.086603     0.0000    
+    pc[2][]:   0.0000       0.0000      -4.5652e-05
       cdelt: 0x<address>
-               1            1            1         
+               1.0000       1.0000       1.0000    
       crval: 0x<address>
-               150         -30           0.018577  
+               150.00      -30.000       0.018577  
       cunit: 0x<address>
              "deg"
              "deg"
@@ -498,7 +478,7 @@ imgpix[3][]:   0            0            0            1
         npv: 10
      npvmax: 10
          pv: 0x<address>
-               2   1   1         
+               2   1   1.0000    
                2   3   0.33333   
                2   5   0.13333   
                2   7   0.053968  
@@ -512,11 +492,11 @@ imgpix[3][]:   0            0            0            1
      npsmax: 0
          ps: 0x0
          cd: 0x<address>
-    cd[0][]:  -0.086603    -0.05         0         
-    cd[1][]:  -0.05         0.086603     0         
-    cd[2][]:   0            0           -4.5652e-05
+    cd[0][]:  -0.086603    -0.050000     0.0000    
+    cd[1][]:  -0.050000     0.086603     0.0000    
+    cd[2][]:   0.0000       0.0000      -4.5652e-05
       crota: 0x<address>
-               0            30           0         
+               0.0000       30.000       0.0000    
      altlin: 6
      velref: 258
         alt: 'I'
@@ -529,9 +509,9 @@ imgpix[3][]:   0            0            0            1
              "Declination (J2000)"
              "Redshift"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED      5e-11     
+             UNDEFINED     UNDEFINED      5.0000e-11
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED      5e-12     
+             UNDEFINED     UNDEFINED      5.0000e-12
     radesys: "FK5"
     equinox: 2000.000000
     specsys: UNDEFINED
@@ -539,7 +519,7 @@ imgpix[3][]:   0            0            0            1
     velosys: 1500.000000
     ssyssrc: "LSRK"
     zsource:  0.002500
-     obsgeo: -4.5542e+06   2.8168e+06  -3.454e+06   
+     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
     dateobs: "1957-02-14T15:00:00"
     dateavg: "1957-02-14T16:48:00"
      mjdobs: 35883.625000
@@ -573,7 +553,7 @@ imgpix[3][]:   0            0            0            1
        m_cd: 0x0
     m_crota: 0x0
 
-    m_colax: 0x<address>  (= colax)
+    m_colax: 0x0
     m_cname: 0x0
     m_crder: 0x0
     m_csyer: 0x0
@@ -584,35 +564,43 @@ imgpix[3][]:   0            0            0            1
        flag: 137
       naxis: 3
       crpix: 0x<address>
-               513          513          1025      
+               513.00       513.00       1025.0    
          pc: 0x<address>
-    pc[0][]:  -0.086603    -0.05         0         
-    pc[1][]:  -0.05         0.086603     0         
-    pc[2][]:   0            0           -4.5652e-05
+    pc[0][]:  -0.086603    -0.050000     0.0000    
+    pc[1][]:  -0.050000     0.086603     0.0000    
+    pc[2][]:   0.0000       0.0000      -4.5652e-05
       cdelt: 0x<address>
-               1            1            1         
+               1.0000       1.0000       1.0000    
+     dispre: 0x0
+     disseq: 0x0
+piximg[0][]:  -0.086603    -0.050000     0.0000    
+piximg[1][]:  -0.050000     0.086603     0.0000    
+piximg[2][]:   0.0000       0.0000      -4.5652e-05
+imgpix[0][]:  -8.6603      -5.0000      -0.0000    
+imgpix[1][]:  -5.0000       8.6603       0.0000    
+imgpix[2][]:  -0.0000      -0.0000      -21905.    
+    i_naxis: 3
       unity: 0
+     affine: 1
+     simple: 0
         err: 0x0
-piximg[0][]:  -0.086603    -0.05         0         
-piximg[1][]:  -0.05         0.086603     0         
-piximg[2][]:   0            0           -4.5652e-05
-imgpix[0][]:  -8.6603      -5           -0         
-imgpix[1][]:  -5            8.6603       0         
-imgpix[2][]:  -0           -0           -21905     
+     tmpcrd: 0x<address>
      m_flag: 0
     m_naxis: 0
     m_crpix: 0x0
        m_pc: 0x0
     m_cdelt: 0x0
+   m_dispre: 0x0
+   m_disseq: 0x0
 
    cel.*
       flag: 137
      offset: 0
        phi0:  0.000000
      theta0: 90.000000
-       ref:   150         -30           195         -30        
-       prj: (see below)
-     euler:   150          120          195         -0.5          0.86603   
+        ref:   150.00      -30.000       195.00      -30.000    
+        prj: (see below)
+      euler:   150.00       120.00       195.00      -0.50000      0.86603   
     latpreq: 0 (not required)
      isolat: 0
         err: 0x0
@@ -621,13 +609,13 @@ imgpix[2][]:  -0           -0           -21905
        flag: 107
        code: "ZPN"
          r0: 57.295780
-         pv:  0         
-              1            0            0.33333      0            0.13333   
-              0            0.053968     0            0.021869     0         
-              0.0088632    0            0.0035921    0            0.0014558 
-              0            0.00059003   0            0.00023913   0         
-              0            0            0            0            0         
-              0            0            0            0         
+         pv:  0.0000    
+              1.0000       0.0000       0.33333      0.0000       0.13333   
+              0.0000       0.053968     0.0000       0.021869     0.0000    
+              0.0088632    0.0000       0.0035921    0.0000       0.0014558 
+              0.0000       0.00059003   0.0000       0.00023913   0.0000    
+              0.0000       0.0000       0.0000       0.0000       0.0000    
+              0.0000       0.0000       0.0000       0.0000    
        phi0:  0.000000
      theta0: 90.000000
      bounds: 7
@@ -643,8 +631,8 @@ imgpix[2][]:  -0           -0           -21905
          x0: 0.000000
          y0: 0.000000
         err: 0x0
-        w[]:   3.1416       8.9006e+05   0            0            0         
-               0            0            0            0            0         
+        w[]:   3.1416       8.9006e+05   0.0000       0.0000       0.0000    
+               0.0000       0.0000       0.0000       0.0000       0.0000    
           m: 0
           n: 19
      prjx2s: 0x<address>
@@ -654,11 +642,11 @@ imgpix[2][]:  -0           -0           -21905
        flag: 112
        type: "ZOPT"
        code: "F2W"
-      crval:  0.01858   
+      crval:  0.018577  
     restfrq: 1420405750.000000
     restwav: 0.211061
          pv: (not used)
-          w:   0.2111       1.394e+09   -1.369e+09   (remainder unused)
+          w:   0.21106      1.3945e+09  -1.3691e+09  (remainder unused)
     isGrism: 0
         err: 0x0
      spxX2P: 0x<address>

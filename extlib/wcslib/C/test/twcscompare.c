@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -23,7 +23,7 @@
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO,
      and: Michael Droetboom, Space Telescope Science Institute
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcscompare.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: twcscompare.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * Test wcscompare().
@@ -51,8 +51,8 @@ int main()
   wcsini(1, 2, &a);
   wcsini(1, 2, &b);
 
-  if (status = wcscompare(0, 0.0, &a, &b, &equal)) {
-    printf("wcscompare ERROR %d: %d.\n", status, wcs_errmsg[status]);
+  if ((status = wcscompare(0, 0.0, &a, &b, &equal))) {
+    printf("wcscompare ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   } else if (!equal) {
     printf("FAIL: Equal wcsprms tested unequal.\n");
@@ -61,16 +61,16 @@ int main()
 
   strncpy(b.dateobs, "2014-01-01T00:00:00", 72);
 
-  if (status = wcscompare(0, 0.0, &a, &b, &equal)) {
-    printf("wcscompare ERROR %d: %d.\n", status, wcs_errmsg[status]);
+  if ((status = wcscompare(0, 0.0, &a, &b, &equal))) {
+    printf("wcscompare ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   } else if (equal) {
     printf("FAIL: Unequal wcsprms tested equal.\n");
     return 1;
   }
 
-  if (status = wcscompare(WCSCOMPARE_ANCILLARY, 0.0, &a, &b, &equal)) {
-    printf("wcscompare ERROR %d: %d.\n", status, wcs_errmsg[status]);
+  if ((status = wcscompare(WCSCOMPARE_ANCILLARY, 0.0, &a, &b, &equal))) {
+    printf("wcscompare ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   } else if (!equal) {
     printf("FAIL: Ancillary keyword not ignored.\n");
@@ -80,8 +80,8 @@ int main()
   b.crpix[0] = 12.5;
   b.crpix[1] = 12.5;
 
-  if (status = wcscompare(WCSCOMPARE_ANCILLARY, 0.0, &a, &b, &equal)) {
-    printf("wcscompare ERROR %d: %d.\n", status, wcs_errmsg[status]);
+  if ((status = wcscompare(WCSCOMPARE_ANCILLARY, 0.0, &a, &b, &equal))) {
+    printf("wcscompare ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   } else if (equal) {
     printf("FAIL: Unequal wcsprms tested equal.\n");
@@ -89,8 +89,8 @@ int main()
   }
 
   cmp = WCSCOMPARE_ANCILLARY | WCSCOMPARE_TILING;
-  if (status = wcscompare(cmp, 0.0, &a, &b, &equal)) {
-    printf("wcscompare ERROR %d: %d.\n", status, wcs_errmsg[status]);
+  if ((status = wcscompare(cmp, 0.0, &a, &b, &equal))) {
+    printf("wcscompare ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   } else if (equal) {
     printf("FAIL: Non-integral translation equates as a tiling.\n");
@@ -98,8 +98,8 @@ int main()
   }
 
   cmp = WCSCOMPARE_ANCILLARY | WCSCOMPARE_CRPIX;
-  if (status = wcscompare(cmp, 0.0, &a, &b, &equal)) {
-    printf("wcscompare ERROR %d: %d.\n", status, wcs_errmsg[status]);
+  if ((status = wcscompare(cmp, 0.0, &a, &b, &equal))) {
+    printf("wcscompare ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   } else if (!equal) {
     printf("FAIL: Translation not ignored.\n");

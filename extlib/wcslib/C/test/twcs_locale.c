@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -23,7 +23,7 @@
   Author: Michael Droetboom, Space Telescope Science Institute,
      and: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcs_locale.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: twcs_locale.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * twcs_locale tests wcslib's handling of locales, such as fr_FR, that use a
@@ -33,6 +33,7 @@
 *---------------------------------------------------------------------------*/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <locale.h>
 
 #include "wcs.h"
@@ -42,46 +43,56 @@
 
 #define HEADER_SIZE 36000
 
-int main(int argc, char** argv)
+int main()
+
 {
-  struct wcsprm *w;
+  struct wcsprm *wcs, *wcsp;
   char header[HEADER_SIZE];
   size_t real_size;
   FILE *fd;
   int nreject, nwcs;
-  int status;
   int nkeyrec;
   char *gen_header;
 
   wcserr_enable(1);
   wcsprintf_set(stderr);
 
-  setlocale(LC_NUMERIC, "fr_FR");
-  wcsprintf("Parsing xmmlss.hdr with locale set to fr_FR.\n");
-
-  fd = fopen("test/xmmlss.hdr", "r");
-  real_size = fread(header, 1, HEADER_SIZE, fd);
-  fclose(fd);
-
-  if (wcspih(header, real_size / 80, WCSHDR_all, 0, &nreject, &nwcs, &w)) {
-    wcserr_prt(w->err, 0x0);
+  if ((fd = fopen("pih.fits", "r")) == 0x0) {
+    wcsprintf("\nFailed to open pih.fits, abort.\n");
     return 1;
   }
 
-  if (wcsset(w)) {
-    wcserr_prt(w->err, 0x0);
+  setlocale(LC_NUMERIC, "fr_FR");
+  wcsprintf("Parsing pih.fits with locale set to fr_FR.\n");
+
+  real_size = fread(header, 1, HEADER_SIZE, fd);
+  fclose(fd);
+
+  if (wcspih(header, real_size / 80, WCSHDR_all, 0, &nreject, &nwcs, &wcs)) {
+    wcsperr(wcs, 0x0);
+    return 1;
+  }
+
+  /* Choose one of the three WCS in this header. */
+  wcsp = wcs + 1;
+
+  if (wcsset(wcsp)) {
+    wcsperr(wcsp, 0x0);
     return 1;
   }
 
   wcsprintf("\nOutput from wcsprt() with this locale\n"
               "-------------------------------------\n");
-  wcsprt(w);
+  wcsprt(wcsp);
   wcsprintf("\n");
 
   wcsprintf("Output from wcshdo() with the same locale\n"
             "-----------------------------------------\n");
-  wcshdo(1, w, &nkeyrec, &gen_header);
+  wcshdo(1, wcsp, &nkeyrec, &gen_header);
   printf("%s", gen_header);
+
+  free(gen_header);
+  wcsvfree(&nwcs, &wcs);
 
   return 0;
 }

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,7 +22,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: twcsfix.f,v 4.25.1.2 2015/01/06 01:02:37 mcalabre Exp mcalabre $
+* $Id: twcsfix.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
       PROGRAM TWCSFIX
@@ -59,7 +59,7 @@
       INCLUDE 'wcs.inc'
       INCLUDE 'wcsfix.inc'
       INTEGER   STAT(WCSFIX_NWCS), STATUS
-      CHARACTER CTYPES*8
+      CHARACTER CTYPES*9
       INTEGER   WCS(WCSLEN)
       DOUBLE PRECISION DUMMY
       EQUIVALENCE (WCS,DUMMY)
@@ -109,14 +109,13 @@
 *     Extract information from the FITS header.
       STATUS = WCSSET (WCS)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 40) STATUS
- 40     FORMAT (/,'WCSSET ERROR',I2,'.')
+        STATUS = WCSPERR(WCS, CHAR(0))
       END IF
 
       CALL FLUSH(6)
       STATUS = WCSPRT (WCS)
-      WRITE (*, 50)
- 50   FORMAT (/,'------------------------------------',
+      WRITE (*, 40)
+ 40   FORMAT (/,'------------------------------------',
      :          '------------------------------------')
 
 *     Should now have a 'VOPT-F2W' axis, translate it to frequency.
@@ -124,15 +123,13 @@
       I = -1
       STATUS = WCSSPTR (WCS, I, CTYPES)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 60) STATUS
- 60     FORMAT ('WCSPTR ERROR',I2,'.')
+        STATUS = WCSPERR(WCS, CHAR(0))
         GO TO 999
       END IF
 
       STATUS = WCSSET (WCS)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 70) STATUS
- 70     FORMAT ('WCSSET ERROR',I2,'.')
+        STATUS = WCSPERR(WCS, CHAR(0))
         GO TO 999
       END IF
 

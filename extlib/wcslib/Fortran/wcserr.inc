@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,14 +22,15 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: wcserr.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: wcserr.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  WCSERR_ENABLE, WCSERR_GET, WCSERR_GTC, WCSERR_GTI,
-     :          WCSERR_PRT
-      INTEGER   WCSERR_ENABLE, WCSERR_GET, WCSERR_GTC, WCSERR_GTI,
-     :          WCSERR_PRT
+      EXTERNAL  WCSERR_GET, WCSERR_GTC, WCSERR_GTI,
+     :          WCSERR_ENABLE, WCSERR_PRT, WCSERR_CLEAR
+
+      INTEGER   WCSERR_GET, WCSERR_GTC, WCSERR_GTI,
+     :          WCSERR_ENABLE, WCSERR_PRT, WCSERR_CLEAR
 
 *     Length of the WCSERR data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 44 on 32-bit machines.
@@ -37,8 +38,8 @@
       PARAMETER (ERRLEN = 46)
 
 *     Codes for WCSERR data structure elements used by WCSERR_GET.
-      INTEGER   WCSERR_FILE, WCSERR_FUNCTION, WCSERR_LINE_NO,
-     :          WCSERR_MSG, WCSERR_STATUS
+      INTEGER   WCSERR_STATUS, WCSERR_LINE_NO, WCSERR_FUNCTION,
+     :          WCSERR_FILE, WCSERR_MSG
 
       PARAMETER (WCSERR_STATUS   = 200)
       PARAMETER (WCSERR_LINE_NO  = 201)

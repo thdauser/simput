@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: fitshdr.c,v 4.25.1.2 2015/01/06 01:03:31 mcalabre Exp mcalabre $
+  $Id: fitshdr.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=============================================================================
 * Usage: fitshdr [infile]
 *-----------------------------------------------------------------------------
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
 
   if (feof(stdin)) {
     nbyte = blksiz * nblock;
-    printf("Skipped %lld block%s of data of size %d bytes (%lld bytes). \n",
+    printf("Skipped %lld block%s of data of size %d bytes (%lld bytes).\n",
       nblock, (nblock == 1)?"":"s", blksiz, nbyte);
 
     nbyte = blksiz * iblock;

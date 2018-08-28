@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: spc_f.c,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+  $Id: spc_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -34,11 +34,19 @@
 
 /* Fortran name mangling. */
 #include <wcsconfig_f77.h>
-#define spcini_  F77_FUNC(spcini,  SPCINI)
 #define spcput_  F77_FUNC(spcput,  SPCPUT)
+#define spcptc_  F77_FUNC(spcptc,  SPCPTC)
+#define spcptd_  F77_FUNC(spcptd,  SPCPTD)
+#define spcpti_  F77_FUNC(spcpti,  SPCPTI)
 #define spcget_  F77_FUNC(spcget,  SPCGET)
+#define spcgtc_  F77_FUNC(spcgtc,  SPCGTC)
+#define spcgtd_  F77_FUNC(spcgtd,  SPCGTD)
+#define spcgti_  F77_FUNC(spcgti,  SPCGTI)
+
+#define spcini_  F77_FUNC(spcini,  SPCINI)
 #define spcfree_ F77_FUNC(spcfree, SPCFREE)
 #define spcprt_  F77_FUNC(spcprt,  SPCPRT)
+#define spcperr_ F77_FUNC(spcperr, SPCPERR)
 #define spcset_  F77_FUNC(spcset,  SPCSET)
 #define spcx2s_  F77_FUNC(spcx2s,  SPCX2S)
 #define spcs2x_  F77_FUNC(spcs2x,  SPCS2X)
@@ -47,13 +55,6 @@
 #define spcxpse_ F77_FUNC(spcxpse, SPCXPSE)
 #define spctrne_ F77_FUNC(spctrne, SPCTRNE)
 #define spcaips_ F77_FUNC(spcaips, SPCAIPS)
-
-#define spcptc_  F77_FUNC(spcptc,  SPCPTC)
-#define spcptd_  F77_FUNC(spcptd,  SPCPTD)
-#define spcpti_  F77_FUNC(spcpti,  SPCPTI)
-#define spcgtc_  F77_FUNC(spcgtc,  SPCGTC)
-#define spcgtd_  F77_FUNC(spcgtd,  SPCGTD)
-#define spcgti_  F77_FUNC(spcgti,  SPCGTI)
 
 /* Deprecated. */
 #define spctyp_  F77_FUNC(spctyp,  SPCTYP)
@@ -72,14 +73,6 @@
 #define SPC_W       200
 #define SPC_ISGRISM 201
 #define SPC_ERR     202
-
-/*--------------------------------------------------------------------------*/
-
-int spcini_(int *spc)
-
-{
-  return spcini((struct spcprm *)spc);
-}
 
 /*--------------------------------------------------------------------------*/
 
@@ -150,7 +143,8 @@ int spcpti_(int *spc, const int *what, const int *value, const int *m)
 int spcget_(const int *spc, const int *what, void *value)
 
 {
-  int  k, m;
+  unsigned int l;
+  int  m;
   char *cvalp;
   int  *ivalp;
   double *dvalp;
@@ -199,11 +193,11 @@ int spcget_(const int *spc, const int *what, void *value)
     /* Copy the contents of the wcserr struct. */
     if (spcp->err) {
       ispcp = (int *)(spcp->err);
-      for (k = 0; k < ERRLEN; k++) {
+      for (l = 0; l < ERRLEN; l++) {
         *(ivalp++) = *(ispcp++);
       }
     } else {
-      for (k = 0; k < ERRLEN; k++) {
+      for (l = 0; l < ERRLEN; l++) {
         *(ivalp++) = 0;
       }
     }
@@ -232,6 +226,14 @@ int spcgti_(const int *spc, const int *what, int *value)
 
 /*--------------------------------------------------------------------------*/
 
+int spcini_(int *spc)
+
+{
+  return spcini((struct spcprm *)spc);
+}
+
+/*--------------------------------------------------------------------------*/
+
 int spcfree_(int *spc)
 
 {
@@ -240,14 +242,34 @@ int spcfree_(int *spc)
 
 /*--------------------------------------------------------------------------*/
 
-int spcprt_(int *spc)
+int spcprt_(const int *spc)
 
 {
   /* This may or may not force the Fortran I/O buffers to be flushed.  If
    * not, try CALL FLUSH(6) before calling SPCPRT in the Fortran code. */
   fflush(NULL);
 
-  return spcprt((struct spcprm *)spc);
+  return spcprt((const struct spcprm *)spc);
+}
+
+/*--------------------------------------------------------------------------*/
+
+/* prefix should be null-terminated, or else of length 72 in which case
+ * trailing blanks are not significant. */
+
+int spcperr_(int *spc, const char prefix[72])
+
+{
+  char prefix_[72];
+
+  strncpy(prefix_, prefix, 72);
+  wcsutil_null_fill(72, prefix_);
+
+  /* This may or may not force the Fortran I/O buffers to be flushed. */
+  /* If not, try CALL FLUSH(6) before calling SPCPERR in the Fortran code. */
+  fflush(NULL);
+
+  return wcserr_prt(((struct spcprm *)spc)->err, prefix_);
 }
 
 /*--------------------------------------------------------------------------*/

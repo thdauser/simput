@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,7 +22,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: log.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: log.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
@@ -30,8 +30,8 @@
       INTEGER   LOGS2X, LOGX2S
 
 *     Error codes and messages.
-      INTEGER   LOGERR_BAD_LOG_REF_VAL, LOGERR_BAD_WORLD, LOGERR_BAD_X,
-     :          LOGERR_NULL_POINTER, LOGERR_SUCCESS
+      INTEGER   LOGERR_SUCCESS, LOGERR_NULL_POINTER,
+     :          LOGERR_BAD_LOG_REF_VAL, LOGERR_BAD_X, LOGERR_BAD_WORLD
 
       PARAMETER (LOGERR_SUCCESS         = 0)
       PARAMETER (LOGERR_NULL_POINTER    = 1)
@@ -39,5 +39,5 @@
       PARAMETER (LOGERR_BAD_X           = 3)
       PARAMETER (LOGERR_BAD_WORLD       = 4)
 
-      CHARACTER LOG_ERRMSG(0:3)*80
+      CHARACTER LOG_ERRMSG(0:4)*80
       COMMON /LOG_DATA/ LOG_ERRMSG

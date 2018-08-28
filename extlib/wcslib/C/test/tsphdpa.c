@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tsphdpa.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: tsphdpa.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * tsphdpa tests sphdpa().
@@ -35,14 +35,38 @@
 int main()
 
 {
+  char c;
   double dist, lat, lat0, lng, lng0, pa;
 
-  printf("\nEnter reference (lng,lat): ");
-  scanf("%lf%*[ ,	]%lf", &lng0, &lat0);
+  while (1) {
+    printf("\nEnter reference (lng,lat): ");
+    if (scanf("%lf%*[ ,	]%lf", &lng0, &lat0) != 2) {
+      printf("Input error, please try again.\n");
+      continue;
+    }
+
+    break;
+  }
+
+  while (fgetc(stdin) != '\n');
 
   while (1) {
-    printf("\nEnter   field   (lng,lat): ");
-    scanf("%lf%*[ ,	]%lf", &lng, &lat);
+    printf("\nEnter field (lng,lat): ");
+
+    c = fgetc(stdin);
+    if (c == EOF || c == '\n') {
+      if (c == EOF) printf("\n");
+      break;
+    }
+    ungetc(c, stdin);
+
+    if (scanf("%lf%*[ ,	]%lf", &lng, &lat) != 2) {;
+      printf("Input error, please try again.\n");
+      while (fgetc(stdin) != '\n');
+      continue;
+    }
+
+    while (fgetc(stdin) != '\n');
 
     sphdpa(1, lng0, lat0, &lng, &lat, &dist, &pa);
 

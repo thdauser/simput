@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------
-# WCSLIB 4.25 - an implementation of the FITS WCS standard.
-# Copyright (C) 1995-2015, Mark Calabretta
+# WCSLIB 5.19 - an implementation of the FITS WCS standard.
+# Copyright (C) 1995-2018, Mark Calabretta
 #
 # This file is part of WCSLIB.
 #
@@ -21,7 +21,7 @@
 #
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: bth.keyrec,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+# $Id: bth.keyrec,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 #-----------------------------------------------------------------------------
 #
 # FITS header keyrecords used for testing by tbth1.
@@ -33,14 +33,14 @@
 # Lines in this file beginning with '#' are ignored by tofits.
 #
 #-----------------------------------------------------------------------------
-XTENSION= 'BINTABLE'           / binary table extension
+XTENSION= 'BINTABLE'           / Binary table extension
 BITPIX  =                    8 / 8-bit bytes
 NAXIS   =                    2 / 2-dimensional binary table
-NAXIS1  =                 3330 / width of table in bytes
-NAXIS2  =                   68 / number of rows in table
-PCOUNT  =                    0 / size of special data area
-GCOUNT  =                    1 / one data group (required keyword)
-TFIELDS =                   33 / number of fields in each row
+NAXIS1  =                 3330 / Width of table in bytes
+NAXIS2  =                   68 / Number of rows in table
+PCOUNT  =                    0 / Size of special data area
+GCOUNT  =                    1 / One data group (required keyword)
+TFIELDS =                   33 / Number of fields in each row
 
 COMMENT  wcsbth() ignores all of the above keywords except for TFIELDS which it
 COMMENT  only considers to be advisory.  In fact, TFIELDS here is incorrect
@@ -57,11 +57,9 @@ COMMENT  The main extension to the standard is the presence of image header
 COMMENT  keywords in what is meant to be a binary table extension header.  The
 COMMENT  usage notes for wcsbth() in wcshdr.h explains how it interprets these
 COMMENT  keywords.
-COMMENT
 COMMENT  -----------------------------------------------------------------------
 
 COMMENT  =======================================================================
-COMMENT
 COMMENT  The primary image header keywords define a coordinate representation
 COMMENT  using AIPS-convention WCS keywords.  As it happens, no binary table
 COMMENT  image array inherits these keywords and consequently they define an
@@ -81,8 +79,8 @@ COMMENT  here solely for identification purposes.
 COMMENT
 COMMENT  This representation contains only standard image header keywords, but
 COMMENT  their use in a binary table header is non-standard.
-COMMENT
 COMMENT  -----------------------------------------------------------------------
+
 COMMENT  The following keyrecord is not part of the AIPS convention.
 WCSNAME =   'AIPS convention: TAN projection' / Name of this coordinate system
 
@@ -95,14 +93,14 @@ CDELT1  =                -0.10 / x-scale
 CDELT2  =                 0.10 / y-scale
 CROTA2  =                 15.0 / Bulk image rotation
 CTYPE1  = 'RA---TAN'           / Right ascension in a gnomonic projection
-CRVAL1  =                150.0 / Right ascension at the reference point
+CRVAL1  =                150.0 / [deg] Right ascension at the reference point
 CTYPE2  = 'DEC--TAN'           / Declination in a gnomonic projection
-CRVAL2  =                -30.0 / Declination at the reference point
+CRVAL2  =                -30.0 / [deg] Declination at the reference point
 EPOCH   =               2000.0 / Equinox of equatorial coordinates
 
 CDELT3  =               62.5e3 / Frequency scale
 CTYPE3  = 'FREQ    '           / Frequency axis
-CRVAL3  =             1.3945e9 / Reference frequency
+CRVAL3  =             1.3945e9 / [Hz] Reference frequency
 VELREF  =                  258 / Barycentric radio velocity
 ALTRPIX =                  0.0 / Alternate reference pixel (not handled)
 ALTRVAL =                  0.0 / Alternate reference value (not handled)
@@ -113,7 +111,6 @@ CTYPE4  = 'STOKES  '           / Stokes convention axis (I, Q, U, V)
 CRVAL4  =                  1.0 / Stokes I
 
 COMMENT  =======================================================================
-COMMENT
 COMMENT  This coordinate representation utilizing a PCi_ja matrix expresses the
 COMMENT  above AIPS convention header using standard WCS keywords.  This set of
 COMMENT  image header keywords with alternate representation 'I' is defined for
@@ -123,8 +120,8 @@ COMMENT  representation above.
 COMMENT
 COMMENT  This representation contains only standard image header keywords but
 COMMENT  their use in a binary table header is non-standard.
-COMMENT
 COMMENT  -----------------------------------------------------------------------
+
 WCSAXESI=                    4 / Number of coordinate axes
 
 CRPIX1I =                  513 / Pixel coordinate of reference point
@@ -154,7 +151,7 @@ CTYPE4I = 'STOKES'             / Coordinate type code
 CRVAL1I =                  150 / [deg] Coordinate value at reference point
 CRVAL2I =                  -30 / [deg] Coordinate value at reference point
 CRVAL3I =           1394500000 / [Hz] Coordinate value at reference point
-CRVAL4I =                    1 / Coordinate value at reference point
+CRVAL4I =                    1 / Stokes I
 
 LONPOLEI=                  180 / [deg] Native longitude of celestial pole
 LATPOLEI=                  -30 / [deg] Native latitude of celestial pole
@@ -164,6 +161,26 @@ RESTWAVI=                    0 / [Hz] Line rest wavelength
 WCSNAMEI= 'AIPS convention: TAN projection' / Coordinate system title
 EQUINOXI=                 2000 / [yr] Equinox of equatorial coordinates
 SPECSYSI= 'BARYCENT'           / Reference frame of spectral coordinates
+
+COMMENT  =======================================================================
+COMMENT  By themselves, these primary image header auxiliary WCS keywords
+COMMENT  should not be sufficient to cause a wcsprm struct to be created for
+COMMENT  representation X, nor should they affect any of the others.
+COMMENT  -----------------------------------------------------------------------
+
+WCSNAMEX= 'eXtraneous'         / Name of this coordinate system
+LONPOLEX=                180.0 / [deg] Native longitude of the NCP
+LATPOLEX=                999.0 / [deg] Native latitude of the NCP
+RESTFRQX=         1.42040575e9 / [Hz] HI rest frequency
+RESTWAVX=          0.211061141 / [m] HI rest wavelength
+EQUINOXX=               2000.0 / [yr] Equinox of equatorial coordinates
+RADESYSX= 'ICRS'               / Mean equatorial coordinates, IAU 1984 system
+SPECSYSX= 'BARYCENT'           / Reference frame of spectral coordinates
+SSYSOBSX= 'TOPOCENT'           / Reference frame of observation
+SSYSSRCX= 'LSRK'               / Reference frame of source redshift
+VELANGLX=                35.25 / Velocity orientation angle
+VELOSYSX=               1500.0 / [m/s] Bary-topo velocity towards the source
+ZSOURCEX=               0.0025 / Redshift of the source
 
 COMMENT  =======================================================================
 COMMENT  Binary table column 33 contains an image array, most of whose WCS
@@ -384,15 +401,14 @@ DOBS8   = '1957-02-14T15:00:00' / ISO-8601 observation date matching MJDOB8
 DAVG8   = '1957-02-14T16:48:00' / ISO-8601 mid-observation date matching MJDA8
 
 COMMENT  =======================================================================
-COMMENT
 COMMENT  The following keywords have no alternates; they apply to each
 COMMENT  coordinate representation, even that of the AIPS convention for
 COMMENT  which, strictly, only the DATE-OBS keyword should be recognized.
 COMMENT
 COMMENT  The keycomments for OBSGEO-Y and OBSGEO-Z have been omitted
 COMMENT  deliberately for test purposes.
-COMMENT
 COMMENT  -----------------------------------------------------------------------
+
 OBSGEO-X=           -4554231.9 / [m] ITRF observatory coordinates
 OBSGEO-Y=            2816758.3 /
 OBSGEO-Z=           -3454035.9
@@ -400,5 +416,7 @@ MJD-OBS =            35883.625 / [d] MJD at start of observation (UTC)
 MJD-AVG =            35883.700 / [d] MJD mid-observation time (UTC)
 DATE-OBS= '1957-02-14T15:00:00'/ UTC date corresponding to MJD-OBS
 DATE-AVG= '1957-02-14T16:48:00'/ UTC date corresponding to MJD-AVG
+
 OBSGX99 =           -4000000.0 / [m] ITRF observatory X-coordinate
+
 END

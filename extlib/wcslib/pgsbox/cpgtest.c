@@ -1,7 +1,7 @@
 /*============================================================================
 
-  PGSBOX 4.25 - draw curvilinear coordinate axes for PGPLOT.
-  Copyright (C) 1997-2015, Mark Calabretta
+  PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
+  Copyright (C) 1997-2018, Mark Calabretta
 
   This file is part of PGSBOX.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: cpgtest.c,v 4.25.1.2 2015/01/06 01:03:14 mcalabre Exp mcalabre $
+  $Id: cpgtest.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=============================================================================
 *
 *   cpgtest
@@ -52,8 +52,7 @@ int main()
   const double d2r = pi/180.0;
 
   char   devtyp[16], fcode[2][4], idents[3][80], nlcprm[1], opt[2];
-  int    c0[7], ci[7], gcode[2], ic, ierr, j, large, naxis[2], nliprm[2],
-         status;
+  int    c0[7], ci[7], gcode[2], ic, ierr, j, large, naxis[2], nliprm[2];
   float  blc[2], scl, trc[2];
   double cache[257][4], dec0, grid1[9], grid2[9], nldprm[8], rotn, tiklen;
   struct wcsprm wcs;
@@ -335,7 +334,7 @@ int main()
   printf("\nSimple SIN projection\n");
 
   wcs.flag = -1;
-  status = wcsini(1, 2, &wcs);
+  wcsini(1, 2, &wcs);
 
   /* Set projection type to SIN. */
   strcpy(wcs.ctype[0], "RA---SIN");
@@ -415,7 +414,7 @@ int main()
 
   printf("\nConic equal area projection\n");
 
-  status = wcsini(1, 2, &wcs);
+  wcsini(1, 2, &wcs);
 
   /* Set projection type to conic equal-area. */
   strcpy(wcs.ctype[0], "RA---COE");
@@ -495,7 +494,7 @@ int main()
   wcs.crval[1] =  60.0;
   wcs.lonpole  = 999.0;
   wcs.latpole  = 999.0;
-  status = wcsset(&wcs);
+  wcsset(&wcs);
 
   /* We just want to delineate the boundary, in green. */
   cpgsci(7);
@@ -541,7 +540,7 @@ int main()
 
   printf("\nPolyconic projection with colour-coded grid\n");
 
-  status = wcsini(1, 2, &wcs);
+  wcsini(1, 2, &wcs);
 
   /* Set projection type to polyconic. */
   strcpy(wcs.ctype[0], "RA---PCO");
@@ -712,7 +711,7 @@ int main()
   wcs.crval[0] =   0.0;
   wcs.crval[1] =   0.0;
   wcs.lonpole  = 999.0;
-  status = wcsset(&wcs);
+  wcsset(&wcs);
 
   ic = -1;
   cpgsbox(blc, trc, idents, opt, -1, 0, c0, gcode, 0.0, 2, grid1, 1, grid2,
@@ -760,7 +759,7 @@ int main()
   }
   cpgwnad(0.0f, 1.0f, 0.0f, ((float)naxis[1])/((float)naxis[0]));
 
-  status = wcsini(1, 2, &wcs);
+  wcsini(1, 2, &wcs);
 
   /* Set projection type to plate carree. */
   strcpy(wcs.ctype[0], "GLON-CAR");
@@ -791,7 +790,7 @@ int main()
   /* it is possible to recentre it in longitude.  cylfix() will modify   */
   /* modify CRPIX, CRVAL, and LONPOLE to suit.                           */
 
-  status = cylfix(naxis, &wcs);
+  cylfix(naxis, &wcs);
 
   /* Annotation. */
   strcpy(idents[0], "");
@@ -836,9 +835,9 @@ int main()
   wcs.crval[0] =  30.0;
   wcs.crval[1] =  35.0;
   wcs.lonpole  = 999.0;
-  status = wcsset(&wcs);
+  wcsset(&wcs);
 
-  status = cylfix(naxis, &wcs);
+  cylfix(naxis, &wcs);
 
   /* Annotation. */
   strcpy(idents[0], "longitude");
@@ -912,7 +911,7 @@ int main()
   }
   cpgwnad (blc[0], trc[0], blc[1], trc[1]);
 
-  status = wcsini(1, 2, &wcs);
+  wcsini(1, 2, &wcs);
 
   /* Set projection type to plate carree. */
   strcpy(wcs.ctype[0], "RA---CAR");
@@ -986,7 +985,7 @@ int main()
   }
   cpgwnad (blc[0], trc[0], blc[1], trc[1]);
 
-  status = wcsini(1, 2, &wcs);
+  wcsini(1, 2, &wcs);
 
   /* Set projection type to cylindrical perspective. */
   strcpy(wcs.ctype[0], "RA---CYP");
@@ -1072,7 +1071,7 @@ int main()
   }
   cpgwnad(0.0f, 1.0f, 0.0f, ((float)naxis[1])/((float)naxis[0]));
 
-  status = wcsini(1, 2, &wcs);
+  wcsini(1, 2, &wcs);
 
   /* Set projection type to gnomonic. */
   strcpy(wcs.ctype[0], "RA---TAN");
@@ -1306,7 +1305,7 @@ int main()
   trc[0] = naxis[0] + 0.5;
   trc[1] = naxis[1] + 0.5;
 
-  status = wcsini(1, 2, &wcs);
+  wcsini(1, 2, &wcs);
 
   strcpy(wcs.ctype[0], "x");
   strcpy(wcs.ctype[1], "y");

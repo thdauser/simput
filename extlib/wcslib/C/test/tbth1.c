@@ -1,6 +1,7 @@
 /*============================================================================
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -21,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tbth1.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: tbth1.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 * tbth1 tests wcsbth(), the WCS FITS parser for binary table headers, and
@@ -131,7 +132,9 @@ int main()
   ctrl  = -2;
   keysel = 0;
   colsel[0] = 0;
-  fprintf(stderr, "\nIllegal-WCS header keyrecords rejected by wcsbth():\n");
+
+  fprintf(stderr, "\nIllegal or extraneous WCS header keyrecords rejected "
+                  "by wcsbth():\n");
   if ((status = wcsbth(header, nkeyrec, relax, ctrl, keysel, colsel,
                        &nreject, &nwcs, &wcs))) {
     fprintf(stderr, "wcsbth ERROR %d: %s.\n", status, wcs_errmsg[status]);
@@ -140,7 +143,7 @@ int main()
 
 
   /* List the remaining keyrecords. */
-  printf("\n\nHeader keyrecords ignored by wcsbth():\n");
+  printf("\n\nNon-WCS header keyrecords ignored by wcsbth():\n");
   hptr = header;
   while (*hptr) {
     printf("%.80s\n", hptr);

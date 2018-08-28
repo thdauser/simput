@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,25 +22,25 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: wcsunits.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: wcsunits.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  WCSULEXE, WCSUNITSE, WCSUTRNE
-      INTEGER   WCSULEXE, WCSUNITSE, WCSUTRNE
+      EXTERNAL  WCSUNITSE, WCSUTRNE, WCSULEXE
+      INTEGER   WCSUNITSE, WCSUTRNE, WCSULEXE
 
 *     Deprecated functions.
-      EXTERNAL  WCSULEX, WCSUNITS, WCSUTRN
-      INTEGER   WCSULEX, WCSUNITS, WCSUTRN
+      EXTERNAL  WCSUNITS, WCSUTRN, WCSULEX
+      INTEGER   WCSUNITS, WCSUTRN, WCSULEX
 
 *     Array indices.
-      INTEGER   WCSUNITS_BEAM, WCSUNITS_BIN, WCSUNITS_BIT,
-     :          WCSUNITS_CHARGE, WCSUNITS_COUNT, WCSUNITS_LENGTH,
-     :          WCSUNITS_LUMINTEN, WCSUNITS_MAGNITUDE, WCSUNITS_MASS,
-     :          WCSUNITS_MOLE, WCSUNITS_NTYPE, WCSUNITS_PIXEL,
-     :          WCSUNITS_PLANE_ANGLE, WCSUNITS_SOLID_ANGLE,
-     :          WCSUNITS_SOLRATIO, WCSUNITS_TEMPERATURE, WCSUNITS_TIME,
-     :          WCSUNITS_VOXEL
+      INTEGER   WCSUNITS_PLANE_ANGLE, WCSUNITS_SOLID_ANGLE,
+     :          WCSUNITS_CHARGE, WCSUNITS_MOLE, WCSUNITS_TEMPERATURE,
+     :          WCSUNITS_LUMINTEN, WCSUNITS_MASS, WCSUNITS_LENGTH,
+     :          WCSUNITS_TIME, WCSUNITS_BEAM, WCSUNITS_BIN,
+     :          WCSUNITS_BIT, WCSUNITS_COUNT, WCSUNITS_MAGNITUDE,
+     :          WCSUNITS_PIXEL, WCSUNITS_SOLRATIO, WCSUNITS_VOXEL,
+     :          WCSUNITS_NTYPE
 
       PARAMETER (WCSUNITS_PLANE_ANGLE =  1)
       PARAMETER (WCSUNITS_SOLID_ANGLE =  2)
@@ -66,13 +66,13 @@
      :          WCSUNITS_UNITS(WCSUNITS_NTYPE)*9
 
 *     Error codes and messages.
-      INTEGER   UNITSERR_BAD_EXPON_SYMBOL, UNITSERR_BAD_FUNCS,
-     :          UNITSERR_BAD_INITIAL_SYMBOL,
-     :          UNITSERR_BAD_NUM_MULTIPLIER, UNITSERR_BAD_UNIT_SPEC,
-     :          UNITSERR_CONSEC_BINOPS, UNITSERR_DANGLING_BINOP,
-     :          UNITSERR_FUNCTION_CONTEXT, UNITSERR_PARSER_ERROR,
-     :          UNITSERR_SUCCESS, UNITSERR_UNBAL_BRACKET,
-     :          UNITSERR_UNBAL_PAREN, UNITSERR_UNSAFE_TRANS
+      INTEGER   UNITSERR_SUCCESS, UNITSERR_BAD_NUM_MULTIPLIER,
+     :          UNITSERR_DANGLING_BINOP, UNITSERR_BAD_INITIAL_SYMBOL,
+     :          UNITSERR_FUNCTION_CONTEXT, UNITSERR_BAD_EXPON_SYMBOL,
+     :          UNITSERR_UNBAL_BRACKET, UNITSERR_UNBAL_PAREN,
+     :          UNITSERR_CONSEC_BINOPS, UNITSERR_PARSER_ERROR,
+     :          UNITSERR_BAD_UNIT_SPEC, UNITSERR_BAD_FUNCS,
+     :          UNITSERR_UNSAFE_TRANS
 
       PARAMETER (UNITSERR_SUCCESS            =  0)
       PARAMETER (UNITSERR_BAD_NUM_MULTIPLIER =  1)

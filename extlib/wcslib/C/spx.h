@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,29 +22,32 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: spx.h,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
+  $Id: spx.h,v 5.19.1.1 2018/07/26 15:41:40 mcalabre Exp mcalabre $
 *=============================================================================
 *
-* WCSLIB 4.25 - C routines that implement the spectral coordinate systems
-* recognized by the FITS World Coordinate System (WCS) standard.  Refer to
-*
-*   "Representations of world coordinates in FITS",
-*   Greisen, E.W., & Calabretta, M.R. 2002, A&A, 395, 1061 (Paper I)
-*
-*   "Representations of spectral coordinates in FITS",
-*   Greisen, E.W., Calabretta, M.R., Valdes, F.G., & Allen, S.L.
-*   2006, A&A, 446, 747 (Paper III)
-*
-* Refer to the README file provided with WCSLIB for an overview of the
-* library.
+* WCSLIB 5.19 - C routines that implement the FITS World Coordinate System
+* (WCS) standard.  Refer to the README file provided with WCSLIB for an
+* overview of the library.
 *
 *
 * Summary of the spx routines
 * ---------------------------
+* Routines in this suite implement the spectral coordinate systems recognized
+* by the FITS World Coordinate System (WCS) standard, as described in
+*
+=   "Representations of world coordinates in FITS",
+=   Greisen, E.W., & Calabretta, M.R. 2002, A&A, 395, 1061 (WCS Paper I)
+=
+=   "Representations of spectral coordinates in FITS",
+=   Greisen, E.W., Calabretta, M.R., Valdes, F.G., & Allen, S.L.
+=   2006, A&A, 446, 747 (WCS Paper III)
+*
 * specx() is a scalar routine that, given one spectral variable (e.g.
 * frequency), computes all the others (e.g. wavelength, velocity, etc.) plus
 * the required derivatives of each with respect to the others.  The results
 * are returned in the spxprm struct.
+*
+* spxperr() prints the error message(s) (if any) stored in a spxprm struct.
 *
 * The remaining routines are all vector conversions from one spectral
 * variable to another.  The API of these functions only differ in whether the
@@ -94,6 +97,39 @@
 * These are the workhorse routines, to be used for fast transformations.
 * Conversions may be done "in place" by calling the routine with the output
 * vector set to the input.
+*
+* Air-to-vacuum wavelength conversion:
+* ------------------------------------
+* The air-to-vacuum wavelength conversion in early drafts of WCS Paper III
+* cites Cox (ed., 2000, Allen’s Astrophysical Quantities, AIP Press,
+* Springer-Verlag, New York), which itself derives from Edlén (1953, Journal
+* of the Optical Society of America, 43, 339).  This is the IAU standard,
+* adopted in 1957 and again in 1991.  No more recent IAU resolution replaces
+* this relation, and it is the one used by WCSLIB.
+*
+* However, the Cox relation was replaced in later drafts of Paper III, and as
+* eventually published, by the IUGG relation (1999, International Union of
+* Geodesy and Geophysics, comptes rendus of the 22nd General Assembly,
+* Birmingham UK, p111).  There is a nearly constant ratio between the two,
+* with IUGG/Cox = 1.000015 over most of the range between 200nm and 10,000nm.
+*
+* The IUGG relation itself is derived from the work of Ciddor (1996, Applied
+* Optics, 35, 1566), which is used directly by the Sloan Digital Sky Survey.
+* It agrees closely with Cox; longwards of 2500nm, the ratio Ciddor/Cox is
+* fixed at 1.000000021, decreasing only slightly, to 1.000000018, at 1000nm.
+*
+* The Cox, IUGG, and Ciddor relations all accurately provide the wavelength
+* dependence of the air-to-vacuum wavelength conversion.  However, for full
+* accuracy, the atmospheric temperature, pressure, and partial pressure of
+* water vapour must be taken into account.  These will determine a small,
+* wavelength-independent scale factor and offset, which is not considered by
+* WCS Paper III.
+*
+* WCS Paper III is also silent on the question of the range of validity of the
+* air-to-vacuum wavelength conversion.  Cox's relation would appear to be
+* valid in the range 200nm to 10,000nm.  Both the Cox and the Ciddor relations
+* have singularities below 200nm, with Cox's at 156nm and 83nm.  WCSLIB checks
+* neither the range of validity, nor for these singularities.
 *
 * Argument checking:
 * ------------------
@@ -155,6 +191,25 @@
 * velobeta(), and betavelo() implement vector conversions between wave-like
 * or velocity-like spectral types (i.e. conversions that do not need the rest
 * frequency or wavelength).  They all have the same API.
+*
+*
+* spxperr() - Print error messages from a spxprm struct
+* -----------------------------------------------------
+* spxperr() prints the error message(s) (if any) stored in a spxprm struct.
+* If there are no errors then nothing is printed.  It uses wcserr_prt(), q.v.
+*
+* Given:
+*   spx       const struct spxprm*
+*                       Spectral variables and their derivatives.
+*
+*   prefix    const char *
+*                       If non-NULL, each output line will be prefixed with
+*                       this string.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*                         1: Null spxprm pointer passed.
 *
 *
 * freqafrq() - Convert frequency to angular frequency (vector)
@@ -400,7 +455,7 @@
 *     (Returned) ... vice versa [s/m] (constant, = 1/c, always available).
 *
 *   struct wcserr *err
-*     (Returned) If enabled, when an error status is returned this struct
+*     (Returned) If enabled, when an error status is returned, this struct
 *     contains detailed information about the error, see wcserr_enable().
 *
 *   void *padding
@@ -418,8 +473,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "wcserr.h"
 
 extern const char *spx_errmsg[];
 
@@ -484,6 +537,7 @@ struct spxprm {
 int specx(const char *type, double spec, double restfrq, double restwav,
           struct spxprm *specs);
 
+int spxperr(const struct spxprm *spx, const char *prefix);
 
 /* For use in declaring function prototypes, e.g. in spcprm. */
 #define SPX_ARGS double param, int nspec, int instep, int outstep, \

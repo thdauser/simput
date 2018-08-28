@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tlin.c,v 4.25.1.2 2015/01/06 01:01:52 mcalabre Exp mcalabre $
+  $Id: tlin.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
 *=============================================================================
 *
 *  tlin tests the linear transformation routines supplied with WCSLIB.
@@ -66,7 +66,7 @@ int main()
 
   /* List status return messages. */
   printf("\nList of lin status return values:\n");
-  for (status = 1; status <= 3; status++) {
+  for (status = 1; status <= 6; status++) {
     printf("%4d: %s.\n", status, lin_errmsg[status]);
   }
 

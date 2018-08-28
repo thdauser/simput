@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcserr_f.c,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+  $Id: wcserr_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -33,23 +33,19 @@
 
 /* Fortran name mangling. */
 #include <wcsconfig_f77.h>
-#define wcserr_enable_  F77_FUNC(wcserr_enable, WCSERR_ENABLE)
 #define wcserr_get_  F77_FUNC(wcserr_get, WCSERR_GET)
-#define wcserr_prt_  F77_FUNC(wcserr_prt, WCSERR_PRT)
+#define wcserr_gtc_  F77_FUNC(wcserr_gtc, WCSERR_GTC)
+#define wcserr_gti_  F77_FUNC(wcserr_gti, WCSERR_GTI)
+
+#define wcserr_enable_  F77_FUNC(wcserr_enable, WCSERR_ENABLE)
+#define wcserr_prt_     F77_FUNC(wcserr_prt, WCSERR_PRT)
+#define wcserr_clear_   F77_FUNC(wcserr_clear, WCSERR_CLEAR)
 
 #define WCSERR_STATUS   200
 #define WCSERR_LINE_NO  201
 #define WCSERR_FUNCTION 202
 #define WCSERR_FILE     203
 #define WCSERR_MSG      204
-
-/*--------------------------------------------------------------------------*/
-
-int wcserr_enable_(const int *enable)
-
-{
-  return wcserr_enable(*enable);
-}
 
 /*--------------------------------------------------------------------------*/
 
@@ -103,6 +99,14 @@ int wcserr_gti_(const int *wcs, const int *what, int *value)
 
 /*--------------------------------------------------------------------------*/
 
+int wcserr_enable_(const int *enable)
+
+{
+  return wcserr_enable(*enable);
+}
+
+/*--------------------------------------------------------------------------*/
+
 int wcserr_prt_(const int *err, const char prefix[72])
 
 {
@@ -115,4 +119,12 @@ int wcserr_prt_(const int *err, const char prefix[72])
   fflush(NULL);
 
   return wcserr_prt((const struct wcserr *)err, prefix_);
+}
+
+/*--------------------------------------------------------------------------*/
+
+int wcserr_clear_(int **errp)
+
+{
+  return wcserr_clear((struct wcserr **)errp);
 }

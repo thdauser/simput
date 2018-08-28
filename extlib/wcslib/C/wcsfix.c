@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcsfix.c,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
+  $Id: wcsfix.c,v 5.19.1.1 2018/07/26 15:41:40 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <math.h>
@@ -33,6 +33,7 @@
 #include "wcserr.h"
 #include "wcsmath.h"
 #include "wcsutil.h"
+#include "lin.h"
 #include "sph.h"
 #include "wcs.h"
 #include "wcsunits.h"
@@ -56,6 +57,32 @@ const char *wcsfix_errmsg[] = {
   "All of the corner pixel coordinates are invalid",
   "Could not determine reference pixel coordinate",
   "Could not determine reference pixel value"};
+
+/* Map error returns for lower-level routines. */
+const int fix_linerr[] = {
+  FIXERR_SUCCESS,		/*  0: LINERR_SUCCESS         */
+  FIXERR_NULL_POINTER,		/*  1: LINERR_NULL_POINTER    */
+  FIXERR_MEMORY,		/*  2: LINERR_MEMORY          */
+  FIXERR_SINGULAR_MTX,		/*  3: LINERR_SINGULAR_MTX    */
+  FIXERR_BAD_PARAM,		/*  4: LINERR_DISTORT_INIT    */
+  FIXERR_NO_REF_PIX_COORD,	/*  5: LINERR_DISTORT         */
+  FIXERR_NO_REF_PIX_VAL		/*  6: LINERR_DEDISTORT       */
+};
+
+const int fix_wcserr[] = {
+  FIXERR_SUCCESS,		/*  0: WCSERR_SUCCESS         */
+  FIXERR_NULL_POINTER,		/*  1: WCSERR_NULL_POINTER    */
+  FIXERR_MEMORY,		/*  2: WCSERR_MEMORY          */
+  FIXERR_SINGULAR_MTX,		/*  3: WCSERR_SINGULAR_MTX    */
+  FIXERR_BAD_CTYPE,		/*  4: WCSERR_BAD_CTYPE       */
+  FIXERR_BAD_PARAM,		/*  5: WCSERR_BAD_PARAM       */
+  FIXERR_BAD_COORD_TRANS,	/*  6: WCSERR_BAD_COORD_TRANS */
+  FIXERR_ILL_COORD_TRANS,	/*  7: WCSERR_ILL_COORD_TRANS */
+  FIXERR_BAD_CORNER_PIX,	/*  8: WCSERR_BAD_PIX         */
+  FIXERR_NO_REF_PIX_VAL,	/*  9: WCSERR_BAD_WORLD       */
+  FIXERR_NO_REF_PIX_VAL 	/* 10: WCSERR_BAD_WORLD_COORD */
+				/*     ...others not used     */
+};
 
 /* Convenience macro for invoking wcserr_set(). */
 #define WCSFIX_ERRMSG(status) WCSERR_SET(status), wcsfix_errmsg[status]
@@ -146,7 +173,7 @@ int wcsfixi(int ctrl, const int naxis[], struct wcsprm *wcs, int stat[],
       /* No change => no message. */
       wcserr_copy(0x0, info+ifix);
 
-    } else if (stat[ifix] == FIXERR_SUCCESS) {
+    } else if (stat[ifix] == 0) {
       /* Successful translation, but there may be an informative message. */
       if (wcs->err && wcs->err->status < 0) {
         wcserr_copy(wcs->err, info+ifix);
@@ -207,7 +234,7 @@ int cdfix(struct wcsprm *wcs)
 
     cd = wcs->cd + i * (naxis + 1);
     *cd = 1.0;
-    status = FIXERR_SUCCESS;
+    status = 0;
 
 next: ;
   }
@@ -223,7 +250,7 @@ static int parse_date(const char *buf, int *hour, int *minute, double *sec)
   char ctmp[72];
 
   if (sscanf(buf, "%2d:%2d:%s", hour, minute, ctmp) < 3 ||
-      wcsutil_str2double(ctmp, "%lf", sec)) {
+      wcsutil_str2double(ctmp, sec)) {
     return 1;
   }
 
@@ -402,7 +429,7 @@ int datfix(struct wcsprm *wcs)
     wcserr_set(WCSERR_SET(FIXERR_DATE_FIX),
       "Changed '%s' to '%s'", orig_dateobs, dateobs);
 
-    return FIXERR_SUCCESS;
+    return 0;
   }
 
   return FIXERR_NO_CHANGE;
@@ -414,30 +441,36 @@ int unitfix(int ctrl, struct wcsprm *wcs)
 
 {
   int  i, k, result, status = FIXERR_NO_CHANGE;
-  char orig_unit[80], msg[WCSERR_MSG_LENGTH];
+  char orig_unit[80], msg[WCSERR_MSG_LENGTH], msgtmp[WCSERR_MSG_LENGTH];
   const char *function = "unitfix";
   struct wcserr **err;
 
   if (wcs == 0x0) return FIXERR_NULL_POINTER;
   err = &(wcs->err);
 
-  strcpy(msg, "Changed units: ");
+  strncpy(msg, "Changed units: ", WCSERR_MSG_LENGTH);
+
   for (i = 0; i < wcs->naxis; i++) {
     strncpy(orig_unit, wcs->cunit[i], 80);
     result = wcsutrne(ctrl, wcs->cunit[i], &(wcs->err));
     if (result == 0 || result == 12) {
       k = strlen(msg);
-      sprintf(msg+k, "'%s' -> '%s', ", orig_unit, wcs->cunit[i]);
-      status = FIXERR_UNITS_ALIAS;
+      if (k < WCSERR_MSG_LENGTH-1) {
+        wcsutil_null_fill(80, orig_unit);
+        sprintf(msgtmp, "'%s' -> '%s', ", orig_unit, wcs->cunit[i]);
+        strncpy(msg+k, msgtmp, WCSERR_MSG_LENGTH-1-k);
+        status = FIXERR_UNITS_ALIAS;
+      }
     }
   }
 
   if (status == FIXERR_UNITS_ALIAS) {
+    /* Chop off the trailing ", ". */
     k = strlen(msg) - 2;
     msg[k] = '\0';
     wcserr_set(WCSERR_SET(FIXERR_UNITS_ALIAS), msg);
 
-    status = FIXERR_SUCCESS;
+    status = 0;
   }
 
   return status;
@@ -469,29 +502,31 @@ int spcfix(struct wcsprm *wcs)
         strncpy(wcs->specsys, specsys, 9);
         wcserr_set(WCSERR_SET(FIXERR_SPC_UPDATE),
           "Changed SPECSYS to '%s'", specsys);
-        status = FIXERR_SUCCESS;
+        status = 0;
       }
 
       /* Was ctype translated?  Have to null-fill for comparing them. */
       wcsutil_null_fill(9, wcs->ctype[i]);
       if (strncmp(wcs->ctype[i], ctype, 9)) {
         /* ctype was translated... */
-        if (status == FIXERR_SUCCESS) {
+        if (status == 0) {
           /* ...and specsys was also. */
           wcserr_set(WCSERR_SET(FIXERR_SPC_UPDATE),
-            "Changed CTYPE%d from '%s' to '%s', and SPECSYS to '%s'",
-            i+1, wcs->ctype[i], ctype, wcs->specsys);
+            "Changed CTYPE%d from '%s' to '%s', and SPECSYS to '%s' "
+            "(VELREF=%d)", i+1, wcs->ctype[i], ctype, wcs->specsys,
+            wcs->velref);
         } else {
           wcserr_set(WCSERR_SET(FIXERR_SPC_UPDATE),
-            "Changed CTYPE%d from '%s' to '%s'", i+1, wcs->ctype[i], ctype);
-          status = FIXERR_SUCCESS;
+            "Changed CTYPE%d from '%s' to '%s' (VELREF=%d)", i+1,
+            wcs->ctype[i], ctype, wcs->velref);
+          status = 0;
         }
 
         strncpy(wcs->ctype[i], ctype, 9);
       }
 
       /* Tidy up. */
-      if (status == FIXERR_SUCCESS) {
+      if (status == 0) {
         wcsutil_null_fill(72, wcs->ctype[i]);
         wcsutil_null_fill(72, wcs->specsys);
       }
@@ -526,7 +561,7 @@ int celfix(struct wcsprm *wcs)
 
   /* Initialize if required. */
   if (wcs->flag != WCSSET) {
-    if ((status = wcsset(wcs))) return status;
+    if ((status = wcsset(wcs))) return fix_wcserr[status];
   }
 
   /* Was an NCP or GLS projection code translated? */
@@ -537,7 +572,7 @@ int celfix(struct wcsprm *wcs)
       strcpy(wcs->ctype[wcs->lat]+5, "SIN");
 
       if (wcs->npvmax < wcs->npv + 2) {
-        /* Allocate space for two more PVi_ja keyvalues. */
+        /* Allocate space for two more PVi_ma keyvalues. */
         if (wcs->m_flag == WCSSET && wcs->pv == wcs->m_pv) {
           if (!(wcs->pv = calloc(wcs->npv+2, sizeof(struct pvcard)))) {
             wcs->pv = wcs->m_pv;
@@ -569,7 +604,7 @@ int celfix(struct wcsprm *wcs)
       wcs->pv[wcs->npv].value = wcsprj->pv[2];
       (wcs->npv)++;
 
-      return FIXERR_SUCCESS;
+      return 0;
 
     } else if (strcmp(wcs->ctype[wcs->lat]+5, "GLS") == 0) {
       strcpy(wcs->ctype[wcs->lng]+5, "SFL");
@@ -585,7 +620,7 @@ int celfix(struct wcsprm *wcs)
          * the linear transformation and instead is accomplished here by
          * setting theta_0. */
         if (wcs->npvmax < wcs->npv + 3) {
-          /* Allocate space for three more PVi_ja keyvalues. */
+          /* Allocate space for three more PVi_ma keyvalues. */
           if (wcs->m_flag == WCSSET && wcs->pv == wcs->m_pv) {
             if (!(wcs->pv = calloc(wcs->npv+3, sizeof(struct pvcard)))) {
               wcs->pv = wcs->m_pv;
@@ -624,7 +659,7 @@ int celfix(struct wcsprm *wcs)
         (wcs->npv)++;
       }
 
-      return FIXERR_SUCCESS;
+      return 0;
     }
   }
 
@@ -650,7 +685,7 @@ int cylfix(const int naxis[], struct wcsprm *wcs)
 
   /* Initialize if required. */
   if (wcs->flag != WCSSET) {
-    if ((status = wcsset(wcs))) return status;
+    if ((status = wcsset(wcs))) return fix_wcserr[status];
   }
 
   /* Check that we have a cylindrical projection. */
@@ -690,7 +725,7 @@ int cylfix(const int naxis[], struct wcsprm *wcs)
     }
   }
 
-  if (phimin > phimax) return status;
+  if (phimin > phimax) return fix_wcserr[status];
 
   /* Any changes needed? */
   if (phimin >= -180.0 && phimax <= 180.0) return FIXERR_NO_CHANGE;
@@ -703,9 +738,11 @@ int cylfix(const int naxis[], struct wcsprm *wcs)
   if ((status = prjs2x(&(wcs->cel.prj), 1, 1, 1, 1, &phi0, &theta0, &x, &y,
                        stat))) {
     if (status == PRJERR_BAD_PARAM) {
-      return wcserr_set(WCSFIX_ERRMSG(FIXERR_BAD_PARAM));
+      status = FIXERR_BAD_PARAM;
+    } else {
+      status = FIXERR_NO_REF_PIX_COORD;
     }
-    return wcserr_set(WCSFIX_ERRMSG(FIXERR_NO_REF_PIX_COORD));
+    return wcserr_set(WCSFIX_ERRMSG(status));
   }
 
   for (k = 0; k < wcs->naxis; k++) {
@@ -715,17 +752,14 @@ int cylfix(const int naxis[], struct wcsprm *wcs)
   img[0][wcs->lat] = y;
 
   if ((status = linx2p(&(wcs->lin), 1, 0, img[0], pix[0]))) {
-    return wcserr_set(WCSFIX_ERRMSG(status));
+    return wcserr_set(WCSFIX_ERRMSG(fix_linerr[status]));
   }
 
 
   /* Compute celestial coordinates at the new reference pixel. */
   if ((status = wcsp2s(wcs, 1, 0, pix[0], img[0], phi, theta, world[0],
                        stat))) {
-    if (wcs->err->status == WCSERR_BAD_PIX) {
-      wcs->err->status = FIXERR_NO_REF_PIX_COORD;
-    }
-    return wcs->err->status;
+    return fix_wcserr[status];
   }
 
   /* Compute native coordinates of the celestial pole. */

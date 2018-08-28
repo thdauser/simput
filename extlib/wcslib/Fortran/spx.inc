@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,7 +22,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: spx.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: spx.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
@@ -42,6 +42,11 @@
      :         WAVEZOPT, ZOPTWAVE, WAVEAWAV, AWAVWAVE,
      :         WAVEVELO, VELOWAVE, AWAVVELO, VELOAWAV,
      :         VELOBETA, BETAVELO
+
+*     Length of the SPXPRM data structure (INTEGER array) on 64-bit
+*     machines.  Only needs to be 82 on 32-bit machines.
+      INTEGER   SPXLEN
+      PARAMETER (SPXLEN = 84)
 
 *     Spectral data structure.
       INTEGER   SPX_WAVETYPE,  SPX_VELOTYPE
@@ -114,8 +119,9 @@
       PARAMETER (SPX_ERR     = 200)
 
 *     Error codes and messages.
-      INTEGER   SPXERR_BAD_INSPEC_COORD, SPXERR_BAD_SPEC_PARAMS,
-     :          SPXERR_BAD_SPEC_VAR, SPXERR_NULL_POINTER, SPXERR_SUCCESS
+      INTEGER   SPXERR_SUCCESS, SPXERR_NULL_POINTER,
+     :          SPXERR_BAD_SPEC_PARAMS, SPXERR_BAD_SPEC_VAR,
+     :          SPXERR_BAD_INSPEC_COORD
 
       PARAMETER (SPXERR_SUCCESS          = 0)
       PARAMETER (SPXERR_NULL_POINTER     = 1)

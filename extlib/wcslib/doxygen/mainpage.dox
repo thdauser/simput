@@ -1,4 +1,4 @@
-/** @mainpage WCSLIB 4.25.1 and PGSBOX 4.25.1
+/** @mainpage WCSLIB 5.19.1 and PGSBOX 5.19.1
 
 @image html Bonne.gif "Bonne's projection"
 
@@ -15,12 +15,13 @@
 - @subpage testing
 - @subpage fortran
 - @subpage pgsbox
+- @subpage versioning
 
 @section copyright Copyright
 
 @verbatim
-  WCSLIB 4.25.1 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   WCSLIB is free software: you can redistribute it and/or modify it under the
   terms of the GNU Lesser General Public License as published by the Free
@@ -39,7 +40,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: mainpage.dox,v 4.25.1.3 2015/01/06 01:02:55 mcalabre Exp mcalabre $
+  $Id: mainpage.dox,v 5.19.1.2 2018/07/28 12:54:15 mcalabre Exp mcalabre $
 @endverbatim
 */
 
@@ -49,7 +50,7 @@ WCSLIB is a C library, supplied with a full set of Fortran wrappers, that
 implements the "World Coordinate System" (WCS) standard in FITS (Flexible
 Image Transport System).  It also includes a @ref software "PGPLOT"-based
 routine, @ref pgsbox "PGSBOX", for drawing general curvilinear coordinate
-graticules and a number of utility programs.
+graticules, and also a number of utility programs.
 
 The FITS data format is widely used within the international astronomical
 community, from the radio to gamma-ray regimes, for data interchange and
@@ -75,9 +76,16 @@ The FITS WCS standard is described in
 - "Mapping on the HEALPix Grid" (HPX),
    Calabretta, M.R., & Roukema, B.F. 2007, MNRAS, 381, 865
 
+- "Representing the 'Butterfly' Projection in FITS: Projection Code XPH"
+   (XPH), Calabretta, M.R., & Lowe, S.R. 2013, PASA, 30, e050
+
+- "Representations of time coordinates in FITS: Time and relative dimension in
+   space", Rots, A.H., Bunclark, P.S., Calabretta, M.R., Allen, S.L.,
+   Manchester R.N., & Thompson, W.T. 2015, A&A, 574, A36
+
 Reprints of all published papers may be obtained from NASA's Astrophysics
 Data System (ADS), http://adsabs.harvard.edu/.  Reprints of Papers I, II
-(+HPX) and III are available from
+(including HPX & XPH), and III are available from
 http://www.atnf.csiro.au/people/Mark.Calabretta.  This site also includes
 errata and supplementary material for Papers I, II and III.
 
@@ -96,16 +104,15 @@ Several implementations of the FITS WCS standards are available:
     http://www.atnf.csiro.au/people/Mark.Calabretta/WCS/<I></I>.  The
     remainder of this manual describes its use.
 
-  - @b wcstools, developed by Doug Mink, may be obtained from
+  - @b wcstools, developed by Jessica Mink, may be obtained from
     http://tdc-www.harvard.edu/software/wcstools/<I></I>.
 
   - @b AST, developed by David Berry within the U.K. Starlink project,
     http://www.starlink.ac.uk/ast/ and now supported by JAC, Hawaii
-    http://starlink.jach.hawaii.edu/starlink/<I></I>.
-    @n@n
-    A useful utility for experimenting with FITS WCS descriptions (similar to
-    @a wcsgrid) is also provided; go to the above site and then look at the
-    section entitled "FITS-WCS Plotting Demo".
+    http://starlink.jach.hawaii.edu/starlink/<I></I>.  A useful utility for
+    experimenting with FITS WCS descriptions (similar to @a wcsgrid) is also
+    provided; go to the above site and then look at the section entitled
+    "FITS-WCS Plotting Demo".
 
   - @b SolarSoft, http://sohowww.nascom.nasa.gov/solarsoft/<I></I>, primarily
     an IDL-based system for analysis of Solar physics data, contains a module
@@ -137,6 +144,12 @@ and Javascript by
   -  <B>wcsjs</B>, https://github.com/astrojs/wcsjs, a port created by Amit
      Kapadia using Emscripten, an LLVM to Javascript compiler.  wcsjs provides
      a code base for running @ref overview "WCSLIB" on web browsers.
+
+Julia wrappers (https://en.wikipedia.org/wiki/Julia_(programming_language))
+are provided by
+
+  - <B>WCS.jl</B>, https://github.com/JuliaAstro/WCS.jl, a component of Julia
+    Astro, https://github.com/JuliaAstro.
 
 Recommended WCS-aware FITS image viewers:
 
@@ -344,14 +357,15 @@ Several utility programs are distributed with WCSLIB:
 /** @page structs WCSLIB data structures
 
 The WCSLIB routines are based on data structures specific to them: wcsprm for
-the wcs.h,c routines, celprm for cel.h,c, and likewise spcprm, linprm,
-prjprm and tabprm, with struct definitions contained in the corresponding
+the wcs.h,c routines, celprm for cel.h,c, and likewise spcprm, linprm, prjprm,
+tabprm, and disprm, with struct definitions contained in the corresponding
 header files: wcs.h, cel.h, etc.  The structs store the parameters that define
 a coordinate transformation and also intermediate values derived from those
 parameters.  As a high-level object, the wcsprm struct contains linprm,
-tabprm, spcprm, and celprm structs, and in turn the celprm struct contains a
-prjprm struct.  Hence the wcsprm struct contains everything needed for a
-complete coordinate description.
+tabprm, spcprm, and celprm structs, and in turn the linprm struct contains
+disprm structs, and the celprm struct contains a prjprm struct.  Hence the
+wcsprm struct contains everything needed for a complete coordinate
+description.
 
 Applications programmers who use the top- and middle-level routines generally
 only need to pass wcsprm structs from one routine that fills them to another
@@ -361,7 +375,7 @@ worthwhile knowing something about the way they work.
 Three basic operations apply to all WCSLIB structs:
 
 - Initialize.  Each struct has a specific initialization routine, e.g.
-  wcsini(), celini(), spcini(), etc.  These allocate memory (if required) and
+  wcsinit(), celini(), spcini(), etc.  These allocate memory (if required) and
   set all struct members to default values.
 
 - Fill in the required values.  Each struct has members whose values must be
@@ -385,9 +399,9 @@ that the struct needs to be reset.
 
 The initialization routine may be invoked repeatedly on a struct if it is
 desired to reuse it.  However, the @a flag member of structs that contain
-allocated memory (wcsprm, linprm and tabprm) must be set to -1 before the
-first initialization to initialize memory management, but not subsequently or
-else memory leaks will result.
+allocated memory (wcsprm, linprm, tabprm, and disprm) must be set to -1 before
+the first initialization to initialize memory management, but not subsequently
+or else memory leaks will result.
 
 Each struct has one or more service routines: to do deep copies from one to
 another, to print its contents, and to free allocated memory.  Refer to the
@@ -400,18 +414,18 @@ header files for a detailed description.
 The initialization routines for certain of the WCSLIB data structures allocate
 memory for some of their members:
 
-- wcsini() optionally allocates memory for the @a crpix, @a pc, @a cdelt,
+- wcsinit() optionally allocates memory for the @a crpix, @a pc, @a cdelt,
     @a crval, @a cunit, @a ctype, @a pv, @a ps, @a cd, @a crota, @a colax,
     @a cname, @a crder, and @a csyer arrays in the wcsprm struct (using
-    linini() for certain of these).  Note that wcsini() does not allocate
+    lininit() for certain of these).  Note that wcsinit() does not allocate
     memory for the @a tab array - refer to the usage notes for wcstab() in
     wcshdr.h.  If the @a pc matrix is not unity, wcsset() (via linset()) also
     allocates memory for the @a piximg and @a imgpix arrays.
 
-- linini(): optionally allocates memory for the @a crpix, @a pc, and @a cdelt
+- lininit(): optionally allocates memory for the @a crpix, @a pc, and @a cdelt
     arrays in the linprm struct.  If the @a pc matrix is not unity, linset()
     also allocates memory for the @a piximg and @a imgpix arrays.  Typically
-    these would be used by wcsini() and wcsset().
+    these would be used by wcsinit() and wcsset().
 
 - tabini(): optionally allocates memory for the @a K, @a map, @a crval,
     @a index, and @a coord arrays (including the arrays referenced by
@@ -420,30 +434,37 @@ memory for some of their members:
     tabfree() will then free it.  tabset() also allocates memory for the
     @a sense, @a p0, @a delta and @a extrema arrays.
 
+- disinit(): optionally allocates memory for the @ dtype, @ dp, and @ maxdis
+    arrays.  disset() also allocates memory for a number of arrays that
+    hold distortion parmeters and intermediate values: @ axmap, @ Nhat,
+    @ offset, @ scale, @ iparm, and @ dparm, and also several private work
+    arrays: @ disp2x, @ disx2p, and @ tmpmem.
+
 The caller may load data into these arrays but must not modify the struct
 members (i.e. the pointers) themselves or else memory leaks will result.
 
-wcsini() maintains a record of memory it has allocated and this is used by
-wcsfree() which wcsini() uses to free any memory that it may have allocated
+wcsinit() maintains a record of memory it has allocated and this is used by
+wcsfree() which wcsinit() uses to free any memory that it may have allocated
 on a previous invokation.  Thus it is not necessary for the caller to invoke
-wcsfree() separately if wcsini() is invoked repeatedly on the same wcsprm
+wcsfree() separately if wcsinit() is invoked repeatedly on the same wcsprm
 struct.  Likewise, wcsset() deallocates memory that it may have allocated on
-a previous invokation.  The same comments apply to linini(), linfree(), and
-linset() and to tabini(), tabfree(), and tabset().
+a previous invokation.  The same comments apply to lininit(), linfree(), and
+linset(), to tabini(), tabfree(), and tabset(), and to disinit(), disfree()
+and disset().
 
-A memory leak will result if a wcsprm, linprm or tabprm struct goes out of
-scope before the memory has been @a free'd, either by the relevant routine,
-wcsfree(), linfree() or tabfree(), or otherwise.  Likewise, if one of these
-structs itself has been @a malloc'd and the allocated memory is not @a free'd
-when the memory for the struct is @a free'd.  A leak may also arise if the
-caller interferes with the array pointers in the "private" part of these
-structs.
+A memory leak will result if a wcsprm, linprm, tabprm, or disprm struct goes
+out of scope before the memory has been @a free'd, either by the relevant
+routine, wcsfree(), linfree(), tabfree(), or disfree() or otherwise.
+Likewise, if one of these structs itself has been @a malloc'd and the
+allocated memory is not @a free'd when the memory for the struct is @a free'd.
+A leak may also arise if the caller interferes with the array pointers in the
+"private" part of these structs.
 
-Beware of making a shallow copy of a wcsprm, linprm or tabprm struct by
-assignment; any changes made to allocated memory in one would be reflected in
-the other, and if the memory allocated for one was @a free'd the other would
-reference unallocated memory.  Use the relevant routine instead to make a deep
-copy: wcssub(), lincpy() or tabcpy().
+Beware of making a shallow copy of a wcsprm, linprm, tabprm, or disprm struct
+by assignment; any changes made to allocated memory in one would be reflected
+in the other, and if the memory allocated for one was @a free'd the other
+would reference unallocated memory.  Use the relevant routine instead to make
+a deep copy: wcssub(), lincpy(), tabcpy(), or discpy().
 */
 
 
@@ -510,7 +531,7 @@ Each of the @ref structs "structs" in @ref overview "WCSLIB" includes a
 pointer, called @a err, to a wcserr struct.  When an error occurs, a struct is
 allocated and error information stored in it.  The wcserr pointers and the
 @ref memory "memory" allocated for them are managed by the routines that
-manage the various structs such as wcsini() and wcsfree().
+manage the various structs such as wcsinit() and wcsfree().
 
 wcserr messaging is an opt-in system enabled via wcserr_enable(), as in the
 example above.  If enabled, when an error occurs it is the user's
@@ -543,9 +564,10 @@ WCSLIB has two different categories of vector API:
   vectors.
   @n
   The routines that implement these steps, wcsp2s(), wcss2p(), linp2x(),
-  linx2p(), tabx2s(), and tabs2x(), accept and return two-dimensional arrays,
-  i.e. a number of coordinate vectors.  Because WCSLIB permits these arrays to
-  contain unused elements, three parameters are needed to describe them:
+  linx2p(), tabx2s(), tabs2x(), disp2x() and disx2p() accept and return
+  two-dimensional arrays, i.e. a number of coordinate vectors.  Because WCSLIB
+  permits these arrays to contain unused elements, three parameters are needed
+  to describe them:
   - @a  naxis: the number of coordinate elements, as per the FITS @c NAXIS or
                @c WCSAXES keyvalues,
   - @a ncoord: the number of coordinate vectors,
@@ -555,7 +577,7 @@ WCSLIB has two different categories of vector API:
                ignored.  It may be set to 0.)
   .
   @a ncoord and @a nelem are specified as function arguments while @a naxis is
-  provided as a member of the wcsprm (or linprm) struct.
+  provided as a member of the wcsprm (or linprm or disprm) struct.
   @n
   For example, wcss2p() accepts an array of world coordinate vectors,
   <EM>world[ncoord][nelem]</EM>.  In the following example, @a naxis = 4,
@@ -704,27 +726,52 @@ may be set to 0.
 
 /** @page threads Thread-safety
 
-With the following exceptions WCSLIB 4.25.1 is thread-safe:
+Thanks to feedback and patches provided by Rodrigo Tobar Carrizo, as of
+release 5.18, WCSLIB is now completely thread-safe, with only a couple of
+minor provisos.
 
-- The C code generated by Flex is not re-entrant.  Flex does have the capacity
-  for producing re-entrant scanners but they have a different API.  This may
-  be handled by a compile-time option in future but in the meantime calls to
-  the header parsers should be serialized via a mutex.
+In particular, a number of new routines were introduced to preclude altering
+the global variables NPVMAX, NPSMAX, and NDPMAX, which determine how much
+memory to allocate for storing PVi_ma, PSi_ma, DPja, and DQia keyvalues:
+wcsinit(), lininit(), lindist(), and disinit().  Specifically, these new
+routines are now used by various WCSLIB routines, such as the header parsers,
+which previously temporarily altered the global variables, thus posing a
+thread hazard.
 
-- The low-level functions wcsnpv() and wcsnps() are not thread-safe but within
-  the library itself they are only used by the Flex scanners wcspih() and
-  wcsbth().  They would rarely need to be used by application programmers.
+In addition, the Flex scanners were made reentrant and consequently should
+now be thread-safe.  This was achieved by rewriting them as thin wrappers
+(with the same API) over scanners that were modified (with changed API), as
+required to use Flex's "reentrant" option.
 
-- Diagnostic functions that print the contents of the various structs, namely
-  celprt(), linprt(), prjprt(), spcprt(), tabprt(), wcsprt(), and wcsperr()
-  use printf() which is thread-safe by the POSIX requirement on @c stdio.
-  However, this is only at the function level.  Where multiple threads invoke
-  these functions simultaneously their output is likely to be interleaved.
+For complete thread-safety, please observe the following provisos:
+
+- The low-level routines wcsnpv(), wcsnps(), and disndp() are not thread-safe,
+  but they are not used within WCSLIB itself other than to get (not set) the
+  values of the global variables NPVMAX, NPSMAX, and NDPMAX.
+
+  wcsinit() and disinit() only do so to get default values if the relevant
+  parameters are not provided as function arguments.  Note that wcsini()
+  invokes wcsinit() with defaults which cause this behavior, as does disini()
+  invoking disinit().
+
+  The preset values of NPVMAX(=64), NPSMAX(=8), and NDPMAX(=256) are large
+  enough to cover most practical cases.  However, it may be desirable to
+  tailor them to avoid allocating memory that remains unused.  If so, and
+  thread-safety is an issue, then use wcsinit() and disinit() instead with the
+  relevant values specified.  This is what WCSLIB routines, such as the header
+  parsers wcspih() and wcsbth(), do to avoid wasting memory.
 
 - wcserr_enable() sets a static variable and so is not thread-safe.  However,
-  this facility is not intended to be used dynamically.  If detailed error
-  messages are required, enable wcserr when execution starts and don't change
-  it.
+  the error reporting facility is not intended to be used dynamically.  If
+  detailed error messages are required, enable wcserr when execution starts
+  and don't change it.
+
+Note that diagnostic routines that print the contents of the various structs,
+namely celprt(), disprt(), linprt(), prjprt(), spcprt(), tabprt(), wcsprt(),
+and wcsperr() use printf() which is thread-safe by the POSIX requirement on
+@c stdio.  However, this is only at the function level.  Where multiple
+threads invoke these routines simultaneously their output is likely to be
+interleaved.
 */
 
 
@@ -736,8 +783,8 @@ WCSLIB routine under test, reside in @c ./{C,Fortran}/test and each contains a
 brief description of its purpose.
 
 The high- and middle-level test programs are more instructive for applications
-programming, while the low-level tests are vital for verifying the integrity
-of the mathematical routines.
+programming, while the low-level tests are important for verifying the
+integrity of the mathematical routines.
 
 - High level:
   @n
@@ -754,12 +801,21 @@ of the mathematical routines.
   line, together with a program, @a tofits, that compiles these into a valid
   FITS file.
   @n@n
+  @a tbth1 tests wcsbth() by reading a test header and printing the resulting
+  wcsprm structs.  In the process it also tests wcsfix().
+  @n@n
   @a tfitshdr also uses @c wcs.keyrec to test the generic FITS header parsing
   routine.
   @n@n
   @a twcsfix sets up a wcsprm struct containing various non-standard
   constructs and then invokes wcsfix() to translate them all to standard
   usage.
+  @n@n
+  @a twcslint tests the syntax checker for FITS WCS keyrecords (wcsware -l) on
+  a specially constructed header riddled with invalid entries.
+  @n@n
+  @a tdis3 uses wcsware to test the handling of different types of distortion
+  functions encoded in a set of test FITS headers.
 
 - Middle level:
   @n
@@ -767,21 +823,25 @@ of the mathematical routines.
   projections.  @a twcsmix verifies wcsmix() on the @f$1^\circ@f$ grid of
   celestial longitude and latitude for a number of selected projections.  It
   plots a test grid for each projection and indicates the location of
-  successful and failed solutions.  @a twcssub tests the extraction of a
-  coordinate description for a subimage from a wcsprm struct by wcssub().
+  successful and failed solutions.  @a tdis2 and @a twcssub test the
+  extraction of a coordinate description for a subimage from a wcsprm struct
+  by wcssub().
   @n@n
   @a tunits tests wcsutrne(), wcsunitse() and wcsulexe(), the units
   specification translator, converter and parser, either interactively or
   using a list of units specifications contained in units_test.
+  @n@n
+  @a twcscompare tests particular aspects of the comparison routine,
+  wcscompare().
 
 - Low level:
   @n
-  @a tlin, @a tlog, @a tprj1, @a tsph, @a tspc, @a tspc, and ttab1 test
-  "closure" of the respective routines.  Closure tests apply the forward and
-  reverse transformations in sequence and compare the result with the original
-  value.  Ideally, the result should agree exactly, but because of floating
-  point rounding errors there is usually a small discrepancy so it is only
-  required to agree within a "closure tolerance".
+  @a tdis1, @a tlin, @a tlog, @a tprj1, @a tspc, @a tsph, @a tspx, and ttab1
+  test "closure" of the respective routines.  Closure tests apply the forward
+  and reverse transformations in sequence and compare the result with the
+  original value.  Ideally, the result should agree exactly, but because of
+  floating point rounding errors there is usually a small discrepancy so it is
+  only required to agree within a "closure tolerance".
   @n@n
   @a tprj1 tests for closure separately for longitude and latitude except at
   the poles where it only tests for closure in latitude.  Note that closure in
@@ -821,6 +881,9 @@ of the mathematical routines.
   addressed by @a tcel1, @a tcel2, @a tprj2, @a ttab2 and @a ttab3 which plot
   graticules for visual inspection of scaling, orientation, and other
   macroscopic characteristics of the projections.
+  @n@n
+  There are also a number of other special-purpose test programs that are not
+  automatically exercised by the test suite.
 */
 
 
@@ -840,8 +903,8 @@ To this end, routines have been provided to set and retrieve values of the
 various structs, for example @c WCSPUT and @c WCSGET for the wcsprm struct,
 and @c CELPUT and @c CELGET for the celprm struct.  These must be used in
 conjunction with wrappers on the routines provided to manage the structs in C,
-for example @c WCSINI, @c WCSSUB, @c WCSCOPY, @c WCSFREE, and @c WCSPRT which
-wrap wcsini(), wcssub(), wcscopy(), wcsfree(), and wcsprt().
+for example @c WCSINIT, @c WCSSUB, @c WCSCOPY, @c WCSFREE, and @c WCSPRT which
+wrap wcsinit(), wcssub(), wcscopy(), wcsfree(), and wcsprt().
 
 The various @c *PUT and @c *GET routines are based on codes defined in Fortran
 include files (*.inc), if your Fortran compiler does not support the
@@ -869,7 +932,7 @@ or two integer arguments of these routines specify 1-relative array indices
 
 The @c *PUT routines also reset the @a flag element to signal that the struct
 needs to be reinitialized.  Therefore, if you wanted to set wcsprm::flag
-itself to -1 prior to the first call to @c WCSINI, for example, then that
+itself to -1 prior to the first call to @c WCSINIT, for example, then that
 @c WCSPUT must be the last one before the call.
 
 The @c *GET routines retrieve whole arrays at a time and expect array
@@ -990,4 +1053,102 @@ fairly well established conventions.  Nevertheless, it's possible that you may
 need to modify the code if you use a combination of Fortran and C compilers
 with linkage conventions that differ from that of the GNU compilers, gcc and
 g77.
+*/
+
+/** @page versioning WCSLIB version numbers
+
+The full WCSLIB/PGSBOX version number is composed of three integers in fields
+separated by periods:
+
+ - <B>Major</B>: the first number changes only when the ABI changes, a rare
+   occurence (and the API never changes).  Typically, the ABI changes when the
+   contents of a struct change.  For example, the contents of the
+   <I>linprm</I> struct changed between 4.25.1 and 5.0.
+
+   In practical terms, this number becomes the major version number of the
+   WCSLIB sharable library, <B>libwcs.so.<major></B>.  To avoid possible
+   segmentation faults or bus errors that may arise from the altered ABI, the
+   dynamic (runtime) linker will not allow an application linked to a sharable
+   library with a particular major version number to run with that of a
+   different major version number.
+
+   Application code must be recompiled and relinked to use a newer version of
+   the WCSLIB sharable library with a new major version number.
+
+ - <B>Minor</B>: the second number changes when existing code is changed,
+   whether due to added functionality or bug fixes.  This becomes the minor
+   version number of the WCSLIB sharable library,
+   <B>libwcs.so.<major>.<minor></B>.
+
+   Because the ABI remains unchanged, older applications can use the new
+   sharable library without needing to be recompiled, thus obtaining the
+   benefit of bug fixes, speed enhancements, etc.
+
+   Application code written subsequently to use the added functionality would,
+   of course, need to be recompiled.
+
+ - <B>Patch</B>: the third number, which is often omitted, indicates a change
+   to the build procedures, documentation, or test suite.  It may also
+   indicate changes to the utility applications (<I>wcsware</I>,
+   <I>HPXcvt</I>, etc.), including the addition of new ones.
+
+   However, the library itself, including the definitions in the header files,
+   remains unaltered, so there is no point in recompiling applications.
+
+The following describes what happens (or should happen) when WCSLIB's
+installation procedures are used on a typical Linux system using the GNU gcc
+compiler and GNU linker.
+
+The sharable library should be installed as libwcs.so.<major>.<minor>, say
+libwcs.so.5.4 for concreteness, and a number of symbolic links created as
+follows:
+
+@verbatim
+  libwcs.so     -> libwcs.so.5
+  libwcs.so.5   -> libwcs.so.5.4
+  libwcs.so.5.4
+@endverbatim
+
+When an application is linked using '-lwcs', the linker finds libwcs.so and
+the symlinks lead it to libwcs.so.5.4.  However, that library's SONAME is
+actually 'libwcs.so.5', by virtue of linker options used when the sharable
+library was created, as can be seen by running
+
+@verbatim
+  readelf -d libwcs.so.5.4
+@endverbatim
+
+Thus, when an application that was compiled and linked to libwcs.so.5.4 begins
+execution, the dynamic linker, ld.so, will attempt to bind it to libwcs.so.5,
+as can be seen by running
+
+@verbatim
+  ldd <application>
+@endverbatim
+
+Later, when WCSLIB  5.5 is installed, the library symbolic links will become
+
+@verbatim
+  libwcs.so     -> libwcs.so.5
+  libwcs.so.5   -> libwcs.so.5.5
+  libwcs.so.5.4
+  libwcs.so.5.5
+@endverbatim
+
+Thus, even without being recompiled, existing applications will link
+automatically to libwcs.so.5.5 at runtime.  In fact, libwcs.so.5.4 would no
+longer be used and could be deleted.
+
+If WCSLIB 6.0 were to be installed at some later time, then the libwcs.so.6
+libraries would be used for new compilations.  However, the libwcs.so.5
+libraries must be left in place for existing executables that still require
+them:
+
+@verbatim
+  libwcs.so     -> libwcs.so.6
+  libwcs.so.6   -> libwcs.so.6.0
+  libwcs.so.6.0
+  libwcs.so.5   -> libwcs.so.5.5
+  libwcs.so.5.5
+@endverbatim
 */

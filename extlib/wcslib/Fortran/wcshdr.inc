@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,27 +22,30 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: wcshdr.inc,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: wcshdr.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  WCSBDX, WCSBTH, WCSIDX, WCSPIH, WCSTAB, WCSVCOPY,
-     :          WCSVFREE
-      INTEGER   WCSBDX, WCSBTH, WCSIDX, WCSPIH, WCSTAB, WCSVCOPY,
-     :          WCSVFREE
+      EXTERNAL  WCSPIH, WCSBTH, WCSTAB, WCSIDX, WCSBDX, WCSVFREE,
+     :          WCSVCOPY
+
+      INTEGER   WCSPIH, WCSBTH, WCSTAB, WCSIDX, WCSBDX, WCSVFREE,
+     :          WCSVCOPY
 
 *     Flag bits for the RELAX argument.
-      INTEGER   WCSHDR_all, WCSHDR_ALLIMG, WCSHDR_AUXIMG,
-     :          WCSHDR_BIMGARR, WCSHDR_CD00i00j, WCSHDR_CNAMn,
-     :          WCSHDR_CROTAia, WCSHDR_DOBSn, WCSHDR_EPOCHa,
-     :          WCSHDR_IMGHEAD, WCSHDR_LONGKEY, WCSHDR_none,
-     :          WCSHDR_PC00i00j, WCSHDR_PIXLIST, WCSHDR_PROJPn,
-     :          WCSHDR_RADECSYS, WCSHDR_reject, WCSHDR_VELREFa,
-     :          WCSHDR_VSOURCE
+      INTEGER   WCSHDR_none, WCSHDR_all, WCSHDR_reject, WCSHDR_strict
 
       PARAMETER (WCSHDR_none     = 0)
       PARAMETER (WCSHDR_all      = 2**20 - 1)
       PARAMETER (WCSHDR_reject   = 2**28)
+      PARAMETER (WCSHDR_strict   = 2**29)
+
+      INTEGER   WCSHDR_CROTAia,  WCSHDR_EPOCHa,   WCSHDR_VELREFa,
+     :          WCSHDR_CD00i00j, WCSHDR_PC00i00j, WCSHDR_PROJPn,
+     :          WCSHDR_CD0i_0ja, WCSHDR_PC0i_0ja, WCSHDR_PV0i_0ma,
+     :          WCSHDR_PS0i_0ma, WCSHDR_RADECSYS, WCSHDR_VSOURCE,
+     :          WCSHDR_DOBSn,    WCSHDR_LONGKEY,  WCSHDR_CNAMn,
+     :          WCSHDR_AUXIMG,   WCSHDR_ALLIMG
 
       PARAMETER (WCSHDR_CROTAia  = 2**0)
       PARAMETER (WCSHDR_EPOCHa   = 2**1)
@@ -50,28 +53,35 @@
       PARAMETER (WCSHDR_CD00i00j = 2**3)
       PARAMETER (WCSHDR_PC00i00j = 2**4)
       PARAMETER (WCSHDR_PROJPn   = 2**5)
-      PARAMETER (WCSHDR_RADECSYS = 2**6)
-      PARAMETER (WCSHDR_VSOURCE  = 2**7)
-      PARAMETER (WCSHDR_DOBSn    = 2**8)
-      PARAMETER (WCSHDR_LONGKEY  = 2**9)
-      PARAMETER (WCSHDR_CNAMn    = 2**10)
-      PARAMETER (WCSHDR_AUXIMG   = 2**11)
-      PARAMETER (WCSHDR_ALLIMG   = 2**12)
+      PARAMETER (WCSHDR_CD0i_0ja = 2**6)
+      PARAMETER (WCSHDR_PC0i_0ja = 2**7)
+      PARAMETER (WCSHDR_PV0i_0ma = 2**8)
+      PARAMETER (WCSHDR_PS0i_0ma = 2**9)
+      PARAMETER (WCSHDR_RADECSYS = 2**10)
+      PARAMETER (WCSHDR_VSOURCE  = 2**11)
+      PARAMETER (WCSHDR_DOBSn    = 2**12)
+      PARAMETER (WCSHDR_LONGKEY  = 2**13)
+      PARAMETER (WCSHDR_CNAMn    = 2**14)
+      PARAMETER (WCSHDR_AUXIMG   = 2**15)
+      PARAMETER (WCSHDR_ALLIMG   = 2**16)
 
-      PARAMETER (WCSHDR_IMGHEAD  = 2**16)
-      PARAMETER (WCSHDR_BIMGARR  = 2**17)
-      PARAMETER (WCSHDR_PIXLIST  = 2**18)
+      INTEGER   WCSHDR_IMGHEAD, WCSHDR_BIMGARR, WCSHDR_PIXLIST
+
+      PARAMETER (WCSHDR_IMGHEAD  = 2**21)
+      PARAMETER (WCSHDR_BIMGARR  = 2**22)
+      PARAMETER (WCSHDR_PIXLIST  = 2**23)
 
 *     Error codes and messages.
-      INTEGER   WCSHDRERR_BAD_TABULAR_PARAMS, WCSHDRERR_MEMORY,
-     :          WCSHDRERR_NULL_POINTER, WCSHDRERR_PARSER,
-     :          WCSHDRERR_SUCCESS
+      INTEGER   WCSHDRERR_SUCCESS, WCSHDRERR_NULL_POINTER,
+     :          WCSHDRERR_MEMORY,  WCSHDRERR_BAD_COLUMN,
+     :          WCSHDRERR_PARSER,  WCSHDRERR_BAD_TABULAR_PARAMS
 
       PARAMETER (WCSHDRERR_SUCCESS            = 0)
       PARAMETER (WCSHDRERR_NULL_POINTER       = 1)
       PARAMETER (WCSHDRERR_MEMORY             = 2)
-      PARAMETER (WCSHDRERR_BAD_TABULAR_PARAMS = 3)
+      PARAMETER (WCSHDRERR_BAD_COLUMN         = 3)
       PARAMETER (WCSHDRERR_PARSER             = 4)
+      PARAMETER (WCSHDRERR_BAD_TABULAR_PARAMS = 5)
 
-      CHARACTER WCSHDR_ERRMSG(0:3)*80
+      CHARACTER WCSHDR_ERRMSG(0:5)*80
       COMMON /WCSHDR_DATA/ WCSHDR_ERRMSG

@@ -1,7 +1,7 @@
 /*============================================================================
 
-  PGSBOX 4.25 - draw curvilinear coordinate axes for PGPLOT.
-  Copyright (C) 1997-2015, Mark Calabretta
+  PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
+  Copyright (C) 1997-2018, Mark Calabretta
 
   This file is part of PGSBOX.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: pgwcsl.c,v 4.25.1.2 2015/01/06 01:03:14 mcalabre Exp mcalabre $
+  $Id: pgwcsl.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <math.h>
@@ -53,6 +53,12 @@ int *ierr;
   static double wrld[9];
   struct wcsprm *wcsp;
   struct celprm *wcscel;
+
+  /* Avert nuisance compiler warnings about unused parameters. */
+  (void)nlc;
+  (void)nld;
+  (void)nlcprm;
+  (void)nldprm;
 
   *ierr = 0;
 
@@ -204,7 +210,7 @@ int *ierr;
 
   } else if (*opcode == 0) {
     /* Initialize. */
-    if (*nli < WCSLEN) {
+    if (*nli < (int)WCSLEN) {
       *ierr = 1;
       return;
     }

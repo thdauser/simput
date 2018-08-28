@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,7 +22,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: twcs.f,v 4.25.1.2 2015/01/06 01:02:37 mcalabre Exp mcalabre $
+* $Id: twcs.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
       PROGRAM TWCS
@@ -47,7 +47,7 @@
 
       INTEGER   CHECK_ERROR, ETEST, I, J, K, LAT, LATIDX, LNG, LNGIDX,
      :          NFAIL1, NFAIL2, SPCIDX, STAT(0:360), STATUS,
-     :          TEST_ERRORS
+     :          TEST_ERRORS, VERS(3)
       DOUBLE PRECISION FREQ, IMG(NELEM,0:360), LAT1, LNG1, PHI(0:360),
      :          PIXEL1(NELEM,0:360), PIXEL2(NELEM,0:360), R, RESID,
      :          RESMAX, THETA(0:360), TIME, WORLD1(NELEM,0:360),
@@ -111,8 +111,11 @@
       COMMON /ERRTST/ ETEST
       DATA ETEST /0/
 *-----------------------------------------------------------------------
-      WRITE (*, 10)
- 10   FORMAT ('Testing closure of WCSLIB world coordinate ',
+      WRITE (*, 10) WCSLIB_VERSION(VERS)
+ 10   FORMAT ('WCSLIB version number: ',A,/)
+
+      WRITE (*, 20)
+ 20   FORMAT ('Testing closure of WCSLIB world coordinate ',
      :        'transformation routines (twcs.f)',/,
      :        '-------------------------------------------',
      :        '--------------------------------')
@@ -122,8 +125,8 @@
       STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
       CALL PARSER (WCS)
 
-      WRITE (*, 20) TOL
- 20   FORMAT (/,'Reporting tolerance',1PG8.1,' pixel.')
+      WRITE (*, 30) TOL
+ 30   FORMAT (/,'Reporting tolerance',1PG8.1,' pixel.')
 
 
 *     Get indices.
@@ -134,7 +137,7 @@
 *     Initialize non-celestial world coordinates.
       TIME = 1D0
       FREQ = 1.42040595D9 - 180D0 * 62500D0
-      DO 30 K = 0, 360
+      DO 40 K = 0, 360
         WORLD1(1,K) = 0D0
         WORLD1(2,K) = 0D0
         WORLD1(3,K) = 0D0
@@ -145,63 +148,63 @@
 
         WORLD1(SPCIDX,K) = 2.99792458D8 / FREQ
         FREQ = FREQ + 62500D0
- 30   CONTINUE
+ 40   CONTINUE
 
       NFAIL1 = 0
       RESMAX = 0D0
-      DO 110 LAT = 90, -90, -1
+      DO 120 LAT = 90, -90, -1
         LAT1 = DBLE(LAT)
 
         K = 0
-        DO 40 LNG = -180, 180
+        DO 50 LNG = -180, 180
           LNG1 = DBLE(LNG)
 
           WORLD1(LNGIDX,K) = LNG1
           WORLD1(LATIDX,K) = LAT1
           K = K + 1
- 40     CONTINUE
+ 50     CONTINUE
 
         STATUS = WCSS2P (WCS, 361, NELEM, WORLD1, PHI, THETA, IMG,
      :                   PIXEL1, STAT)
         IF (STATUS.NE.0) THEN
-          WRITE (*, 50) STATUS, LAT1
- 50       FORMAT (3X,'WCSS2P(1) ERROR',I3,' (LAT1 =',F20.15, ')')
-          GO TO 110
+          WRITE (*, 60) STATUS, LAT1
+ 60       FORMAT (3X,'WCSS2P(1) ERROR',I3,' (LAT1 =',F20.15, ')')
+          GO TO 120
         END IF
 
         STATUS = WCSP2S (WCS, 361, NELEM, PIXEL1, IMG, PHI, THETA,
      :                   WORLD2, STAT)
         IF (STATUS.NE.0) THEN
-          WRITE (*, 60) STATUS, LAT1
- 60       FORMAT (3X,'WCSP2S ERROR',I3,' (LAT1 =',F20.15, ')')
-          GO TO 110
+          WRITE (*, 70) STATUS, LAT1
+ 70       FORMAT (3X,'WCSP2S ERROR',I3,' (LAT1 =',F20.15, ')')
+          GO TO 120
         END IF
 
         STATUS = WCSS2P (WCS, 361, NELEM, WORLD2, PHI, THETA, IMG,
      :                   PIXEL2, STAT)
         IF (STATUS.NE.0) THEN
-          WRITE (*, 70) STATUS, LAT1
- 70       FORMAT (3X,'WCSS2P(2) ERROR',I3,' (LAT1 =',F20.15, ')')
-          GO TO 110
+          WRITE (*, 80) STATUS, LAT1
+ 80       FORMAT (3X,'WCSS2P(2) ERROR',I3,' (LAT1 =',F20.15, ')')
+          GO TO 120
         END IF
 
-        DO 100 K = 0, 360
+        DO 110 K = 0, 360
           RESID = 0D0
-          DO 80 I = 1, NAXIS
+          DO 90 I = 1, NAXIS
             R = PIXEL2(I,K) - PIXEL1(I,K)
             RESID = RESID + R*R
- 80       CONTINUE
+ 90       CONTINUE
 
           RESID = SQRT(RESID)
           IF (RESID.GT.RESMAX) RESMAX = RESID
 
           IF (RESID.GT.TOL) THEN
             NFAIL1 = NFAIL1 + 1
-            WRITE (*, 90) (WORLD1(I,K), I=1,NAXIS),
-     :                    (PIXEL1(I,K), I=1,NAXIS),
-     :                    (WORLD2(I,K), I=1,NAXIS),
-     :                    (PIXEL2(I,K), I=1,NAXIS)
- 90         FORMAT (/,'Closure error:',/,
+            WRITE (*, 100) (WORLD1(I,K), I=1,NAXIS),
+     :                     (PIXEL1(I,K), I=1,NAXIS),
+     :                     (WORLD2(I,K), I=1,NAXIS),
+     :                     (PIXEL2(I,K), I=1,NAXIS)
+ 100        FORMAT (/,'Closure error:',/,
      :                'world1:',4F18.12,/,
      :                'pixel1:',4F18.12,/,
      :                'world2:',4F18.12,/,
@@ -209,17 +212,17 @@
           END IF
 
           LNG1 = LNG1 + 1D0
- 100    CONTINUE
- 110  CONTINUE
+ 110    CONTINUE
+ 120  CONTINUE
 
-      WRITE (*, 120) RESMAX
- 120  FORMAT ('WCSP2S/WCSS2P: Maximum closure residual =',1P,G8.1,
+      WRITE (*, 130) RESMAX
+ 130  FORMAT ('WCSP2S/WCSS2P: Maximum closure residual =',1P,G8.1,
      :        ' pixel.')
 
 
 *     Test WCSERR.
-      WRITE (*, 130)
- 130  FORMAT (//,'IGNORE messages marked with ''OK'', they test ',
+      WRITE (*, 140)
+ 140  FORMAT (//,'IGNORE messages marked with ''OK'', they test ',
      :           'WCSERR: ')
 
       STATUS = WCSERR_ENABLE(1)
@@ -234,19 +237,19 @@
 
       IF (NFAIL1.NE.0 .OR. NFAIL2.NE.0) THEN
         IF (NFAIL1.NE.0) THEN
-          WRITE (*, 140) NFAIL1
- 140      FORMAT (/,'FAIL:',I5,' closure residuals exceed reporting ',
+          WRITE (*, 150) NFAIL1
+ 150      FORMAT (/,'FAIL:',I5,' closure residuals exceed reporting ',
      :      'tolerance.')
         END IF
 
         IF (NFAIL2.NE.0) THEN
-          WRITE (*, 150) NFAIL2
- 150      FORMAT ('FAIL:',I5,' error messages differ from that ',
+          WRITE (*, 160) NFAIL2
+ 160      FORMAT ('FAIL:',I5,' error messages differ from that ',
      :      'expected.')
         END IF
       ELSE
-        WRITE (*, 160)
- 160    FORMAT (/,'PASS: All closure residuals are within reporting ',
+        WRITE (*, 170)
+ 170    FORMAT (/,'PASS: All closure residuals are within reporting ',
      :    'tolerance.',/,'PASS: All error messages reported as ',
      :    'expected.')
       END IF
@@ -319,7 +322,11 @@
 *-----------------------------------------------------------------------
       INTEGER FUNCTION TEST_ERRORS()
 *-----------------------------------------------------------------------
+      CHARACTER NULL*1
+      PARAMETER (NULL = CHAR(0))
+
       INTEGER   CHECK_ERROR, ETEST, NFAIL, STATUS
+      CHARACTER CTYPE*72
 
 *     On some systems, such as Sun Sparc, the struct MUST be aligned
 *     on a double precision boundary, done here using an equivalence.
@@ -344,18 +351,19 @@
       STATUS = WCSINI (2, WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_SUCCESS, ' ')
 
-*     Test 4.
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'CUBEFACE', 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'CUBEFACE', 2, 0)
+*     Test 4; CTYPE strings handled with CHARACTER*72 variable.
+      CTYPE = 'CUBEFACE'
+      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE, 1, 0)
+      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE, 2, 0)
       STATUS = WCSSET (WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_BAD_CTYPE,
      :          'Multiple CUBEFACE axes (in CTYPE1 and CTYPE2)')
 
-*     Test 5.
+*     Test 5; CTYPE strings handled C-style, i.e. with trailing '\0'.
       STATUS = WCSPUT (WCS, WCS_FLAG, 0, 0, 0)
       STATUS = WCSINI (2, WCS)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'RA---FOO', 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'DEC--BAR', 2, 0)
+      STATUS = WCSPUT (WCS, WCS_CTYPE, 'RA---FOO'//NULL, 1, 0)
+      STATUS = WCSPUT (WCS, WCS_CTYPE, 'DEC--BAR'//NULL, 2, 0)
       STATUS = WCSSET (WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_BAD_CTYPE,
      :          'Unrecognized projection code (FOO in CTYPE1)')
@@ -363,8 +371,8 @@
 *     Test 6.
       STATUS = WCSPUT (WCS, WCS_FLAG, 0, 0, 0)
       STATUS = WCSINI (2, WCS)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'RA---TAN', 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'FREQ-LOG', 2, 0)
+      STATUS = WCSPUT (WCS, WCS_CTYPE, 'RA---TAN'//NULL, 1, 0)
+      STATUS = WCSPUT (WCS, WCS_CTYPE, 'FREQ-LOG'//NULL, 2, 0)
       STATUS = WCSSET (WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_BAD_CTYPE,
      :          'Unmatched celestial axes')

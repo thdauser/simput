@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 4.25 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2015, Mark Calabretta
+* WCSLIB 5.19 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2018, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -22,7 +22,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: wcs_data.f,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+* $Id: wcs_data.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *=======================================================================
 
       BLOCK DATA WCS_BLOCK_DATA
@@ -36,10 +36,10 @@
      :  'Null wcsprm pointer passed',
      :  'Memory allocation failed',
      :  'Linear transformation matrix is singular',
-     :  'Inconsistent or unrecognized coordinate axis types',
+     :  'Inconsistent or unrecognized coordinate axis type',
      :  'Invalid parameter value',
-     :  'Invalid coordinate transformation parameters',
-     :  'Ill-conditioned coordinate transformation parameters',
+     :  'Unrecognized coordinate transformation parameter',
+     :  'Ill-conditioned coordinate transformation parameter',
      :  'One or more of the pixel coordinates were invalid',
      :  'One or more of the world coordinates were invalid',
      :  'Invalid world coordinate',

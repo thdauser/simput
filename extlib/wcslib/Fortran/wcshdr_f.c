@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,7 +22,7 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcshdr_f.c,v 4.25.1.2 2015/01/06 01:02:17 mcalabre Exp mcalabre $
+  $Id: wcshdr_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -118,24 +118,55 @@ int wcsvcopy_(const iptr wcspp, const int *i, int *wcs)
   wcsdst = (struct wcsprm *)wcs;
   *wcsdst = *wcssrc;
 
-  /* Don't take memory. */
-  wcsdst->m_flag   = 0;
-  wcsdst->m_naxis  = 0;
-  wcsdst->m_crpix  = 0x0;
-  wcsdst->m_pc     = 0x0;
-  wcsdst->m_cdelt  = 0x0;
-  wcsdst->m_cunit  = 0x0;
-  wcsdst->m_ctype  = 0x0;
-  wcsdst->m_crval  = 0x0;
-  wcsdst->m_pv     = 0x0;
-  wcsdst->m_ps     = 0x0;
-  wcsdst->m_cd     = 0x0;
-  wcsdst->m_crota  = 0x0;
-  wcsdst->m_cname  = 0x0;
-  wcsdst->m_crder  = 0x0;
-  wcsdst->m_csyer  = 0x0;
-  wcsdst->m_wtb    = 0x0;
-  wcsdst->m_tab    = 0x0;
+  /* Prevent wcsfree(wcsdst) freeing memory that is used by wcssrc.  On  */
+  /* the other hand, beware that wcsfree(wcssrc) will free the "given"   */
+  /* members of wcsdst for which memory was allocated by wcsini().       */
+
+  /* Don't take any error messages. */
+  wcsdst->err         = 0x0;
+  wcsdst->lin.err     = 0x0;
+  wcsdst->cel.err     = 0x0;
+  wcsdst->spc.err     = 0x0;
+  wcsdst->cel.prj.err = 0x0;
+
+  /* Don't take memory allocated by wcsini()... */
+  wcsdst->m_flag  = 0;
+  wcsdst->m_naxis = 0;
+  wcsdst->m_crpix = 0x0;
+  wcsdst->m_pc    = 0x0;
+  wcsdst->m_cdelt = 0x0;
+  wcsdst->m_crval = 0x0;
+  wcsdst->m_cunit = 0x0;
+  wcsdst->m_ctype = 0x0;
+  wcsdst->m_pv    = 0x0;
+  wcsdst->m_ps    = 0x0;
+  wcsdst->m_cd    = 0x0;
+  wcsdst->m_crota = 0x0;
+  wcsdst->m_colax = 0x0;
+  wcsdst->m_cname = 0x0;
+  wcsdst->m_crder = 0x0;
+  wcsdst->m_csyer = 0x0;
+  wcsdst->m_tab   = 0x0;
+  wcsdst->m_wtb   = 0x0;
+
+  /* ...or by wcsset(). */
+  wcsdst->types   = 0x0;
+  wcsdst->flag    = 0;
+
+  /* Don't take memory allocated by linini()... */
+  wcsdst->lin.m_flag   = 0;
+  wcsdst->lin.m_naxis  = 0x0;
+  wcsdst->lin.m_crpix  = 0x0;
+  wcsdst->lin.m_pc     = 0x0;
+  wcsdst->lin.m_cdelt  = 0x0;
+  wcsdst->lin.m_dispre = 0x0;
+  wcsdst->lin.m_disseq = 0x0;
+
+  /* ...or by linset(). */
+  wcsdst->lin.piximg   = 0x0;
+  wcsdst->lin.imgpix   = 0x0;
+  wcsdst->lin.tmpcrd   = 0x0;
+  wcsdst->lin.flag     = 0;
 
   return 0;
 }

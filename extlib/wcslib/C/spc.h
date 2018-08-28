@@ -1,7 +1,7 @@
 /*============================================================================
 
-  WCSLIB 4.25 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2015, Mark Calabretta
+  WCSLIB 5.19 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2018, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -22,37 +22,39 @@
 
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: spc.h,v 4.25.1.2 2015/01/06 01:01:06 mcalabre Exp mcalabre $
+  $Id: spc.h,v 5.19.1.1 2018/07/26 15:41:40 mcalabre Exp mcalabre $
 *=============================================================================
 *
-* WCSLIB 4.25 - C routines that implement the spectral coordinate systems
-* recognized by the FITS World Coordinate System (WCS) standard.  Refer to
-*
-*   "Representations of world coordinates in FITS",
-*   Greisen, E.W., & Calabretta, M.R. 2002, A&A, 395, 1061 (Paper I)
-*
-*   "Representations of spectral coordinates in FITS",
-*   Greisen, E.W., Calabretta, M.R., Valdes, F.G., & Allen, S.L.
-*   2006, A&A, 446, 747 (Paper III)
-*
-* Refer to the README file provided with WCSLIB for an overview of the
-* library.
+* WCSLIB 5.19 - C routines that implement the FITS World Coordinate System
+* (WCS) standard.  Refer to the README file provided with WCSLIB for an
+* overview of the library.
 *
 *
 * Summary of the spc routines
 * ---------------------------
-* These routines implement the part of the FITS WCS standard that deals with
-* spectral coordinates.  They define methods to be used for computing spectral
-* world coordinates from intermediate world coordinates (a linear
-* transformation of image pixel coordinates), and vice versa.  They are based
-* on the spcprm struct which contains all information needed for the
-* computations.  The struct contains some members that must be set by the
-* user, and others that are maintained by these routines, somewhat like a
-* C++ class but with no encapsulation.
+* Routines in this suite implement the part of the FITS World Coordinate
+* System (WCS) standard that deals with spectral coordinates, as described in
+*
+=   "Representations of world coordinates in FITS",
+=   Greisen, E.W., & Calabretta, M.R. 2002, A&A, 395, 1061 (WCS Paper I)
+=
+=   "Representations of spectral coordinates in FITS",
+=   Greisen, E.W., Calabretta, M.R., Valdes, F.G., & Allen, S.L.
+=   2006, A&A, 446, 747 (WCS Paper III)
+*
+* These routines define methods to be used for computing spectral world
+* coordinates from intermediate world coordinates (a linear transformation
+* of image pixel coordinates), and vice versa.  They are based on the spcprm
+* struct which contains all information needed for the computations.  The
+* struct contains some members that must be set by the user, and others that
+* are maintained by these routines, somewhat like a C++ class but with no
+* encapsulation.
 *
 * Routine spcini() is provided to initialize the spcprm struct with default
 * values, spcfree() reclaims any memory that may have been allocated to store
 * an error message, and spcprt() prints its contents.
+*
+* spcperr() prints the error message(s) (if any) stored in a spcprm struct.
 *
 * A setup routine, spcset(), computes intermediate values in the spcprm struct
 * from parameters in it that were supplied by the user.  The struct always
@@ -92,24 +94,24 @@
 *     expressed.  Each S-type is encoded as four characters and is
 *     linearly related to one of four basic types as follows:
 *
-*     F: frequency
-*       'FREQ':  frequency
-*       'AFRQ':  angular frequency
-*       'ENER':  photon energy
-*       'WAVN':  wave number
-*       'VRAD':  radio velocity
+*     F (Frequency):
+*       - 'FREQ':  frequency
+*       - 'AFRQ':  angular frequency
+*       - 'ENER':  photon energy
+*       - 'WAVN':  wave number
+*       - 'VRAD':  radio velocity
 *
-*     W: wavelength in vacuo
-*       'WAVE':  wavelength
-*       'VOPT':  optical velocity
-*       'ZOPT':  redshift
+*     W (Wavelength in vacuo):
+*       - 'WAVE':  wavelength
+*       - 'VOPT':  optical velocity
+*       - 'ZOPT':  redshift
 *
-*     A: wavelength in air
-*       'AWAV':  wavelength in air
+*     A (wavelength in Air):
+*       - 'AWAV':  wavelength in air
 *
-*     V: velocity
-*       'VELO':  relativistic velocity
-*       'BETA':  relativistic beta factor
+*     V (Velocity):
+*       - 'VELO':  relativistic velocity
+*       - 'BETA':  relativistic beta factor
 *
 *     The S-type forms the first four characters of the CTYPEia keyvalue,
 *     and CRVALia and CDELTia are expressed as S-type quantities so that
@@ -153,6 +155,11 @@
 * desired S-type is 'ZOPT' (redshift), the P-type is necessarily 'W'
 * (wavelength), and the X-type is 'F' (frequency) by the nature of the
 * instrument.
+*
+* Air-to-vacuum wavelength conversion:
+* ------------------------------------
+* Please refer to the prologue of spx.h for important comments relating to the
+* air-to-vacuum wavelength conversion.
 *
 * Argument checking:
 * ------------------
@@ -209,6 +216,25 @@
 * Given:
 *   spc       const struct spcprm*
 *                       Spectral transformation parameters.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*                         1: Null spcprm pointer passed.
+*
+*
+* spcperr() - Print error messages from a spcprm struct
+* -----------------------------------------------------
+* spcperr() prints the error message(s) (if any) stored in a spcprm struct.
+* If there are no errors then nothing is printed.  It uses wcserr_prt(), q.v.
+*
+* Given:
+*   spc       const struct spcprm*
+*                       Spectral transformation parameters.
+*
+*   prefix    const char *
+*                       If non-NULL, each output line will be prefixed with
+*                       this string.
 *
 * Function return value:
 *             int       Status return value:
@@ -627,6 +653,9 @@
 *
 *                       returns ctype = 'VOPT' with specsys set to 'LSRK'.
 *
+*                       If omitted from the header, the default value of
+*                       VELREF is 0.
+*
 * Returned:
 *   ctype     char[9]   Translated CTYPEia keyvalue, or a copy of ctypeA if no
 *                       translation was performed (in which case any trailing
@@ -719,7 +748,7 @@
 *     (An unused variable inserted for alignment purposes only.)
 *
 *   struct wcserr *err
-*     (Returned) If enabled, when an error status is returned this structure
+*     (Returned) If enabled, when an error status is returned, this struct
 *     contains detailed information about the error, see wcserr_enable().
 *
 *   void *padding2
@@ -751,7 +780,6 @@
 #define WCSLIB_SPC
 
 #include "spx.h"
-#include "wcserr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -831,6 +859,8 @@ int spcfree(struct spcprm *spc);
 
 int spcprt(const struct spcprm *spc);
 
+int spcperr(const struct spcprm *spc, const char *prefix);
+
 int spcset(struct spcprm *spc);
 
 int spcx2s(struct spcprm *spc, int nx, int sx, int sspec,
@@ -869,10 +899,10 @@ int spctyp(const char ctype[9], char stype[], char scode[], char sname[],
            char units[], char *ptype, char *xtype, int *restreq);
 int spcspx(const char ctypeS[9], double crvalS, double restfrq,
            double restwav, char *ptype, char *xtype, int *restreq,
-	   double *crvalX, double *dXdS);
+           double *crvalX, double *dXdS);
 int spcxps(const char ctypeS[9], double crvalX, double restfrq,
            double restwav, char *ptype, char *xtype, int *restreq,
-	   double *crvalS, double *dSdX);
+           double *crvalS, double *dSdX);
 int spctrn(const char ctypeS1[9], double crvalS1, double cdeltS1,
            double restfrq, double restwav, char ctypeS2[9], double *crvalS2,
            double *cdeltS2);
