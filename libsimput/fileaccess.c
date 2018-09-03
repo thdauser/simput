@@ -4503,16 +4503,19 @@ char *scanSpecFileName(char *filename, char **basename, char **extname, int *ext
      }
      retval=strndup(expr2,strlen(expr2)-1);
   } else {
-     // expr3 points at [. So character before that must be ]
-     if (*(expr3-1)!=']') {
-	SIMPUT_ERROR("Malformed FITS selection string");
-	*status=EXIT_FAILURE;
-	return(NULL);
-     }
-     retval=strndup(expr2,(size_t) (expr3-expr2-2));
+	  // expr3 points at [. So character before that must be ]
+	  if (*(expr3-1)!=']') {
+		  SIMPUT_ERROR("Malformed FITS selection string");
+		  *status=EXIT_FAILURE;
+		  return(NULL);
+	  }
+	  retval=strndup(expr3,(size_t) (expr3-1));
   }
 
   CHECK_NULL_RET(retval,*status,"scanSpecFileName: Error allocating retval",NULL);
+
+  headas_chat(5, "Extracted string: %s\n", retval);
+
   return retval;
 }
 
@@ -4600,7 +4603,7 @@ long getSpecRow(char *expr, long ind)
 	char **ii;
 	headas_chat(5, "name\n");
 	name = pos + strlen("NAME==") + 1;
-	name[strlen(name)-1] = '\0';
+	name[strlen(name)-2] = '\0';  // -2 for deleting the characters " '] "
 	headas_chat(5, "Name to search for: \"%s\"\n", name);
 	
 	NamePtr = SpecCache->namecol[ind]->name;
