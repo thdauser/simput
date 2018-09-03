@@ -5,7 +5,7 @@ AM_CFLAGS+=-I@top_srcdir@/extlib/heautils
 AM_CFLAGS+=-I@top_srcdir@/extlib/heasp
 AM_CFLAGS+=-I@top_srcdir@/extlib/cfitsio
 AM_CFLAGS+=-I@top_srcdir@/extlib/wcslib/C
-AM_CFLAGS+=-Wall -Werror
+AM_CFLAGS+=-Wall
 
 ############ BINARIES #################
 

@@ -7,7 +7,7 @@ AC_INIT([simput],[2.3.2],[thomas.dauser@sternwarte.uni-erlangen.de])
 
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux]) 
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign -Wall])
 AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
 
 # Check for programs:
