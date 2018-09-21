@@ -3138,7 +3138,7 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
 
     // Read the image from the file.
     int anynul;
-    double null_value=0.;
+    double null_value=1e-308;   // lowest possible value
     long fpixel[2]={1, 1};   // Lower left corner.
     //              |--|--> FITS coordinates start at (1,1).
     long lpixel[2]={img->naxis1, img->naxis2}; // Upper right corner.
@@ -3157,11 +3157,11 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     // i.e., sum up the pixels.
     double sum=0.;
     for(ii=0; ii<img->naxis1; ii++) {
-      long jj;
-      for(jj=0; jj<img->naxis2; jj++) {
-	sum+=image1d[ii+ img->naxis1*jj];
-	img->dist[ii][jj]=sum;
-      }
+    	long jj;
+    	for(jj=0; jj<img->naxis2; jj++) {
+    		sum+=image1d[ii+ img->naxis1*jj];
+    		img->dist[ii][jj]=sum;
+    	}
     }
 
     // Store the file reference to the image for later comparisons.
