@@ -4599,30 +4599,6 @@ long getSpecRow(char *expr, long ind)
     headas_chat(5,"Row is %ld\n", row);
     return row;
   } else {
-<<<<<<< HEAD
-     if ( (pos = strstr(expr, "NAME==")) != NULL ) {
-	char **ii;
-	headas_chat(5, "name\n");
-	name = pos + strlen("NAME==") + 1;
-	name[strlen(name)-1] = '\0';
-	headas_chat(5, "Name to search for: \"%s\"\n", name);
-	
-	NamePtr = SpecCache->namecol[ind]->name;
-	ii = (char **) bsearch((const void *) &name,
-			       (const void *) SpecCache->namecol[ind]->name,
-			       (size_t) SpecCache->namecol[ind]->n,
-			       sizeof(char *),
-			       myStrCmp);
-	NamePtr = NULL;
-
-	row = SpecCache->namecol[ind]->row[ii - SpecCache->namecol[ind]->name];
-	headas_chat(5, "Position: %ld\n", row);
-	return row+1;
-     } else {
-	headas_chat(5, "nothing, returning -1\n");
-	return -1;
-     }
-=======
 	  // let's see if a string like "NAME=='spec1'" is given
 	  pos = strstr(expr, "NAME==");
 	  // try also, if lowercase "name" is given if we did not match yet
@@ -4652,7 +4628,6 @@ long getSpecRow(char *expr, long ind)
 		  headas_chat(5, "nothing, returning -1\n");
 		  return -1;
 	  }
->>>>>>> spec_cache
   }
 
   return -1;
