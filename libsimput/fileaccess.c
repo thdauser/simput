@@ -3138,7 +3138,7 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
 
     // Read the image from the file.
     int anynul;
-    double null_value=0.;
+    double null_value=1e-308;   // lowest possible value
     long fpixel[2]={1, 1};   // Lower left corner.
     //              |--|--> FITS coordinates start at (1,1).
     long lpixel[2]={img->naxis1, img->naxis2}; // Upper right corner.
@@ -3157,11 +3157,11 @@ SimputImg* loadSimputImg(const char* const filename, int* const status)
     // i.e., sum up the pixels.
     double sum=0.;
     for(ii=0; ii<img->naxis1; ii++) {
-      long jj;
-      for(jj=0; jj<img->naxis2; jj++) {
-	sum+=image1d[ii+ img->naxis1*jj];
-	img->dist[ii][jj]=sum;
-      }
+    	long jj;
+    	for(jj=0; jj<img->naxis2; jj++) {
+    		sum+=image1d[ii+ img->naxis1*jj];
+    		img->dist[ii][jj]=sum;
+    	}
     }
 
     // Store the file reference to the image for later comparisons.
@@ -4503,16 +4503,19 @@ char *scanSpecFileName(char *filename, char **basename, char **extname, int *ext
      }
      retval=strndup(expr2,strlen(expr2)-1);
   } else {
-     // expr3 points at [. So character before that must be ]
-     if (*(expr3-1)!=']') {
-	SIMPUT_ERROR("Malformed FITS selection string");
-	*status=EXIT_FAILURE;
-	return(NULL);
-     }
-     retval=strndup(expr2,(size_t) (expr3-expr2-2));
+	  // expr3 points at [. So character before that must be ]
+	  if (*(expr3-1)!=']') {
+		  SIMPUT_ERROR("Malformed FITS selection string");
+		  *status=EXIT_FAILURE;
+		  return(NULL);
+	  }
+	  retval=strndup(expr3,(size_t) (expr3-1));
   }
 
   CHECK_NULL_RET(retval,*status,"scanSpecFileName: Error allocating retval",NULL);
+
+  headas_chat(5, "Extracted string: %s\n", retval);
+
   return retval;
 }
 
@@ -4596,6 +4599,7 @@ long getSpecRow(char *expr, long ind)
     headas_chat(5,"Row is %ld\n", row);
     return row;
   } else {
+<<<<<<< HEAD
      if ( (pos = strstr(expr, "NAME==")) != NULL ) {
 	char **ii;
 	headas_chat(5, "name\n");
@@ -4618,6 +4622,37 @@ long getSpecRow(char *expr, long ind)
 	headas_chat(5, "nothing, returning -1\n");
 	return -1;
      }
+=======
+	  // let's see if a string like "NAME=='spec1'" is given
+	  pos = strstr(expr, "NAME==");
+	  // try also, if lowercase "name" is given if we did not match yet
+	  if (pos == NULL){
+		  pos = strstr(expr, "name==");
+	  }
+
+	  if ( pos != NULL ) {
+		  char **ii;
+		  headas_chat(5, "name\n");
+		  name = pos + strlen("NAME==") + 1;
+		  name[strlen(name)-2] = '\0';  // -2 for deleting the characters " '] "
+		  headas_chat(5, "Name to search for: \"%s\"\n", name);
+
+		  NamePtr = SpecCache->namecol[ind]->name;
+		  ii = (char **) bsearch((const void *) &name,
+				  (const void *) SpecCache->namecol[ind]->name,
+				  (size_t) SpecCache->namecol[ind]->n,
+				  sizeof(char *),
+				  myStrCmp);
+		  NamePtr = NULL;
+
+		  row = SpecCache->namecol[ind]->row[ii - SpecCache->namecol[ind]->name];
+		  headas_chat(5, "Position: %ld\n", row);
+		  return row+1;
+	  } else {
+		  headas_chat(5, "nothing, returning -1\n");
+		  return -1;
+	  }
+>>>>>>> spec_cache
   }
 
   return -1;
