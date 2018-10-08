@@ -124,7 +124,8 @@ AC_CONFIG_FILES([Makefile
 		 tools/simputrotate/Makefile
 		 tools/simputsrc/Makefile
 		 tools/simputmulticell/Makefile
-		 tools/simputverify/Makefile])
+		 tools/simputverify/Makefile
+		 tools/simputversion/Makefile])
 
 
 AC_CONFIG_SUBDIRS([extlib/cfitsio])
