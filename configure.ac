@@ -3,10 +3,10 @@
 
 
 AC_PREREQ(2.59)
-AC_INIT([simput],[2.3.2],[thomas.dauser@sternwarte.uni-erlangen.de])
+AC_INIT([simput],[2.3.3],[thomas.dauser@sternwarte.uni-erlangen.de])
 
 # Store auxiliary files in the sub-directory 'build-aux'.
-AC_CONFIG_AUX_DIR([build-aux]) 
+AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE([foreign -Wall])
 AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
 
@@ -15,7 +15,7 @@ AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.
 AC_PROG_FC # Search for a Fortran compiler.
 AM_PROG_AR
 
-LT_PREREQ(2.4) 
+LT_PREREQ(2.4)
 
 AC_PROG_LIBTOOL
 
@@ -30,20 +30,20 @@ CFLAGS="$CFLAGS -g -std=c99 -D_GNU_SOURCE -W -Wall -fPIC -Dg77Fortran "
 # FCFLAGS="-O0"
 
 # Conditional compilation of Fortran code.
-AC_ARG_ENABLE([fortran], 
-              [AS_HELP_STRING([--enable-fortran], 
+AC_ARG_ENABLE([fortran],
+              [AS_HELP_STRING([--enable-fortran],
 	                      [enable compilation of Fortran code])],
 	          [fortran=true], [fortran=false])
 AM_CONDITIONAL([FORTRAN], [test x$fortran = xtrue])
 
 # Conditional compilation of program 'galabs' (requires HEAdas).
-AC_ARG_ENABLE([galabs], 
-              [AS_HELP_STRING([--enable-galabs], 
+AC_ARG_ENABLE([galabs],
+              [AS_HELP_STRING([--enable-galabs],
 	                      [enable compilation of binary 'galabs'])],
 	          [galabs=true], [galabs=false])
 AM_CONDITIONAL([GALABS], [test x$galabs = xtrue])
 
-# make ar better behaved 
+# make ar better behaved
 AC_SUBST([ARFLAGS],[rvU])
 
 # Check for libraries.
@@ -125,7 +125,6 @@ AC_CONFIG_FILES([Makefile
 
 AC_CONFIG_SUBDIRS([extlib/cfitsio])
 AC_CONFIG_SUBDIRS([extlib/wcslib])
-AC_CONFIG_SUBDIRS([extlib/fftw])		
+AC_CONFIG_SUBDIRS([extlib/fftw])
 
 AC_OUTPUT
-
