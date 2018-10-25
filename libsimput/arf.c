@@ -95,6 +95,15 @@ struct ARF* loadARF(char* filename, int* const status)
   headas_chat(5, "ARF loaded with %ld energy bins\n",
 	      arf->NumberEnergyBins);
 
+  int ii;
+  for (ii=0; ii<arf->NumberEnergyBins; ii++){
+	  if(! (arf->EffArea[ii] >=0)){
+		  headas_chat(5, " *** Warning: found value %e in ARF for bin %i, setting it to 0.0\n",
+				  arf->EffArea,ii);
+		  arf->EffArea[ii] = 0.0;
+	  }
+  }
+
   return(arf);
 }
 
