@@ -1000,7 +1000,7 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 
       if ( spec == NULL || *status != EXIT_SUCCESS )
       {
-	headas_chat(5, "*** Warning in loadSimputMIdpSpec: Error using the spectrum cache, falling back to default! ***\n");
+	headas_chat(5, "*** Warning in loadSimputMIdpSpec: Not possible to use spectrum cache! ***\n");
 	*status = EXIT_SUCCESS;
 	break;
       }
