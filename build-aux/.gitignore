@@ -1,0 +1,7 @@
+ar-lib
+compile
+config*
+depcomp
+install-sh
+ltmain.sh
+missing

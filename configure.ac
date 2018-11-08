@@ -1,14 +1,18 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-
 AC_PREREQ(2.59)
-AC_INIT([simput],[2.3.3],[thomas.dauser@sternwarte.uni-erlangen.de])
+AC_INIT([simput], [m4_esyscmd([build-aux/git-version-gen .tarball-version])], [sixte-support@lists.fau.de])
 
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR(build-aux/m4) 
+
 AM_INIT_AUTOMAKE([foreign -Wall])
 AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
+
+AC_REQUIRE_AUX_FILE([git-version-gen])
+
 
 # Check for programs:
 AC_PROG_CC # Search for a C compiler and store it in the Variable 'CC'.

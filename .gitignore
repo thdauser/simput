@@ -9,7 +9,6 @@ simput*.tar.gz
 *.mod
 aclocal.m4
 autom4te.cache
-build-aux
 simputconfig.h
 simputconfig.h.in
 config.log
@@ -20,11 +19,6 @@ config.h
 config.h.in
 libtool
 stamp-h1
-depcomp
-install-sh
-ltmain.sh
-missing
-ar-lib
 configure
 Makefile
 Makefile.in
