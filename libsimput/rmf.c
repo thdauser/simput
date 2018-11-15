@@ -103,8 +103,8 @@ struct RMF* loadRMF(char* const filename, int* const status)
          sumresp += rmf->Matrix[j+rmf->FirstElement[igrp]];
        }
     }
-   if (sumresp>1.000001) {
-      SIMPUT_ERROR("RMF contains rows with a sum > 1.0 (probably contains ARF)");
+   if (sumresp>1.1) {
+      SIMPUT_ERROR("RMF contains rows with a sum > 1.1 (probably contains ARF)");
       *status=EXIT_FAILURE;
       return(rmf);
     }
