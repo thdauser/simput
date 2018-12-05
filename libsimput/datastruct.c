@@ -1142,6 +1142,10 @@ SpecNameCol_t *newSpecNameCol(long n, int namelen, int* const status)
  */
 void destroySpecNameCol(SpecNameCol_t *cols)
 {
+  if ( cols == NULL )
+  {
+    return ;
+  }
   for (long ii=0; ii<cols->n; ii++)
   {
     free(cols->name[ii]);
