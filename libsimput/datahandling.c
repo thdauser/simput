@@ -1799,7 +1799,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   CHECK_STATUS_VOID(*status);
 
   // We declare a light curve for future possible use:
-  SimputLC* lc;
+  SimputLC* lc=NULL;
   if (EXTTYPE_LC==timetype) {
     // Get the respective light curve.                                                                                               
     lc=getSimputLC(cat, src, timeref, currtime, mjdref, status);
@@ -1909,7 +1909,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
     // order to perform the interpolation. We first suppose that
     // all spectra are equally binned:
 
-    if (EXTTYPE_MIDPSPEC==spectype) {
+    if (EXTTYPE_MIDPSPEC==spectype && lc!=NULL) {
       //We first determine the second spectrum name:
       char specref_next[SIMPUT_MAXSTR];
       getSimputSrcSpecRefNext(cat, src, currtime, mjdref, specref_next, status);
@@ -1929,8 +1929,19 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
            CHECK_STATUS_VOID(*status);
       assert(bin_next_spec < lc->nentries);
 
-      double time_prev_spec=lc->phase[bin_prev_spec]*lc->period;
-      double time_next_spec=lc->phase[bin_next_spec]*lc->period;
+      double time_prev_spec = -1;
+      double time_next_spec = -1;
+
+      if (lc->time != NULL){
+    	  time_prev_spec=lc->time[bin_prev_spec];
+    	  time_next_spec=lc->time[bin_next_spec];
+      } else if (lc->phase != NULL){
+    	  time_prev_spec=lc->phase[bin_prev_spec]*lc->period;
+    	  time_next_spec=lc->phase[bin_next_spec]*lc->period;
+      } else {
+    	  SIMPUT_ERROR(" failure to load spectrum for light curve: no phase or light curve information given\n");
+      }
+
      
       // We declare and compute the interpolation factors:
       double af=(time_next_spec-currtime)/(time_next_spec-time_prev_spec);
