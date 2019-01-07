@@ -30,3 +30,7 @@ To continue type:
 
 If everything worked properly you can now use the software.
 
+NOTE:
+If you encounter problems during the installation with pgplot in the wcslib,
+try adding the option "--without-pgplot" in the "./configure" step.
+
