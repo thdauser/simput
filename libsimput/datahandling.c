@@ -66,7 +66,7 @@ void setSimputRndGen(double(*rndgen)(int* const))
 
 /** Determine a random number between 0 and 1 with the specified
     random number generator. */
-static inline double getRndNum(int* const status)
+double getRndNum(int* const status)
 {
   // Check if a random number generator has been set.
   if (NULL==static_rndgen) {

@@ -277,5 +277,9 @@ void freeSimputImgBuffer(struct SimputImgBuffer** sb);
 struct SimputPhListBuffer* newSimputPhListBuffer(int* const status);
 void freeSimputPhListBuffer(struct SimputPhListBuffer** pb, int* const status);
 
+/** Determine a random number between 0 and 1 with the specified
+    random number generator. */
+double getRndNum(int* const status);
+
 
 #endif /* COMMON_H */
