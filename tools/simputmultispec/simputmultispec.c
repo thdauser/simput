@@ -884,24 +884,32 @@ int simputmultispec_main() {
 
 	param_node *root = NULL;
 
-    // loop over Pixels
+	// loop over Pixels
 	int ii, jj;
 	for (ii = 0; ii < ctsImg->naxis1 ; ii++){
-    	for (jj = 0; jj <  ctsImg->naxis2 ; jj++){
+		for (jj = 0; jj <  ctsImg->naxis2 ; jj++){
+			int outside=0;
+			int kk;
 
-    		// get the IDs of the closest grid point
-    		// matching the given values in the parameter images
-    		int id_array[num_param];
-    		get_par_id(id_array, ctsImg, parImgs, ipar, num_param, ii, jj, &status);
+			// get the IDs of the closest grid point
+			// matching the given values in the parameter images
+			int id_array[num_param];
+			get_par_id(id_array, ctsImg, parImgs, ipar, num_param, ii, jj, &status);
 
-    		param_node *tmp_ptr = get_pointer_to_leave(id_array, par, &root, &status);
-    		add_value_to_param_img(tmp_ptr, ctsImg, ii, jj, &status);
+			for(kk=0; kk<num_param; ++kk) {
+				outside |= (id_array[kk]<0);
+			}
 
-    	    CHECK_STATUS_BREAK(status);
-    	}
-	    CHECK_STATUS_BREAK(status);
-    } // END PIXEL LOOP
-    CHECK_STATUS_BREAK(status);
+			if(!outside) {
+				param_node *tmp_ptr = get_pointer_to_leave(id_array, par, &root, &status);
+				add_value_to_param_img(tmp_ptr, ctsImg, ii, jj, &status);
+			}
+
+			CHECK_STATUS_BREAK(status);
+		}
+		CHECK_STATUS_BREAK(status);
+	} // END PIXEL LOOP
+	CHECK_STATUS_BREAK(status);
 
     // ---- now gather the images in a linked list ---- //
     img_list *li = create_img_list(root,par,num_param,&status);
