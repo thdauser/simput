@@ -1,5 +1,8 @@
-version [2.4.3]
+version [2.4.4]
   - updates the Mac dependency solver
+
+version [2.4.3]
+  - updates install.txt with information on pgplot
 
 version [2.4.2]
   - fixes bug for time variable light curve
