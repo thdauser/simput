@@ -1,3 +1,5 @@
+version [2.4.3]
+  - updates the Mac dependency solver
 
 version [2.4.2]
   - fixes bug for time variable light curve
