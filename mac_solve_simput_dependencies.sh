@@ -11,7 +11,7 @@ for tool in bin/simputfile bin/simputimg bin/simputlc bin/simputmerge bin/simput
     bin/simputmultispec bin/simputpsd bin/simputrotate bin/simputspec bin/simputsrc bin/simputverify \
     lib/libsimput.dylib lib/libhdsp.dylib lib/libhdutils.dylib lib/libape.dylib \
     lib/libhdinit.dylib lib/libhdio.dylib lib/liblabnh.dylib lib/libposstring.dylib \
-    lib/libatFunctions.dylib lib/libCCfits.0.dylib
+    lib/libatFunctions.dylib
 do
     for lib in libcfitsio.2.dylib libwcs.5.19.1.dylib libwcs.4.25.1.dylib 
     do 
