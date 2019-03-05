@@ -55,6 +55,12 @@
 // Maximal number of spectrum extensions to cache
 #define SPEC_MAX_CACHE (10)
 
+// Environment variable to disable warning message on purpose
+#define SIMPUT_NOWARN_ENVVAR "SIMPUTNOWARN"
+// Value to set this variable to in order to disable warnings
+#define SIMPUT_NOWARN_VALUE "YES"
+
+
 
 /** Chatter level:
 
@@ -85,7 +91,16 @@
 
 /** Chatter routine for warnings printed to STDOUT. */
 #define SIMPUT_WARNING(msg) \
-  if(1<=DCHATTY) {printf("\n*** Warning in %s: %s! ***\n", __func__, msg);}
+  if(1<=DCHATTY) { \
+    char *dont = getenv(SIMPUT_NOWARN_ENVVAR); \
+    if ( dont != NULL ) { \
+      if ( strcmp(dont, SIMPUT_NOWARN_VALUE) != 0 ) { \
+        printf("\n*** Warning in %s: %s! ***\n", __func__, msg); \
+      } \
+    } else { \
+      printf("\n*** Warning in %s: %s! ***\n", __func__, msg); \
+    } \
+  }
 
 /** Chatter routine for informational output to STDOUT. */
 #define SIMPUT_INFO(msg) \
