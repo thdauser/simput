@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef SIMPUT_H
@@ -72,7 +74,7 @@ typedef struct {
 
   /** Right ascension of source position [rad]. */
   double ra;
-  
+
   /** Declination of source position [rad]. */
   double dec;
 
@@ -150,7 +152,7 @@ typedef struct {
 
   /** Buffer for pre-loaded mission-independent spectra. */
   void* midpspecbuff;
-  
+
   /** Buffer for pre-loaded photon lists. */
   void* phlistbuff;
 
@@ -177,7 +179,7 @@ typedef struct {
 
   /** Number of entries in the spectrum. */
   long nentries;
-  
+
   /** Energy values [keV]. */
   float* energy;
 
@@ -427,7 +429,7 @@ typedef struct {
   // unit conversion factor for energy
   float *fenergy;
   // unit conversion factor for flux
-  float *fflux; 
+  float *fflux;
   // bins in the spectrum
   long *nbins;
   // fits filepointer to the openend fitsfiles
@@ -458,7 +460,7 @@ void freeSimputCtlg(SimputCtlg** const ctlg, int* const status);
     values are set to 0, variable length string columns will be
     used. Otherwise fixed length string columns are used. */
 SimputCtlg* openSimputCtlg(const char* const filename,
-			   const int mode, 
+			   const int mode,
 			   const int maxstrlen_src_name,
 			   const int maxstrlen_spectrum,
 			   const int maxstrlen_image,
@@ -477,7 +479,7 @@ SimputSrc* newSimputSrc(int* const status);
 
 /** Constructor for the SimputSrc data structure. Allocates memory and
     initializes elements with the given values. */
-SimputSrc* newSimputSrcV(const long src_id, 
+SimputSrc* newSimputSrcV(const long src_id,
 			 const char* const src_name,
 			 /** ([rad]). */
 			 const double ra,
@@ -624,14 +626,14 @@ SimputMIdpSpec* getSimputSrcMIdpSpec(SimputCtlg* const cat,
     [photons/cm**2/keV]. */
 void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  const long row,
-			  float* const energy, 
+			  float* const energy,
 			  float* const pflux,
 			  int* const status);
 
 /** Determine the flux in the specified energy band in
     [erg/cm**2]. */
 float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
-				const float emin, 
+				const float emin,
 				const float emax);
 
 /** Set the instrument ARF containing the effective area. This
@@ -646,10 +648,10 @@ void setSimputARF(SimputCtlg* const cat, struct ARF* const arf);
     the mission-independent format.
     Note that all generated photon energies will be randomized within each
     ARF bin. Thus, even for a constant ARF (when the calling function takes
-    care of the phontons lost at specific energies), you need to define 
+    care of the phontons lost at specific energies), you need to define
     narrow energy bins. */
 void setSimputARFfromarrays(SimputCtlg* const cat,
-			    long NumberEnergyBins, 
+			    long NumberEnergyBins,
 			    float low_energy[],
 			    float high_energy[],
 			    float eff_area[],
@@ -660,8 +662,8 @@ void setSimputARFfromarrays(SimputCtlg* const cat,
     area. This information is required to obtain a mission-specific
     spectrum from the mission-independent format. If an error occurs,
     the status variable is set to EXIT_FAILURE. */
-void loadSimputARF(SimputCtlg* const cat, 
-		   char* const filename, 
+void loadSimputARF(SimputCtlg* const cat,
+		   char* const filename,
 		   int* const status);
 
 /** Set the random number generator, which is used by the simput
@@ -676,7 +678,7 @@ void setSimputRndGen(double(*rndgen)(int* const));
     specification of an instrument ARF required. */
 float getSimputPhotonRate(SimputCtlg* const cat,
 			  SimputSrc* const src,
-			  const double time, 
+			  const double time,
 			  const double mjdref,
 			  int* const status);
 
@@ -718,9 +720,9 @@ SimputPSD* loadSimputPSD(const char* const filename, int* const status);
 /** Save the PSD in the specified extension of the given FITS
     file. If the file does not exist yet, a new file is created. If
     the file exists, an appropriate HDU is created. */
-void saveSimputPSD(SimputPSD* const psd, 
+void saveSimputPSD(SimputPSD* const psd,
 		   const char* const filename,
-		   char* const extname, 
+		   char* const extname,
 		   int extver,
 		   int* const status);
 
@@ -742,9 +744,9 @@ SimputImg* loadSimputImg(const char* const filename, int* const status);
 /** Save the source image in the specified extension of the given FITS
     file. If the file does not exist yet, a new file is created. If
     the file exists, an appropriate HDU is created. */
-void saveSimputImg(SimputImg* const img, 
+void saveSimputImg(SimputImg* const img,
 		   const char* const filename,
-		   char* const extname, 
+		   char* const extname,
 		   int extver,
 		   int* const status);
 
@@ -862,8 +864,8 @@ int getSimputPhotonAnySource(SimputCtlg* const cat,
 void closeSimputPhotonAnySource(SimputPhoton *next_photons);
 
 /** Determine the extension type of a particular FITS file HDU. */
-int getSimputExtType(SimputCtlg* const cat, 
-		     const char* const filename, 
+int getSimputExtType(SimputCtlg* const cat,
+		     const char* const filename,
 		     int* const status);
 
 // WCSlib: pixel to sky

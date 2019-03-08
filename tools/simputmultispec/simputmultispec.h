@@ -16,10 +16,12 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef SIMPUTMULTISPEC_H
-#define SIMPUTMULTISPEC_H 
+#define SIMPUTMULTISPEC_H
 
 #include "ape/ape_trad.h"
 
@@ -176,4 +178,3 @@ int simputmultispec_getpar(struct Parameters* const par);
 
 
 #endif /* SIMPUTMULTISPEC_H */
-

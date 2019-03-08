@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef SIMPUTMERGE_H
@@ -35,7 +37,7 @@ struct Parameters {
   char Infile2[SIMPUT_MAXSTR];
   char Outfile[SIMPUT_MAXSTR];
   char FetchExtensions;
-  
+
   char clobber;
 };
 
@@ -62,4 +64,3 @@ int simputmerge_getpar(struct Parameters* const par);
 
 
 #endif /* SIMPUTMERGE_H */
-

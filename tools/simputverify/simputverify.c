@@ -16,12 +16,14 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "simputverify.h"
 
 
-int simputverify_main() 
+int simputverify_main()
 {
   // Program parameters.
   struct Parameters par;
@@ -35,7 +37,7 @@ int simputverify_main()
   SimputPhList* phl=NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS; 
+  int status=EXIT_SUCCESS;
 
 
   // Register HEATOOL
@@ -46,7 +48,7 @@ int simputverify_main()
   do { // Beginning of ERROR HANDLING Loop.
 
     // ---- Initialization ----
-    
+
     // Read the parameters using PIL.
     status=simputverify_getpar(&par);
     CHECK_STATUS_BREAK(status);
@@ -229,7 +231,7 @@ int simputverify_main()
 		} else {
 		  strcpy(filename2, lc->image[jj]);
 		}
-		
+
 		// Determine extension type and open the extension.
 		int exttype=getSimputExtType(cat, filename2, &status);
 		CHECK_STATUS_BREAK(status);
@@ -251,7 +253,7 @@ int simputverify_main()
 		  status=EXIT_FAILURE;
 		  char msg[SIMPUT_MAXSTR];
 		  sprintf(msg, "image reference '%s' in line '%ld' of "
-			  "light curve '%s' refers to unknown extension type", 
+			  "light curve '%s' refers to unknown extension type",
 			  lc->image[jj], jj+1, filename);
 		  SIMPUT_ERROR(msg);
 		}
@@ -286,7 +288,7 @@ int simputverify_main()
 	}
 	CHECK_STATUS_BREAK(status);
       }
-      
+
       // Check if there has been at least one SPECTRUM reference, either
       // in the source catalog or in the light curve.
       if (0==has_spectrum) {
@@ -329,7 +331,7 @@ int simputverify_getpar(struct Parameters* const par)
   char* sbuffer=NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS; 
+  int status=EXIT_SUCCESS;
 
   // Read all parameters via the ape_trad_ routines.
 
@@ -337,10 +339,9 @@ int simputverify_getpar(struct Parameters* const par)
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("failed reading the name of the SIMPUT file");
     return(status);
-  } 
+  }
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
   return(status);
 }
-

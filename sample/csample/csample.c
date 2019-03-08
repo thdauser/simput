@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include <math.h>
@@ -91,7 +93,7 @@ int main(int argc, char **argv)
       CHECK_STATUS_BREAK(status);
 
       SimputSrc* src=
-	newSimputSrcV(1, "", -1.*M_PI/180., 2.5*M_PI/180., 0., 1., 
+	newSimputSrcV(1, "", -1.*M_PI/180., 2.5*M_PI/180., 0., 1.,
 		      1., 10., 5.e-12, "[SPEC,1][#row==1]", "[IMG1,1]", "", &status);
       CHECK_STATUS_BREAK(status);
       appendSimputSrc(cat, src, &status);
@@ -206,7 +208,7 @@ int main(int argc, char **argv)
   freeSimputMIdpSpec(&spec);
   freeSimputMIdpSpec(&spec2);
   freeSimputCtlg(&cat, &status);
-  
+
   fits_report_error(stderr, status);
   return(status);
 }

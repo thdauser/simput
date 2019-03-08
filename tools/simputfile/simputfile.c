@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "simputfile.h"
@@ -53,9 +55,9 @@ int simputfile_main()
       par.ImageFile[0]='\0';
     }
 
-    // Check the input type for the power spectrum: individual 
-    // components or an ASCII file. Only one of these two option 
-    // may be used. In case multiple of them exist, throw an error 
+    // Check the input type for the power spectrum: individual
+    // components or an ASCII file. Only one of these two option
+    // may be used. In case multiple of them exist, throw an error
     // message and abort.
 
     int ntoptions=0;
@@ -65,7 +67,7 @@ int simputfile_main()
     if (strlen(par.PSDFile)>0) {
       ntoptions++;
     }
-    if ((par.LFQ!=0) || (par.HBOQ!=0) || 
+    if ((par.LFQ!=0) || (par.HBOQ!=0) ||
 	(par.Q1Q!=0) || (par.Q2Q!=0) || (par.Q3Q!=0)) {
       ntoptions++;
     }
@@ -95,9 +97,9 @@ int simputfile_main()
     }
 
 
-    // Call 'simputsrc' to produce a SIMPUT catalog with a 
+    // Call 'simputsrc' to produce a SIMPUT catalog with a
     // single point-like source.
-    sprintf(command, 
+    sprintf(command,
 	    "simputsrc Simput=%s Src_ID=%d Src_Name=%s RA=%f Dec=%f "
 	    "Emin=%f Emax=%f Flux=%e chatter=%d clobber=%s history=%s",
 	    par.Simput, par.Src_ID, par.Src_Name, par.RA, par.Dec,
@@ -121,7 +123,7 @@ int simputfile_main()
     } */
     // Call 'simputspec' to produce a spectrum and assign it
     // to the source.
-    sprintf(command, 
+    sprintf(command,
 	    "simputspec Simput=%s "
 	    "Elow=%f Eup=%f Nbins=%i logEgrid=%s "
 	    "plPhoIndex=%f plFlux=%e "
@@ -139,16 +141,16 @@ int simputfile_main()
 	    par.flSigma, par.flFlux,
 	    par.rflSpin, par.rflFlux,
 	    par.NH,
-	    par.Emin, par.Emax, 
+	    par.Emin, par.Emax,
 	    par.ISISFile, par.ISISPrep, par.XSPECFile, par.XSPECPrep, par.PHAFile, par.ASCIIFile,
 	    par.chatter, shistory);
     status=system(command);
     CHECK_STATUS_BREAK(status);
 
-    // Call 'simputlc' to produce a light curve and assign it 
+    // Call 'simputlc' to produce a light curve and assign it
     // to the source.
     if (strlen(par.LCFile)>0) {
-      sprintf(command, 
+      sprintf(command,
 	      "simputlc Simput=%s LCFile=%s MJDREF=%.10lf chatter=%d history=%s",
 	      par.Simput, par.LCFile, par.MJDREF, par.chatter, shistory);
       status=system(command);
@@ -157,9 +159,9 @@ int simputfile_main()
 
     // Call 'simputpsd' to produce a power spectrum and assign
     // it to the source.
-    if ((strlen(par.PSDFile)>0) || (par.LFQ!=0) || (par.HBOQ!=0) || 
+    if ((strlen(par.PSDFile)>0) || (par.LFQ!=0) || (par.HBOQ!=0) ||
 	(par.Q1Q!=0) || (par.Q2Q!=0) || (par.Q3Q!=0)) {
-      sprintf(command, 
+      sprintf(command,
 	      "simputpsd Simput=%s "
 	      "PSDnpt=%ld PSDfmin=%e PSDfmax=%e "
 	      "LFQ=%e LFrms=%e "
@@ -168,7 +170,7 @@ int simputfile_main()
 	      "Q2f=%e Q2Q=%e Q2rms=%e "
 	      "Q3f=%e Q3Q=%e Q3rms=%e "
 	      "PSDFile=%s chatter=%d history=%s",
-	      par.Simput, 
+	      par.Simput,
 	      par.PSDnpt, par.PSDfmin, par.PSDfmax,
 	      par.LFQ, par.LFrms,
 	      par.HBOf, par.HBOQ, par.HBOrms,
@@ -182,10 +184,10 @@ int simputfile_main()
 
     // Call 'simputimg' to assign an image to the source.
     if (strlen(par.ImageFile)>0) {
-      sprintf(command, 
+      sprintf(command,
 	      "simputimg Simput=%s "
 	      "ImageFile=%s chatter=%d history=%s",
-	      par.Simput, 
+	      par.Simput,
 	      par.ImageFile, par.chatter, shistory);
       status=system(command);
       CHECK_STATUS_BREAK(status);
@@ -210,14 +212,14 @@ int simputfile_getpar(struct Parameters* const par)
   char* sbuffer=NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS; 
+  int status=EXIT_SUCCESS;
 
   // Read all parameters via the ape_trad_ routines.
   status=ape_trad_query_file_name("Simput", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the output SIMPUT catalog file failed");
     return(status);
-  } 
+  }
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
@@ -540,4 +542,3 @@ int simputfile_getpar(struct Parameters* const par)
 
   return(status);
 }
-

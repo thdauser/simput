@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Thomas Dauser, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef PARINPUT_H

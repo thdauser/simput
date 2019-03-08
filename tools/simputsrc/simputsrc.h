@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef SIMPUTSRC_H
@@ -48,7 +50,7 @@ struct Parameters {
   float Emax;
   /** Reference flux [erg/s/cm^2]. */
   float Flux;
-  
+
   char clobber;
 };
 
@@ -57,4 +59,3 @@ int simputsrc_getpar(struct Parameters* const par);
 
 
 #endif /* SIMPUTSRC_H */
-

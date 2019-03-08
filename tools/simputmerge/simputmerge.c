@@ -16,6 +16,8 @@
 
 
    Copyright 2015 Thomas Dauser, FAU
+   Copyright 2016-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "simputmerge.h"
@@ -400,7 +402,7 @@ static void freeSimputData(simput_data** dat){
 }
 
 
-int simputmerge_main() 
+int simputmerge_main()
 {
 	// Program parameters.
 	struct Parameters par;
@@ -575,4 +577,3 @@ int simputmerge_getpar(struct Parameters* const par)
 
 	return(status);
 }
-

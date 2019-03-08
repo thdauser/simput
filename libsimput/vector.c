@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "vector.h"
@@ -90,11 +92,11 @@ Vector vector_difference(const Vector x2, const Vector x1) {
 }
 
 
-Vector interpolate_vec(const Vector v1, const double t1, 
-		       const Vector v2, const double t2, 
+Vector interpolate_vec(const Vector v1, const double t1,
+		       const Vector v2, const double t2,
 		       const double time) {
   Vector pos;
-  
+
   pos.x=v1.x + (time-t1)/(t2-t1)*(v2.x-v1.x);
   pos.y=v1.y + (time-t1)/(t2-t1)*(v2.y-v1.y);
   pos.z=v1.z + (time-t1)/(t2-t1)*(v2.z-v1.z);
@@ -103,33 +105,33 @@ Vector interpolate_vec(const Vector v1, const double t1,
 }
 
 
-Vector interpolateCircleVector(const Vector v1, 
-			       const Vector v2, 
+Vector interpolateCircleVector(const Vector v1,
+			       const Vector v2,
 			       const double phase)
 {
   Vector x1=normalize_vector(v1); // Use as first base vector.
   Vector x2=normalize_vector(v2);
-  Vector r; // Return value. 
+  Vector r; // Return value.
 
   // Calculate cosine of angle between x1 and x2 (v1 and v2) [rad].
   double cosine_value=scalar_product(&x1, &x2);
 
-  if (fabs(cosine_value) < cos(0.1/3600.*M_PI/180.)) { 
+  if (fabs(cosine_value) < cos(0.1/3600.*M_PI/180.)) {
     // The misalignment between the 2 vectors is more than 0.1 arcsec.
-    // This is important to check for the subsequent algorithm, 
-    // because the vectors should not be aligned parallel or 
+    // This is important to check for the subsequent algorithm,
+    // because the vectors should not be aligned parallel or
     // anti-parallel.
 
     // Angle between x1 and x2:
-    double phi=acos(cosine_value); 
+    double phi=acos(cosine_value);
 
-    // Calculate the second base vector spanning the plane of 
+    // Calculate the second base vector spanning the plane of
     // the circle.
-    Vector d={.x=x2.x-cosine_value*x1.x, 
-	      .y=x2.y-cosine_value*x1.y, 
+    Vector d={.x=x2.x-cosine_value*x1.x,
+	      .y=x2.y-cosine_value*x1.y,
 	      .z=x2.z-cosine_value*x1.z };
-    x2=normalize_vector(d); 
-    
+    x2=normalize_vector(d);
+
     // Determine the angle corresponding to the phase.
     double sinphasephi=sin(phase*phi);
     double cosphasephi=cos(phase*phi);
@@ -138,7 +140,7 @@ Vector interpolateCircleVector(const Vector v1,
     r.z=cosphasephi*x1.z + sinphasephi*x2.z;
     r=normalize_vector(r);
 
-  } else { 
+  } else {
     // There is quasi no motion at all, so perform a linear
     // interpolation.
     r.x=x1.x + phase*(x2.x-x1.x);
@@ -164,7 +166,7 @@ void calculate_ra_dec(const Vector v, double* const ra, double* const dec)
 }
 
 
-double getVectorDimensionValue(const Vector* const vec, const int dimension) 
+double getVectorDimensionValue(const Vector* const vec, const int dimension)
 {
   if (0==dimension) {
     return(vec->x);
@@ -185,15 +187,15 @@ void rotate_coord_system(float c1_ra,
 			 float *res_dec,
 			 long n_coords
 			 ){
-			    
+
   // Calculate coordinate shift
   double dra, ddec;
   double sinra, sindec, cosra, cosdec, sindecr, cosdecr, x, y, z, tx, ty, tz;
   dra=(c2_ra-c1_ra)*M_PI/180.;
   ddec=(c2_dec-c1_dec)*M_PI/180.;
-  
+
   long ii;
-  
+
   // Rotate all coordinates
   for(ii=0; ii<n_coords; ii++){
     // first rotate to RA=0
@@ -202,24 +204,24 @@ void rotate_coord_system(float c1_ra,
     // rotate in DEC
     sindec=sin(res_dec[ii]);
     cosdec=cos(res_dec[ii]);
-  
+
     sinra=sin(res_ra[ii]);
     cosra=cos(res_ra[ii]);
-  
+
     sindecr=sin(-ddec);
     cosdecr=cos(-ddec);
-    
+
     x=cosra*cosdec;
     y=sinra*cosdec;
     z=sindec;
-    
+
     tx=x*cosdecr+z*sindecr;
     ty=y;
     tz=-x*sindecr+z*cosdecr;
     // now convert to RA, DEC and rotate to end position in RA
     res_dec[ii]=180.*asin(tz)/M_PI;
     res_ra[ii]=180.*atan2(ty,tx)/M_PI+c2_ra;
-    
+
   }
-  
+
 }

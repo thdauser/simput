@@ -16,6 +16,8 @@
 
 
    Copyright 2015 Thorsten Brand, FAU
+   Copyright 2016-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef SIMPUTROTATE_H
@@ -43,4 +45,3 @@ int simputrotate_getpar(Parameters* const par);
 
 
 #endif /* SIMPUTROTATE_H */
-

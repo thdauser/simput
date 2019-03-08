@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "rmf.h"
@@ -57,12 +59,12 @@ struct RMF* getRMF(int* const status)
   rmf->RMFType[0]='\0';
   rmf->RMFExtensionName[0]='\0';
   rmf->EBDExtensionName[0]='\0';
-  
+
   return(rmf);
 }
 
 
-struct RMF* loadRMF(char* const filename, int* const status) 
+struct RMF* loadRMF(char* const filename, int* const status)
 {
   struct RMF* rmf=getRMF(status);
   CHECK_STATUS_RET(*status, rmf);
@@ -72,7 +74,7 @@ struct RMF* loadRMF(char* const filename, int* const status)
   fitsfile* fptr=NULL;
   fits_open_file(&fptr, filename, READONLY, status);
   CHECK_STATUS_RET(*status, rmf);
-  
+
   // Read the 'SPECRESP MATRIX' or 'MATRIX' extension:
   *status=ReadRMFMatrix(fptr, 0, rmf);
   CHECK_STATUS_RET(*status, rmf);
@@ -82,7 +84,7 @@ struct RMF* loadRMF(char* const filename, int* const status)
 	      rmf->NumberEnergyBins, rmf->NumberChannels);
 
   // Check if the RMF file contains matrix rows with a sum of more than 1.
-  // In that case the RSP probably also contains the mirror ARF, what should 
+  // In that case the RSP probably also contains the mirror ARF, what should
   // not be the case for this simulation. Row sums with a value of less than
   // 1 should actually also not be used, but can be handled by the simulation.
   long igrp;
@@ -133,10 +135,10 @@ struct RMF* loadRMF(char* const filename, int* const status)
 }
 
 
-void loadArfRmfFromRsp(char* const filename, 
+void loadArfRmfFromRsp(char* const filename,
 		       struct ARF** arf,
 		       struct RMF** rmf,
-		       int* const status) 
+		       int* const status)
 {
   *rmf=getRMF(status);
   CHECK_STATUS_VOID(*status);
@@ -146,7 +148,7 @@ void loadArfRmfFromRsp(char* const filename,
   fitsfile* fptr=NULL;
   fits_open_file(&fptr, filename, READONLY, status);
   CHECK_STATUS_VOID(*status);
-  
+
   // Read the 'SPECRESP MATRIX' or 'MATRIX' extension:
   *status=ReadRMFMatrix(fptr, 0, *rmf);
   CHECK_STATUS_VOID(*status);
@@ -162,13 +164,13 @@ void loadArfRmfFromRsp(char* const filename,
   // Produce an ARF from the RSP data.
   (*arf)->NumberEnergyBins=(*rmf)->NumberEnergyBins;
   (*arf)->LowEnergy=(float*)malloc((*arf)->NumberEnergyBins*sizeof(float));
-  CHECK_NULL_VOID((*arf)->LowEnergy, *status, 
+  CHECK_NULL_VOID((*arf)->LowEnergy, *status,
 		  "memory allocation for energy bins failed");
   (*arf)->HighEnergy=(float*)malloc((*arf)->NumberEnergyBins*sizeof(float));
-  CHECK_NULL_VOID((*arf)->HighEnergy, *status, 
+  CHECK_NULL_VOID((*arf)->HighEnergy, *status,
 		  "memory allocation for energy bins failed");
   (*arf)->EffArea=(float*)malloc((*arf)->NumberEnergyBins*sizeof(float));
-  CHECK_NULL_VOID((*arf)->EffArea, *status, 
+  CHECK_NULL_VOID((*arf)->EffArea, *status,
 		  "memory allocation for effective area failed");
   strcpy((*arf)->Telescope, (*rmf)->Telescope);
   strcpy((*arf)->Instrument, (*rmf)->Instrument);
@@ -184,14 +186,14 @@ void loadArfRmfFromRsp(char* const filename,
     for (chancount=0; chancount<(*rmf)->NumberChannels; chancount++) {
       sum+=ReturnRMFElement(*rmf, chancount, bincount);
     }
-    
+
     // Check if this might be an RMF and not an RSP, as it should be.
     if ((0==notrmf)&&(fabs(sum-1.0)<0.001)) {
       SIMPUT_WARNING("response matrix declared as RSP file looks like RMF");
     } else {
       notrmf=1;
     }
-    
+
     (*arf)->LowEnergy[bincount]=(*rmf)->LowEnergy[bincount];
     (*arf)->HighEnergy[bincount]=(*rmf)->HighEnergy[bincount];
     (*arf)->EffArea[bincount]=(float)sum;
@@ -210,7 +212,7 @@ void loadArfRmfFromRsp(char* const filename,
 }
 
 
-void freeRMF(struct RMF* const rmf) 
+void freeRMF(struct RMF* const rmf)
 {
   if (NULL!=rmf) {
     if (NULL!=rmf->NumberGroups) {
@@ -357,8 +359,8 @@ he response matrix */
 }
 
 
-void returnRMFChannel(struct RMF *rmf, 
-		      const float energy, 
+void returnRMFChannel(struct RMF *rmf,
+		      const float energy,
 		      long* const channel)
 {
   ReturnChannelSixte(rmf, energy, 1, channel);
@@ -398,7 +400,7 @@ long getEBOUNDSChannel(const float energy, const struct RMF* const rmf)
   if (NULL==rmf) return(-1);
 
   // Check if the charge is outside the range of the energy bins defined
-  // in the EBOUNDS table. In that case the return value of this function 
+  // in the EBOUNDS table. In that case the return value of this function
   // is '-1'.
   if (rmf->ChannelLowEnergy[0] > energy) {
     return(-1);
@@ -406,8 +408,8 @@ long getEBOUNDSChannel(const float energy, const struct RMF* const rmf)
     return(-1);
     //return(rmf->NumberChannels - 1 + rmf->FirstChannel);
   }
-  
-  // Perform a binary search to obtain the detector PHA channel 
+
+  // Perform a binary search to obtain the detector PHA channel
   // that corresponds to the given detector charge.
   long min, max, mid;
   min=0;
@@ -420,14 +422,14 @@ long getEBOUNDSChannel(const float energy, const struct RMF* const rmf)
       max=mid;
     }
   }
-  
+
   // Return the PHA channel.
   return(min+rmf->FirstChannel);
 }
 
 
-void getEBOUNDSEnergyLoHi(const long channel, 
-			  const struct RMF* const rmf, 
+void getEBOUNDSEnergyLoHi(const long channel,
+			  const struct RMF* const rmf,
 			  float* const lo,
 			  float* const hi,
 			  int* const status)
@@ -443,7 +445,7 @@ void getEBOUNDSEnergyLoHi(const long channel,
     return;
   }
 
-  // Return the lower and upper energy value of the specified PHA 
+  // Return the lower and upper energy value of the specified PHA
   // channel according to the EBOUNDS table.
   *lo=rmf->ChannelLowEnergy[mchannel];
   *hi=rmf->ChannelHighEnergy[mchannel];

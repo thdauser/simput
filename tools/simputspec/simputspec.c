@@ -16,12 +16,14 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "simputspec.h"
 
 
-int simputspec_main() 
+int simputspec_main()
 {
   // Program parameters.
   struct Parameters par;
@@ -42,7 +44,7 @@ int simputspec_main()
   struct ARF* arf=NULL;
   struct RMF* rmf=NULL;
 
-  // Flag, whether the spectrum should be constructed from 
+  // Flag, whether the spectrum should be constructed from
   // different components.
   int use_components=0;
 
@@ -120,7 +122,7 @@ int simputspec_main()
     }
 
     int noptions=0;
-    if ((par.plFlux>0.) || (par.bbFlux>0.) || 
+    if ((par.plFlux>0.) || (par.bbFlux>0.) ||
         (par.flFlux>0.) || (par.rflFlux>0.)) {
       use_components=1;
       noptions++;
@@ -177,7 +179,7 @@ int simputspec_main()
     } // END of running ISIS.
 
 
-    // If an Xspec .xcm file is given, we have to run Xspec in order 
+    // If an Xspec .xcm file is given, we have to run Xspec in order
     // to produce the spectrum.
     if (strlen(par.XSPECFile)>0) {
 
@@ -192,7 +194,7 @@ int simputspec_main()
     CHECK_STATUS_BREAK(status);
 
     if ((strlen(par.ISISFile)>0) || (use_components>0)) {
-      
+
     	read_isisSpec_fits_file(par.Simput, simputspec,
     			par.ISISFile, par.Emin, par.Emax,
 				par.plFlux, par.bbFlux, par.flFlux, par.rflFlux,
@@ -316,7 +318,7 @@ int simputspec_main()
 	}
 
 	int anynull=0;
-	fits_read_col(fptr, TFLOAT, crate, 1, 1, nrows, 0, 
+	fits_read_col(fptr, TFLOAT, crate, 1, 1, nrows, 0,
 		      simputspec->fluxdensity, &anynull, &status);
 
       } else {
@@ -368,9 +370,9 @@ int simputspec_main()
 	for (kk=0; kk<arf->NumberEnergyBins; kk++) {
 	  area+=ReturnRMFElement(rmf, ii, kk)*arf->EffArea[kk];
 	}
-	
+
 	// Divide by the area and the width of the energy bin.
-	simputspec->fluxdensity[ii]*=1./area/(hi-lo);	
+	simputspec->fluxdensity[ii]*=1./area/(hi-lo);
       }
       CHECK_STATUS_BREAK(status);
 
@@ -381,7 +383,7 @@ int simputspec_main()
       // Check if the flux has a physically reasonable value.
       if ((simputspec->fluxdensity[jj]<0.)||(simputspec->fluxdensity[jj]>1.e12)) {
 	char msg[SIMPUT_MAXSTR];
-	sprintf(msg, "flux (%e photons/cm**2/keV) out of limits", 
+	sprintf(msg, "flux (%e photons/cm**2/keV) out of limits",
 		simputspec->fluxdensity[jj]);
         SIMPUT_ERROR(msg);
         status=EXIT_FAILURE;
@@ -438,7 +440,7 @@ int simputspec_main()
       fits_read_col(cat->fptr, TFLOAT, cat->ce_max, 1, 1, 1,
 		    &srce_max, &srce_max, &anynul, &status);
       CHECK_STATUS_BREAK(status);
-      
+
       // Determine the flux in the reference band.
       srcflux=getSimputMIdpSpecBandFlux(simputspec, srce_min, srce_max);
 
@@ -477,7 +479,7 @@ int simputspec_main()
       char filename[SIMPUT_MAXSTR];
       sprintf(filename, "%s.spec%d", par.Simput, ii);
       remove(filename);
-    }      
+    }
   }
   if (strlen(par.ISISFile)>0) {
     char filename[SIMPUT_MAXSTR];
@@ -512,13 +514,13 @@ int simputspec_getpar(struct Parameters* const par)
   char* sbuffer=NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS; 
+  int status=EXIT_SUCCESS;
 
   status=ape_trad_query_file_name("Simput", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the SIMPUT catalog failed");
     return(status);
-  } 
+  }
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
@@ -693,4 +695,3 @@ int simputspec_getpar(struct Parameters* const par)
 
   return(status);
 }
-

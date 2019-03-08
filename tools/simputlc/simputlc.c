@@ -16,12 +16,14 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "simputlc.h"
 
 
-int simputlc_main() 
+int simputlc_main()
 {
   // Program parameters.
   struct Parameters par;
@@ -91,7 +93,7 @@ int simputlc_main()
     long ii;
     for (ii=0; ii<nlines; ii++) {
       if (fscanf(asciilc, "%lf %f\n",
-		 &(simputlc->time[ii]), 
+		 &(simputlc->time[ii]),
 		 &(simputlc->flux[ii]))<2) {
 	SIMPUT_ERROR("failed reading light curve from ASCII file");
 	status=EXIT_FAILURE;
@@ -130,7 +132,7 @@ int simputlc_main()
     char* timeref=(char*)malloc(32*sizeof(char));
     CHECK_NULL_BREAK(timeref, status, "memory allocation failed");
     sprintf(timeref, "[%s,%d]", par.Extname, par.Extver);
-    fits_write_col(cat->fptr, TSTRING, cat->ctiming, 1, 1, 1, 
+    fits_write_col(cat->fptr, TSTRING, cat->ctiming, 1, 1, 1,
     		   &timeref, &status);
     CHECK_STATUS_BREAK(status);
 
@@ -163,14 +165,14 @@ int simputlc_getpar(struct Parameters* const par)
   char* sbuffer=NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS; 
+  int status=EXIT_SUCCESS;
 
   // Read all parameters via the ape_trad_ routines.
   status=ape_trad_query_file_name("Simput", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the SIMPUT catalog failed");
     return(status);
-  } 
+  }
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
@@ -204,5 +206,3 @@ int simputlc_getpar(struct Parameters* const par)
 
   return(status);
 }
-
-

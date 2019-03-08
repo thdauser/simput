@@ -1,3 +1,24 @@
+/*
+   This file is part of SIXTE.
+
+   SIXTE is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIXTE is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                  Erlangen-Nuernberg
+*/
+
 #include "simput_tree.h"
 
 long iterate_tree_depdth(node *n);
@@ -6,10 +27,10 @@ long get_tree_depdth(tree *tree_ptr);
 node *find_elmt_best(tree *tree_ptr, void *data, int *depdth);
 
 long iterate_tree_depdth(node *n){
-  
+
   long d_right=0;
   long d_left=0;
-  
+
   if(n->right!=NULL){
     d_right=iterate_tree_depdth(n->right);
     d_right++;
@@ -26,12 +47,12 @@ long iterate_tree_depdth(node *n){
 }
 
 long get_tree_depdth(tree *tree_ptr){
-  
+
   long d=0;
   node *ptr=tree_ptr->treeptr;
-  
+
   d=iterate_tree_depdth(ptr);
-  
+
   return d;
 }
 
@@ -81,31 +102,31 @@ node *find_elmt(tree *tree_ptr, void *data){
 }
 
 node* get_node(void *data, node *parent){
-  
+
   node *ptr=(node*)malloc(sizeof(node));
-  
+
   if(ptr!=NULL){
     ptr->parent=parent;
     ptr->left=NULL;
     ptr->right=NULL;
     ptr->data=data;
   }
-  
+
   return ptr;
 }
 
 node *add_elmt(tree *tree_ptr, void *data){
-  
+
   int depdth=TREE_MINDEPDTH;
   node *ptr=find_elmt_best(tree_ptr, data, &depdth);
-  
+
   if(ptr==NULL){
     tree_ptr->treeptr=get_node(data, NULL);
     ptr=tree_ptr->treeptr;
   }else{
-  
+
     int cval=tree_ptr->cmp(data, ptr->data);
-  
+
     if(cval<0){
       if(ptr==tree_ptr->treeptr){
 	ptr->left=get_node(data, tree_ptr->treeptr);
@@ -126,19 +147,19 @@ node *add_elmt(tree *tree_ptr, void *data){
       }
     }
   }
-  
+
   if(ptr!=NULL){
     tree_ptr->nelem++;
     if(depdth>tree_ptr->maxdepdth){
       tree_ptr->maxdepdth=depdth;
     }
   }
-  
-  return ptr;  
+
+  return ptr;
 }
 
 node *find_largest_node(node *elmt){
-  
+
   if(elmt->right!=NULL){
     node *ptr=elmt->right;
     ptr=find_largest_node(ptr);
@@ -149,7 +170,7 @@ node *find_largest_node(node *elmt){
 }
 
 node *find_smallest_node(node *elmt){
-  
+
   if(elmt->left!=NULL){
     node *ptr=elmt->left;
     ptr=find_smallest_node(ptr);
@@ -168,7 +189,7 @@ void remove_elmt(tree *tree_ptr, node *elmt){
   }else{
     cval=0;
   }
-  
+
   if(elmt->right!=NULL && elmt->left!=NULL){
     // element has two children.
     // find largest element beneath the element
@@ -204,8 +225,8 @@ void remove_elmt(tree *tree_ptr, node *elmt){
       node *scnd=find_smallest_node(elmt->right);
       scnd->left=elmt->left;
       elmt->left->parent=scnd;
-      
-      // then unlink the largest and substitute the element to 
+
+      // then unlink the largest and substitute the element to
       // be removed with it
       largest->parent=elmt->parent;
       if(cval<0){
@@ -216,7 +237,7 @@ void remove_elmt(tree *tree_ptr, node *elmt){
 	tree_ptr->treeptr=largest;
       }
       largest->left=elmt->right;
-      largest->left->parent=largest;     
+      largest->left->parent=largest;
     }
   }else{
     // element has only one or zero children,
@@ -243,17 +264,17 @@ void remove_elmt(tree *tree_ptr, node *elmt){
       }
     }
   }
-  
+
   tree_ptr->free_elmt(elmt->data);
   free(elmt);
   tree_ptr->nelem--;
   tree_ptr->maxdepdth=get_tree_depdth(tree_ptr);
-  
+
   return;
 }
 
 void free_nodes_recursively(node *ptr, void (*free_elmt)(void*)){
-  
+
   if(ptr->left!=NULL){
     free_nodes_recursively(ptr->left, free_elmt);
   }
@@ -262,32 +283,32 @@ void free_nodes_recursively(node *ptr, void (*free_elmt)(void*)){
   }
   free_elmt(ptr->data);
   free(ptr);
-  
+
   return;
 }
 
 void free_tree(tree *tree_ptr){
-  
+
   node *ptr=tree_ptr->treeptr;
-  
+
   if(ptr!=NULL){
     free_nodes_recursively(ptr, tree_ptr->free_elmt);
     tree_ptr->treeptr=NULL;
   }
-  
+
   tree_ptr->cmp=NULL;
   tree_ptr->free_elmt=NULL;
   tree_ptr->nelem=0;
   tree_ptr->maxdepdth=0;
-  
+
   return;
 }
 
 tree *get_tree(int (*cmp)(void*, void*),
 	       void (*free_elmt)(void*)){
-		 
+
   tree *ptr=(tree*)malloc(sizeof(tree));
-  
+
   if(ptr!=NULL){
     ptr->cmp=cmp;
     ptr->free_elmt=free_elmt;
@@ -295,6 +316,6 @@ tree *get_tree(int (*cmp)(void*, void*),
     ptr->nelem=0;
     ptr->maxdepdth=0;
   }
-  
+
   return ptr;
 }

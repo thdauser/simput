@@ -1,3 +1,24 @@
+/*
+   This file is part of SIXTE.
+
+   SIXTE is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIXTE is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                  Erlangen-Nuernberg
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +61,7 @@ void nil_init(){
 
 	puts("initialize nil..");
 	nil=(struct speclist*)malloc(sizeof *nil);
-	
+
 	if(nil==NULL){
 		puts("Memory allocation for nil failed. Exit.");
 		exit(1);
@@ -81,7 +102,7 @@ struct speclist* speclist_newnode(char* new_name, char* fullname, float e_min, f
 	newnode->emax=e_max;
 	newnode->integral=integral;
 	newnode->nentries=nsteps;
-	
+
 	newnode->energy=(float*)malloc(nsteps*sizeof(float));
 	newnode->pflux=(float*)malloc(nsteps*sizeof(float));
 
@@ -124,7 +145,7 @@ struct speclist* insert_spec(struct speclist* root, char* new_name, char* fullna
 }
 
 struct speclist* check_if_exists(struct speclist* list, char* name, int* status){
-//This function returns a pointer to the speclist entry 
+//This function returns a pointer to the speclist entry
 //with the searched name and sets status to 1 if its found,
 //otherwise status is 0 and a NULL pointer is returned
 
@@ -153,7 +174,7 @@ struct speclist* check_if_exists(struct speclist* list, char* name, int* status)
 }
 
 struct speclist* check_fullname_if_exists(struct speclist* list, char* fullname, int* status){
-//This function returns a pointer to the speclist entry 
+//This function returns a pointer to the speclist entry
 //with the searched name and sets status to 1 if its found,
 //otherwise status is 0 and a NULL pointer is returned
 

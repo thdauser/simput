@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "common.h"
@@ -24,7 +26,7 @@
 SimputSrc* newSimputSrc(int* const status)
 {
   SimputSrc* entry=(SimputSrc*)malloc(sizeof(SimputSrc));
-  CHECK_NULL_RET(entry, *status, 
+  CHECK_NULL_RET(entry, *status,
 		 "memory allocation for SimputSrc failed", entry);
 
   // Initialize elements.
@@ -50,7 +52,7 @@ SimputSrc* newSimputSrc(int* const status)
 }
 
 
-SimputSrc* newSimputSrcV(const long src_id, 
+SimputSrc* newSimputSrcV(const long src_id,
 			 const char* const src_name,
 			 const double ra,
 			 const double dec,
@@ -100,7 +102,7 @@ SimputSrc* newSimputSrcV(const long src_id,
   if (NULL!=image) {
     src->image=(char*)malloc((strlen(image)+1)*sizeof(char));
     CHECK_NULL_RET(src->image, *status,
-		   "memory allocation for reference to image extension failed", 
+		   "memory allocation for reference to image extension failed",
 		   src);
     strcpy(src->image, image);
   }
@@ -108,7 +110,7 @@ SimputSrc* newSimputSrcV(const long src_id,
   if (NULL!=timing) {
     src->timing=(char*)malloc((strlen(timing)+1)*sizeof(char));
     CHECK_NULL_RET(src->timing, *status,
-		   "memory allocation for reference to timing extension failed", 
+		   "memory allocation for reference to timing extension failed",
 		   src);
     strcpy(src->timing, timing);
   }
@@ -162,12 +164,12 @@ void freeSimputSrc(SimputSrc** const src)
 
 struct SimputSrcBuffer* newSimputSrcBuffer(int* const status)
 {
-  struct SimputSrcBuffer *srcbuff = 
+  struct SimputSrcBuffer *srcbuff =
     (struct SimputSrcBuffer*)malloc(sizeof(struct SimputSrcBuffer));
 
-  CHECK_NULL_RET(srcbuff, *status, 
+  CHECK_NULL_RET(srcbuff, *status,
 		 "memory allocation for SimputSrcBuffer failed", srcbuff);
-    
+
   srcbuff->nsrcs  =0;
   srcbuff->csrc   =0;
   srcbuff->srcs   =NULL;
@@ -204,7 +206,7 @@ SimputCtlg* newSimputCtlg(int* const status)
 {
   SimputCtlg* cat=
     (SimputCtlg*)malloc(sizeof(SimputCtlg));
-  CHECK_NULL_RET(cat, *status, 
+  CHECK_NULL_RET(cat, *status,
 		 "memory allocation for SimputCtlg failed", cat);
 
   // Initialize elements.
@@ -295,12 +297,12 @@ long getSimputCtlgNSources(const SimputCtlg* const cat)
 
 struct SimputExttypeBuffer* newSimputExttypeBuffer(int* const status)
 {
-  struct SimputExttypeBuffer *extbuff= 
+  struct SimputExttypeBuffer *extbuff=
     (struct SimputExttypeBuffer*)malloc(sizeof(struct SimputExttypeBuffer));
 
-  CHECK_NULL_RET(extbuff, *status, 
+  CHECK_NULL_RET(extbuff, *status,
 		 "memory allocation for SimputExttypeBuffer failed", extbuff);
-    
+
   extbuff->type   =EXTTYPE_NONE;
   extbuff->fileref=NULL;
   extbuff->left   =NULL;
@@ -336,7 +338,7 @@ int searchSimputExttypeBuffer(void* buffer, const char* const filename)
   if (NULL==eb) {
     return(EXTTYPE_NONE);
   }
-  
+
   // Compare with the current type.
   int cmp=strcmp(filename, eb->fileref);
   if (0==cmp) {
@@ -362,7 +364,7 @@ void insertSimputExttypeBuffer(void** buffer,
     *eb=newSimputExttypeBuffer(status);
     CHECK_STATUS_VOID(*status);
     (*eb)->fileref=(char*)malloc((strlen(filename)+1)*sizeof(char));
-    CHECK_NULL_VOID((*eb)->fileref, *status, 
+    CHECK_NULL_VOID((*eb)->fileref, *status,
 		    "memory allocation for file reference failed");
     strcpy((*eb)->fileref, filename);
     (*eb)->type=type;
@@ -380,7 +382,7 @@ SimputMIdpSpec* newSimputMIdpSpec(int* const status)
 {
   SimputMIdpSpec* spec=
     (SimputMIdpSpec*)malloc(sizeof(SimputMIdpSpec));
-  CHECK_NULL_RET(spec, *status, 
+  CHECK_NULL_RET(spec, *status,
 		 "memory allocation for SimputMIdpSpec failed", spec);
 
   // Initialize elements.
@@ -390,7 +392,7 @@ SimputMIdpSpec* newSimputMIdpSpec(int* const status)
   spec->name       =NULL;
   spec->fileref    =NULL;
 
-  return(spec);  
+  return(spec);
 }
 
 
@@ -417,7 +419,7 @@ void freeSimputMIdpSpec(SimputMIdpSpec** spec)
 
 void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  const long row,
-			  float* const energy, 
+			  float* const energy,
 			  float* const fluxdensity,
 			  int* const status)
 {
@@ -437,9 +439,9 @@ struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status)
   struct SimputMIdpSpecBuffer *specbuff=
     (struct SimputMIdpSpecBuffer*)malloc(sizeof(struct SimputMIdpSpecBuffer));
 
-  CHECK_NULL_RET(specbuff, *status, 
+  CHECK_NULL_RET(specbuff, *status,
 		 "memory allocation for SimputMIdpSpecBuffer failed", specbuff);
-    
+
   specbuff->spectrum=NULL;
   specbuff->left    =NULL;
   specbuff->right   =NULL;
@@ -466,7 +468,7 @@ void freeSimputMIdpSpecBuffer(struct SimputMIdpSpecBuffer** sb)
 }
 
 
-SimputMIdpSpec* searchSimputMIdpSpecBuffer(void* buffer, 
+SimputMIdpSpec* searchSimputMIdpSpecBuffer(void* buffer,
 					   const char* const filename)
 {
   struct SimputMIdpSpecBuffer* sb=(struct SimputMIdpSpecBuffer*)buffer;
@@ -475,7 +477,7 @@ SimputMIdpSpec* searchSimputMIdpSpecBuffer(void* buffer,
   if (NULL==sb) {
     return(NULL);
   }
-  
+
   // Compare with the current spectrum.
   int cmp=strcmp(filename, sb->spectrum->fileref);
   if (0==cmp) {
@@ -509,8 +511,8 @@ void insertSimputMIdpSpecBuffer(void** buffer,
 }
 
 
-static long MIdpSpecPartition(SimputMIdpSpec** const spectra, 
-			      const long left, const long right, 
+static long MIdpSpecPartition(SimputMIdpSpec** const spectra,
+			      const long left, const long right,
 			      const long pivotIndex)
 {
   // Move pivot to end.
@@ -521,7 +523,7 @@ static long MIdpSpecPartition(SimputMIdpSpec** const spectra,
 
   long storeIndex=left;
   long ii;
-  for (ii=left; ii<right; ii++) { // left ≤ i < right  
+  for (ii=left; ii<right; ii++) { // left ≤ i < right
     if (strcmp(spectra[ii]->fileref, spectra[right]->fileref)<0) {
       if (ii>storeIndex) {
 	buffer=spectra[storeIndex];
@@ -541,8 +543,8 @@ static long MIdpSpecPartition(SimputMIdpSpec** const spectra,
 }
 
 
-static void quicksortMIdpSpec(SimputMIdpSpec** const spectra, 
-			      const long left, 
+static void quicksortMIdpSpec(SimputMIdpSpec** const spectra,
+			      const long left,
 			      const long right)
 {
   if (right>left) {
@@ -585,7 +587,7 @@ void buildSimputMIdpSpecBuffer(void** buffer,
   }
 
   if (median<nspectra-1) {
-    buildSimputMIdpSpecBuffer((void**)&((*sb)->right), &(spectra[median+1]), 
+    buildSimputMIdpSpecBuffer((void**)&((*sb)->right), &(spectra[median+1]),
 			      nspectra-1-median, 1, status);
     CHECK_STATUS_VOID(*status);
   }
@@ -595,14 +597,14 @@ void buildSimputMIdpSpecBuffer(void** buffer,
 SimputSpec* newSimputSpec(int* const status)
 {
   SimputSpec* spec=(SimputSpec*)malloc(sizeof(SimputSpec));
-  CHECK_NULL_RET(spec, *status, 
+  CHECK_NULL_RET(spec, *status,
 		 "memory allocation for SimputSpec failed", spec);
 
   // Initialize elements.
   spec->distribution=NULL;
   spec->fileref     =NULL;
 
-  return(spec);  
+  return(spec);
 }
 
 
@@ -626,9 +628,9 @@ struct SimputSpecBuffer* newSimputSpecBuffer(int* const status)
   struct SimputSpecBuffer *specbuff=
     (struct SimputSpecBuffer*)malloc(sizeof(struct SimputSpecBuffer));
 
-  CHECK_NULL_RET(specbuff, *status, 
+  CHECK_NULL_RET(specbuff, *status,
 		 "memory allocation for SimputSpecBuffer failed", specbuff);
-    
+
   specbuff->spectrum=NULL;
   specbuff->left    =NULL;
   specbuff->right   =NULL;
@@ -655,7 +657,7 @@ void freeSimputSpecBuffer(struct SimputSpecBuffer** sb)
 }
 
 
-SimputSpec* searchSimputSpecBuffer(void* buffer, 
+SimputSpec* searchSimputSpecBuffer(void* buffer,
 				   const char* const filename)
 {
   struct SimputSpecBuffer* sb=(struct SimputSpecBuffer*)buffer;
@@ -664,7 +666,7 @@ SimputSpec* searchSimputSpecBuffer(void* buffer,
   if (NULL==sb) {
     return(NULL);
   }
-  
+
   // Compare with the current spectrum.
   int cmp=strcmp(filename, sb->spectrum->fileref);
   if (0==cmp) {
@@ -701,7 +703,7 @@ void insertSimputSpecBuffer(void** buffer,
 SimputLC* newSimputLC(int* const status)
 {
   SimputLC* lc=(SimputLC*)malloc(sizeof(SimputLC));
-  CHECK_NULL_RET(lc, *status, 
+  CHECK_NULL_RET(lc, *status,
 		 "memory allocation for SimputLC failed", lc);
 
   // Initialize elements.
@@ -796,12 +798,12 @@ void freeSimputLC(SimputLC** const lc)
 
 struct SimputLCBuffer* newSimputLCBuffer(int* const status)
 {
-  struct SimputLCBuffer *lcbuff= 
+  struct SimputLCBuffer *lcbuff=
     (struct SimputLCBuffer*)malloc(sizeof(struct SimputLCBuffer));
 
-  CHECK_NULL_RET(lcbuff, *status, 
+  CHECK_NULL_RET(lcbuff, *status,
 		 "memory allocation for SimputLCBuffer failed", lcbuff);
-    
+
   lcbuff->nlcs=0;
   lcbuff->clc =0;
   lcbuff->lcs =NULL;
@@ -829,7 +831,7 @@ void freeSimputLCBuffer(struct SimputLCBuffer** sb)
 SimputPSD* newSimputPSD(int* const status)
 {
   SimputPSD* psd=(SimputPSD*)malloc(sizeof(SimputPSD));
-  CHECK_NULL_RET(psd, *status, 
+  CHECK_NULL_RET(psd, *status,
 		 "memory allocation for SimputPSD failed", psd);
 
   // Initialize elements.
@@ -862,12 +864,12 @@ void freeSimputPSD(SimputPSD** const psd)
 
 struct SimputPSDBuffer* newSimputPSDBuffer(int* const status)
 {
-  struct SimputPSDBuffer *psdbuff = 
+  struct SimputPSDBuffer *psdbuff =
     (struct SimputPSDBuffer*)malloc(sizeof(struct SimputPSDBuffer));
 
-  CHECK_NULL_RET(psdbuff, *status, 
+  CHECK_NULL_RET(psdbuff, *status,
 		 "memory allocation for SimputPSDBuffer failed", psdbuff);
-    
+
   psdbuff->npsds=0;
   psdbuff->psds =NULL;
 
@@ -894,7 +896,7 @@ void freeSimputPSDBuffer(struct SimputPSDBuffer** sb)
 SimputImg* newSimputImg(int* const status)
 {
   SimputImg* img=(SimputImg*)malloc(sizeof(SimputImg));
-  CHECK_NULL_RET(img, *status, 
+  CHECK_NULL_RET(img, *status,
 		 "memory allocation for SimputImg failed", img);
 
   // Initialize elements.
@@ -936,11 +938,11 @@ void freeSimputImg(SimputImg** const img)
 
 struct SimputImgBuffer* newSimputImgBuffer(int* const status)
 {
-  struct SimputImgBuffer *imgbuff = 
+  struct SimputImgBuffer *imgbuff =
     (struct SimputImgBuffer*)malloc(sizeof(struct SimputImgBuffer));
-  CHECK_NULL_RET(imgbuff, *status, 
+  CHECK_NULL_RET(imgbuff, *status,
 		 "memory allocation for SimputImgBuffer failed", imgbuff);
-    
+
   imgbuff->nimgs=0;
   imgbuff->imgs =NULL;
 
@@ -967,7 +969,7 @@ void freeSimputImgBuffer(struct SimputImgBuffer** sb)
 SimputPhList* newSimputPhList(int* const status)
 {
   SimputPhList* phl=(SimputPhList*)malloc(sizeof(SimputPhList));
-  CHECK_NULL_RET(phl, *status, 
+  CHECK_NULL_RET(phl, *status,
 		 "memory allocation for SimputPhList failed", phl);
 
   // Initialize elements.
@@ -1012,11 +1014,11 @@ void freeSimputPhList(SimputPhList** const phl, int* const status)
 
 struct SimputPhListBuffer* newSimputPhListBuffer(int* const status)
 {
-  struct SimputPhListBuffer *phlbuff = 
+  struct SimputPhListBuffer *phlbuff =
     (struct SimputPhListBuffer*)malloc(sizeof(struct SimputPhListBuffer));
-  CHECK_NULL_RET(phlbuff, *status, 
+  CHECK_NULL_RET(phlbuff, *status,
 		 "memory allocation for SimputPhListBuffer failed", phlbuff);
-    
+
   phlbuff->nphls=0;
   phlbuff->phls =NULL;
 
@@ -1208,4 +1210,3 @@ void destroySpecCacheBuff(SimputSpecExtCache *cache)
   free(cache->ext);
   free(cache);
 }
-

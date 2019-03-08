@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include <float.h>
@@ -47,7 +49,7 @@ void loadSimputARF(SimputCtlg* const cat, char* const filename, int* const statu
 
 /** Use the C rand() function to determine a random number between 0
     and 1. */
-static double getCRand(int* const status) 
+static double getCRand(int* const status)
 {
   double r=(double)rand()/((double)RAND_MAX+1.0);
   assert(r<1.0);
@@ -90,7 +92,7 @@ SimputSrc* getSimputSrc(SimputCtlg* const cf,
 			int* const status)
 {
   // Maximum number of sources in the cache.
-  const long maxsrcs=1000000; 
+  const long maxsrcs=1000000;
 
   // Check if the source catalog contains a source buffer.
   if (NULL==cf->srcbuff) {
@@ -105,7 +107,7 @@ SimputSrc* getSimputSrc(SimputCtlg* const cf,
   // Allocate memory for the cache.
   if (NULL==sb->rowmap) {
     sb->rowmap=(long*)malloc(cf->nentries*sizeof(long));
-    CHECK_NULL_RET(sb->rowmap, *status, 
+    CHECK_NULL_RET(sb->rowmap, *status,
 		   "memory allocation for row map failed", NULL);
     long jj;
     for (jj=0; jj<cf->nentries; jj++) {
@@ -113,7 +115,7 @@ SimputSrc* getSimputSrc(SimputCtlg* const cf,
     }
   }
 
-  // Check if the cache already exists or whether this routine is 
+  // Check if the cache already exists or whether this routine is
   // called for the first time.
   if (NULL==sb->srcs) {
     sb->srcs=(SimputSrc**)malloc(maxsrcs*sizeof(SimputSrc*));
@@ -139,7 +141,7 @@ SimputSrc* getSimputSrc(SimputCtlg* const cf,
 
   // The requested source is not contained in the cache.
   // Therefore we must load it from the FITS file.
-  
+
   // Check if the cache is already full.
   if (sb->nsrcs<maxsrcs) {
     sb->csrc = sb->nsrcs;
@@ -149,7 +151,7 @@ SimputSrc* getSimputSrc(SimputCtlg* const cf,
     if (sb->csrc>=maxsrcs) {
       sb->csrc=0;
     }
-    // Destroy the source that is currently stored at this place 
+    // Destroy the source that is currently stored at this place
     // in the cache.
     freeSimputSrc(&(sb->srcs[sb->csrc]));
     sb->rowmap[sb->rownums[sb->csrc]-1] = -1;
@@ -176,7 +178,7 @@ static void getSrcTimeRef(SimputCtlg* const cat,
   // Determine the reference to the timing extension.
   if (NULL==src->timing) {
     strcpy(timeref, "");
-  } else if ((0==strlen(src->timing)) || 
+  } else if ((0==strlen(src->timing)) ||
 	     (0==strcmp(src->timing, "NULL")) ||
 	     (0==strcmp(src->timing, " "))) {
     strcpy(timeref, "");
@@ -224,11 +226,11 @@ static SimputPSD* getSimputPSD(SimputCtlg* const cat,
   // format.
   struct SimputPSDBuffer* sb=(struct SimputPSDBuffer*)cat->psdbuff;
 
-  // In case there are no PSDs available at all, allocate 
+  // In case there are no PSDs available at all, allocate
   // memory for the array (storage for PSDs).
   if (NULL==sb->psds) {
     sb->psds=(SimputPSD**)malloc(maxpsds*sizeof(SimputPSD*));
-    CHECK_NULL_RET(sb->psds, *status, 
+    CHECK_NULL_RET(sb->psds, *status,
 		   "memory allocation for PSD buffer failed", NULL);
   }
 
@@ -260,7 +262,7 @@ static SimputPSD* getSimputPSD(SimputCtlg* const cat,
 
 
 static inline double getLCTime(const SimputLC* const lc,
-			       const long kk, 
+			       const long kk,
 			       const long long nperiods,
 			       const double mjdref)
 {
@@ -305,10 +307,10 @@ static inline double getRefTime0(const SimputLC* const lc)
     to the specified time. For periodic light curves the function
     stores the number of periods since the specified origin of the
     light curve in the parameter nperiods. */
-static inline long getLCBin(const SimputLC* const lc, 
-			    const double time, 
+static inline long getLCBin(const SimputLC* const lc,
+			    const double time,
 			    const double mjdref,
-			    long long* nperiods, 
+			    long long* nperiods,
 			    int* const status)
 {
   // Check if the value of MJDREF is negative. This indicates
@@ -350,9 +352,9 @@ static inline long getLCBin(const SimputLC* const lc,
       phase=lc->phase0+log(1.+dt*lc->dperiod/lc->period)/lc->dperiod;
     }
     *nperiods=(long long)phase;
-  
+
     // Correct the first guess such that the requested time lies within the
-    // covered period. Deviations with respect to the first guess can 
+    // covered period. Deviations with respect to the first guess can
     // introduced by a \dot{P} (DPERIOD).
     while (getLCTime(lc, 0, (*nperiods)+1, mjdref)+getRefTime0(lc) <= time) {
       (*nperiods)++;
@@ -361,7 +363,7 @@ static inline long getLCBin(const SimputLC* const lc,
       (*nperiods)--;
     }
   }
-  
+
   // Determine the index of the light curve bin (using binary search).
   long lower=0, upper=lc->nentries-2, mid;
   while (upper>lower) {
@@ -372,16 +374,16 @@ static inline long getLCBin(const SimputLC* const lc,
       upper=mid;
     }
   }
- 
+
   return(lower);
 }
 
 
-static SimputLC* getSimputLC(SimputCtlg* const cat, 
+static SimputLC* getSimputLC(SimputCtlg* const cat,
 			     const SimputSrc* const src,
-			     char* const filename, 
-			     const double prevtime, 
-			     const double mjdref, 
+			     char* const filename,
+			     const double prevtime,
+			     const double mjdref,
 			     int* const status)
 {
   SimputLC* lc=NULL;
@@ -395,15 +397,15 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
     CHECK_STATUS_RET(*status, NULL);
   }
 
-  // Convert the void* pointer to the light curve buffer into 
+  // Convert the void* pointer to the light curve buffer into
   // the right format.
   struct SimputLCBuffer* lb=(struct SimputLCBuffer*)cat->lcbuff;
 
-  // In case there are no light curves available at all, allocate 
+  // In case there are no light curves available at all, allocate
   // memory for the array (storage for images).
   if (NULL==lb->lcs) {
     lb->lcs=(SimputLC**)malloc(maxlcs*sizeof(SimputLC*));
-    CHECK_NULL_RET(lb->lcs, *status, 
+    CHECK_NULL_RET(lb->lcs, *status,
 		   "memory allocation for light curves failed", NULL);
   }
 
@@ -419,7 +421,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 	if (lb->lcs[ii]->src_id==src->src_id) {
 	  // We have a light curve which has been produced from a PSD.
 	  // Check if the requested time is covered by the light curve.
-	  if (prevtime<getLCTime(lb->lcs[ii], lb->lcs[ii]->nentries-1, 
+	  if (prevtime<getLCTime(lb->lcs[ii], lb->lcs[ii]->nentries-1,
 				 0, mjdref)) {
 	    return(lb->lcs[ii]);
 	  }
@@ -434,7 +436,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
   }
 
 
-  // If the LC is not contained in the cache, load it either from 
+  // If the LC is not contained in the cache, load it either from
   // a file or create it from a SimputPSD.
   int timetype=getSimputExtType(cat, filename, status);
   CHECK_STATUS_RET(*status, lc);
@@ -446,34 +448,34 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 
   } else {
     // Create the SimputLC from a SimputPSD.
-    
+
     // Buffer for Fourier transform.
     float* power=NULL;
     double *fftw_in=NULL, *fftw_out=NULL;
 
-    // Length of the PSD for the FFT, which is obtained by 
+    // Length of the PSD for the FFT, which is obtained by
     // interpolation of the input PSD.
     const long psdlen=100000000;
 
     do { // Error handling loop.
-  
+
       SimputPSD* psd=getSimputPSD(cat, filename, status);
       CHECK_STATUS_BREAK(*status);
-      
+
       // Get an empty SimputLC data structure.
       lc=newSimputLC(status);
       CHECK_STATUS_BREAK(*status);
-      
+
       // Set the MJDREF.
       lc->mjdref=mjdref;
 
       // Allocate memory for the light curve.
       lc->nentries=2*psdlen;
       lc->time    =(double*)malloc(lc->nentries*sizeof(double));
-      CHECK_NULL_BREAK(lc->time, *status, 
+      CHECK_NULL_BREAK(lc->time, *status,
 		       "memory allocation for K&R light curve failed");
       lc->flux    =(float*)malloc(lc->nentries*sizeof(float));
-      CHECK_NULL_BREAK(lc->flux, *status, 
+      CHECK_NULL_BREAK(lc->flux, *status,
 		       "memory allocation for K&R light curve failed");
 
       // Set the time bins of the light curve.
@@ -488,7 +490,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       // The PSD is given in Miyamoto normalization. In order to get the RMS
       // right, we have to multiply each bin with df (delta frequency).
       power=(float*)malloc(psdlen*sizeof(float));
-      CHECK_NULL_BREAK(power, *status, 
+      CHECK_NULL_BREAK(power, *status,
 		       "memory allocation for PSD buffer failed");
 
       // Check that the PSD is positive.
@@ -512,8 +514,8 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 	}
 	if (jj==0) {
 	  power[ii]=0.;
-	  /* frequency/psd->frequency[jj]* 
-	     psd->power[jj]* 
+	  /* frequency/psd->frequency[jj]*
+	     psd->power[jj]*
 	     delta_f; */
 	} else {
 	  power[ii]=
@@ -524,7 +526,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
 	    delta_f;
 	}
       }
-    
+
       // Allocate the data structures required by the fftw routines.
       fftw_in =(double*)fftw_malloc(sizeof(double)*lc->nentries);
       CHECK_NULL_BREAK(fftw_in, *status, "memory allocation for fftw "
@@ -548,18 +550,18 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       }
 
       // Perform the inverse Fourier transformation.
-      fftw_plan iplan=fftw_plan_r2r_1d(lc->nentries, fftw_in, fftw_out, 
+      fftw_plan iplan=fftw_plan_r2r_1d(lc->nentries, fftw_in, fftw_out,
 				       FFTW_HC2R, FFTW_ESTIMATE);
       fftw_execute(iplan);
       fftw_destroy_plan(iplan);
-      
+
       // Determine the normalized rates from the FFT.
       for (ii=0; ii<lc->nentries; ii++) {
 	lc->flux[ii]=(float)fftw_out[ii] /* *requ_rms/act_rms */;
 
 	// Avoid negative fluxes (no physical meaning):
-	if (lc->flux[ii]<0.) { 
-	  lc->flux[ii]=0.; 
+	if (lc->flux[ii]<0.) {
+	  lc->flux[ii]=0.;
 	}
       }
 
@@ -567,22 +569,22 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
       // particular source.
       lc->src_id=src->src_id;
 
-      // Store the file reference to the timing extension for later 
+      // Store the file reference to the timing extension for later
       // comparisons.
       lc->fileref=
 	(char*)malloc((strlen(filename)+1)*sizeof(char));
-      CHECK_NULL_RET(lc->fileref, *status, 
-		     "memory allocation for file reference failed", 
+      CHECK_NULL_RET(lc->fileref, *status,
+		     "memory allocation for file reference failed",
 		     lc);
       strcpy(lc->fileref, filename);
 
     } while(0); // END of error handling loop.
-    
+
     // Release allocated memory.
     if (NULL!=power) free(power);
     if (NULL!=fftw_in) fftw_free(fftw_in);
     if (NULL!=fftw_out) fftw_free(fftw_out);
-    
+
   }
 
   // Check if there is still space left in the internal cache.
@@ -594,7 +596,7 @@ static SimputLC* getSimputLC(SimputCtlg* const cat,
     if (lb->clc>=maxlcs) {
       lb->clc=0;
     }
-    // Release the SimputLC that is currently stored at this place 
+    // Release the SimputLC that is currently stored at this place
     // in the cache.
     freeSimputLC(&(lb->lcs[lb->clc]));
   }
@@ -637,7 +639,7 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
       CHECK_STATUS_VOID(*status);
 
       // Check if a spectrum is defined in this light curve bin.
-      if ((0==strcmp(lc->spectrum[bin], "NULL")) || 
+      if ((0==strcmp(lc->spectrum[bin], "NULL")) ||
 	  (0==strcmp(lc->spectrum[bin], " ")) ||
 	  (0==strlen(lc->spectrum[bin]))) {
 	SIMPUT_ERROR("in the current implementation light curves "
@@ -650,7 +652,7 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
       // Copy the reference to the spectrum.
       strcpy(specref, lc->spectrum[bin]);
 
-      // Determine the relative location with respect to the 
+      // Determine the relative location with respect to the
       // location of the light curve.
       if ('['==specref[0]) {
 	char* firstbrack=strchr(timeref, '[');
@@ -660,26 +662,26 @@ void getSimputSrcSpecRef(SimputCtlg* const cat,
 	char* lastslash=strrchr(timeref, '/');
 	lastslash++;
 	strcpy(lastslash, specref);
-	strcpy(specref, timeref);	
+	strcpy(specref, timeref);
       }
 
       return;
     }
   }
 
-  // If no light curve extension with a spectrum column is given, 
-  // determine the spectrum reference directly from the source 
+  // If no light curve extension with a spectrum column is given,
+  // determine the spectrum reference directly from the source
   // description.
-  if (NULL!=src->spectrum) {   
+  if (NULL!=src->spectrum) {
     // Check if this is a valid HDU reference.
-    if ((0==strcmp(src->spectrum, "NULL")) || 
+    if ((0==strcmp(src->spectrum, "NULL")) ||
 	(0==strcmp(src->spectrum, " ")) ||
 	(0==strlen(src->spectrum))) {
       return;
     }
 
     strcpy(specref, src->spectrum);
-    
+
     // Set path and file name if missing.
     if ('['==specref[0]) {
       char buffer[SIMPUT_MAXSTR];
@@ -705,10 +707,10 @@ void getSimputSrcSpecRefNext(SimputCtlg* const cat,
 			     char* const specref,
 			     int* const status)
 {
-  // Initialize with an empty string.                                                                                                                                            
+  // Initialize with an empty string.
   strcpy(specref, "");
 
-  // Determine the timing extension.                                                                                                                                            
+  // Determine the timing extension.
   char timeref[SIMPUT_MAXSTR];
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_VOID(*status);
@@ -717,13 +719,13 @@ void getSimputSrcSpecRefNext(SimputCtlg* const cat,
   CHECK_STATUS_VOID(*status);
 
   if (EXTTYPE_LC==timetype) {
-    // Get the respective light curve.                                                                                                                                            
+    // Get the respective light curve.
     SimputLC* lc=getSimputLC(cat, src, timeref, prevtime, mjdref, status);
     CHECK_STATUS_VOID(*status);
 
-    // Check if there is a spectrum column in the light curve.                                                                                                                    
+    // Check if there is a spectrum column in the light curve.
     if (NULL!=lc->spectrum) {
-      // Determine the current light curve bin.                                                                                                                                   
+      // Determine the current light curve bin.
       long long nperiods;
       long bin=getLCBin(lc, prevtime, mjdref, &nperiods, status);
       CHECK_STATUS_VOID(*status);
@@ -742,8 +744,8 @@ void getSimputSrcSpecRefNext(SimputCtlg* const cat,
       // Copy the reference to the next spectrum.
       strcpy(specref, lc->spectrum[bin+1]);
 
-      // Determine the relative location with respect to the                                                                                                                      
-      // location of the light curve.                                                                                                                                             
+      // Determine the relative location with respect to the
+      // location of the light curve.
       if ('['==specref[0]) {
         char* firstbrack=strchr(timeref, '[');
         strcpy(firstbrack, specref);
@@ -759,8 +761,8 @@ void getSimputSrcSpecRefNext(SimputCtlg* const cat,
     }
   }
   else{
-    // If this function is being executed, a light curve is 
-    // supposed to exist in the simput cataloge. If no 
+    // If this function is being executed, a light curve is
+    // supposed to exist in the simput cataloge. If no
     // light curve is avaliable there is an error somewhere:
     SIMPUT_ERROR("There is no light curve with a spectrum "
 		 " column avaliable");
@@ -814,7 +816,7 @@ static void getSrcImagRef(SimputCtlg* const cat,
       // Copy the reference to the image.
       strcpy(imagref, lc->image[bin]);
 
-      // Determine the relative location with respect to the 
+      // Determine the relative location with respect to the
       // location of the light curve.
       if ('['==imagref[0]) {
 	char* firstbrack=strchr(timeref, '[');
@@ -831,8 +833,8 @@ static void getSrcImagRef(SimputCtlg* const cat,
     }
   }
 
-  // If no light curve extension with an image column is given, 
-  // determine the spectrum reference directly from the source 
+  // If no light curve extension with an image column is given,
+  // determine the spectrum reference directly from the source
   // description.
   if (NULL!=src->image) {
     // Check if this is a valid HDU reference.
@@ -841,7 +843,7 @@ static void getSrcImagRef(SimputCtlg* const cat,
 	(0==strlen(src->image))) {
       return;
     }
-    
+
     strcpy(imagref, src->image);
 
     // Set path and file name if missing.
@@ -919,7 +921,7 @@ SimputMIdpSpec* getSimputSrcMIdpSpec(SimputCtlg* const cat,
 
 static inline void getMIdpSpecEbounds(const SimputMIdpSpec* const spec,
 				      const long idx,
-				      float* const emin, 
+				      float* const emin,
 				      float* const emax)
 {
   // Determine the lower boundary.
@@ -941,8 +943,8 @@ static inline void getMIdpSpecEbounds(const SimputMIdpSpec* const spec,
 /** Convolve the given mission-independent spectrum with the
     instrument ARF. The product of this process is the spectral
     probability distribution binned to the energy grid of the ARF. */
-static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat, 
-					     SimputMIdpSpec* const midpspec, 
+static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
+					     SimputMIdpSpec* const midpspec,
 					     int* const status)
 {
   SimputSpec* spec=NULL;
@@ -976,7 +978,7 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
 	getMIdpSpecEbounds(midpspec, jj, &spec_emin, &spec_emax);
 	if (spec_emax>lo) break;
       }
-      
+
       // Check special cases.
       if ((0==jj) && (spec_emin>cat->arf->LowEnergy[ii])) {
 	if (0==warning_printed) {
@@ -998,7 +1000,7 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
 	}
 	break;
       }
-      
+
       // Upper boundary of the current bin.
       float hi;
       if (spec_emax<=cat->arf->HighEnergy[ii]) {
@@ -1011,14 +1013,14 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
       // Add to the spectral probability density.
       spec->distribution[ii]+=
 	(hi-lo)*cat->arf->EffArea[ii]*midpspec->fluxdensity[jj];
-      
+
       // Increase the lower boundary.
       lo=hi;
 
     } while (0==finished);
 
-    // Create the spectral distribution function 
-    // normalized to the total photon number [photons]. 
+    // Create the spectral distribution function
+    // normalized to the total photon number [photons].
     if (ii>0) {
       spec->distribution[ii]+=spec->distribution[ii-1];
     }
@@ -1028,8 +1030,8 @@ static SimputSpec* convSimputMIdpSpecWithARF(SimputCtlg* const cat,
   // Copy the file reference to the spectrum for later comparisons.
   spec->fileref=
     (char*)malloc((strlen(midpspec->fileref)+1)*sizeof(char));
-  CHECK_NULL_RET(spec->fileref, *status, 
-		 "memory allocation for file reference failed", 
+  CHECK_NULL_RET(spec->fileref, *status,
+		 "memory allocation for file reference failed",
 		 spec);
   strcpy(spec->fileref, midpspec->fileref);
 
@@ -1102,11 +1104,11 @@ static SimputImg* getSimputImg(SimputCtlg* const cat,
   // format.
   struct SimputImgBuffer* sb=(struct SimputImgBuffer*)cat->imgbuff;
 
-  // In case there are no images available at all, allocate 
+  // In case there are no images available at all, allocate
   // memory for the array (storage for images).
   if (NULL==sb->imgs) {
     sb->imgs=(SimputImg**)malloc(maximgs*sizeof(SimputImg*));
-    CHECK_NULL_RET(sb->imgs, *status, 
+    CHECK_NULL_RET(sb->imgs, *status,
 		   "memory allocation for images failed", NULL);
   }
 
@@ -1132,7 +1134,7 @@ static SimputImg* getSimputImg(SimputCtlg* const cat,
   sb->imgs[sb->nimgs]=loadSimputImg(filename, status);
   CHECK_STATUS_RET(*status, sb->imgs[sb->nimgs]);
   sb->nimgs++;
-  
+
   return(sb->imgs[sb->nimgs-1]);
 }
 
@@ -1173,16 +1175,16 @@ void simput_s2p(struct wcsprm* const wcs,
 
 
 inline static void p2s(struct wcsprm* const wcs,
-		const double px, 
+		const double px,
 		const double py,
-		double* sx, 
+		double* sx,
 		double* sy,
 		int* const status)
 {
   double pixcrd[2]={ px, py };
   double imgcrd[2], world[2];
   double phi, theta;
-  
+
   // If CUNIT is set to 'degree', change this to 'deg'.
   // Otherwise the WCSlib will not work properly.
   if (0==strcmp(wcs->cunit[0], "degree  ")) {
@@ -1200,7 +1202,7 @@ inline static void p2s(struct wcsprm* const wcs,
     SIMPUT_ERROR("WCS transformation failed");
     return;
   }
-  
+
   // Convert to [rad].
   *sx=world[0]*M_PI/180.;
   *sy=world[1]*M_PI/180.;
@@ -1237,11 +1239,11 @@ static SimputPhList* getSimputPhList(SimputCtlg* const cat,
   // format.
   struct SimputPhListBuffer* pb=(struct SimputPhListBuffer*)cat->phlistbuff;
 
-  // In case there are no photon lists available at all, allocate 
+  // In case there are no photon lists available at all, allocate
   // memory for the array (storage for photon lists).
   if (NULL==pb->phls) {
     pb->phls=(SimputPhList**)malloc(maxphls*sizeof(SimputPhList*));
-    CHECK_NULL_RET(pb->phls, *status, 
+    CHECK_NULL_RET(pb->phls, *status,
 		   "memory allocation for photon lists failed", NULL);
   }
 
@@ -1267,13 +1269,13 @@ static SimputPhList* getSimputPhList(SimputCtlg* const cat,
   pb->phls[pb->nphls]=openSimputPhList(filename, READONLY, status);
   CHECK_STATUS_RET(*status, pb->phls[pb->nphls]);
   pb->nphls++;
-   
+
   return(pb->phls[pb->nphls-1]);
 }
 
 
 float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
-				const float emin, 
+				const float emin,
 				const float emax)
 {
   // Return value.
@@ -1303,7 +1305,7 @@ float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
 
 float getSimputPhotonRate(SimputCtlg* const cat,
 			  SimputSrc* const src,
-			  const double prevtime, 
+			  const double prevtime,
 			  const double mjdref,
 			  int* const status)
 {
@@ -1334,7 +1336,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
 
       SimputSpec* spec=getSimputSpec(cat, specref, status);
       CHECK_STATUS_RET(*status, 0.);
-      
+
       // Store the determined photon rate in the source data structure
       // for later use.
       // Allocate memory.
@@ -1342,15 +1344,15 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       CHECK_NULL_RET(src->phrate, *status,
 		     "memory allocation for photon rate buffer failed", 0.);
       *(src->phrate)=
-	src->eflux / refband_flux * 
+	src->eflux / refband_flux *
 	(float)(spec->distribution[cat->arf->NumberEnergyBins-1]);
-      
+
     } else if (EXTTYPE_PHLIST==spectype) {
 
       // Get the photon list.
       SimputPhList* phl=getSimputPhList(cat, specref, status);
       CHECK_STATUS_RET(*status, 0.);
-      
+
       // Determine the flux in the reference energy band
       // and the reference number of photons after weighing
       // with the instrument ARF.
@@ -1363,7 +1365,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
 	int anynul=0;
 	long nphs=MIN(buffsize, phl->nphs-(ii*buffsize));
 	float buffer[buffsize];
-	fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii*buffsize+1, 
+	fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii*buffsize+1,
 		      1, nphs, NULL, buffer, &anynul, status);
 	if (EXIT_SUCCESS!=*status) {
 	  SIMPUT_ERROR("failed reading unit of energy column in photon list");
@@ -1389,7 +1391,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
 	      upper=mid;
 	    }
 	  }
-	  refnumber+=cat->arf->EffArea[lower];	  
+	  refnumber+=cat->arf->EffArea[lower];
 	}
 	// END of loop over all photons in the buffer.
       }
@@ -1408,7 +1410,7 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       return(0.);
     }
   }
-  
+
   return(*(src->phrate));
 }
 
@@ -1426,7 +1428,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
   char timeref[SIMPUT_MAXSTR];
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_RET(*status, 0);
-    
+
   // Check if a timing extension has been specified.
   if (0==strlen(timeref)) {
     // The source has a constant brightness.
@@ -1434,14 +1436,14 @@ int getSimputPhotonTime(SimputCtlg* const cat,
     // Determine the average photon rate.
     float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
     CHECK_STATUS_RET(*status, 0);
-    
+
     // Check if the rate is 0.
     if (0.==avgrate) {
       return(1);
     }
     assert(avgrate>0.);
 
-    // Time intervals between subsequent photons are exponentially 
+    // Time intervals between subsequent photons are exponentially
     // distributed.
     *nexttime=prevtime+rndexp((double)1./avgrate, status);
     CHECK_STATUS_RET(*status, 0);
@@ -1467,7 +1469,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	// Determine the average photon rate.
 	float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
 	CHECK_STATUS_RET(*status, 0);
-	
+
 	// Check if the rate is 0.
 	if (0.==avgrate) {
 	  return(1);
@@ -1486,7 +1488,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	  *status=EXIT_FAILURE;
 	  char msg[SIMPUT_MAXSTR];
 	  sprintf(msg, "required photon rate (%e) higher than provided "
-		  "by photon list (%e)", 
+		  "by photon list (%e)",
 		  avgrate, phl->nphs/(phl->tstop-phl->tstart));
 	  SIMPUT_ERROR(msg);
 	  return(0);
@@ -1515,14 +1517,14 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
 	// Read the time from the file.
 	int anynul=0;
-	fits_read_col(phl->fptr, TDOUBLE, phl->ctime, phl->currrow, 1, 1, 
+	fits_read_col(phl->fptr, TDOUBLE, phl->ctime, phl->currrow, 1, 1,
 		      NULL, &newtime, &anynul, status);
 	if (EXIT_SUCCESS!=*status) {
 	  SIMPUT_ERROR("failed reading time from photon list");
 	  return(0);
 	}
 	newtime*=phl->ftime;
-	
+
 	// Check if the time lies within the requested interval.
 	if (newtime+phl->timezero+(phl->mjdref-mjdref)*24.*3600.<prevtime) {
 	  continue;
@@ -1545,7 +1547,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
       // Determine the average photon rate.
       float avgrate=getSimputPhotonRate(cat, src, prevtime, mjdref, status);
       CHECK_STATUS_RET(*status, 0);
-    
+
       // Check if the rate is 0.
       if (0.==avgrate) {
 	return(1);
@@ -1555,10 +1557,10 @@ int getSimputPhotonTime(SimputCtlg* const cat,
       // Get the light curve.
       SimputLC* lc=getSimputLC(cat, src, timeref, prevtime, mjdref, status);
       CHECK_STATUS_RET(*status, 0);
-      
+
       // Determine the photon time according to the light curve.
       // The light curve is a piece-wise constant function, so the
-      // general algorithm proposed by Klein & Roberts has to 
+      // general algorithm proposed by Klein & Roberts has to
       // be applied.
       // Step 1 in the algorithm.
       double u=getRndNum(status);
@@ -1568,9 +1570,9 @@ int getSimputPhotonTime(SimputCtlg* const cat,
       long long nperiods=0;
       long kk=getLCBin(lc, prevtime, mjdref, &nperiods, status);
       CHECK_STATUS_RET(*status, 0);
-      
+
       while ((kk<lc->nentries-1)||(lc->src_id>0)) {
-	
+
 	// If the end of the light curve is reached, check if it has
 	// been produced from a PSD. In that case one can create new one.
 	if ((kk>=lc->nentries-1)&&(lc->src_id>0)) {
@@ -1580,7 +1582,7 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	  CHECK_STATUS_RET(*status, 0);
 	}
 
-	// Determine the relative time within the kk-th interval 
+	// Determine the relative time within the kk-th interval
 	// (i.e., t=0 lies at the beginning of the kk-th interval).
 	double tk=getLCTime(lc, kk, nperiods, mjdref);
 	double t =prevtime-tk;
@@ -1609,20 +1611,20 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
 	// Step 3 in the algorithm.
 	if (u<=uk) {
-	  if (fabs(ak*stepwidth)>fabs(bk*1.e-6)) { 
-	    // Instead of checking if ak = 0., check, whether its product 
-	    // with the interval length is a very small number in comparison 
-	    // to b_kk. If ak * stepwidth is much smaller than b_kk, the 
+	  if (fabs(ak*stepwidth)>fabs(bk*1.e-6)) {
+	    // Instead of checking if ak = 0., check, whether its product
+	    // with the interval length is a very small number in comparison
+	    // to b_kk. If ak * stepwidth is much smaller than b_kk, the
 	    // rate in the interval can be assumed to be approximately constant.
 	    *nexttime=tk+
 	      (-bk+sqrt(pow(bk,2.)+pow(ak*t,2.)+2.*ak*t*bk-2.*ak*log(1.-u)/avgrate))/ak;
 	    return(0);
-	    
+
 	  } else { // ak == 0
 	    *nexttime=prevtime-log(1.-u)/(avgrate*bk);
 	    return(0);
 	  }
-	  
+
 	} else {
 	  // Step 4 (u > u_k).
 	  u=(u-uk)/(1-uk);
@@ -1635,13 +1637,13 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 	}
       }
       // END of while (kk < lc->nentries).
-    
+
       // The range of the light curve has been exceeded.
       // So the routine has failed to determine a photon time.
       return(1);
 
     } else {
-      // The timing reference does not point to any of the 
+      // The timing reference does not point to any of the
       // above extension types.
       *status=EXIT_FAILURE;
       SIMPUT_ERROR("invalid timing extension");
@@ -1652,9 +1654,9 @@ int getSimputPhotonTime(SimputCtlg* const cat,
 
 
 static void getSimputPhFromPhList(const SimputCtlg* const cat,
-				  SimputPhList* const phl, 
-				  float* const energy, 
-				  double* const ra, 
+				  SimputPhList* const phl,
+				  float* const energy,
+				  double* const ra,
 				  double* const dec,
 				  int* const status)
 {
@@ -1670,16 +1672,16 @@ static void getSimputPhFromPhList(const SimputCtlg* const cat,
       return;
     }
     *energy *=phl->fenergy;
-    
-    fits_read_col(phl->fptr, TDOUBLE, phl->cra, phl->currrow, 1, 1, 
-		  NULL, ra, &anynul, status);      
+
+    fits_read_col(phl->fptr, TDOUBLE, phl->cra, phl->currrow, 1, 1,
+		  NULL, ra, &anynul, status);
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("failed reading right ascension from photon list");
       return;
     }
     *ra *=phl->fra;
-	
-    fits_read_col(phl->fptr, TDOUBLE, phl->cdec, phl->currrow, 1, 1, 
+
+    fits_read_col(phl->fptr, TDOUBLE, phl->cdec, phl->currrow, 1, 1,
 		  NULL, dec, &anynul, status);
     if (EXIT_SUCCESS!=*status) {
       SIMPUT_ERROR("failed reading declination from photon list");
@@ -1691,7 +1693,7 @@ static void getSimputPhFromPhList(const SimputCtlg* const cat,
 
   } else {
     // Randomly select a photon from the file.
-    
+
     // Determine the maximum value of the instrument ARF.
     if (0.==phl->refarea) {
       long kk;
@@ -1701,22 +1703,22 @@ static void getSimputPhFromPhList(const SimputCtlg* const cat,
 	}
       }
     }
-    
+
     while(1) {
       // Determine a random photon within the list.
       long ii=(long)(getRndNum(status)*phl->nphs);
       CHECK_STATUS_VOID(*status);
-      
+
       // Read the photon energy.
       int anynul=0;
-      fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1, 
+      fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii+1, 1, 1,
 		    NULL, energy, &anynul, status);
       if (EXIT_SUCCESS!=*status) {
 	SIMPUT_ERROR("failed reading energy from photon list");
 	return;
       }
       *energy *=phl->fenergy;
-      
+
       // Determine the ARF value for the photon energy.
       long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
       while (upper>lower) {
@@ -1727,29 +1729,29 @@ static void getSimputPhFromPhList(const SimputCtlg* const cat,
 	  upper=mid;
 	}
       }
-      
+
       // Randomly determine according to the effective area
       // of the instrument, whether this photon is seen or not.
       double r=getRndNum(status);
       CHECK_STATUS_VOID(*status);
       if (r<cat->arf->EffArea[lower]/phl->refarea) {
 	// Read the position of the photon.
-	fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1, 
-		      NULL, ra, &anynul, status);      
+	fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii+1, 1, 1,
+		      NULL, ra, &anynul, status);
 	if (EXIT_SUCCESS!=*status) {
 	  SIMPUT_ERROR("failed reading right ascension from photon list");
 	  return;
 	}
 	*ra *=phl->fra;
-	
-	fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1, 
+
+	fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii+1, 1, 1,
 		      NULL, dec, &anynul, status);
 	if (EXIT_SUCCESS!=*status) {
 	  SIMPUT_ERROR("failed reading declination from photon list");
 	  return;
 	}
 	*dec *=phl->fdec;
-     
+
 	// Increase the counter of the number of returned photons and
 	// check if it exceeds one fifth of the total number of available
 	// photons.
@@ -1766,7 +1768,7 @@ static void getSimputPhFromPhList(const SimputCtlg* const cat,
 	  }
 	  SIMPUT_WARNING(msg);
 	}
-      
+
 	return;
       }
     }
@@ -1783,14 +1785,14 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 				double* const dec,
 				int* const status)
 {
-  // Determine if we have a Light Curve or a single spectrum is                                                                      
-  // given:                                                                                                    
+  // Determine if we have a Light Curve or a single spectrum is
+  // given:
 
   // We set a flag indicating wether we have a spectra-based
   // lightcurve or not:
   int speclightcurve=0;
 
-  // Determine the timing extension.                                                                                                 
+  // Determine the timing extension.
   char timeref[SIMPUT_MAXSTR];
   getSrcTimeRef(cat, src, timeref);
   CHECK_STATUS_VOID(*status);
@@ -1801,11 +1803,11 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   // We declare a light curve for future possible use:
   SimputLC* lc=NULL;
   if (EXTTYPE_LC==timetype) {
-    // Get the respective light curve.                                                                                               
+    // Get the respective light curve.
     lc=getSimputLC(cat, src, timeref, currtime, mjdref, status);
     CHECK_STATUS_VOID(*status);
 
-    // Check if there is a spectrum column in the light curve.                                                                       
+    // Check if there is a spectrum column in the light curve.
     if (NULL!=lc->spectrum) {
       // In this case we should use 2 spectra in each light curve
       // bin in order to interpolate information from both spectra.
@@ -1813,7 +1815,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
     }
   }
 
-  // Determine the references to the spectrum and 
+  // Determine the references to the spectrum and
   // image for the updated photon arrival time.
   char specref[SIMPUT_MAXSTR];
   getSimputSrcSpecRef(cat, src, currtime, mjdref, specref, status);
@@ -1856,7 +1858,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       *energy=b_energy;
     }
     if (EXTTYPE_PHLIST==imagtype) {
-      // Shift the photon position according to the 
+      // Shift the photon position according to the
       // RA,Dec values defined for this source in the catalog.
 
       // Apply IMGSCAL.
@@ -1885,19 +1887,19 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       f.z=r.x      *sindec +     0.0   + r.z      *cosdec;
 
       // Determine RA and Dec of the photon.
-      calculate_ra_dec(f, ra, dec); 
+      calculate_ra_dec(f, ra, dec);
     }
   }
 
 
   // ---
-  // If the spectrum does NOT refer to a photon list, determine the 
+  // If the spectrum does NOT refer to a photon list, determine the
   // photon energy from a spectrum.
-  
-  // Determine if we have a Light Curve or a single spectrum is 
+
+  // Determine if we have a Light Curve or a single spectrum is
   // given:
 
-  // Get a random number in the interval [0,1].                                                                                                                                  
+  // Get a random number in the interval [0,1].
   // We will use it afterwards for obtaining the photon energy:
   double rnd=getRndNum(status);
   CHECK_STATUS_VOID(*status);
@@ -1905,7 +1907,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   assert(rnd<=1.);
 
   if (speclightcurve) {
-    // If we have a lightcurve, we take the next spectrum too in 
+    // If we have a lightcurve, we take the next spectrum too in
     // order to perform the interpolation. We first suppose that
     // all spectra are equally binned:
 
@@ -1915,13 +1917,13 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       getSimputSrcSpecRefNext(cat, src, currtime, mjdref, specref_next, status);
       CHECK_STATUS_VOID(*status);
 
-      // Determine the spectra.               
+      // Determine the spectra.
       SimputSpec* spec=getSimputSpec(cat, specref, status);
       SimputSpec* spec_next=getSimputSpec(cat, specref_next, status);
       CHECK_STATUS_VOID(*status);
 
       // We determine the interpolation factors between the
-      // two spectra. For this purppose, we need the time of 
+      // two spectra. For this purppose, we need the time of
       //previous and next phases:
       long long nperiods;
       long bin_prev_spec=getLCBin(lc, currtime, mjdref, &nperiods, status);
@@ -1942,18 +1944,18 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
     	  SIMPUT_ERROR(" failure to load spectrum for light curve: no phase or light curve information given\n");
       }
 
-     
+
       // We declare and compute the interpolation factors:
       double af=(time_next_spec-currtime)/(time_next_spec-time_prev_spec);
       double bf=1.-af;
 
-      // Multiply the random number with total photon rate 
+      // Multiply the random number with total photon rate
       // (i.e. the spectrum does not have to be normalized).
       rnd*=(af*spec->distribution[cat->arf->NumberEnergyBins-1]+
 	    bf*spec_next->distribution[cat->arf->NumberEnergyBins-1]);
-      
-      // Determine the corresponding point in the spectral                                                                                                                       
-      // distribution (using binary search).                                                                                                                                    
+
+      // Determine the corresponding point in the spectral
+      // distribution (using binary search).
       long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
       while (upper>lower) {
         mid=(lower+upper)/2;
@@ -1964,27 +1966,27 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
         }
       }
 
-      // Return the corresponding photon energy.                                                                                                                                 
+      // Return the corresponding photon energy.
       *energy=
         cat->arf->LowEnergy[lower] +
         getRndNum(status)*
         (cat->arf->HighEnergy[lower]-cat->arf->LowEnergy[lower]);
       CHECK_STATUS_VOID(*status);
     }
-  } else { 
+  } else {
     // If there is no lightcurve we follow the usual process:
 
     if (EXTTYPE_MIDPSPEC==spectype) {
       // Determine the spectrum.
       SimputSpec* spec=getSimputSpec(cat, specref, status);
       CHECK_STATUS_VOID(*status);
-      
-      // Multiply the random number with the total photon rate 
+
+      // Multiply the random number with the total photon rate
       // (i.e. the spectrum does not have to be normalized).
       rnd*=spec->distribution[cat->arf->NumberEnergyBins-1];
 
-      // Determine the corresponding point in the spectral                                                                                                                        
-      // distribution (using binary search).                                                                                                                                  
+      // Determine the corresponding point in the spectral
+      // distribution (using binary search).
       long upper=cat->arf->NumberEnergyBins-1, lower=0, mid;
       while (upper>lower) {
 	mid=(lower+upper)/2;
@@ -1995,23 +1997,23 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 	}
       }
 
-      // Return the corresponding photon energy.                                                                                                                                    
+      // Return the corresponding photon energy.
       *energy=
 	cat->arf->LowEnergy[lower] +
 	getRndNum(status)*
 	(cat->arf->HighEnergy[lower]-cat->arf->LowEnergy[lower]);
-      CHECK_STATUS_VOID(*status); 
+      CHECK_STATUS_VOID(*status);
     }
-  }  
-  
+  }
+
   // END of determine the photon energy.
-  // --- 
-  
-  
+  // ---
+
+
   // ---
   // If the image does NOT refer to a photon list, determine the
   // spatial information.
-  
+
   // Point-like sources.
   if (EXTTYPE_NONE==imagtype) {
     *ra =src->ra;
@@ -2061,13 +2063,13 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Now xl and yl have pixel positions [long pixel coordinates].
 
       // Create a temporary wcsprm data structure, which can be modified
-      // to fit this particular source. The wcsprm data structure contained 
-      // in the image should not be modified, since it is used for all 
+      // to fit this particular source. The wcsprm data structure contained
+      // in the image should not be modified, since it is used for all
       // sources including the image.
       wcscopy(1, img->wcs, &wcs);
 
       // Set the position to the origin and assign the correct scaling.
-      // TODO: This assumes that the image WCS is equivalent to the 
+      // TODO: This assumes that the image WCS is equivalent to the
       // coordinate system used in the catalog!!
       wcs.crval[0] =src->ra *180./M_PI;
       wcs.crval[1] =src->dec*180./M_PI;
@@ -2076,7 +2078,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       wcs.flag=0;
 
       // Check that CUNIT is set to "deg". Otherwise there will be a conflict
-      // between CRVAL [deg] and CDELT [different unit]. 
+      // between CRVAL [deg] and CDELT [different unit].
       // TODO This is not required by the standard.
       if (((0!=strcmp(wcs.cunit[0], "deg     ")) &&
     		  (0!=strcmp(wcs.cunit[0], "degree  ")) &&
@@ -2094,7 +2096,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
     	  break;
       }
 
-      // Determine floating point pixel positions shifted by 0.5 in 
+      // Determine floating point pixel positions shifted by 0.5 in
       // order to match the FITS conventions and with a randomization
       // over the pixels.
       double xd=(double)xl + 0.5 + getRndNum(status);
@@ -2102,7 +2104,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       double yd=(double)yl + 0.5 + getRndNum(status);
       CHECK_STATUS_BREAK(*status);
 
-      // Rotate the image (pixel coordinates) by IMGROTA around the 
+      // Rotate the image (pixel coordinates) by IMGROTA around the
       // reference point.
       double xdrot=
 	(xd-wcs.crpix[0])*cos(src->imgrota) +
@@ -2110,9 +2112,9 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       double ydrot=
 	-(xd-wcs.crpix[0])*sin(src->imgrota) +
 	 (yd-wcs.crpix[1])*cos(src->imgrota) + wcs.crpix[1];
-      
+
       // Convert the long-valued pixel coordinates to double values,
-      // including a randomization over the pixel and transform from 
+      // including a randomization over the pixel and transform from
       // pixel coordinates to RA and DEC ([rad]) using the  WCS information.
       p2s(&wcs, xdrot, ydrot, ra, dec, status);
       CHECK_STATUS_BREAK(*status);
@@ -2124,7 +2126,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       while(*ra<0.) {
 	*ra+=2.*M_PI;
       }
-      
+
     } while(0); // END of error handling loop.
 
     // Release memory.
@@ -2291,7 +2293,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       // Point-like source.
       extension=0.;
       break;
-      
+
     } else if (EXTTYPE_IMAGE==imagtype) {
       // Extended source => determine the maximum extension.
       double maxext=0.;
@@ -2299,13 +2301,13 @@ float getSimputSrcExt(SimputCtlg* const cat,
       SimputImg* img=getSimputImg(cat, imagref, status);
       CHECK_STATUS_BREAK(*status);
 
-      // Copy the wcsprm structure and change the size 
+      // Copy the wcsprm structure and change the size
       // according to IMGSCAL.
       wcscopy(1, img->wcs, &wcs);
 
       // Change the scale of the image according to the source specific
       // IMGSCAL property.
-      wcs.crval[0] = 0.; 
+      wcs.crval[0] = 0.;
       wcs.crval[1] = 0.;
       wcs.cdelt[0]*= 1./src->imgscal;
       wcs.cdelt[1]*= 1./src->imgscal;
@@ -2338,7 +2340,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       if (ext>maxext) {
 	maxext = ext;
       }
-      
+
       // Check upper left corner.
       px=0.5;
       py=img->naxis2*1. + 0.5;
@@ -2351,7 +2353,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
       if (ext>maxext) {
 	maxext=ext;
       }
-      
+
       // Check upper right corner.
       px=img->naxis1*1. + 0.5;
       py=img->naxis2*1. + 0.5;
@@ -2364,14 +2366,14 @@ float getSimputSrcExt(SimputCtlg* const cat,
       if (ext>maxext) {
 	maxext=ext;
       }
-      
+
       extension=(float)maxext;
 
     } else if (EXTTYPE_PHLIST==imagtype) {
       // Get the photon list.
       SimputPhList* phl=getSimputPhList(cat, imagref, status);
       CHECK_STATUS_BREAK(*status);
-      
+
       // Determine the maximum extension by going through
       // the whole list of photons.
       double maxext=0.;
@@ -2383,13 +2385,13 @@ float getSimputSrcExt(SimputCtlg* const cat,
 	// Read a block of photons.
 	int anynul=0;
 	long nphs=MIN(buffsize, phl->nphs-(ii*buffsize));
-	fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii*buffsize+1, 
+	fits_read_col(phl->fptr, TDOUBLE, phl->cra, ii*buffsize+1,
 		      1, nphs, NULL, rabuffer, &anynul, status);
 	if (EXIT_SUCCESS!=*status) {
 	  SIMPUT_ERROR("failed reading right ascension from photon list");
 	  return(0.);
 	}
-	fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii*buffsize+1, 
+	fits_read_col(phl->fptr, TDOUBLE, phl->cdec, ii*buffsize+1,
 		      1, nphs, NULL, decbuffer, &anynul, status);
 	if (EXIT_SUCCESS!=*status) {
 	  SIMPUT_ERROR("failed reading declination from photon list");
@@ -2416,4 +2418,3 @@ float getSimputSrcExt(SimputCtlg* const cat,
 
   return(extension);
 }
-

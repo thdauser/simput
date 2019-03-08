@@ -1,3 +1,24 @@
+/*
+   This file is part of SIXTE.
+
+   SIXTE is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIXTE is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                  Erlangen-Nuernberg
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <pil.h>
@@ -39,7 +60,7 @@ int main (int argc,char **argv) {
   if ((err=PILGetAsString("coordsys",coorsys))!=PIL_OK) {
     errx(1,"Problem with getting coordsys parameter");
   }
-  
+
   int coord=-1;
   if (strncasecmp(coorsys,"J2000",PIL_LINESIZE)==0) {
     coord=J2000;
@@ -109,7 +130,7 @@ int main (int argc,char **argv) {
   if((err=PILPutReal("nh",column))!=PIL_OK) {
     errx(1,"Problem writing nh parameter");
   }
- 
+
   if (verbosity>0) {
     printf("N_H = %e cm^2\n",column);
   }

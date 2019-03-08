@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "simputpsd.h"
@@ -52,9 +54,9 @@ int simputpsd_main()
     status=simputpsd_getpar(&par);
     CHECK_STATUS_BREAK(status);
 
-    // Check the input type for the power spectrum: individual 
-    // components or and ASCII file. Only one of these two option 
-    // may be used. In case multiple of them exist, throw an error 
+    // Check the input type for the power spectrum: individual
+    // components or and ASCII file. Only one of these two option
+    // may be used. In case multiple of them exist, throw an error
     // message and abort.
 
     if ((0==strcmp(par.PSDFile, "none"))||
@@ -66,7 +68,7 @@ int simputpsd_main()
     if (strlen(par.PSDFile)>0) {
       noptions++;
     }
-    if ((par.LFQ!=0) || (par.HBOQ!=0) || 
+    if ((par.LFQ!=0) || (par.HBOQ!=0) ||
 	(par.Q1Q!=0) || (par.Q2Q!=0) || (par.Q3Q!=0)) {
       noptions++;
     }
@@ -91,7 +93,7 @@ int simputpsd_main()
     CHECK_STATUS_BREAK(status);
 
     if (strlen(par.PSDFile)>0) {
-    
+
       // Open the ASCII file with the PSD.
       asciipsd=fopen(par.PSDFile,"r");
       CHECK_NULL_BREAK(asciipsd, status, "could not open input PSD file");
@@ -123,7 +125,7 @@ int simputpsd_main()
       long ii;
       for (ii=0; ii<nlines; ii++) {
 	if (fscanf(asciipsd, "%f %f\n",
-		   &(simputpsd->frequency[ii]), 
+		   &(simputpsd->frequency[ii]),
 		   &(simputpsd->power[ii]))<2) {
 	  SIMPUT_ERROR("failed reading PSD from ASCII file");
 	  status=EXIT_FAILURE;
@@ -148,7 +150,7 @@ int simputpsd_main()
 	  exp(log(par.PSDfmin)+ii*(log(par.PSDfmax/par.PSDfmin)/par.PSDnpt));
       }
 
-      // Calculate Lorentzians using Formula (5.1) in Pottschmidt, K.: 
+      // Calculate Lorentzians using Formula (5.1) in Pottschmidt, K.:
       // Accretion Disk Weather of Black Hole X-Ray Binaries (2002), p. 95.
       float* Lzero=NULL;
       float* LHBO =NULL;
@@ -228,10 +230,10 @@ int simputpsd_main()
       }
 
       // Release memory.
-      free(Lzero); 
-      free(LHBO); 
-      free(LQ1); 
-      free(LQ2); 
+      free(Lzero);
+      free(LHBO);
+      free(LQ1);
+      free(LQ2);
       free(LQ3);
     }
 
@@ -265,7 +267,7 @@ int simputpsd_main()
     char* timeref=(char*)malloc(32*sizeof(char));
     CHECK_NULL_BREAK(timeref, status, "memory allocation failed");
     sprintf(timeref, "[%s,%d]", par.Extname, par.Extver);
-    fits_write_col(cat->fptr, TSTRING, cat->ctiming, 1, 1, 1, 
+    fits_write_col(cat->fptr, TSTRING, cat->ctiming, 1, 1, 1,
     		   &timeref, &status);
     CHECK_STATUS_BREAK(status);
 
@@ -298,14 +300,14 @@ int simputpsd_getpar(struct Parameters* const par)
   char* sbuffer=NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS; 
+  int status=EXIT_SUCCESS;
 
   // Read all parameters via the ape_trad_ routines.
   status=ape_trad_query_file_name("Simput", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the SIMPUT catalog failed");
     return(status);
-  } 
+  }
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
@@ -435,5 +437,3 @@ int simputpsd_getpar(struct Parameters* const par)
 
   return(status);
 }
-
-

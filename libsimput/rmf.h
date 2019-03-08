@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef RMF_H
@@ -49,7 +51,7 @@ struct RMF* loadRMF(char* const filename, int* const status);
 
 /** Load an RSP matrix and the corresponding EBOUNDS from a response
     file and split the RSP into an ARF and an RMF. */
-void loadArfRmfFromRsp(char* const filename, 
+void loadArfRmfFromRsp(char* const filename,
 		       struct ARF** arf,
 		       struct RMF** rmf,
 		       int* const status);
@@ -64,8 +66,8 @@ void freeRMF(struct RMF* const rmf);
     input energy. The channel number can start at 0, 1, or any other
     positive value defined in the RMF. The return value '-1' means
     that no appropriate channel could be determined. */
-void returnRMFChannel(struct RMF *rmf, 
-		      const float energy, 
+void returnRMFChannel(struct RMF *rmf,
+		      const float energy,
 		      long* const channel);
 
 /** Load the EBOUNDS extension from an RMF or RSP file. */
@@ -90,7 +92,7 @@ long getEBOUNDSChannel(const float energy, const struct RMF* const rmf);
     returned energy is given in the same units as the EBOUNDS,
     (usually [keV]). */
 void getEBOUNDSEnergyLoHi(const long channel,
-			  const struct RMF* const rmf, 
+			  const struct RMF* const rmf,
 			  float* const lo,
 			  float* const hi,
 			  int* const status);

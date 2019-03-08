@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "simputsrc.h"
@@ -52,7 +54,7 @@ int simputsrc_main()
 
     // ---- Main Part ----
 
-    // Check if the SIMPUT file already exists and remove the old 
+    // Check if the SIMPUT file already exists and remove the old
     // one if necessary.
     int exists;
     fits_file_exists(par.Simput, &exists, &status);
@@ -112,14 +114,14 @@ int simputsrc_getpar(struct Parameters* const par)
   char* sbuffer=NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS; 
+  int status=EXIT_SUCCESS;
 
   // Read all parameters via the ape_trad_ routines.
   status=ape_trad_query_file_name("Simput", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the SIMPUT catalog failed");
     return(status);
-  } 
+  }
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
@@ -175,4 +177,3 @@ int simputsrc_getpar(struct Parameters* const par)
 
   return(status);
 }
-

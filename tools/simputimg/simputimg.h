@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef SIMPUTIMG_H
@@ -33,7 +35,7 @@
 struct Parameters {
   /** File name of the SIMPUT file the image should be attached to. */
   char Simput[SIMPUT_MAXSTR];
-  
+
   /** EXTNAME of the generated HDU. */
   char Extname[SIMPUT_MAXSTR];
   /** EXTVER of the generated HDU. */
@@ -48,4 +50,3 @@ int simputimg_getpar(struct Parameters* const par);
 
 
 #endif /* SIMPUTIMG_H */
-

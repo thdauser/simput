@@ -1,3 +1,24 @@
+/*
+   This file is part of SIXTE.
+
+   SIXTE is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIXTE is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                  Erlangen-Nuernberg
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <pil.h>
@@ -180,7 +201,7 @@ int find_grid(float *array, int length, float number){
       }
 
     else{
-      low=mid;	
+      low=mid;
       }
     mid=(high+low)/2;
   }
@@ -282,11 +303,11 @@ void Specabsorb(int nhind, struct speclist *ispec, SimputMIdpSpec** ospec){
 
 void getSpecfile(char* reference, char **filename){
 // returns the filename which is included in a simput spectrum reference
-  
+
   int length=0;
   int found=0;
   int ii;
-  
+
   while(reference[length]!='\0' && found!=1){
     if(reference[length]=='[' && reference[length+1]=='N' && reference[length+2]=='A' && reference[length+3]=='M' && reference[length+4]=='E'){
       found=1;
@@ -294,78 +315,78 @@ void getSpecfile(char* reference, char **filename){
     else
       length++;
     }
-    
+
   *filename=(char*)malloc((length+1)*sizeof(char));
   if(*filename==NULL){
     puts("ERROR: unable to allocate memory for filename.");
     exit(1);
     }
-    
+
   for(ii=0; ii<length; ii++){
     (*filename)[ii]=reference[ii];
     }
   (*filename)[length]='\0';
-  
+
 }
 
 int findSpecfile(char* filename){
 //returns the index of the file in the buffer
-  
+
   if(specfilenentries==0)
     return -1;
-  
+
   int fileindex=0;
   while(fileindex<specfilenentries && strcmp(specfiles[fileindex], filename)!=0){
     fileindex++;
     }
-  
+
   if(fileindex==specfilenentries){
     fileindex=-1;
     printf("findSpecfile: specfiles[0]=%s\n", specfiles[0]);
   }
-  
+
   return fileindex;
-  
+
 }
 
 void insertNewSpecfile(char* filename){
 // inserts a new input file into the buffer
-  
+
   specfilenentries++;
-  
+
   specfiles=(char**)realloc(specfiles, specfilenentries*sizeof(char*));
   if(specfiles==NULL){
     puts("ERROR: wasn't able to (re)allocate memory for specfiles-array");
     exit(1);
     }
-    
+
   specfiles[specfilenentries-1]=(char*)malloc(MAXSTRING*sizeof(char));
   if(specfiles[specfilenentries-1]==NULL){
     puts("ERROR: wasn't able to allocate memory for new specfilename");
     exit(1);
     }
   strcpy(specfiles[specfilenentries-1], filename);
-  
+
   specs=(struct speclist**)realloc(specs, specfilenentries*sizeof(struct speclist*));
   if(specs==NULL){
     puts("ERROR: wasn't able to (re)allocate memory for specs-array");
     exit(1);
     }
   specs[specfilenentries-1]=return_nil();
-  
+
   oldspecs=(struct speclist**)realloc(oldspecs, specfilenentries*sizeof(struct speclist*));
   if(oldspecs==NULL){
     puts("ERROR: wasn't able to (re)allocate memory for oldspecs-array");
     exit(1);
     }
   oldspecs[specfilenentries-1]=return_nil();
-  
+
 }
 
 void getParameters(int argc, char **argv, par *pars){
 //reads input parameters via PIL
   int parameter_read;
-	
+
   if(PIL_OK!=(parameter_read=PILInit(argc, argv))){
     printf("ERROR: PILInit failed. %s\n", PIL_err_handler(parameter_read));
     exit(1);
@@ -469,7 +490,7 @@ void NHgridInit(float NHmin, float NHmax, float NHstep){
 double integrateBSpec(long nentries, float *energy, float *pflux, float a, float b){
   //This function integrates the the spectrum from a to b
   static int isav=0;
-  if ( isav>=nentries || !(energy[isav]<=a && energy[isav+1]>a)) { 
+  if ( isav>=nentries || !(energy[isav]<=a && energy[isav+1]>a)) {
   	isav=find_grid(energy, nentries, a);
    	}
   int ii=isav;
@@ -526,7 +547,7 @@ void doSrc(SimputCtlg* icat, SimputCtlg** ocat, int srcind, char *specfilename, 
   //NH-grid
   int gridind=(int)((lognh-nhgrid[0])/nhstep);
   lognh=nhgrid[gridind];
-  
+
   //get name of spectrum file
   SimputGetSpecFileExt(src[donesrc]->spectrum, &specfile);
   //check if file is already known
@@ -547,10 +568,10 @@ void doSrc(SimputCtlg* icat, SimputCtlg** ocat, int srcind, char *specfilename, 
 
   struct speclist* findoldspec=check_if_exists(oldspecs[fileknown], inspecname, &exist);
   searchlev=0;
-  
+
   SimputMIdpSpec* ispec =NULL;
   char specname[2*MAXSTRING], specref[2*MAXSTRING], tempspec[2*MAXSTRING];
-  
+
   if(exist==1){
     cacheload++;
     if(findoldspec->emin==src[donesrc]->e_min && findoldspec->emax==src[donesrc]->e_max){
@@ -578,7 +599,7 @@ void doSrc(SimputCtlg* icat, SimputCtlg** ocat, int srcind, char *specfilename, 
   sprintf(tempspec,"%s[SPEC][NAME=='%s']", tempfilename, specname);
   struct speclist* findspec=check_if_exists(specs[fileknown], specname, &exist);
   searchlev=0;
-  
+
   //if spectrum already exists, take its integral or integrate again
   if(exist==1){
     cacheabsorbed++;
@@ -742,7 +763,7 @@ int main (int argc,char **argv) {
   //main loop: gets NH-values for source positions,
   //loads spectra, calculates absorption, absorbes
   for(ii=0; ii<nentries; ii++){
-	searchlev=0; 
+	searchlev=0;
 	doSrc(rawcatalog, &ocat, ii, pars.ospec, pars.tempfile, &status);
     if(ii%(nentries/100)==0){
       printf("%d/%ld (%d %%) sources absorbed.\n", ii, nentries, (int)(ii*100/nentries));
@@ -775,7 +796,7 @@ int main (int argc,char **argv) {
       printf("ERROR: Output file \"%s\" can't be opened.\n", pars.ocat);
       exit(1);
       }
-   
+
     if(fits_copy_hdu(ifptr, ofptr, 0, &status)){
       fits_report_error(stderr, status);
       }
@@ -788,20 +809,20 @@ int main (int argc,char **argv) {
     if(remove(pars.tempfile)!=0)printf("ERROR deleting temporary file\"%s\"\n", pars.tempfile);
 
   }
-  
+
   fitsfile *ofptr;
   char oext[3*MAXSTRING];
   sprintf(oext,"%s[SRC_CAT]", pars.ocat);
   puts("test status...");
   fits_report_error(stderr, status);
   puts("status tested.");
-  
+
   if(fits_open_file(&ofptr, oext, READWRITE, &status)){
       fits_report_error(stderr, status);
       printf("ERROR: File \"%s\" does not exist.\n", oext);
       exit(1);
       }
-  
+
   fits_write_comment(ofptr, "Galactic absorption with galabs. N_H value from Leiden/Argentine/Bonn Galactic HI Survey", &status);
   fits_update_key(ofptr, TFLOAT, "GalNHmin", &pars.NHmin, "minimum of GalNH-grid", &status);
   fits_update_key(ofptr, TFLOAT, "GalNHmax", &pars.NHmax, "maximum of GalNH-grid", &status);
@@ -814,4 +835,3 @@ int main (int argc,char **argv) {
   printf("Number of call of cached\n              absorbed spectra:   %lld\n\n", cacheabsorbed);
 
 }
-

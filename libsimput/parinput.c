@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Thomas Dauser, Joern Wilms FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "parinput.h"
@@ -82,7 +84,7 @@ void query_simput_parameter_file_name(char *name, char **field, int *status){
 
   if (is_empty_file_name(buf)) {
     *field=malloc(sizeof(char));
-    CHECK_NULL_VOID(buf, *status,"memory allocation failed"); 
+    CHECK_NULL_VOID(buf, *status,"memory allocation failed");
     field[0]='\0';
   } else {
     *field=strdup(buf);

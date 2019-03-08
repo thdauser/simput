@@ -1,3 +1,24 @@
+/*
+   This file is part of SIXTE.
+
+   SIXTE is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIXTE is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                  Erlangen-Nuernberg
+*/
+
 #include "labnh.h"
 #include "posstring.h"
 
@@ -93,7 +114,7 @@ double angdist(double l1, double b1, double l2, double b2) {
 
   double dist=atan2(nom,denom);
 
-  return dist/deg2rad; 
+  return dist/deg2rad;
 }
 
 
@@ -110,7 +131,7 @@ void nh_sampling(int sampl) {
 }
 
 
-// initializer function. 
+// initializer function.
 int nhinit() {
   if (verbosity>2) {
     warnx("Initializing LABNH function");
@@ -185,7 +206,7 @@ int nhinit() {
     warnx("FITS file has %i axes, but exactly three are required.\n",naxis);
     return 5;
   }
-  
+
   // ... and suck it in
   LONGLONG numpxl=(nhmap->naxes[0])*(nhmap->naxes[1])*(nhmap->naxes[2]);
   long *fpixel=malloc(3*sizeof(long));
@@ -311,7 +332,7 @@ double nh_gal(double lii, double bii) {
     fprintf(stderr," nearest map pixel: %3li/%3li\n",(long) xpix,(long) ypix);
   }
 
-  // 
+  //
   // nearest neighbor weighing
   // (not really optimal as the LAB survey does not come
   // in an equal area map, but good enough for government
@@ -346,7 +367,7 @@ double nh_gal(double lii, double bii) {
 	}
 	double pxllong=world[nhmap->wcs->lng];
 	double pxllat=world[nhmap->wcs->lat];
-	
+
 	if (verbosity>0){
 
 	  double pxllongrad=pxllong;

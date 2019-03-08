@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef VECTOR_H
@@ -65,16 +67,16 @@ Vector vector_difference(const Vector x2, const Vector x1);
 
 /** Function interpolates between two vectors at time t1 and t2 for
     the specified time and returns the interpolated vector. */
-Vector interpolate_vec(const Vector v1, const double t1, 
-		       const Vector v2, const double t2, 
+Vector interpolate_vec(const Vector v1, const double t1,
+		       const Vector v2, const double t2,
 		       const double time);
 
 /** Interpolate between 2 vectors assuming that they describe a great
     circle on the unit sphere. The parameter 'phase' should have a
     value in the interval [0,1]. The return value is a normalized
     vector. */
-Vector interpolateCircleVector(const Vector v1, 
-			       const Vector v2, 
+Vector interpolateCircleVector(const Vector v1,
+			       const Vector v2,
 			       const double phase);
 
 /** Function determines the equatorial coordinates of right ascension
@@ -82,11 +84,11 @@ Vector interpolateCircleVector(const Vector v1,
     direction. The angles are calculated in [rad]. The given vector
     doesn't have to be normalized. */
 void calculate_ra_dec(/** Direction. Does not have to be normalized. */
-		      const Vector v, 
-		      /** Right ascension. Units: [rad], Interval: [0;2*pi]. */ 
+		      const Vector v,
+		      /** Right ascension. Units: [rad], Interval: [0;2*pi]. */
 		      double* const ra,
 		      /** Declination. Units: [rad], Interval: [-pi/2;pi/2]. */
-		      double* const dec); 
+		      double* const dec);
 
 /** Returns the value of the k-th dimension of a vector (k=0 ->
     x-value, k=1 -> y-value, k=2 -> z-value). */

@@ -16,10 +16,12 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #ifndef COMMON_H
-#define COMMON_H 
+#define COMMON_H
 
 /////////////////////////////////////////////////////////////////
 // Includes.
@@ -60,7 +62,7 @@
 
     1: error messages and warnings
 
-    2: error messages, warnings, and informational output. 
+    2: error messages, warnings, and informational output.
 
     The chatter level can be defined as a compiler flag. If it is not
     set externally, use the default value of 1. */
@@ -162,7 +164,7 @@ struct SimputSrcBuffer {
   // The array is used to replace the oldest source in the storage.
   long* rownums;
 
-  // Array with a size corresponding to the number of entries 
+  // Array with a size corresponding to the number of entries
   // in the catalog. Each entry in the array refers to the index
   // of the corresponding source in the storage. If the respective
   // source is not contained in the storage, the value in the array
@@ -238,7 +240,7 @@ void insertSimputExttypeBuffer(void** buffer,
 
 struct SimputMIdpSpecBuffer* newSimputMIdpSpecBuffer(int* const status);
 void freeSimputMIdpSpecBuffer(struct SimputMIdpSpecBuffer** sb);
-SimputMIdpSpec* searchSimputMIdpSpecBuffer(void* buffer, 
+SimputMIdpSpec* searchSimputMIdpSpecBuffer(void* buffer,
 					   const char* const filename);
 void insertSimputMIdpSpecBuffer(void** buffer,
 				SimputMIdpSpec* const spec,
@@ -256,7 +258,7 @@ void freeSimputSpec(SimputSpec** const spec);
 
 struct SimputSpecBuffer* newSimputSpecBuffer(int* const status);
 void freeSimputSpecBuffer(struct SimputSpecBuffer** sb);
-SimputSpec* searchSimputSpecBuffer(void* buffer, 
+SimputSpec* searchSimputSpecBuffer(void* buffer,
 				   const char* const filename);
 void insertSimputSpecBuffer(void** buffer,
 			    SimputSpec* const spec,

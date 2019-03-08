@@ -15,6 +15,8 @@
 !
 !
 !   Copyright 2007-2014 Christian Schmid, FAU
+!   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+!                       Erlangen-Nuernberg
 
 
 program fortran_sample
@@ -37,7 +39,7 @@ program fortran_sample
   type(simspec), pointer :: spec
 
   ! Row number in the catalog (counter variable).
-  integer(kind=c_long) :: row = 1 
+  integer(kind=c_long) :: row = 1
   ! Bin number in the spectrum (counter variable).
   integer(kind=c_long) :: entry
 
@@ -96,15 +98,14 @@ program fortran_sample
   end do
   ! END of printing out the spectrum of the first source in the catalog.
 
-       
+
 
   ! Close the SIMPUT catalog FITS file.
   write(*,*) "Close SIMPUT catalog ..."
   call simfrctl(cat, status)
- 
+
   ! Print the error status.
   write(*,*) "Error status: ", status
   write(*,*) "Finished."
 
 end program fortran_sample
-

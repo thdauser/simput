@@ -1,3 +1,24 @@
+/*
+   This file is part of SIXTE.
+
+   SIXTE is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   any later version.
+
+   SIXTE is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+   GNU General Public License for more details.
+
+   For a copy of the GNU General Public License see
+   <http://www.gnu.org/licenses/>.
+
+
+   Copyright 2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                  Erlangen-Nuernberg
+*/
+
 #include "posstring.h"
 
 #include <math.h>
@@ -21,7 +42,7 @@ double parse_posstring(const char *str, const int type) {
   // if type is 3 ( = HOURPOS), then this string is a right ascension
   //   in case the position is given in dd:mm:ss.ss notation, an
   //   automatic conversion to degrees is performed
-  //   
+  //
 
   // match a double first
   double value;
@@ -37,7 +58,7 @@ double parse_posstring(const char *str, const int type) {
     doubstr=0;
 
     // determine the sign. Note: any whitespace before
-    // sign is already removed by the PIL, so this 
+    // sign is already removed by the PIL, so this
     // approach should always work
     double sign=+1;
     if (str[0]=='-' || str[0]=='+') {
@@ -94,7 +115,7 @@ char *posstring(double position, const int type) {
   // format a position
   // type is as parse_posstring above, the angle position
   // is assumed to be IN DEGREES
-  
+
   char *result;
 
   if (type==HOURPOS) { position=position/15.;}
@@ -127,7 +148,7 @@ char *posstring(double position, const int type) {
       }
     }
   }
-  
+
   if ( type==HOURPOS) {
     result=malloc(13);
     if (result==NULL) {

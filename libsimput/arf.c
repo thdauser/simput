@@ -16,6 +16,8 @@
 
 
    Copyright 2007-2014 Christian Schmid, FAU
+   Copyright 2015-2019 Remeis-Sternwarte, Friedrich-Alexander-Universitaet
+                       Erlangen-Nuernberg
 */
 
 #include "arf.h"
@@ -38,7 +40,7 @@ struct ARF* getARF(int* const status)
   arf->Detector[0]='\0';
   arf->Filter[0]='\0';
   arf->ARFExtensionName[0]='\0';
-  
+
   return(arf);
 }
 
@@ -72,7 +74,7 @@ struct ARF* getARFfromarrays(long NumberEnergyBins, float low_energy[], float hi
 }
 
 
-struct ARF* loadARF(char* filename, int* const status) 
+struct ARF* loadARF(char* filename, int* const status)
 {
   struct ARF* arf=getARF(status);
   CHECK_STATUS_RET(*status, arf);
@@ -82,7 +84,7 @@ struct ARF* loadARF(char* filename, int* const status)
   fitsfile* fptr=NULL;
   fits_open_file(&fptr, filename, READONLY, status);
   CHECK_STATUS_RET(*status, arf);
-  
+
   // Read the 'SPECRESP'.
   *status=ReadARF(fptr, 0, arf);
   CHECK_STATUS_RET(*status, arf);
@@ -108,7 +110,7 @@ struct ARF* loadARF(char* filename, int* const status)
 }
 
 
-void freeARF(struct ARF* const arf) 
+void freeARF(struct ARF* const arf)
 {
   if (NULL!=arf) {
     if (NULL!=arf->LowEnergy) {
@@ -123,4 +125,3 @@ void freeARF(struct ARF* const arf)
     free(arf);
   }
 }
-
