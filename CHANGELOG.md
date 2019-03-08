@@ -1,3 +1,6 @@
+version [2.4.5]
+  - updates copyright and license notices
+  
 version [2.4.4]
   - updates the Mac dependency solver
 
