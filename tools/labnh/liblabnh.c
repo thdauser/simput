@@ -1,12 +1,12 @@
 /*
-   This file is part of SIXTE.
+   This file is part of SIMPUT.
 
-   SIXTE is free software: you can redistribute it and/or modify it
+   SIMPUT is free software: you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
    any later version.
 
-   SIXTE is distributed in the hope that it will be useful,
+   SIMPUT is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
    GNU General Public License for more details.
