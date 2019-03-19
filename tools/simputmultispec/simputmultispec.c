@@ -133,6 +133,18 @@ static double get_interp_from_img(const SimputImg* ctsImg, SimputImg* parImg,
 			indYpar -= 1;
 		}
 
+		if( indXpar < 0 || indXpar > parImg->naxis1-1 || indYpar < 0 || indYpar > parImg->naxis2-1 ){
+			// Throw an error.
+			char msg[SIMPUT_MAXSTR];
+			sprintf(msg,
+					"ParamFile (%s) Index out of bounds: ix=%d not in [0,%ld] or iy=%d not in [0,%ld]! Check Image coverage or WCS coordinates",
+					parImg->fileref, indXpar, parImg->naxis1-1, indYpar, parImg->naxis2-1
+					);
+			SIMPUT_ERROR(msg);
+			*status = EXIT_FAILURE;
+			return interpolParVal;
+		}
+
 		// FIXME: choose a "proper" value here
 		// (conservative choice right now, to avoid missing rows if the grids match)
 		const double tol = 0.001;
