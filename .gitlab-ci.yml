@@ -12,6 +12,7 @@ stages:
   - build
   - test
   - deploy
+  - update
 
 build:
   stage: build
@@ -22,7 +23,7 @@ build:
     - make install
   only:
     - master
-    - gitlab-ci
+    - tags
   artifacts:
     expire_in: 30 min
     paths:
@@ -35,12 +36,23 @@ test:
     - make test
   only:
     - master
-    - gitlab-ci
-
+ 
 provide:
   stage: deploy
   script:
     - git push /data/git/simput.git HEAD:master
   only:
     - master
-    - gitlab-ci
+
+update:
+  stage: update
+  dependencies:
+    - build
+  script:
+    - make dist
+    - rsync -vhu simput-?.?.?*.tar.gz /data/www/sixte_archive/simput/
+  only:
+    - tags
+  except: 
+    - /^(?!master).+@/  # Ruby RegEx for anything not starting with 'master'
+
