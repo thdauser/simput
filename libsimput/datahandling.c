@@ -86,6 +86,28 @@ double getRndNum(int* const status)
   return(static_rndgen(status));
 }
 
+// Check that CUNIT is set to "deg". Otherwise there will be a conflict
+// between CRVAL [deg] and CDELT [different unit].
+static void check_wcs_unit_degree(const struct wcsprm* wcs, int* const status) {
+	if (((0 != strcmp(wcs->cunit[0], "deg     "))
+			&& (0 != strcmp(wcs->cunit[0], "degree  "))
+			&& (0 != strcmp(wcs->cunit[0], "deg"))
+			&& (0 != strcmp(wcs->cunit[0], "degree")))
+			|| ((0 != strcmp(wcs->cunit[1], "deg     "))
+					&& (0 != strcmp(wcs->cunit[1], "degree  "))
+					&& (0 != strcmp(wcs->cunit[1], "deg"))
+					&& (0 != strcmp(wcs->cunit[1], "degree")))) {
+		*status = EXIT_FAILURE;
+		char msg[SIMPUT_MAXSTR];
+		sprintf(msg,
+				"units of image coordinates are '%s' and '%s' (must be 'deg')",
+				wcs->cunit[0], wcs->cunit[1]);
+		SIMPUT_ERROR(msg);
+		// break;
+	}
+}
+
+
 
 SimputSrc* getSimputSrc(SimputCtlg* const cf,
 			const long row,
@@ -2080,21 +2102,9 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Check that CUNIT is set to "deg". Otherwise there will be a conflict
       // between CRVAL [deg] and CDELT [different unit].
       // TODO This is not required by the standard.
-      if (((0!=strcmp(wcs.cunit[0], "deg     ")) &&
-    		  (0!=strcmp(wcs.cunit[0], "degree  ")) &&
-    		  (0!=strcmp(wcs.cunit[0], "deg")) &&
-    		  (0!=strcmp(wcs.cunit[0], "degree"))) ||
-    		  ((0!=strcmp(wcs.cunit[1], "deg     ")) &&
-    				  (0!=strcmp(wcs.cunit[1], "degree  ")) &&
-    				  (0!=strcmp(wcs.cunit[1], "deg")) &&
-    				  (0!=strcmp(wcs.cunit[1], "degree")))) {
-    	  *status=EXIT_FAILURE;
-    	  char msg[SIMPUT_MAXSTR];
-    	  sprintf(msg, "units of image coordinates are '%s' and '%s' "
-    			  "(must be 'deg')", wcs.cunit[0], wcs.cunit[1]);
-    	  SIMPUT_ERROR(msg);
-    	  break;
-      }
+	  check_wcs_unit_degree(&wcs, status);
+	  CHECK_STATUS_BREAK(*status);
+
 
       // Determine floating point pixel positions shifted by 0.5 in
       // order to match the FITS conventions and with a randomization
@@ -2268,8 +2278,11 @@ void closeSimputPhotonAnySource(SimputPhoton *next_photons)
   }
 }
 
+
 float getSimputSrcExt(SimputCtlg* const cat,
 		      const SimputSrc* const src,
+			  double* ra_c,
+			  double* dec_c,
 		      const double prevtime,
 		      const double mjdref,
 		      int* const status)
@@ -2296,7 +2309,6 @@ float getSimputSrcExt(SimputCtlg* const cat,
 
     } else if (EXTTYPE_IMAGE==imagtype) {
       // Extended source => determine the maximum extension.
-      double maxext=0.;
 
       SimputImg* img=getSimputImg(cat, imagref, status);
       CHECK_STATUS_BREAK(*status);
@@ -2313,61 +2325,22 @@ float getSimputSrcExt(SimputCtlg* const cat,
       wcs.cdelt[1]*= 1./src->imgscal;
       wcs.flag = 0;
 
-      // Check lower left corner.
-      double px=0.5;
-      double py=0.5;
+
+      // We set the Source RA, Dec to the center of the image in the src cat (and ONLY there!)
+      // we always use the center of the image
+      double px=img->naxis1/2. + 0.5;
+      double py=img->naxis2/2. + 0.5;
       double sx, sy;
       p2s(&wcs, px, py, &sx, &sy, status);
-      CHECK_STATUS_BREAK(*status);
-      // TODO This has not been tested extensively, yet.
-      while(sx>M_PI) {
-	sx-=2.0*M_PI;
-      }
-      double ext=sqrt(pow(sx,2.)+pow(sy,2.));
-      if (ext>maxext) {
-	maxext=ext;
-      }
+      *ra_c = sx;  // only move the source in the catalog, not in the WCS or Simput Source!!!!!!
+      *dec_c = sy;
 
-      // Check lower right corner.
-      px = img->naxis1*1. + 0.5;
-      py = 0.5;
-      p2s(&wcs, px, py, &sx, &sy, status);
-      CHECK_STATUS_BREAK(*status);
-      while(sx>M_PI) {
-	sx-=2.0*M_PI;
-      }
-      ext = sqrt(pow(sx,2.)+pow(sy,2.));
-      if (ext>maxext) {
-	maxext = ext;
-      }
+	  check_wcs_unit_degree(&wcs, status);
 
-      // Check upper left corner.
-      px=0.5;
-      py=img->naxis2*1. + 0.5;
-      p2s(&wcs, px, py, &sx, &sy, status);
-      CHECK_STATUS_BREAK(*status);
-      while(sx>M_PI) {
-	sx-=2.0*M_PI;
-      }
-      ext=sqrt(pow(sx,2.)+pow(sy,2.));
-      if (ext>maxext) {
-	maxext=ext;
-      }
 
-      // Check upper right corner.
-      px=img->naxis1*1. + 0.5;
-      py=img->naxis2*1. + 0.5;
-      p2s(&wcs, px, py, &sx, &sy, status);
-      CHECK_STATUS_BREAK(*status);
-      while(sx>M_PI) {
-	sx-=2.0*M_PI;
-      }
-      ext=sqrt(pow(sx,2.)+pow(sy,2.));
-      if (ext>maxext) {
-	maxext=ext;
-      }
-
-      extension=(float)maxext;
+      double cdelt1_rad = wcs.cdelt[0]*M_PI/180;
+      double cdelt2_rad = wcs.cdelt[1]*M_PI/180;
+      extension = sqrt( pow(img->naxis1/2.*cdelt1_rad,2) + pow(img->naxis2/2.*cdelt2_rad,2) );
 
     } else if (EXTTYPE_PHLIST==imagtype) {
       // Get the photon list.

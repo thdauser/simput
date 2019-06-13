@@ -771,6 +771,8 @@ SimputPhList* openSimputPhList(const char* const filename,
     source around its reference point in [rad]. */
 float getSimputSrcExt(SimputCtlg* const cat,
 		      const SimputSrc* const src,
+			  double* ra_center_img,
+			  double* dec_center_img,
 		      const double prevtime,
 		      const double mjdref,
 		      int* const status);
