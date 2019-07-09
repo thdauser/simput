@@ -53,6 +53,4 @@ update:
     - rsync -vhu simput-?.?.?*.tar.gz /data/www/sixte_archive/simput/
   only:
     - tags
-  except: 
-    - /^(?!master).+@/  # Ruby RegEx for anything not starting with 'master'
 
