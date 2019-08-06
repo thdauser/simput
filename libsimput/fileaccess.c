@@ -556,22 +556,6 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
         SIMPUT_ERROR("failed reading image scaling from source catalog");
         break;
       }
-
-      // Check if imgscal value is valid
-      if (imgscal == 0) {
-        char buffer[512];
-        sprintf(buffer, "IMGSCAL of source %ld in %s must be non-zero",
-          src_id, cat->filename);
-        SIMPUT_ERROR(buffer);
-        *status=EXIT_FAILURE;
-        break;
-      }
-      if (imgscal < 1.e-8) {
-        char buffer[512];
-        sprintf(buffer, "IMGSCAL value of source %ld in %s is very small (IMGSCAL = %e)",
-          src_id, cat->filename, imgscal);
-        SIMPUT_WARNING(buffer);
-      }
     }
 
     fits_read_col(cat->fptr, TFLOAT, cat->ce_min, row, 1, 1,
@@ -616,8 +600,25 @@ SimputSrc* loadSimputSrc(SimputCtlg* const cat,
       fits_read_col(cat->fptr, TSTRING, cat->cimage, row, 1, 1,
 		    "", image, &anynul, status);
       if (EXIT_SUCCESS!=*status) {
-	SIMPUT_ERROR("failed reading image reference from source catalog");
-	break;
+	      SIMPUT_ERROR("failed reading image reference from source catalog");
+	      break;
+      }
+      // Check if imgscal value is valid (only if an image was specified)
+      if (strncmp(*image, "NULL", 4) != 0) {
+        if (imgscal == 0) {
+          char buffer[512];
+          sprintf(buffer, "IMGSCAL of source %ld in %s must be non-zero",
+            src_id, cat->filename);
+          SIMPUT_ERROR(buffer);
+          *status=EXIT_FAILURE;
+          break;
+        }
+        if (imgscal < 1.e-8) {
+          char buffer[512];
+          sprintf(buffer, "IMGSCAL value of source %ld in %s is very small (IMGSCAL = %e)",
+            src_id, cat->filename, imgscal);
+          SIMPUT_WARNING(buffer);
+        }
       }
     } else {
       image[0][0]='\0';
