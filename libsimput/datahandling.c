@@ -2319,8 +2319,8 @@ float getSimputSrcExt(SimputCtlg* const cat,
 
       // Change the scale of the image according to the source specific
       // IMGSCAL property.
-      wcs.crval[0] = 0.;
-      wcs.crval[1] = 0.;
+      wcs.crval[0] = src->ra*180/M_PI;
+      wcs.crval[1] = src->dec*180/M_PI;
       wcs.cdelt[0]*= 1./src->imgscal;
       wcs.cdelt[1]*= 1./src->imgscal;
       wcs.flag = 0;
@@ -2343,6 +2343,9 @@ float getSimputSrcExt(SimputCtlg* const cat,
       extension = sqrt( pow(img->naxis1/2.*cdelt1_rad,2) + pow(img->naxis2/2.*cdelt2_rad,2) );
 
     } else if (EXTTYPE_PHLIST==imagtype) {
+      // set the centers
+      *ra_c = src->ra;
+      *dec_c = src->dec;
       // Get the photon list.
       SimputPhList* phl=getSimputPhList(cat, imagref, status);
       CHECK_STATUS_BREAK(*status);
