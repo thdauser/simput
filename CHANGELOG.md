@@ -1,3 +1,17 @@
+version [2.4.6]
+  - fixes visibility of extended sources
+    * The centers of extended sources were determined without use of their
+      RA/Dec placements in the source catalog, making image extensions not
+      placed at 0/0 not visible
+  - if an image reference is specified for a source, check for valid IMGSCAL
+    values (positive, nonzero)
+  - updates "getSimputSrcExt"
+    * now calulates RA, Dec of Img Center (necessitates Sixte version > 2.5.11)
+  - updates cfitsio library in simput
+  - updates simputmultispec
+    * now checks the indices in an image reference and
+      throws an error if they are out of bounds
+
 version [2.4.5]
   - updates copyright and license notices
   - fixes segfault in simputmultispec
