@@ -36,9 +36,10 @@ test:
     - make test
   only:
     - master
- 
+
 provide:
   stage: deploy
+  dependencies: []
   script:
     - git push /data/git/simput.git HEAD:master
   only:
@@ -53,4 +54,3 @@ update:
     - rsync -vhu simput-?.?.?*.tar.gz /data/www/sixte_archive/simput/
   only:
     - tags
-
