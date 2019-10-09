@@ -1,3 +1,8 @@
+version [2.4.7]
+  - fixes a bug that caused problems in Sixte ero_vis tool
+    * The positions of point-like sources were not taken into account correctly
+      in ero_vis since v2.4.6 which led to wrong GTIs.
+
 version [2.4.6]
   - fixes visibility of extended sources
     * The centers of extended sources were determined without use of their
