@@ -2304,6 +2304,8 @@ float getSimputSrcExt(SimputCtlg* const cat,
     // Check if it is a point-like or an extended source.
     if (EXTTYPE_NONE==imagtype) {
       // Point-like source.
+      *ra_c=src->ra;
+      *dec_c=src->dec;
       extension=0.;
       break;
 
