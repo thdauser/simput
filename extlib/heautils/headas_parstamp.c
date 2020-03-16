@@ -13,11 +13,11 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include "pil.h"
 #include "headas_utils.h"
 #include "headas_error.h"
 #include "f77_wrap.h"
 #include "ape/ape_trad.h"
+#include "ape/ape_util.h"
 
 #define PAREN_YES 1
 #define PAREN_NO 0
@@ -159,6 +159,7 @@ int HDpar_stamp(fitsfile *fptr, int hdunum, int *status){
     fits_write_history(fptr, msg, status);
     /* follow END (which may wrap) with a blank line */
     fits_write_history(fptr, " ", status); 
+    ape_util_free_string_array(par_name);
     break;
   }
   
@@ -181,30 +182,36 @@ static int hdpstmp(fitsfile *fptr, int linenum, char *pname, char *pval, int fla
 
   if (flag == PAREN_YES){
     sprintf(histstr,"P%d (%s = %s)",linenum,pname,pval);
-  }
-  else if (flag == FLAG_NOTE) {
+  } else if (flag == FLAG_NOTE) {
     sprintf(histstr, "    %s", pval);
-  }else{
+  } else {
     sprintf(histstr,"P%d %s = %s",linenum,pname,pval);
   }
 
   if (strlen(histstr) <= 72){
+
     fits_write_history(fptr, histstr, &status);
     free(histstr);
+
   } else {
+
+    /* Write first line */
     strncpy(msg,histstr,72);
     msg[72]='\0';
     fits_write_history(fptr, msg, &status);
+
+    /* Write remaining lines */
     for (i=0; i < (int) strlen(histstr)/72; i++){
-	  if (flag == FLAG_NOTE)
+      if (flag == FLAG_NOTE)
         sprintf(msg, "    ");
       else
         sprintf(msg,"P%d ",linenum);
-      strncat(msg,histstr+(i+1)*72,72-numlen-2);
+      strncat(msg,histstr+72+(i*(72-numlen-2)),72-numlen-2);
       msg[72]='\0';
       fits_write_history(fptr, msg, &status);
     }
     free(histstr);
+
   }
 
   if (!status)
