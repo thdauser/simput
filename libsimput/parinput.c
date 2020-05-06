@@ -62,19 +62,18 @@ void query_simput_parameter(char* name, const int type, void *retval, int* statu
   }
 }
 
-// return 1 (boolean true) if *file is "none" (in any of its capitalized versions)
-// note: this makes use of C's short circuiting &&, so it is fast and there is
-// no danger of accessing unallocated memory
+// return 1 (boolean true) if *file is "none" (in any of its capitalized versions),
+// return 0 (boolean false) otherwise.
 int is_empty_file_name(char *file){
-  return (strlen(file)==4) &&
-    (file[0]=='n' || file[0]=='N') &&
-    (file[1]=='o' || file[1]=='O') &&
-    (file[2]=='n' || file[2]=='N') &&
-    (file[3]=='e' || file[3]=='E');
+  if (strncasecmp(file, "none", 5) == 0) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
-
-// read a file name parameter and return it in a pointer that can be freed
+// Read a file name parameter and return it in a pointer that can be freed.
+// If name is "none" (in any of its capitalized versions), *field is set to NULL.
 void query_simput_parameter_file_name(char *name, char **field, int *status){
   if (*status!=EXIT_SUCCESS) return;
 
@@ -83,9 +82,7 @@ void query_simput_parameter_file_name(char *name, char **field, int *status){
   if (*status!=EXIT_SUCCESS) return;
 
   if (is_empty_file_name(buf)) {
-    *field=malloc(sizeof(char));
-    CHECK_NULL_VOID(buf, *status,"memory allocation failed");
-    field[0]='\0';
+    *field = NULL;
   } else {
     *field=strdup(buf);
     free(buf);

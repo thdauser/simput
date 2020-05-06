@@ -817,8 +817,8 @@ static void loop_images_fits(img_list *li, SimputImg *ctsImg, struct Parameters 
 static void check_if_output_exists(struct Parameters par, int * status){
 	// Check if the SIMPUT file already exists and remove the old
 	// one if necessary.
-	int exists;
-	fits_file_exists(par.Simput, &exists, status);
+	int exists = 0;
+  if (par.Simput)	fits_file_exists(par.Simput, &exists, status);
 	CHECK_STATUS_VOID(*status);
 	if (0!=exists) {
 		if (0!=par.clobber) {
