@@ -66,6 +66,10 @@ struct RMF* getRMF(int* const status)
 
 struct RMF* loadRMF(char* const filename, int* const status)
 {
+  // First, check validity of RMF
+  checkRMF(filename, status);
+  CHECK_STATUS_RET(*status, NULL);
+
   struct RMF* rmf=getRMF(status);
   CHECK_STATUS_RET(*status, rmf);
 
@@ -121,7 +125,21 @@ struct RMF* loadRMF(char* const filename, int* const status)
     printf(" (total average sum of each RMF row %e) \n",total_sum);
   }
 
-
+  // Check consistency of FirstChannelGroup values.
+  // Note: This check is currently ignored in checkRMF because of a bug in the
+  // HEASoft ftchkrmf code (see heacore/heasp/rmf.cxx). Here they throw an error
+  // when F_CHAN >= NumberChannels, but the correct condition should be
+  // F_CHAN > NumberChannels.
+  for (long ii = 0; ii < rmf->NumberTotalGroups; ii++) {
+    if ( (rmf->FirstChannelGroup[ii] < rmf->FirstChannel) ||
+         (rmf->FirstChannelGroup[ii] > rmf->NumberChannels) ) {
+      char msg[SIMPUT_MAXSTR];
+      snprintf(msg, sizeof(msg), "FirstChannelGroup has invalid value (%li) for group %li. "
+        "Should be >= %li and <= %li", rmf->FirstChannelGroup[ii], ii, rmf->FirstChannel,
+        rmf->NumberChannels);
+      SIMPUT_WARNING(msg);
+    }
+  }
 
   // Close the open FITS file.
   fits_close_file(fptr, status);
@@ -209,6 +227,134 @@ void loadArfRmfFromRsp(char* const filename,
   // Read the EBOUNDS extension.
   loadEbounds(*rmf, filename, status);
   CHECK_STATUS_VOID(*status);
+}
+
+
+// Calls the HEASoft FTOOL ftchkrmf in the following way:
+// ftchkrmf infile=infile outfile=outfile clobber=yes
+static void call_ftchkrmf(char* const infile, char* const outfile,
+                          int* const status) {
+  // Check for previous error
+  CHECK_STATUS_VOID(*status);
+
+  // Piece together the ftchkrmf call
+  char cmd[SIMPUT_MAXSTR];
+  snprintf(cmd, sizeof(cmd), "ftchkrmf infile=%s outfile=%s clobber=yes",
+           infile, outfile);
+
+  // Call ftchkrmf
+  FILE *fp = popen(cmd, "r");
+
+  // Check for errors
+  if (fp == NULL) {
+    char msg[SIMPUT_MAXSTR];
+    snprintf(msg, sizeof(msg), "Failed to run ftchkrmf (should be part of ftools) for %s",
+             infile);
+    *status = EXIT_FAILURE;
+    SIMPUT_ERROR(msg);
+    return;
+  }
+
+  // Cleanup
+  pclose(fp);
+}
+
+
+// Prints a warning about failed ftchkrmf validity check on filename
+void print_ftchkrmf_warning(char* const filename, int* warning_printed) {
+  if (!(*warning_printed)) { // Only print this warning once
+    char msg[SIMPUT_MAXSTR];
+    snprintf(msg, sizeof(msg), "RMF validity check failed for %s\n"
+             "The following problems have been identified", filename);
+    SIMPUT_WARNING(msg);
+    headas_chat(3, "\n=== Start of RMF validity check report ===\n\n");
+    *warning_printed = 1;
+  }
+}
+
+
+// Checks the output of ftchkrmf (on filename) for errors.
+static void check_ftchkrmf_output(char* const filename, char* const outfile,
+                                  int* const status) {
+  // Check for previous program errors
+  CHECK_STATUS_VOID(*status);
+
+  // Open outfile
+  FILE* fp = fopen(outfile, "r");
+  CHECK_NULL_VOID(fp, *status, "Failed to read ftchkrmf output");
+
+  // Check outfile line by line (should be empty or only contain optional hints
+  // if RMF is valid)
+  size_t len1 = SIMPUT_MAXSTR;
+  char* err_str1 = malloc(len1 * sizeof(*err_str1));
+  size_t len2 = len1;
+  char* err_str2 = malloc(len2 * sizeof(*err_str1));;
+  ssize_t read;
+  int warning_printed = 0;
+  while ( (read = getline(&err_str1, &len1, fp)) != -1 ) {
+    // Ignore warnings about optional properties
+    if (strstr(err_str1, "optional") != NULL) {
+      // Skip this line (i.e., the error description) and the
+      // following (i.e., the error value)
+      read = getline(&err_str1, &len1, fp);
+      continue;
+    }
+
+    // Ignore warning if it is only about missing HDUVERS1 keyword (obsolete since 1998)
+    if (strstr(err_str1, "mandatory keywords") != NULL) {
+      // Read next line (i.e., the keyword name)
+      read = getline(&err_str2, &len2, fp);
+      if (strncmp(err_str2, " HDUVERS1 \n", 12) == 0) {
+        continue;
+      }
+
+      // Missing keyword is not just HDUVERS1, so print warning and error message
+      print_ftchkrmf_warning(filename, &warning_printed);
+      headas_chat(3, "%s", err_str1);
+      headas_chat(3, "%s", err_str2);
+      continue;
+    }
+
+    // Ignore warning about invalid FirstChannelGroup values. This is checked
+    // in loadRMF.
+    if (strstr(err_str1, "FirstChannelGroup has invalid value") != NULL) {
+      // Just skip this line
+      continue;
+    }
+
+    // Ignore strings that are just the newline character
+    if (err_str1[0] == '\n') continue;
+
+    // The error is not optional or about missing HDUVERS1 keyword, so print it.
+    print_ftchkrmf_warning(filename, &warning_printed);
+    headas_chat(3, "%s", err_str1);
+  }
+
+  // Cleanup
+  if (warning_printed) {
+    headas_chat(3, "\n=== End of RMF validity check report ===\n\n");
+  }
+  fclose(fp);
+  free(err_str1);
+  free(err_str2);
+}
+
+
+void checkRMF(char* const filename, int* const status) {
+  // Check for previous error
+  CHECK_STATUS_VOID(*status);
+
+  // Call ftchkrmf from the HEASoft FTOOLS to check validity of RMF
+  char* outfile = "rmf.log";
+  call_ftchkrmf(filename, outfile, status);
+
+  // Check ftchkrmf output for errors
+  check_ftchkrmf_output(filename, outfile, status);
+
+  // Remove logfile created by ftchkrmf
+  if (access(outfile, F_OK) == 0) {
+    remove(outfile);
+  }
 }
 
 

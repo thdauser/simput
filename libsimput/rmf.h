@@ -24,6 +24,7 @@
 #define RMF_H 1
 
 #include "arf.h"
+#include <unistd.h>
 
 #ifndef HEASP_H
 #define HEASP_H 1
@@ -55,6 +56,10 @@ void loadArfRmfFromRsp(char* const filename,
 		       struct ARF** arf,
 		       struct RMF** rmf,
 		       int* const status);
+
+/** Checks the validity of a FITS response file, using ftchkrmf
+    from the HEASoft FTOOLS. */
+void checkRMF(char* const filename, int* const status);
 
 /** Destructor for the RMF data structure. Warning: As there is no
     internal destructor for the RMF data structure in the HEASP
