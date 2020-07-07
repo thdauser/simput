@@ -765,7 +765,9 @@ void freeSimputPhList(SimputPhList** const phl, int* const status);
 SimputPhList* openSimputPhList(const char* const filename,
 			       const int mode,
 			       int* const status);
-
+/** Calculate the angular distance between to points on a sphere in radians */
+double calcGreatcircleDist(const double ra1, const double dec1,
+                           const double ra2, const double dec2);
 
 /** Return the maximum angular extension (radius) of a particular
     source around its reference point in [rad]. */

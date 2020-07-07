@@ -2278,6 +2278,22 @@ void closeSimputPhotonAnySource(SimputPhoton *next_photons)
   }
 }
 
+double calcGreatcircleDist(const double ra1, const double dec1,
+                          const double ra2, const double dec2)
+{
+  // use Vincenty formula
+  // code is equivalent to the "angular_separation" algorithm from the
+  // Remeis isisscripts
+  double s,c,s1,c1,s2,c2;
+  sincos(ra2 - ra1, &s,  &c);
+  sincos(dec1,      &s1, &c1);
+  sincos(dec2,      &s2, &c2);
+
+  return atan2(sqrt( pow(c2*s,2) + pow(c1*s2 - s1*c2*c, 2) ),
+               s1*s2 + c1*c2*c);
+
+}
+
 
 float getSimputSrcExt(SimputCtlg* const cat,
 		      const SimputSrc* const src,
@@ -2342,7 +2358,11 @@ float getSimputSrcExt(SimputCtlg* const cat,
 
       double cdelt1_rad = wcs.cdelt[0]*M_PI/180;
       double cdelt2_rad = wcs.cdelt[1]*M_PI/180;
-      extension = sqrt( pow(img->naxis1/2.*cdelt1_rad,2) + pow(img->naxis2/2.*cdelt2_rad,2) );
+//      extension = sqrt( pow(img->naxis1/2.*cdelt1_rad,2) + pow(img->naxis2/2.*cdelt2_rad,2) );
+      extension = calcGreatcircleDist(src->ra, src->dec,
+                                      src->ra + img->naxis1/2.*cdelt1_rad,
+                                      src->dec + img->naxis2/2.*cdelt2_rad);
+
 
     } else if (EXTTYPE_PHLIST==imagtype) {
       // set the centers
@@ -2379,8 +2399,11 @@ float getSimputSrcExt(SimputCtlg* const cat,
 	// Determine the maximum extension.
 	long jj;
 	for (jj=0; jj<nphs; jj++) {
-	  double ext=
-	    sqrt(pow(rabuffer[jj],2.0)+pow(decbuffer[jj],2.0))*M_PI/180.;
+//	  double ext=
+//	    sqrt(pow(rabuffer[jj],2.0)+pow(decbuffer[jj],2.0))*M_PI/180.;
+	  double ext = calcGreatcircleDist(0, 0,
+                                           rabuffer[jj]*M_PI/180,
+                                           decbuffer[jj]*M_PI/180);
 	  if (ext>maxext) {
 	    maxext=ext;
 	  }
