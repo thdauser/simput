@@ -2358,10 +2358,21 @@ float getSimputSrcExt(SimputCtlg* const cat,
 
       double cdelt1_rad = wcs.cdelt[0]*M_PI/180;
       double cdelt2_rad = wcs.cdelt[1]*M_PI/180;
-//      extension = sqrt( pow(img->naxis1/2.*cdelt1_rad,2) + pow(img->naxis2/2.*cdelt2_rad,2) );
-      extension = calcGreatcircleDist(src->ra, src->dec,
-                                      src->ra + img->naxis1/2.*cdelt1_rad,
-                                      src->dec + img->naxis2/2.*cdelt2_rad);
+      // use centers of image and corner values to calculate source extent
+      // here we need to find the maximum distance of all corners - may not
+      // be the same due to projection!
+      double sign[2] = {-1., 1.};
+      // test out source extension for all corners of the image
+      for (int i1=0; i1<2; i1++) {
+        for (int i2=0; i2<2; i2++) {
+          double tmp_ext = calcGreatcircleDist(sx, sy,
+                             sx + img->naxis1/2.*cdelt1_rad * sign[i1],
+                             sy + img->naxis2/2.*cdelt2_rad * sign[i2]);
+          if (tmp_ext > extension) {
+            extension = tmp_ext;
+          }
+        }
+      }
 
 
     } else if (EXTTYPE_PHLIST==imagtype) {
@@ -2401,7 +2412,7 @@ float getSimputSrcExt(SimputCtlg* const cat,
 	for (jj=0; jj<nphs; jj++) {
 //	  double ext=
 //	    sqrt(pow(rabuffer[jj],2.0)+pow(decbuffer[jj],2.0))*M_PI/180.;
-	  double ext = calcGreatcircleDist(0, 0,
+	  double ext = calcGreatcircleDist(0., 0.,
                                            rabuffer[jj]*M_PI/180,
                                            decbuffer[jj]*M_PI/180);
 	  if (ext>maxext) {
