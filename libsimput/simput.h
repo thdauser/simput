@@ -779,6 +779,13 @@ float getSimputSrcExt(SimputCtlg* const cat,
 		      const double mjdref,
 		      int* const status);
 
+/** Return whether or not a source is extended by checking the type of its
+    image extension */
+int isSimputSrcExtended(SimputCtlg* const cat,
+		        const SimputSrc* const src,
+    		        const double prevtime,
+		        const double mjdref,
+		        int* const status);
 
 /* If no photon can be produced, because there is no light curve
    information available for the specified point of time, the return

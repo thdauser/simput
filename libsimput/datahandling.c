@@ -2430,3 +2430,34 @@ float getSimputSrcExt(SimputCtlg* const cat,
 
   return(extension);
 }
+
+int isSimputSrcExtended(SimputCtlg* const cat,
+		        const SimputSrc* const src,
+    		        const double prevtime,
+		        const double mjdref,
+		        int* const status)
+{
+  do { // Error handling loop.
+
+    // Get the source image for this particular source.
+    char imagref[SIMPUT_MAXSTR];
+    getSrcImagRef(cat, src, prevtime, mjdref, imagref, status);
+    CHECK_STATUS_BREAK(*status);
+    int imagtype=getSimputExtType(cat, imagref, status);
+    CHECK_STATUS_RET(*status, 0);
+
+    // Check if it is a point-like or an extended source.
+    if (EXTTYPE_NONE==imagtype) {
+      // Point-like source.
+      return 0;
+    } else if (EXTTYPE_IMAGE==imagtype) {
+      // Source from image
+      return 1;
+    } else if (EXTTYPE_PHLIST==imagtype) {
+      // Source from photon list
+      return 1;
+    }
+  } while(0); // END of error handling loop
+
+  return 0; // Given as default return - the status has to be checked!
+}
