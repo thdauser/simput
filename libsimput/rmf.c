@@ -245,16 +245,6 @@ static void call_ftchkrmf(char* const infile, char* const outfile,
   // Call ftchkrmf
   FILE *fp = popen(cmd, "r");
 
-  // Check for errors
-  if (fp == NULL) {
-    char msg[SIMPUT_MAXSTR];
-    snprintf(msg, sizeof(msg), "Failed to run ftchkrmf (should be part of ftools) for %s",
-             infile);
-    *status = EXIT_FAILURE;
-    SIMPUT_ERROR(msg);
-    return;
-  }
-
   // Cleanup
   pclose(fp);
 }
@@ -344,7 +334,14 @@ void checkRMF(char* const filename, int* const status) {
   // Check for previous error
   CHECK_STATUS_VOID(*status);
 
-  // Call ftchkrmf from the HEASoft FTOOLS to check validity of RMF
+  // Check if ftchkrmf from the HEASoft FTOOLS if available on the system
+  if (system("which ftchkrmf > /dev/null 2>&1")) {
+    headas_chat(5, "\n*** Warning in %s: Failed to run ftchkrmf (should "
+                   "be part of ftools) for %s! ***\n", __func__, filename);
+    return;
+  }
+
+  // Call ftchkrmf to check validity of RMF
   char* outfile = "rmf.log";
   call_ftchkrmf(filename, outfile, status);
 
