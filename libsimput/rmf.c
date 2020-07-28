@@ -239,14 +239,15 @@ static void call_ftchkrmf(char* const infile, char* const outfile,
 
   // Piece together the ftchkrmf call
   char cmd[SIMPUT_MAXSTR];
-  snprintf(cmd, sizeof(cmd), "ftchkrmf infile=%s outfile=%s clobber=yes",
-           infile, outfile);
+  snprintf(cmd, sizeof(cmd), "ftchkrmf infile=%s outfile=%s clobber=yes"
+           " >/dev/null 2>&1", infile, outfile);
 
   // Call ftchkrmf
-  FILE *fp = popen(cmd, "r");
-
-  // Cleanup
-  pclose(fp);
+  int ret = system(cmd);
+  if (ret == -1) {
+    SIMPUT_ERROR("Failed to run ftchkrmf.");
+    *status = EXIT_FAILURE;
+  }
 }
 
 
@@ -335,23 +336,29 @@ void checkRMF(char* const filename, int* const status) {
   CHECK_STATUS_VOID(*status);
 
   // Check if ftchkrmf from the HEASoft FTOOLS if available on the system
-  if (system("which ftchkrmf > /dev/null 2>&1")) {
+  if (system("which ftchkrmf >/dev/null 2>&1")) {
     headas_chat(5, "\n*** Warning in %s: Failed to run ftchkrmf (should "
                    "be part of ftools) for %s! ***\n", __func__, filename);
     return;
   }
 
+  // Generate unique temporary name for the ftchkrmf output file.
+  char outfile[] = "rmf.log_XXXXXX";
+  int fd = mkstemp(outfile);
+  if (fd == -1) {
+    SIMPUT_ERROR("Failed to generate temporary filename.");
+    *status = EXIT_FAILURE;
+    return;
+  }
+
   // Call ftchkrmf to check validity of RMF
-  char* outfile = "rmf.log";
   call_ftchkrmf(filename, outfile, status);
 
   // Check ftchkrmf output for errors
   check_ftchkrmf_output(filename, outfile, status);
 
-  // Remove logfile created by ftchkrmf
-  if (access(outfile, F_OK) == 0) {
-    remove(outfile);
-  }
+  // Delete outfile from filesystem
+  unlink(outfile);
 }
 
 
