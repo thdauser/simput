@@ -3,7 +3,7 @@
 # build, test, and deploy SIMPUT
 
 before_script:
-  - source /data/system/software/softwarescript.bash && source /data/system/software/softwarescript_Xray.bash
+  - source /software/profile.in
   - export SIMPUT=`pwd`
   - export HEADASNOQUERY=
   - export HEADASPROMPT=/dev/null
