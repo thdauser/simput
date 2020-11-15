@@ -2053,36 +2053,8 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       SimputImg* img=getSimputImg(cat, imagref, status);
       CHECK_STATUS_BREAK(*status);
 
-      // Perform a binary search in 2 dimensions.
-      double rnd=getRndNum(status)*img->dist[img->naxis1-1][img->naxis2-1];
-      CHECK_STATUS_BREAK(*status);
-
-      // Perform a binary search to obtain the x-coordinate.
-      long high=img->naxis1-1;
-      long xl  =0;
-      long mid;
-      long ymax=img->naxis2-1;
-      while (high > xl) {
-	mid=(xl+high)/2;
-	if (img->dist[mid][ymax] < rnd) {
-	  xl=mid+1;
-	} else {
-	  high=mid;
-	}
-      }
-
-      // Search for the y coordinate.
-      high=img->naxis2-1;
-      long yl=0;
-      while (high > yl) {
-	mid=(yl+high)/2;
-	if (img->dist[xl][mid] < rnd) {
-	  yl=mid+1;
-	} else {
-	  high=mid;
-	}
-      }
-      // Now xl and yl have pixel positions [long pixel coordinates].
+      double xd, yd;
+      drawRndPosFromImg(img, &xd, &yd, status);
 
       // Create a temporary wcsprm data structure, which can be modified
       // to fit this particular source. The wcsprm data structure contained
@@ -2102,16 +2074,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Check that CUNIT is set to "deg". Otherwise there will be a conflict
       // between CRVAL [deg] and CDELT [different unit].
       // TODO This is not required by the standard.
-	  check_wcs_unit_degree(&wcs, status);
-	  CHECK_STATUS_BREAK(*status);
-
-
-      // Determine floating point pixel positions shifted by 0.5 in
-      // order to match the FITS conventions and with a randomization
-      // over the pixels.
-      double xd=(double)xl + 0.5 + getRndNum(status);
-      CHECK_STATUS_BREAK(*status);
-      double yd=(double)yl + 0.5 + getRndNum(status);
+      check_wcs_unit_degree(&wcs, status);
       CHECK_STATUS_BREAK(*status);
 
       // Rotate the image (pixel coordinates) by IMGROTA around the
@@ -2146,6 +2109,48 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   // ---
 
   return;
+}
+
+
+void drawRndPosFromImg(SimputImg* const img, double* xd, double* yd, int* const status) {
+  // Perform a binary search in 2 dimensions.
+  double rnd=getRndNum(status)*img->dist[img->naxis1-1][img->naxis2-1];
+  CHECK_STATUS_VOID(*status);
+
+  // Perform a binary search to obtain the x-coordinate.
+  long high=img->naxis1-1;
+  long xl=0;
+  long mid;
+  long ymax=img->naxis2-1;
+  while (high > xl) {
+    mid=(xl+high)/2;
+    if (img->dist[mid][ymax] < rnd) {
+      xl=mid+1;
+    } else {
+      high=mid;
+    }
+  }
+
+  // Search for the y coordinate.
+  high=img->naxis2-1;
+  long yl=0;
+  while (high > yl) {
+    mid=(yl+high)/2;
+    if (img->dist[xl][mid] < rnd) {
+      yl=mid+1;
+    } else {
+      high=mid;
+    }
+  }
+  // Now xl and yl have pixel positions [long pixel coordinates].
+
+  // Determine floating point pixel positions shifted by 0.5 in
+  // order to match the FITS conventions and with a randomization
+  // over the pixels.
+  *xd=(double)xl + 0.5 + getRndNum(status);
+  CHECK_STATUS_VOID(*status);
+  *yd=(double)yl + 0.5 + getRndNum(status);
+  CHECK_STATUS_VOID(*status);
 }
 
 

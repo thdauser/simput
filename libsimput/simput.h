@@ -810,6 +810,11 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 				double* const dec,
 				int* const status);
 
+/** Draw a random position from an image (the individual pixel values of the image
+ *  are regarded as a probability density for the spatial distribution). */
+void drawRndPosFromImg(SimputImg* const img, double* xd, double* yd,
+                       int* const status);
+
 /** Produce a photon for a particular source in a SIMPUT catalog. The
     error status variable refers to errors related to the access to
     FITS files. If no photon can be produced, because there is no
