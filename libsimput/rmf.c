@@ -120,7 +120,7 @@ struct RMF* loadRMF(char* const filename, int* const status)
     total_sum += sumresp/rmf->NumberEnergyBins;
   }
 
-  if (total_sum<0.995) {
+  if (total_sum<0.99) {
     SIMPUT_WARNING("RMF is not normalized");
     printf(" (total average sum of each RMF row %e) \n",total_sum);
   }
