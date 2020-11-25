@@ -1,3 +1,12 @@
+version [2.4.9]
+  - updates internal handling of RMFs
+
+version [2.4.8]
+  - fixes an error while writing very long input parameters
+  - adds new RMF validity check
+  - adds new function to calculate source extends from images
+    or photon lists via great circle distance
+
 version [2.4.7]
   - fixes a bug that caused problems in Sixte ero_vis tool
     * The positions of point-like sources were not taken into account correctly
