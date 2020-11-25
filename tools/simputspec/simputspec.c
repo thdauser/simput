@@ -343,7 +343,7 @@ int simputspec_main()
       }
       arf=loadARF(ancrfile, &status);
       CHECK_STATUS_BREAK(status);
-      rmf=loadRMF(respfile, &status);
+      rmf=loadNormalizedRMF(respfile, &status);
       CHECK_STATUS_BREAK(status);
       loadEbounds(rmf, respfile, &status);
       CHECK_STATUS_BREAK(status);

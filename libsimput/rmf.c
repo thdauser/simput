@@ -66,15 +66,12 @@ struct RMF* getRMF(int* const status)
 
 struct RMF* loadRMF(char* const filename, int* const status)
 {
-  // First, check validity of RMF
-  checkRMF(filename, status);
+  // First, check validity of RMF.
+  checkRMFValidity(filename, status);
   CHECK_STATUS_RET(*status, NULL);
 
+  // Load the RMF from the FITS file.
   struct RMF* rmf=getRMF(status);
-  CHECK_STATUS_RET(*status, rmf);
-
-  // Load the RMF from the FITS file using the HEAdas access routines
-  // (part of libhdsp).
   fitsfile* fptr=NULL;
   fits_open_file(&fptr, filename, READONLY, status);
   CHECK_STATUS_RET(*status, rmf);
@@ -82,51 +79,11 @@ struct RMF* loadRMF(char* const filename, int* const status)
   // Read the 'SPECRESP MATRIX' or 'MATRIX' extension:
   *status=ReadRMFMatrix(fptr, 0, rmf);
   CHECK_STATUS_RET(*status, rmf);
-
-  // Print some information:
   headas_chat(5, "RMF loaded with %ld energy bins and %ld channels\n",
-	      rmf->NumberEnergyBins, rmf->NumberChannels);
-
-  // Check if the RMF file contains matrix rows with a sum of more than 1.
-  // In that case the RSP probably also contains the mirror ARF, what should
-  // not be the case for this simulation. Row sums with a value of less than
-  // 1 should actually also not be used, but can be handled by the simulation.
-  long igrp;
-  double min_sum=1.;
-  double total_sum = 0.0;
-
-  double sumresp;
-  long ie, i, j;
-  for (ie=0; ie<rmf->NumberEnergyBins; ie++) {
-
-    /* sum up the response in this energy */
-
-    sumresp = 0.0;
-
-    for (i=0; i<rmf->NumberGroups[ie]; i++) {
-       igrp = i + rmf->FirstGroup[ie];
-       for (j=0; j<rmf->NumberChannelGroups[igrp]; j++) {
-         sumresp += rmf->Matrix[j+rmf->FirstElement[igrp]];
-       }
-    }
-   if (sumresp>1.1) {
-      SIMPUT_ERROR("RMF contains rows with a sum > 1.1 (probably contains ARF)");
-      *status=EXIT_FAILURE;
-      return(rmf);
-    }
-    if (sumresp<min_sum) {
-      min_sum=sumresp;
-    }
-    total_sum += sumresp/rmf->NumberEnergyBins;
-  }
-
-  if (total_sum<0.99) {
-    SIMPUT_WARNING("RMF is not normalized");
-    printf(" (total average sum of each RMF row %e) \n",total_sum);
-  }
+              rmf->NumberEnergyBins, rmf->NumberChannels);
 
   // Check consistency of FirstChannelGroup values.
-  // Note: This check is currently ignored in checkRMF because of a bug in the
+  // Note: This check is currently ignored in checkRMFValidity because of a bug in the
   // HEASoft ftchkrmf code (see heacore/heasp/rmf.cxx). Here they throw an error
   // when F_CHAN >= NumberChannels, but the correct condition should be
   // F_CHAN > NumberChannels.
@@ -145,9 +102,16 @@ struct RMF* loadRMF(char* const filename, int* const status)
   fits_close_file(fptr, status);
   CHECK_STATUS_RET(*status, rmf);
 
-  // Read the EBOUNDS extension.
+  // Read the 'EBOUNDS' extension.
   loadEbounds(rmf, filename, status);
   CHECK_STATUS_RET(*status, rmf);
+}
+
+
+struct RMF* loadNormalizedRMF(char* const filename, int* const status)
+{
+  struct RMF* rmf = loadRMF(filename, status);
+  checkRMFNormalization(rmf, status);
 
   return(rmf);
 }
@@ -331,7 +295,7 @@ static void check_ftchkrmf_output(char* const filename, char* const outfile,
 }
 
 
-void checkRMF(char* const filename, int* const status) {
+void checkRMFValidity(char* const filename, int* const status) {
   // Check for previous error
   CHECK_STATUS_VOID(*status);
 
@@ -359,6 +323,38 @@ void checkRMF(char* const filename, int* const status) {
 
   // Delete outfile from filesystem
   unlink(outfile);
+}
+
+
+void checkRMFNormalization(const struct RMF* const rmf, int* const status)
+{
+  double total_sum = 0.0;
+
+  double sumresp;
+  long ie, i, j, igrp;
+  for (ie=0; ie<rmf->NumberEnergyBins; ie++) {
+    /* sum up the response in this energy */
+    sumresp = 0.0;
+
+    for (i=0; i<rmf->NumberGroups[ie]; i++) {
+      igrp = i + rmf->FirstGroup[ie];
+      for (j=0; j<rmf->NumberChannelGroups[igrp]; j++) {
+        sumresp += rmf->Matrix[j+rmf->FirstElement[igrp]];
+      }
+    }
+
+    if (sumresp>1.1) {
+      SIMPUT_ERROR("RMF contains rows with a sum > 1.1 (probably contains ARF)");
+      *status=EXIT_FAILURE;
+    }
+
+    total_sum += sumresp/rmf->NumberEnergyBins;
+  }
+
+  if (total_sum<0.995) {
+    SIMPUT_WARNING("RMF is not normalized");
+    printf(" (total average sum of each RMF row %e) \n",total_sum);
+  }
 }
 
 

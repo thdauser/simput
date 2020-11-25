@@ -50,6 +50,10 @@ struct RMF* getRMF(int* const status);
     file. */
 struct RMF* loadRMF(char* const filename, int* const status);
 
+/** Load an RMF matrix and the corresponding EBOUNDS from a response
+    file and check for normalization. */
+struct RMF* loadNormalizedRMF(char* const filename, int* const status);
+
 /** Load an RSP matrix and the corresponding EBOUNDS from a response
     file and split the RSP into an ARF and an RMF. */
 void loadArfRmfFromRsp(char* const filename,
@@ -57,9 +61,15 @@ void loadArfRmfFromRsp(char* const filename,
 		       struct RMF** rmf,
 		       int* const status);
 
-/** Checks the validity of a FITS response file, using ftchkrmf
+/** Check the validity of a FITS response file, using ftchkrmf
     from the HEASoft FTOOLS. */
-void checkRMF(char* const filename, int* const status);
+void checkRMFValidity(char* const filename, int* const status);
+
+/** Check if the RMF file contains matrix rows with a sum of more than 1.
+    In that case the RSP probably also contains the mirror ARF, what should
+    not be the case for this simulation. Row sums with a value of less than
+    1 should actually also not be used, but can be handled by the simulation. */
+void checkRMFNormalization(const struct RMF* const rmf, int* const status);
 
 /** Destructor for the RMF data structure. Warning: As there is no
     internal destructor for the RMF data structure in the HEASP
