@@ -105,6 +105,8 @@ struct RMF* loadRMF(char* const filename, int* const status)
   // Read the 'EBOUNDS' extension.
   loadEbounds(rmf, filename, status);
   CHECK_STATUS_RET(*status, rmf);
+
+  return(rmf);
 }
 
 
