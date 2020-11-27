@@ -1,3 +1,6 @@
+version [2.4.10]
+  - fixes a bug in RMF handling
+
 version [2.4.9]
   - updates internal handling of RMFs
 
