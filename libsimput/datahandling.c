@@ -2285,10 +2285,16 @@ double calcGreatcircleDist(const double ra1, const double dec1,
   // code is equivalent to the "angular_separation" algorithm from the
   // Remeis isisscripts
   double s,c,s1,c1,s2,c2;
+#if defined(__APPLE__) && defined(__MACH__)
+  __sincos(ra2 - ra1, &s,  &c);
+  __sincos(dec1,      &s1, &c1);
+  __sincos(dec2,      &s2, &c2);
+#else
   sincos(ra2 - ra1, &s,  &c);
   sincos(dec1,      &s1, &c1);
   sincos(dec2,      &s2, &c2);
-
+#endif
+  
   return atan2(sqrt( pow(c2*s,2) + pow(c1*s2 - s1*c2*c, 2) ),
                s1*s2 + c1*c2*c);
 
