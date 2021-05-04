@@ -98,7 +98,7 @@ atEllipsoid(
 
 		if ( 0 < det ) {
 			sin_t0 = sin_tm;
-			cos_tm = cos_tm;
+			cos_t0 = cos_tm;
 			x0 = xm;
 			z0 = zm;
 			dx0 = dxm;
