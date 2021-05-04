@@ -8,6 +8,7 @@ simput*.tar.gz
 *.swo
 *.mod
 aclocal.m4
+build-aux/m4
 autom4te.cache
 simputconfig.h
 simputconfig.h.in
