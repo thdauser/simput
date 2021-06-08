@@ -37,6 +37,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <fftw3.h> // FFTW3 library for Fast Fourier Transform.
+#include <unistd.h>
 
 #include "arf.h"
 #include "simput.h"

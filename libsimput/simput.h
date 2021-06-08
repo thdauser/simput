@@ -945,4 +945,14 @@ long specIsCached(char *fname, char *extname, int extver);
 long getSpecRow(char *expr, long ind);
 
 long getNextSpecCache();
+
+/** Creates a unique temporary file and returns an open file
+    descriptor for the file. The last six characters of filename_template must
+    be "XXXXXX" which will get replaced accordingly. */
+int create_unique_tmp_file(char filename_template[], int* status);
+
+/** Creates a unique temporary filename which is copied to filename_buffer
+    (of length at least L_tmpnam). */
+void create_unique_tmp_name(char filename_buffer[], int* status);
+
 #endif /* SIMPUT_H */

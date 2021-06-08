@@ -171,7 +171,7 @@ int simputspec_main()
     // we have to run ISIS in order to produce a spectrum.
     if ((strlen(par.ISISFile)>0) || (use_components>0)) {
 
-    	write_isisSpec_fits_file(par.Simput, par.ISISFile, par.ISISPrep,
+    	write_isisSpec_fits_file(par.TmpSpecFile, par.ISISFile, par.ISISPrep,
     			par.ISISPostCmd, par.Elow, par.Eup, par.nbins, par.logegrid,
 				par.plPhoIndex, par.bbkT, par.flSigma, par.rflSpin, par.NH,
 				&status);
@@ -183,7 +183,7 @@ int simputspec_main()
     // to produce the spectrum.
     if (strlen(par.XSPECFile)>0) {
 
-    	write_xspecSpec_file(par.Simput, par.XSPECFile, par.XSPECPrep, par.XSPECPostCmd,
+    	write_xspecSpec_file(par.TmpSpecFile, par.XSPECFile, par.XSPECPrep, par.XSPECPostCmd,
     			par.Elow, par.Eup, par.nbins, par.logegrid, &status);
 
     } // END of running Xspec.
@@ -195,7 +195,7 @@ int simputspec_main()
 
     if ((strlen(par.ISISFile)>0) || (use_components>0)) {
 
-    	read_isisSpec_fits_file(par.Simput, simputspec,
+    	read_isisSpec_fits_file(par.TmpSpecFile, simputspec,
     			par.ISISFile, par.Emin, par.Emax,
 				par.plFlux, par.bbFlux, par.flFlux, par.rflFlux,
 				&status);
@@ -204,7 +204,7 @@ int simputspec_main()
       // The spectrum is contained in a .qdp file produced by XSPEC/PLT,
       // and has to be loaded from there.
 
-    	read_xspecSpec_file(par.Simput, simputspec, &status);
+    	read_xspecSpec_file(par.TmpSpecFile, simputspec, &status);
 
     } else if (strlen(par.ASCIIFile)>0) {
         // The spectrum is contained in a ascii file,
@@ -477,19 +477,17 @@ int simputspec_main()
     int ii;
     for (ii=0; ii<4; ii++) {
       char filename[SIMPUT_MAXSTR];
-      sprintf(filename, "%s.spec%d", par.Simput, ii);
+      sprintf(filename, "%s.spec%d", par.TmpSpecFile, ii);
       remove(filename);
     }
   }
   if (strlen(par.ISISFile)>0) {
     char filename[SIMPUT_MAXSTR];
-    sprintf(filename, "%s.spec0", par.Simput);
+    sprintf(filename, "%s.spec0", par.TmpSpecFile);
     remove(filename);
   }
   if (strlen(par.XSPECFile)>0) {
-    char filename[SIMPUT_MAXSTR];
-    sprintf(filename, "%s.qdp", par.Simput);
-    remove(filename);
+    remove(par.TmpSpecFile);
   }
 
   // Release memory.
@@ -630,6 +628,12 @@ int simputspec_getpar(struct Parameters* const par)
   strcpy(par->ISISFile, sbuffer);
   free(sbuffer);
 
+  // If an ISIS file is given, initialize name for temporary spectrum file.
+  if ((strncasecmp(par->XSPECFile, "none", 5) != 0)) {
+    create_unique_tmp_name(par->TmpSpecFile, &status);
+    strncat(par->TmpSpecFile, ".sl", 3);
+  }
+
   status=ape_trad_query_string("ISISPrep", &sbuffer);
   if (EXIT_SUCCESS!=status) {
     SIMPUT_ERROR("reading the name of the ISIS prep file failed");
@@ -655,6 +659,12 @@ int simputspec_getpar(struct Parameters* const par)
   }
   strcpy(par->XSPECFile, sbuffer);
   free(sbuffer);
+
+  // If an XSPEC file is given, initialize name for temporary QDP data file.
+  if ((strncasecmp(par->XSPECFile, "none", 5) != 0)) {
+    create_unique_tmp_name(par->TmpSpecFile, &status);
+    strncat(par->TmpSpecFile, ".qdp", 4);
+  }
 
   status=ape_trad_query_string("XSPECPrep", &sbuffer);
   if (EXIT_SUCCESS!=status) {

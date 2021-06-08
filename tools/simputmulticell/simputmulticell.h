@@ -53,9 +53,11 @@ struct Parameters {
   /* File name of the input Xspec spectral model. */
   char *XSPECFile;
 
-   /* File name of the additional Xspec script. */
-   char *XSPECPrep;
+  /* File name of the additional Xspec script. */
+  char *XSPECPrep;
 
+  /** Name for temporary spectrum file. */
+  char TmpSpecFile[L_tmpnam+4]; // +4 characters for filename extension (.qdp/.sl)
 
   // Param to handle the param info to read from the input file
   char *ParamFile;

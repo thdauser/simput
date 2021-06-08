@@ -660,9 +660,7 @@ static void delete_tmp_spec_files(struct Parameters par){
 		remove(filename);
 	}
 	if (strlen(par.XSPECFile)>0) {
-		char filename[SIMPUT_MAXSTR];
-		sprintf(filename, "%s.qdp", par.Simput);
-		remove(filename);
+		remove(par.TmpSpecFile);
 	}
 }
 
@@ -673,13 +671,13 @@ static void ms_save_spec_isis(SimputMIdpSpec *spec, struct Parameters par,
 	char *ISISsetPar;
 	get_setPar_string_isis(&ISISsetPar, data_par, li, status);
 	printf("%s\n",ISISsetPar);
-	write_isisSpec_fits_file(par.Simput, par.ISISFile, par.ISISPrep,ISISsetPar,
+	write_isisSpec_fits_file(par.TmpSpecFile, par.ISISFile, par.ISISPrep,ISISsetPar,
 			par.Elow, par.Eup, par.nbins, par.logegrid, 0.0, 0.0, 0.0, 0.0, 0.0, status);
 	free(ISISsetPar);
 
 	CHECK_STATUS_VOID(*status);
 
-	read_isisSpec_fits_file(par.Simput, spec, par.ISISFile, par.Emin, par.Emax,
+	read_isisSpec_fits_file(par.TmpSpecFile, spec, par.ISISFile, par.Emin, par.Emax,
 			0.0,0.0,0.0,0.0,status);
 	CHECK_STATUS_VOID(*status);
 
@@ -692,10 +690,8 @@ static void ms_save_spec_xspec(SimputMIdpSpec *spec, struct Parameters par,
 	char *XSPECsetPar;
 	get_setPar_string_xspec(&XSPECsetPar, data_par, li, status);
 	printf("%s\n",XSPECsetPar);
-//	write_isisSpec_fits_file(par.Simput, par.ISISFile, par.ISISPrep,ISISsetPar,
-//			par.Elow, par.Eup, par.Estep, 0.0, 0.0, 0.0, 0.0, 0.0, status);
 
-	write_xspecSpec_file(par.Simput, par.XSPECFile, par.XSPECPrep, XSPECsetPar,
+	write_xspecSpec_file(par.TmpSpecFile, par.XSPECFile, par.XSPECPrep, XSPECsetPar,
 			par.Elow, par.Eup, par.nbins, par.logegrid, status);
 
 
@@ -703,7 +699,7 @@ static void ms_save_spec_xspec(SimputMIdpSpec *spec, struct Parameters par,
 
 	CHECK_STATUS_VOID(*status);
 
-	read_xspecSpec_file(par.Simput, spec ,status);
+	read_xspecSpec_file(par.TmpSpecFile, spec ,status);
 	CHECK_STATUS_VOID(*status);
 
 }
@@ -962,6 +958,16 @@ int simputmultispec_getpar(struct Parameters* const par) {
   query_simput_parameter_string("XSPECPrep", &(par->XSPECPrep), &status );
   query_simput_parameter_string("ISISPrep", &(par->ISISPrep), &status );
   query_simput_parameter_file_name("ImageFile", &(par->ImageFile), &status );
+
+  // Initialize name for temporary spectrum file.
+  if (strlen(par->XSPECFile) > 0) {
+    create_unique_tmp_name(par->TmpSpecFile, &status);
+    strncat(par->TmpSpecFile, ".qdp", 4);
+  }
+  if (strlen(par->ISISFile) > 0) {
+    create_unique_tmp_name(par->TmpSpecFile, &status);
+    strncat(par->TmpSpecFile, ".sl", 3);
+  }
 
   query_simput_parameter_float("RA", &par->RA, &status );
   query_simput_parameter_float("Dec", &par->Dec, &status );

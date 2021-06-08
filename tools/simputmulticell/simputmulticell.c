@@ -388,13 +388,13 @@ static void addSpecCombiToCat(struct Parameters* par, par_info *data_par, img_li
 	CHECK_STATUS_VOID(*status);
 
 	// Write xspec file
-	write_xspecSpec_file(par->Simput, par->XSPECFile, par->XSPECPrep, XSPECsetPar,
+	write_xspecSpec_file(par->TmpSpecFile, par->XSPECFile, par->XSPECPrep, XSPECsetPar,
 			par->Elow, par->Eup, par->nbins, par->logegrid, status);
 	free(XSPECsetPar);
 	CHECK_STATUS_VOID(*status);
 
 	// Read result
-	read_xspecSpec_file(par->Simput, spec ,status);
+	read_xspecSpec_file(par->TmpSpecFile, spec ,status);
 	CHECK_STATUS_VOID(*status);
 
 	// Set the name of the spectrum
@@ -415,9 +415,7 @@ static void addSpecCombiToCat(struct Parameters* par, par_info *data_par, img_li
 	saveSimputMIdpSpec(spec,par->Simput,"SPECTRUM",1,status);
 
 	// delete temp files and free memory
-	char filename[SIMPUT_MAXSTR];
-	sprintf(filename, "%s.qdp", par->Simput);
-	remove(filename);
+	remove(par->TmpSpecFile);
 	freeSimputMIdpSpec(&spec);
 }
 
@@ -444,13 +442,13 @@ static void addSpecToCat(struct Parameters* par,struct param_input *ipar,double*
 	CHECK_STATUS_VOID(*status);
 
 	// Write xspec file
-	write_xspecSpec_file(par->Simput, par->XSPECFile, par->XSPECPrep, XSPECsetPar,
+	write_xspecSpec_file(par->TmpSpecFile, par->XSPECFile, par->XSPECPrep, XSPECsetPar,
 			par->Elow, par->Eup, par->nbins, par->logegrid, status);
 	free(XSPECsetPar);
 	CHECK_STATUS_VOID(*status);
 
 	// Read result
-	read_xspecSpec_file(par->Simput, spec ,status);
+	read_xspecSpec_file(par->TmpSpecFile, spec ,status);
 	CHECK_STATUS_VOID(*status);
 
 	// Set the name of the spectrum
@@ -463,9 +461,7 @@ static void addSpecToCat(struct Parameters* par,struct param_input *ipar,double*
 	saveSimputMIdpSpec(spec,par->Simput,"SPECTRUM",1,status);
 
 	// delete temp files and free memory
-	char filename[SIMPUT_MAXSTR];
-	sprintf(filename, "%s.qdp", par->Simput);
-	remove(filename);
+	remove(par->TmpSpecFile);
 	freeSimputMIdpSpec(&spec);
 }
 
@@ -607,6 +603,16 @@ void simputmulticell_getpar(struct Parameters* const par, int* status) {
 	query_simput_parameter_string("ISISFile", &(par->ISISFile), status );
 	query_simput_parameter_string("XSPECFile", &(par->XSPECFile), status );
     query_simput_parameter_string("XSPECPrep", &(par->XSPECPrep), status );
+
+	// Initialize name for temporary spectrum file.
+    if (strlen(par->XSPECFile) > 0) {
+      create_unique_tmp_name(par->TmpSpecFile, status);
+      strncat(par->TmpSpecFile, ".qdp", 4);
+    }
+    if (strlen(par->ISISFile) > 0) {
+      create_unique_tmp_name(par->TmpSpecFile, status);
+      strncat(par->TmpSpecFile, ".sl", 3);
+    }
 
 	// *** PARAMETER information *** //
 	query_simput_parameter_string("ParamFile", &(par->ParamFile), status );

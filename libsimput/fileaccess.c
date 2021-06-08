@@ -3882,13 +3882,10 @@ static int check_xspec_linecont(char* buf){
 void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 	// The spectrum is contained in a .qdp file produced by XSPEC/PLT,
 	// and has to be loaded from there.
-
 	FILE* xspecfile=NULL;
 
 	// Open the file.
-	char filename[SIMPUT_MAXSTR];
-	sprintf(filename, "%s.qdp", fname);
-	xspecfile=fopen(filename, "r");
+	xspecfile=fopen(fname, "r");
 	CHECK_NULL_VOID(xspecfile, *status, "could not open XSPEC .qdp file");
 
 	// Determine the number of rows.
@@ -3973,18 +3970,12 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 		char *ISISPostCmd, float Elow, float Eup, int nbins, int logegrid,
 		float plPhoIndex, float bbkT, float flSigma, float rflSpin, float NH,
 		int *status){
+	// Create temporary file for ISIS commands.
+	char cmdfilename[]="/tmp/isis.sl_XXXXXX";
+	int fd=create_unique_tmp_file(cmdfilename, status);
 
-	FILE* cmdfile=NULL;
-	char cmdfilename[L_tmpnam]="";
-
-	// Open the ISIS command file.
-	if (NULL==tmpnam(cmdfilename)) {
-		SIMPUT_ERROR("failed getting temporary filename for ISIS command file");
-		*status=EXIT_FAILURE;
-		return;
-	}
-	cmdfile=fopen(cmdfilename,"w");
-	CHECK_NULL_VOID(cmdfile, *status, "opening temporary file failed");
+	FILE* cmdfile=fdopen(fd,"w");
+	CHECK_NULL_VOID(cmdfile, *status, "Failed to open temporary file.");
 
 	// Write the header.
 	fprintf(cmdfile, "require(\"isisscripts\");\n");
@@ -4086,61 +4077,65 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 
 	// Run ISIS.
 	*status=system(command);
+	unlink(cmdfilename);
 	CHECK_STATUS_VOID(*status);
 
 }
 
+
 void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *XSPECPostCmd, float Elow,
-		float Eup,	int nbins, int logegrid,  int *status){
+		float Eup, int nbins, int logegrid,  int *status){
+	// Maximum length for fname is 68 characters (limit of XSPEC wdata command).
+	if (strlen(fname) > 68) {
+		SIMPUT_ERROR("fname too large (must be smaller than 68 characters).");
+		*status=EXIT_FAILURE;
+		return;
+	}
 
-	FILE* cmdfile=NULL;
-	char cmdfilename[L_tmpnam]="";
+	// Create temporary file for XSPEC commands.
+	char cmdfilename[]="/tmp/xspec.xcm_XXXXXX";
+	int fd=create_unique_tmp_file(cmdfilename, status);
 
-   	// Open the command file.
-    	if (NULL==tmpnam(cmdfilename)) {
-    		SIMPUT_ERROR("failed getting temporary filename for Xspec command file");
-    		*status=EXIT_FAILURE;
-    		return;
-    	}
-    	cmdfile=fopen(cmdfilename,"w");
-    	CHECK_NULL_VOID(cmdfile, *status, "opening temporary file failed");
+	FILE* cmdfile=fdopen(fd,"w");
+	CHECK_NULL_VOID(cmdfile, *status, "Failed to open temporary file.");
 
-    	// Write the header.
-    	fprintf(cmdfile, "query yes\n");
+	// Write the header.
+	fprintf(cmdfile, "query yes\n");
 
-        if ( (strlen(XSPECPrep)!=0) && (strcmp(XSPECPrep,"none")!=0) && (strcmp(XSPECPrep,"NONE")!=0) ) {
-                fprintf(cmdfile, "@%s\n", XSPECPrep);
-        }
+	if ( (strlen(XSPECPrep)!=0) && (strcmp(XSPECPrep,"none")!=0) && (strcmp(XSPECPrep,"NONE")!=0) ) {
+		fprintf(cmdfile, "@%s\n", XSPECPrep);
+	}
 
-    	fprintf(cmdfile, "@%s\n", XSPECFile);
+	fprintf(cmdfile, "@%s\n", XSPECFile);
 
-    	if (strlen(XSPECPostCmd)!=0) {
-        	fprintf(cmdfile, "%s\n", XSPECPostCmd);
-    	}
+	if (strlen(XSPECPostCmd)!=0) {
+		fprintf(cmdfile, "%s\n", XSPECPostCmd);
+	}
 
-    	if (logegrid){
-    		fprintf(cmdfile, "dummyrsp %f %f %d log\n", Elow, Eup, nbins);
-    	} else {
-    		fprintf(cmdfile, "dummyrsp %f %f %d lin\n", Elow, Eup, nbins);
-    	}
-    	fprintf(cmdfile, "setplot device /null\n");
+	if (logegrid){
+		fprintf(cmdfile, "dummyrsp %f %f %d log\n", Elow, Eup, nbins);
+	} else {
+		fprintf(cmdfile, "dummyrsp %f %f %d lin\n", Elow, Eup, nbins);
+	}
+	fprintf(cmdfile, "setplot device /null\n");
 
-    	fprintf(cmdfile, "setplot command wdata %s.qdp\n", fname);
-    	fprintf(cmdfile, "plot model\n");
-    	fprintf(cmdfile, "quit\n");
+	fprintf(cmdfile, "setplot command wdata %s\n", fname);
+	fprintf(cmdfile, "plot model\n");
+	fprintf(cmdfile, "quit\n");
 
-    	// End of writing the command file.
-    	fclose(cmdfile);
-    	cmdfile=NULL;
+	// End of writing the command file.
+	fclose(cmdfile);
+	cmdfile=NULL;
 
-    	// Construct the shell command to run Xspec.
-    	char command[SIMPUT_MAXSTR];
-    	strcpy(command, "xspec ");
-    	strcat(command, cmdfilename);
+	// Construct the shell command to run Xspec.
+	char command[SIMPUT_MAXSTR];
+	strcpy(command, "xspec ");
+	strcat(command, cmdfilename);
 
-    	// Run Xspec.
-    	*status=system(command);
-    	CHECK_STATUS_VOID(*status);
+	// Run Xspec.
+	*status=system(command);
+	unlink(cmdfilename);
+	CHECK_STATUS_VOID(*status);
 }
 
 
@@ -4658,4 +4653,21 @@ long getNextSpecCache()
     return SpecCache->last+1;
   }
   return 0;
+}
+
+int create_unique_tmp_file(char filename_template[], int *status) {
+  int fd = mkstemp(filename_template);
+  if (fd == -1) {
+    SIMPUT_ERROR("Failed to generate temporary file.");
+    *status = EXIT_FAILURE;
+  }
+
+  return fd;
+}
+
+void create_unique_tmp_name(char filename_buffer[], int* status) {
+  if (tmpnam(filename_buffer) == NULL) {
+    SIMPUT_ERROR("Failed to generate temporary filename.");
+    *status = EXIT_FAILURE;
+  }
 }

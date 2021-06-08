@@ -95,7 +95,6 @@ struct Parameters {
        model	. */
    char *ISISFile;
 
-
    /* File name for optional preperation script (f. e. to load additional
     models). */
    char *ISISPrep;
@@ -105,6 +104,9 @@ struct Parameters {
 
    /* File name of the additional Xspec script. */
    char *XSPECPrep;
+
+   /** Name for temporary spectrum file. */
+   char TmpSpecFile[L_tmpnam+4]; // +4 characters for filename extension (.qdp/.sl)
 
 
    // Param1

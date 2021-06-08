@@ -83,6 +83,9 @@ struct Parameters {
   char XSPECFile[SIMPUT_MAXSTR];
   char XSPECPostCmd[SIMPUT_MAXSTR];
 
+  /** Name for temporary spectrum file. */
+  char TmpSpecFile[L_tmpnam+4]; // +4 characters for filename extension (.qdp/.sl)
+
   /** File name of the input ASCII spectrum. */
   char ASCIIFile[SIMPUT_MAXSTR];
 
