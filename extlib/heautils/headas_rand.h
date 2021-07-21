@@ -70,10 +70,7 @@ extern "C" {
 #endif
 
 /******************************************************************************
- * $Log: headas_rand.h,v $
- * Revision 1.2  2007/04/19 22:23:12  kaa
- * Added prototypes for new HDmt* routines.
- *
+ * $Log$
  * Revision 1.1  2005/03/23 17:24:31  irby
  * Add routines for temporary file and pseudo-random number generation.
  *

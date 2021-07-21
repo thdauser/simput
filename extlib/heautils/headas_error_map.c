@@ -186,13 +186,7 @@ hd_error_map* HDerror_map_next_map(hd_error_map* map) {
 #endif
 
 /******************************************************************************
- * $Log: headas_error_map.c,v $
- * Revision 1.2  2002/10/04 21:48:51  peachey
- * To support improvements in the error manager, change function
- * HDerror_map_set_msg_func, and replace HDerror_map_get* family
- * with HDerror_map_get_entry, which gets all the information from
- * the map in one call.
- *
+ * $Log$
  * Revision 1.1  2002/09/16 13:45:41  peachey
  * Add headas error handling facilities.
  *

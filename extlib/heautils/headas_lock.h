@@ -66,8 +66,5 @@ extern "C" {
 #endif
 
 /******************************************************************************
- * $Log: headas_lock.h,v $
- * Revision 1.1  2005/03/23 17:24:31  irby
- * Add routines for temporary file and pseudo-random number generation.
- *
+ * $Log$
  ******************************************************************************/

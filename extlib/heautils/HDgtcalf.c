@@ -73,7 +73,7 @@ int HDgtcalf(const char* tele, const char* instr,
      /* Get CALDB index file */
 
      if(gtcalidx("INST",(char*) tele,(char*) instr,cif,instdir,status)) {
-        sprintf(msg,"Problem getting caldb index file");
+        sprintf(msg,"Problem getting CALDB index file");
         HD_ERROR_THROW(msg,*status); 
         goto cleanup;
      }
@@ -538,6 +538,7 @@ static int gtcalf_work(char* cif, const char* tele, const char* instr,
 
 
 cleanup:
+    if(fptr) fits_close_file(fptr,status);
     if(telval) free(telval);
     if(insval) free(insval);
     if(filtval) free(filtval);
@@ -577,7 +578,7 @@ static int gtcalidx (char* mode, char* missn,
      char cifdev[160], cifdir[160];
      char insdev[160], insdir[160];
 
-     FILE * fptr;
+     FILE *fptr = 0;
      char msg[256];
      
      if(*status) return *status;  

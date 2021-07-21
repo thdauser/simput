@@ -119,6 +119,10 @@ int HDgti_copy(struct gti_struct *dest, struct gti_struct *src, int *status)
  *    TSTARTI - integer value       TSTARTI+F  TSTARTI   TSTARTF
  *    TSTARTF - fractional value
  *
+ * In the documentation that follows, we use the notation KEYI and KEYF
+ * for the integer and fractional versions of the keyword, and KEY for
+ * the combined version of the keyword.
+ *
  * This routine read a FITS timing keyword(s).  The returned values
  * are given above.  If the user passes null values for vali and/or
  * valf, then HDget_frac_time will gracefully skip storing those values.
@@ -132,14 +136,14 @@ int HDgti_copy(struct gti_struct *dest, struct gti_struct *src, int *status)
  *                number of seconds is stored in *valf.
  * int *status - pointer to status variable
  *
- * RETURNS: (TSTART) or (TSTARTI+TSTARTF)
+ * RETURNS: (KEY) or (KEYI+KEYF)
  *
  */
 double HDget_frac_time(fitsfile *fileptr, char *key, 
 		       double *vali, double *valf,
 		       int *status)
 {
-  double value, valuei, valuef;
+  double value, valuei=0.0, valuef=0.0;
   char keynamei[10];
   char keynamef[10];
 
@@ -180,6 +184,117 @@ double HDget_frac_time(fitsfile *fileptr, char *key,
 
 }
 
+
+/*
+ * HDput_frac_time - write (potentially) fractional time keyword from FITS header
+ *
+ * Some OGIP FITS timing values are allowed to be specified either as
+ * a single keyword, or a pair of keywords which gives integer and
+ * fractional values which are to be added.  This allows maximum time
+ * precision.  For example, for the observation starting time, it can
+ * either be found by:
+ *
+ *                                  RETURNS    *vali     *valf
+ *    TSTART  - single value        TSTART     TSTART    0
+ *
+ *    TSTARTI - integer value       TSTARTI+F  TSTARTI   TSTARTF
+ *    TSTARTF - fractional value
+ *
+ * In the documentation that follows, we use the notation KEYI and KEYF
+ * for the integer and fractional versions of the keyword, and KEY for
+ * the combined version of the keyword.
+ *
+ * This routine writes FITS timing keyword(s).  The returned values
+ * are given above.  If the user passes null values for vali and/or
+ * valf, then HDget_frac_time will gracefully skip storing those values.
+ *
+ * The subroutine will write the requested keywords and make sure that
+ * the equivalent keywords of the other type are deleted.  For
+ * example, if one requests to write the KEYI/KEYF keywords with
+ * force=1, then the KEY keyword will be deleted if it exists.
+ *
+ * If one requests the full keyword KEY be written with force=2, then
+ * the KEYI and KEYF keywords are deleted if requested.  In that case,
+ * the sum of vali+valf is written to the KEY keyword, so it is not
+ * necessary for the caller to break the value into integer and
+ * fractional parts.
+ *
+ * fitsfile *fileptr - open FITS file pointer, open to HDU where
+ *                     keywords are to be found
+ * char *key - keyword name, "TSTART", "TIMEZERO", etc.
+ * double vali - the requested time to be written (integer).
+ * double valf - the requested time to be written (fractional).
+ * int force - force writing of specific style of keyword
+ *             0 = don't care (will use existing KEY/KEYI/KEYF if found)
+ *             1 = force use of KEYI/KEYF (will delete KEY)
+ *             2 = force use of KEY (will delete KEYI/KEYF)
+ * int *status - pointer to status variable
+ *
+ * RETURNS: 0 upon success
+ *          CFITSIO error status upon failure
+ *
+ */
+int HDput_frac_time(fitsfile *fileptr, char *key, 
+		    double vali, double valf,
+		    int force, char *comment,
+		    int *status)
+{
+  double valuei, valuef;
+  char keynamei[10];
+  char keynamef[10];
+  int statusi = 0, statusf = 0;
+
+  if (status == 0) return 0;
+  if (*status) return (*status);
+  if ((fileptr == 0) || (key == 0)) return (*status = NULL_INPUT_PTR);
+
+  /* Construct the "I"nteger and "F"ractional keyword names */
+  strncpy(keynamei, key, 7);
+  keynamei[7] = 0;
+  strcat(keynamei, "I");
+  strncpy(keynamef, key, 7);
+  keynamef[7] = 0;
+  strcat(keynamef, "F");
+
+  /* Read pair of values first ... */
+  fits_write_errmark();
+  fits_read_key(fileptr, TDOUBLE, keynamei, &valuei, NULL, &statusi);
+  fits_read_key(fileptr, TDOUBLE, keynamef, &valuef, NULL, &statusf);
+  /* It is never an error for either of these two keywords to be missing. */
+  fits_clear_errmark();
+
+  /* Conditions where we write KEYI/KEYF */
+  if ( ((force == 0) && (statusi == 0 || statusf == 0)) || /* Auto & KEYI/KEYF exist */
+       (force == 1) ) {                                    /* Force KEYI/KEYF */
+    char commenti[FLEN_CARD] = "", commentf[FLEN_CARD] = "";
+
+    if (comment) {
+      strcat(commenti, comment); strcat(commenti," (integer)");
+      strcat(commentf, comment); strcat(commentf," (fractional");
+    }
+    /* Force delete the KEY version of keyword */
+    fits_write_errmark();
+    fits_delete_key(fileptr, key, status);
+    fits_clear_errmark(); *status = 0;
+    /* Write KEYI/KEYF versions */
+    fits_update_key(fileptr, TDOUBLE, keynamei, &vali, commenti, status);
+    fits_update_key(fileptr, TDOUBLE, keynamef, &valf, commentf, status);
+    
+  } else {
+    double value = vali+valf;
+
+    /* Force delete the KEYI/KEYF versions of keyword */
+    fits_write_errmark();
+    fits_delete_key(fileptr, keynamei, status); *status = 0;
+    fits_delete_key(fileptr, keynamef, status); *status = 0;
+    fits_clear_errmark(); 
+
+    /* Write KEY version */
+    fits_update_key(fileptr, TDOUBLE, key, &value, comment, status);
+  }
+
+  return *status;
+}
 
 /* 
  * HDgti_shell_sort - internal sort routine

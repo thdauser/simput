@@ -20,7 +20,7 @@ const char *hdbasename(const char *path) {
 
 /********************************** headas_clobber **********************/
 
-int headas_clobberfile(char *filename) {
+int headas_clobberfile(const char *filename) {
 
   /* 
      delete (clobber) the specified file, IF the file exists and IF
@@ -97,6 +97,10 @@ FCALLSCFUN1(FLOAT, hd_ran2, HD_RAN2, hd_ran2, PLONG)
 /* 
  * expand_item_list - Expand a delimited list, or an "@" file
  *
+ * char **expand_item_list(const char *liststr, int *nitems, char fieldsep,
+ *			int trim, int skipempty, int guardparen,
+ *			int *status)
+ *
  * Parses a delimited list or "@" file into individual strings.  An
  * array of string pointers is returned, one pointer for each item in
  * the list.
@@ -153,13 +157,14 @@ FCALLSCFUN1(FLOAT, hd_ran2, HD_RAN2, hd_ran2, PLONG)
  *   result = expand_item_list("item1[x,y],item2",',',*nitems,1,1,1, &status);
  *      - parses to "item1[x,y]","item2" (note CFITSIO syntax obeyed)
  * */
-char **expand_item_list(char *liststr, int *nitems, char fieldsep,
+char **expand_item_list(const char *liststr, int *nitems, char fieldsep,
 			int trim, int skipempty, int guardparen,
 			int *status)
 {
   int allocLen, totalLen, llen;
   char *lines,line[PIL_PATH_MAX];
-  char *ptr, *pdest, **cptr;
+  const char *ptr;
+  char *pdest, **cptr;
   int i;
   FILE *aFile;
   
@@ -174,6 +179,7 @@ char **expand_item_list(char *liststr, int *nitems, char fieldsep,
   /* *************
      CASE 1: an "@" file containing a list of items, one per line */
   if (liststr[0] == '@') {
+    char *lptr = 0; /* Temporary variable used for parsing input file */
     
     /* Cribbed from ffimport_list() in cfitsio/cfileio.c */
     totalLen =    0;
@@ -192,6 +198,7 @@ char **expand_item_list(char *liststr, int *nitems, char fieldsep,
     }
     
     while( fgets(line,PIL_PATH_MAX,aFile)!=NULL ) {
+
       /* Make sure null terminated string */
       line[PIL_PATH_MAX-1] = 0;
       llen = strlen(line);
@@ -200,20 +207,20 @@ char **expand_item_list(char *liststr, int *nitems, char fieldsep,
       if (skipempty && (llen == 0)) continue;
       
       /* Trim trailing spaces, tabs, newlines */
-      ptr = line+llen-1;
-      while ( (ptr >= line) && 
-	      ((trim && ((*ptr == ' ')  || (*ptr == '\t')))
-	       || (*ptr == '\n') || (*ptr == '\r')) ) {
-	*ptr-- = 0;
+      lptr = line+llen-1;
+      while ( (lptr >= line) && 
+	      ((trim && ((*lptr == ' ')  || (*lptr == '\t')))
+	       || (*lptr == '\n') || (*lptr == '\r')) ) {
+	*lptr-- = 0;
 	llen--;
       }
       if (skipempty && (llen == 0)) continue;
       
-      ptr = line;
+      lptr = line;
       /* Trim leading spaces and tabs */
       if (trim) {
-	while ((*ptr == ' ') || (*ptr == '\t')) {
-	  ptr++; 
+	while ((*lptr == ' ') || (*lptr == '\t')) {
+	  lptr++; 
 	  llen--;
 	}
 	if (skipempty && (llen == 0)) continue;
@@ -231,7 +238,7 @@ char **expand_item_list(char *liststr, int *nitems, char fieldsep,
       }
       
       /* Copy string to output, be sure to add 1 to length to include null */
-      strcpy( lines+totalLen, ptr );
+      strcpy( lines+totalLen, lptr );
       totalLen += llen+1;
       
       (*nitems) ++;
@@ -254,17 +261,17 @@ char **expand_item_list(char *liststr, int *nitems, char fieldsep,
 
     /* Move char data to end of array, starting from the end */
     pdest = (char *) ( ((char **) lines) + (*nitems) ) + totalLen - 1;
-    ptr   = lines + totalLen - 1;
-    while(ptr >= lines) {
-      *pdest-- = *ptr--;
+    lptr   = lines + totalLen - 1;
+    while(lptr >= lines) {
+      *pdest-- = *lptr--;
     }
 
     cptr = (char **) lines;
-    ptr = (char *) ( ((char **) lines) + (*nitems) );
+    lptr = (char *) ( ((char **) lines) + (*nitems) );
     for (i=0; i< (*nitems); i++) {
-      cptr[i] = ptr;       /* Put pointer to string i */
-      while (*ptr) ptr++;  /* Skip chars of string */
-      ptr++;               /* Skip null of string */
+      cptr[i] = lptr;       /* Put pointer to string i */
+      while (*lptr) lptr++; /* Skip chars of string */
+      lptr++;               /* Skip null of string */
     }
 
   } else {

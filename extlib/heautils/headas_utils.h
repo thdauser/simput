@@ -63,13 +63,14 @@ extern "C" {
   int headas_parstamp(fitsfile *fptr, int hdunum);
   int HDpar_stamp(fitsfile *fptr, int hdunum, int *status);
   void HDpar_note(const char * name, const char * format, ...);
-  int headas_clobberfile(char *filename);
+  int headas_clobberfile(const char *filename);
   float hd_ran2(long *idum);
-  char **expand_item_list(char *liststr, int *nitems, char fieldsep,
+  char **expand_item_list(const char *liststr, int *nitems, char fieldsep,
 			  int trim, int skipempty, int guardparen,
 			  int *status);
   int HDfile_system_check(const char *file_name, const char *open_mode);
   int HDfile_check(const char *file_name, const char *open_mode);
+  int HDfile_check_init(void);
 
   /****************************************************************************/
 
@@ -81,10 +82,7 @@ extern "C" {
 #endif
 
 /******************************************************************************
- * $Log: headas_utils.h,v $
- * Revision 1.8  2005/08/09 19:05:02  elwin
- * Added import specification for Win32 dll build. -- LEB
- *
+ * $Log$
  * Revision 1.7  2005/05/06 15:05:05  miket
  * adding new function HDpar_note() contributed by R.Wiegand
  *

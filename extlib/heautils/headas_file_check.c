@@ -158,11 +158,7 @@ extern "C" {
 #endif
 
 /******************************************************************************
- * $Log: headas_file_check.c,v $
- * Revision 1.5  2007/12/04 15:54:55  peachey
- * Return the correct Ape status code signifying file not accessible
- * in the event of error, instead of just 0/1.
- *
+ * $Log$
  * Revision 1.4  2007/10/10 21:26:35  peachey
  * Use Ape's default file access checker for first stage of
  * file checking before performing additional checks using cfitsio.

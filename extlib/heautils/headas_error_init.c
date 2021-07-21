@@ -102,11 +102,7 @@ int HDerror_init(int status) {
 #endif
 
 /******************************************************************************
- * $Log: headas_error_init.c,v $
- * Revision 1.2  2002/10/04 21:41:46  peachey
- * Use new message function facility and package ID facility when setting
- * up to handle PIL and CFITSIO error messages.
- *
+ * $Log$
  * Revision 1.1  2002/09/16 13:45:41  peachey
  * Add headas error handling facilities.
  *

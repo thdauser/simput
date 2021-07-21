@@ -37,3 +37,7 @@ extern int HDgti_where(struct gti_struct *gti, int ntimes,
 
 extern double HDget_frac_time(fitsfile *fileptr, char *key, double *keyi, 
 			  double *keyf, int *status);
+extern int HDput_frac_time(fitsfile *fileptr, char *key, 
+			   double vali, double valf,
+			   int force, char *comment,
+			   int *status);

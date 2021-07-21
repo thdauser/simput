@@ -131,11 +131,7 @@ hd_error_map* HDerror_map_next_map(hd_error_map* map);
 #endif
 
 /******************************************************************************
- * $Log: headas_error.h,v $
- * Revision 1.4  2004/01/07 14:45:52  peachey
- * Add functions HDerror_dump_silence and HDerror_dump_is_silent which
- * set and get a silent flag. When this flag is set, HDerror_dump is a no-op.
- *
+ * $Log$
  * Revision 1.3  2002/10/09 16:41:58  peachey
  * Make sure that heaerr, heaout, heaprom are used consistently.
  *

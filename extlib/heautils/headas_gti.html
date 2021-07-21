@@ -1,0 +1,459 @@
+<!--=======================================-->
+<!--  HEADAS HTML HELP FILE TEMPLATE, v1.1 -->
+<!--=======================================-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<style type="text/css">
+body { margin-left: 5%; margin-right: 5%; }
+h1,h2,h3,h4 { margin-left: -5%;}
+</style>
+<title>headas_gti HEADAS help file</title>
+</head>
+<body>
+
+
+<h2>MODULE</h2>
+
+<pre>
+int HDgti_init(struct gti_struct *gti)
+int HDgti_free(struct gti_struct *gti)
+int HDgti_copy(struct gti_struct *dest, struct gti_struct *src, int *status)
+int HDgti_grow(struct gti_struct *gti, int new, int *status)
+
+int HDgti_merge(int mode, struct gti_struct *gti, 
+	     struct gti_struct *agti, struct gti_struct *bgti, 
+	     int *status)
+int HDgti_clean(struct gti_struct *gti, struct gti_struct *ogti,
+	    int *status)
+
+double HDgti_exp(double t1, double t2, struct gti_struct *gti, int *status)
+int HDgti_where(struct gti_struct *gti, int ntimes, 
+	     double *times, int *segs, int *status)
+
+int HDgti_read(char *filename, struct gti_struct *gti, 
+	    char *extname, char *start, char *stop,
+	    struct gti_struct *refer_to, 
+	    fitsfile **fptr, int *status)
+int HDgti_write(fitsfile *fptr, struct gti_struct *gti, 
+	     char *extname, char *start, char *stop,
+	     int *status)
+double HDget_frac_time(fitsfile *fileptr, char *key, 
+		       double *vali, double *valf,
+		       int *status)
+</pre>
+
+<h2>DESCRIPTION</h2>
+
+<p>
+This module contains routines which are used to create, manipulate,
+read and write "good time intervals" or GTIs.  A GTI contains
+information about a set of time intervals, which are typically useful
+for astronomy data processing.  For example, a GTI usually contains
+information about exposure start and stop times.  This module has
+routines which interface with standard FITS-format GTI files.
+
+<p>
+The primary data structure used by this module is the gti_struct
+structure, which is defined here:
+<pre>
+
+     struct gti_struct {
+       double mjdref;       /* MJD Reference time of GTI */
+       double timezero;     /* Timezero time offset of GTI */
+       int ngti;            /* Number of occupied time values */
+       int maxgti;          /* Maximum amount of time values */
+       double *start, *stop;/* Pointer to start[] and stop[] arrays */
+       void *dptr;          /* Raw data storage pointer */
+     };
+</pre>
+Most of these fields correspond to time-specific keywords within 
+FITS GTI files.  
+
+<p>
+The user is responsible for allocating a gti_struct structure using
+malloc or some other suitable means.  There are two ways to initialze
+the data structure.  The function HDgti_init() can be used to
+initialize a structure to a consistent empty state. An initialized
+structure begins life empty with no internal storage.  Alternatively,
+the HDgti_copy() function can be used to duplicate an existing GTI
+structure into an uninitialized destination data structure.
+
+<p>
+The function HDgti_free() is used to deallocate any internal storage
+and must be called by the user before de-allocating the gti structure
+itself.
+
+<p>
+A GTI may be enlarged using HDgti_grow(), where the user specifies the
+new maximum amount of storage.  Thus, the standard life-cylce for a
+GTI will be something like this:
+<pre>
+       {
+         struct gti_struct gti;  /* or allocate with malloc() */
+         HDgti_init(&amp;gti);       /* initialize structure */
+         HDgti_grow(&amp;gti, ngti, &amp;status); /* grow to desired size */
+         /*  ..... process with GTI ..... */
+         HDgti_free(&amp;gti);
+         /* de-allocate "gti" with free() if appropriate */
+       }
+</pre>
+
+<p>
+The function HDgti_read() is used to initialize a GTI
+structure using the contents of existing FITS GTI extension.  The file
+should be formatted according to the OGIP/93-003 memo, "The Proposed
+Timing FITS File Format for High Energy Astrophysics Data."  The
+MJDREF and TIMEZERO keywords should be present in the requested
+extension.  If they are not present, the default value is assumed to
+be zero.
+
+<p>
+The function HDgti_write() is used to write a GTI structure as a new
+FITS extension.  The file must exist and be open for writing.
+
+<p>
+The utility routine HDget_frac_time() can be used to read keyword that
+can potentially be stored either as the complete value or as integer
+and fractional components.  For example the reference time value can
+either be stored as MJDREF (complete numerical result) or two
+keywords, MJDREFI and MJDREFF, representing the integer and fractional
+components.  HDget_frac_time() attempts both alternatives and returns
+the results.
+
+<p>
+This module also supports manipulation and tabulation capabilities for
+GTI structures.
+
+<p>
+The HDgti_exp() function calculates the overlap exposure time between
+a requested start and stop time and a given GTI structure.
+
+<p>
+The HDgti_where() function computes which GTI time interval a
+requested event falls into, or -1 if the event time does not fall into
+any interval.
+
+<p>
+The HDgti_merge() function performs a merging function between two GTI
+structures.  The merge can either be an "intersection" (GTI_AND)
+operation, which represents the overlapping intervals that occur in
+both GTI structures; or a "union" (GTI_OR) operation, which represents
+the intervals which occur in either one GTI structure or the other.
+
+<p>
+The HDgti_clean() function takes as input a GTI structure and performs
+sanity check operations.  After "cleaning" the GTI structure will be
+in time order with duplicate and overlapping time intervals removed.
+I.e. there will be no redundant intervals and two overlapping
+intervals will be joined into one.
+
+<h2>
+DETAILED DOCUMENTATION
+</h2>
+
+<h3>
+HDgti_init
+</h3>
+<pre>
+
+HDgti_init - initialize GTI structure
+
+Intializes an already-existing GTI structure.  It is assumed that
+no memory needs to be deallocated.
+
+struct gti_struct *gti - pointer to existing GTI structure.
+
+RETURNS: status code
+</pre>
+
+<h3>
+HDgti_free
+</h3>
+<pre>
+
+HDgti_free - deallocate memory associated with GTI structure
+
+Deallocates memory pointed to by GTI structure.  The structure
+itself is not deallocated, but any time intervals are.
+The structure is then initialized to zeroes.
+
+struct gti_struct *gti - pointer to existing GTI structure.
+
+RETURNS: status code
+
+</pre>
+
+
+<h3>
+HDgti_copy
+</h3>
+<pre>
+HDgti_copy - deep copy GTI from one structure to another
+
+Perform deep copy of GTI from source to destination structures.
+The structures must already have been allocated; the contents are
+then transferred.
+
+struct gti_struct *dest - pointer to existing GTI structure, dest of copy
+struct gti_struct *src - pointer to existing GTI structure, source of copy
+int *status - pointer to status variable
+
+RETURNS: status code 
+
+</pre>
+
+<h3>
+HDget_frac_time
+</h3>
+<pre>
+
+HDget_frac_time - get (potentially) fractional time keyword from FITS header
+
+Some OGIP FITS timing values are allowed to be specified either as
+a single keyword, or a pair of keywords which gives integer and
+fractional values which are to be added.  This allows maximum time
+precision.  For example, for the observation starting time, it can
+either be found by:
+
+                                 RETURNS    *vali     *valf
+   TSTART  - single value        TSTART     TSTART    0
+
+   TSTARTI - integer value       TSTARTI+F  TSTARTI   TSTARTF
+   TSTARTF - fractional value
+
+This routine read a FITS timing keyword(s).  The returned values
+are given above.  If the user passes null values for vali and/or
+valf, then HDget_frac_time will gracefully skip storing those values.
+
+fitsfile *fileptr - open FITS file pointer, open to HDU where
+                    keywords are to be found
+char *key - keyword name, "TSTART", "TIMEZERO", etc.
+double *vali - upon return, and if vali is not null, then the whole
+               number of seconds is stored in *vali.
+double *valf - upon return, and if valf is not null, then the fractional
+               number of seconds is stored in *valf.
+int *status - pointer to status variable
+
+RETURNS: (TSTART) or (TSTARTI+TSTARTF)
+
+
+</pre>
+
+<h3>
+HDgti_grow
+</h3>
+<pre>
+
+HDgti_grow - enlarge the storage of an existing GTI structure
+
+Takes an existing GTI structure, and enlarges it to a new size,
+i.e., increases the maximum number of GTI rows that can be stored
+in the structure.  
+
+The storage can never shrink.  Thus, users can call this function
+whenever they anticipate needing a certain number of GTI rows.  The
+existing values will be preserved.
+
+HDgti_grow() handles the case where the GTI structure has been
+initialized and has no allocated storage associated with it, yet.
+
+struct gti_struct *gti - pointer to existing GTI structure, to be
+                          enlarged.
+int new - new maximum number of rows of storage which gti should contain.
+int *status - pointer to status variable
+
+RETURNS: status code 
+
+</pre>
+
+<h3>
+HDgti_read
+</h3>
+<pre>
+
+HDgti_read - read a GTI extension from a FITS file
+
+Reads a GTI extension from a FITS file.  If filename is non-NULL,
+then HDgti_read will open the specified file name (and optional
+extension name).  If filename is NULL, then it is assumed that the
+file is already open, and a CFITSIO file handle is available in
+(*fptr).  
+
+Upon return, if fptr is non-NULL, the file will remain open and
+*fptr will be a CFITSIO file handle.  Otherwise, the file will be
+closed.
+
+HDgti_read() will search for the first extension matching the
+extname parameter.  Set extename="*" to match the first extension
+of the open file.
+
+The user can choose the column names to read.  The user can also
+provide a reference GTI.  If the two GTIs have different timezero
+values, then the times of the new gti are adjusted to match the
+timezero value of the refer_to GTI.
+
+
+char *filename - name of FITS file to read (including CFITSIO syntax),
+                 or NULL
+struct gti_struct *gti - pointer to existing GTI structure, to be
+                         filled with data from FITS file.
+char *extname - name of extension,    or 0 for default of "GTI"
+                (set extname="*" to use first open table extension)
+char *start   - name of START column, or 0 for default of "*START*"
+char *stop    - name of STOP column,  or 0 for default of "*STOP*"
+struct gti_struct *refer_to - pointer to existing GTI structure.
+fitsfile **fptr - three cases:
+   fptr == 0: 
+       HDgti_read will open filename, and close it before returning
+   fptr != 0 and filename != NULL: 
+       HDgti_read will open filename, file will remain open, and
+       (*fptr) contains the CFITSIO handle of open file
+   fptr != 0 and filename == NULL: 
+       HDgti_read assumes file is already open, and
+       (*fptr) contains the CFITSIO handle of open file
+int *status - pointer to status variable
+
+RETURNS: status code
+</pre>
+
+<h3>
+HDgti_write
+</h3>
+<pre>
+
+HDgti_write - create a GTI extension and write it
+
+Writes a GTI extension to a FITS file.  A binary table is created
+and populated with the gti "gti".  Basic OGIP GTI keywords are
+written.
+
+The file is left open upon return so that users may manipulate the
+header afterwards.
+
+The units are assumed to be seconds.  The user can choose the
+extname, and column names to write.
+
+
+fitsfile *fptr - already-open FITS file, open for writing
+struct gti_struct *gti - populated GTI structure, to be written to fptr
+char *extname - name of extension, or 0 for default of "STDGTI"
+char *start - name of START column, or 0 for default of "START"
+char *stop - name of STOP column, or 0 for default of "STOP"
+int *status - pointer to status variable
+
+RETURNS: status code 
+
+</pre>
+
+<h3>
+HDgti_merge
+</h3>
+<pre>
+
+HDgti_merge - merge two GTIs either using intersection or union
+
+Merges two different good time interval lists.  If the mode is
+GTI_AND, then the intersection between the two lists is determined.
+If the mode is GTI_OR, then the union between the two lists is
+found.
+
+This routine is based heavily on the fortran version, taken from
+the HEASARC extractor (gtilib.f).
+
+int mode - merging mode, either GTI_AND or GTI_OR
+struct gti_struct *gti - pointer to existing GTI structure, result of merge
+struct gti_struct *agti - pointer to existing GTI structure, 1st input GTI
+struct gti_struct *bgti - pointer to existing GTI structure, 2nd input GTI
+int *status - pointer to status variable
+
+RETURNS: status code 
+
+</pre>
+
+<h3>
+HDgti_clean
+</h3>
+<pre>
+
+HDgti_clean - clean a GTI by sorting, removing duplicates, overlaps
+
+HDgti_clean:  Sort a gti list and remove invalid and overlapping
+  intervals by calling HDgti_merge to OR it with nothing.
+
+This routine is based heavily on the fortran version, taken from
+the HEASARC extractor.
+
+struct gti_struct *gti - pointer to existing GTI structure, result of clean
+struct gti_struct *ogti - pointer to existing GTI structure, to be cleaned
+int *status - pointer to status variable
+
+RETURNS: status code 
+
+</pre>
+
+<h3>
+HDgti_exp
+</h3>
+<pre>
+
+HDgti_exp - compute overlap exposure of a time bin with GTI
+
+Exposure: What part of the time interval (t1, t2) is contained
+within the Good Time Intervals?  (For the fractional exposure, just
+divide gtiexp by (t2-t1).)
+
+ NOTE: It is *VITAL* that the GTI list be ordered and
+    contain no overlaps!  If in doubt, call HDgti_clean first.
+    also, we assume that t1, t2, and the gti list are all
+    in the same units.
+
+One difference from the FORTRAN version is that if there are no
+good time intervals (i.e. gti-&gt;ngti == 0), then zero is returned
+here.  In the FORTRAN version, the whole exposure is returned.
+
+double t1 - start of time bin.
+double t2 - stop of time bin.  (note: t1 &lt; t2)
+struct gti_struct *gti - pointer to existing GTI structure, whose
+       overlap with the time bin is to be computed.
+int *status - pointer to status variable
+
+RETURNS: overlap exposure 
+</pre>
+
+<h3>
+HDgti_where
+</h3>
+<pre>
+
+HDgti_where - which good time intervals a set of times falls into
+
+HDgti_where examines an array of times, and determines which good time
+intervals the times fall into.  This routine is most highly
+optimized for times which are sorted in time order.
+
+An interval of -1 indicates a time that does not fall into a good
+time interval.
+
+struct gti_struct *gti - pointer to existing GTI structure.
+int ntimes - size of times array.
+double *times - an ntimes-element array, times to be examined.
+int *segs - an ntimes-element array.  Upon return, the values give 
+  which good time interval the time falls into:
+   (times[i] &gt;= gti->start[segs[i]]) &amp;&amp; (times[i] &lt; gti-&gt;stop[segs[i]])
+  or, if segs[i] is -1, the time does not fall into a GTI
+int *status - pointer to status variable
+
+RETURNS: status code 
+</pre>
+
+<h2>ALSO SEE</h2>
+
+<h2>LAST MODIFIED</h2>
+
+February 2009
+
+</body>
+</html>
+
+
+
+
