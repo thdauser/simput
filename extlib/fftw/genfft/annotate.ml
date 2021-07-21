@@ -78,9 +78,9 @@ let reorder l =
 	  List.map 
 	    (fun (a, x) -> ((a, x), (overlap va x, List.length x))) b in
 	let c' =
-	  Sort.list 
-	    (fun (_, (a, la)) (_, (b, lb)) -> 
-	      la < lb or a > b)
+	  List.sort 
+	    (fun (_, (a, la)) (_, (b, lb)) ->
+              if la < lb || a > b then -1 else 1)
 	    c in
 	let b' = List.map (fun (a, _) -> a) c' in
 	a :: (loop b') in
@@ -273,7 +273,7 @@ let rec rewrite_declarations force_declarations
   let m = !Magic.number_of_variables in
 
   let declare_it declared =
-    if (force_declarations or List.length declared >= m) then
+    if (force_declarations || List.length declared >= m) then
       ([], declared)
     else
       (declared, [])

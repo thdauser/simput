@@ -18,8 +18,8 @@
  *
  */
 
-#include "api.h"
-#include "threads.h"
+#include "api/api.h"
+#include "threads/threads.h"
 
 static int threads_inited = 0;
 
@@ -50,7 +50,7 @@ int X(init_threads)(void)
 	     and hence the time it is configured */
 	  plnr = X(the_planner)();
 	  X(threads_conf_standard)(plnr);
-	       
+
           threads_inited = 1;
      }
      return 1;
@@ -78,4 +78,22 @@ void X(plan_with_nthreads)(int nthreads)
      A(threads_inited);
      plnr = X(the_planner)();
      plnr->nthr = X(imax)(1, nthreads);
+}
+
+int X(planner_nthreads)(void)
+{
+    return X(the_planner)()->nthr;
+}
+
+void X(make_planner_thread_safe)(void)
+{
+     X(threads_register_planner_hooks)();
+}
+
+spawnloop_function X(spawnloop_callback) = (spawnloop_function) 0;
+void *X(spawnloop_callback_data) = (void *) 0;
+void X(threads_set_callback)(void (*spawnloop)(void *(*work)(char *), char *, size_t, int, void *), void *data)
+{
+     X(spawnloop_callback) = (spawnloop_function) spawnloop;
+     X(spawnloop_callback_data) = data;
 }

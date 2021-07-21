@@ -3,14 +3,7 @@ cfitsio/libcfitsio.so*
 cfitsio/libcfitsio.2.3.37.dylib
 cfitsio/libcfitsio.2.dylib
 cfitsio/libcfitsio.dylib
-fftw/doc/html/*
-fftw/doc/stamp-vti
-fftw/doc/version.texi
-fftw/doc/fftw3.info
-fftw/doc/fftw3.info-1
-fftw/doc/fftw3.info-2
 fftw/api/fftw3.f03
-fftw/doc/version
 fftw/config.h
 fftw/config.h.in
 fftw/fftw.pc
@@ -33,6 +26,8 @@ fftw/config.sub
 fftw/depcomp
 fftw/install-sh
 fftw/missing
+fftw/FFTW3Config.cmake
+fftw/FFTW3ConfigVersion.cmake
 wcslib/C/fitshdr.c
 wcslib/C/libwcs.so*
 wcslib/C/libwcs.so

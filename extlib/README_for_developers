@@ -2,4 +2,10 @@ Changes made to the extlib files:
 
 - wcslib/configure.ac: L246 changed to SHRLN="libwcs.dylib"
 
-- fftw/configure.ac: L26: commented out "AC_DISABLE_SHARED"
+- fftw:
+  * commented out "AC_DISABLE_SHARED" in configure.ac, L33.
+  * fftw/doc directory not compiled for Simput, commented out corresponding lines
+    in Makefile.am L34-42 and deleted corresponding AC_CONFIG_FILES entries in 
+    fftw/configure.ac, L805-806 (creating the documentation also modifies many
+    of the input files there which leads to problems with git and also
+    'make distcheck').

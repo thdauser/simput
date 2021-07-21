@@ -490,6 +490,10 @@
       integer(C_INT), value :: nthreads
     end subroutine fftwq_plan_with_nthreads
     
+    integer(C_INT) function fftwq_planner_nthreads() bind(C, name='fftwq_planner_nthreads')
+      import
+    end function fftwq_planner_nthreads
+    
     integer(C_INT) function fftwq_init_threads() bind(C, name='fftwq_init_threads')
       import
     end function fftwq_init_threads
@@ -497,6 +501,11 @@
     subroutine fftwq_cleanup_threads() bind(C, name='fftwq_cleanup_threads')
       import
     end subroutine fftwq_cleanup_threads
+    
+! Unable to generate Fortran interface for fftwq_threads_set_callback
+    subroutine fftwq_make_planner_thread_safe() bind(C, name='fftwq_make_planner_thread_safe')
+      import
+    end subroutine fftwq_make_planner_thread_safe
     
     integer(C_INT) function fftwq_export_wisdom_to_filename(filename) bind(C, name='fftwq_export_wisdom_to_filename')
       import
@@ -564,7 +573,11 @@
       integer(C_SIZE_T), value :: n
     end function fftwq_malloc
     
-! Unable to generate Fortran interface for fftwq_alloc_real
+    type(C_PTR) function fftwq_alloc_real(n) bind(C, name='fftwq_alloc_real')
+      import
+      integer(C_SIZE_T), value :: n
+    end function fftwq_alloc_real
+    
     type(C_PTR) function fftwq_alloc_complex(n) bind(C, name='fftwq_alloc_complex')
       import
       integer(C_SIZE_T), value :: n

@@ -4,7 +4,18 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include "fftw-bench.h"
+#include "tests/fftw-bench.h"
+
+/* define to enable code that traps floating-point exceptions.
+   Disabled by default because I don't want to worry about the
+   portability of such code.  feenableexcept() seems to be a GNU
+   thing */
+#undef TRAP_FP_EXCEPTIONS
+
+#ifdef TRAP_FP_EXCEPTIONS
+#  include <signal.h>
+#  include <fenv.h>
+#endif
 
 #ifdef _OPENMP
 #  include <omp.h>
@@ -31,6 +42,42 @@ extern void uninstall_hook(void);  /* in hook.c */
 extern unsigned FFTW(random_estimate_seed);
 #endif
 
+#ifdef TRAP_FP_EXCEPTIONS
+static void sigfpe_handler(int sig, siginfo_t *info, void *context)
+{
+     /* fftw code is not supposed to generate FP exceptions */
+     UNUSED(sig); UNUSED(info); UNUSED(context);
+     fprintf(stderr, "caught FPE, aborting\n");
+     abort();
+}
+
+static void setup_sigfpe_handler(void)
+{
+  struct sigaction a;
+  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW);
+  memset(&a, 0, sizeof(a));
+  a.sa_sigaction = sigfpe_handler;
+  a.sa_flags = SA_SIGINFO;
+  if (sigaction(SIGFPE, &a, NULL) == -1) {
+       fprintf(stderr, "cannot install sigfpe handler\n");
+       exit(1);
+  }
+}
+#else
+static void setup_sigfpe_handler(void)
+{
+}
+#endif
+
+/* dummy serial threads backend for testing threads_set_callback */
+static void serial_threads(void *(*work)(char *), char *jobdata, size_t elsize, int njobs, void *data)
+{
+     int i;
+     (void) data; /* unused */
+     for (i = 0; i < njobs; ++i)
+          work(jobdata + elsize * i);
+}
+
 void useropt(const char *arg)
 {
      int x;
@@ -49,6 +96,12 @@ void useropt(const char *arg)
      else if (!strcmp(arg, "paranoid")) paranoid = 1;
      else if (!strcmp(arg, "wisdom")) usewisdom = 1;
      else if (!strcmp(arg, "amnesia")) amnesia = 1;
+     else if (!strcmp(arg, "threads_callback"))
+#ifdef HAVE_SMP
+          FFTW(threads_set_callback)(serial_threads, NULL);
+#else
+          fprintf(stderr, "Serial FFTW; ignoring threads_callback option.\n");
+#endif
      else if (sscanf(arg, "nthreads=%d", &x) == 1) nthreads = x;
 #ifdef FFTW_RANDOM_ESTIMATOR
      else if (sscanf(arg, "eseed=%d", &x) == 1) FFTW(random_estimate_seed) = x;
@@ -72,6 +125,8 @@ void rdwisdom(void)
      if (threads_ok) {
 	  BENCH_ASSERT(FFTW(init_threads)());
 	  FFTW(plan_with_nthreads)(nthreads);
+	  BENCH_ASSERT(FFTW(planner_nthreads)() == nthreads);
+          FFTW(make_planner_thread_safe)();
 #ifdef _OPENMP
 	  omp_set_num_threads(nthreads);
 #endif
@@ -96,7 +151,7 @@ void rdwisdom(void)
 
      if (success) {
 	  if (verbose > 1) printf("READ WISDOM (%g seconds): ", tim);
-	  
+
 	  if (verbose > 3)
 	       export_wisdom(stdout);
 	  if (verbose > 1)
@@ -126,9 +181,9 @@ static unsigned preserve_input_flags(bench_problem *p)
       * fftw3 cannot preserve input for multidimensional c2r transforms.
       * Enforce FFTW_DESTROY_INPUT
       */
-     if (p->kind == PROBLEM_REAL && 
-	 p->sign > 0 && 
-	 !p->in_place && 
+     if (p->kind == PROBLEM_REAL &&
+	 p->sign > 0 &&
+	 !p->in_place &&
 	 p->sz->rnk > 1)
 	  p->destroy_input = 1;
 
@@ -162,6 +217,8 @@ void setup(bench_problem *p)
 {
      double tim;
 
+     setup_sigfpe_handler();
+
      if (amnesia) {
 	  FFTW(forget_wisdom)();
 	  havewisdom = 0;
@@ -169,7 +226,11 @@ void setup(bench_problem *p)
 
      /* Regression test: check that fftw_malloc exists and links
       * properly */
-     FFTW(free(FFTW(malloc(42))));
+     {
+          void *ptr = FFTW(malloc(42));
+          BENCH_ASSERT(FFTW(alignment_of)((bench_real *)ptr) == 0);
+          FFTW(free(ptr));
+     }
 
      rdwisdom();
      install_hook();
@@ -184,7 +245,7 @@ void setup(bench_problem *p)
      if (verbose > 1) printf("planner time: %g s\n", tim);
 
      BENCH_ASSERT(the_plan);
-     
+
      {
 	  double add, mul, nfma, cost, pcost;
 	  FFTW(flops)(the_plan, &add, &mul, &nfma);
@@ -207,7 +268,7 @@ void doit(int iter, bench_problem *p)
      FFTW(plan) q = the_plan;
 
      UNUSED(p);
-     for (i = 0; i < iter; ++i) 
+     for (i = 0; i < iter; ++i)
 	  FFTW(execute)(q);
 }
 

@@ -70,10 +70,10 @@ static void transpose_chunks(int *sched, int n_pes, int my_pe,
 		    else {
 			 memcpy(buf, O + sbo[pe], sbs[pe] * sizeof(R));
 			 MPI_Sendrecv(buf, (int) (sbs[pe]), FFTW_MPI_TYPE,
-				      pe, (my_pe * n_pes + pe) & 0xffff,
+				      pe, (my_pe * n_pes + pe) & 0x7fff,
 				      O + rbo[pe], (int) (rbs[pe]),
 				      FFTW_MPI_TYPE,
-				      pe, (pe * n_pes + my_pe) & 0xffff,
+				      pe, (pe * n_pes + my_pe) & 0x7fff,
 				      comm, &status);
 		    }
 	       }
@@ -88,10 +88,10 @@ static void transpose_chunks(int *sched, int n_pes, int my_pe,
 		    else
 			 MPI_Sendrecv(I + sbo[pe], (int) (sbs[pe]),
 				      FFTW_MPI_TYPE,
-				      pe, (my_pe * n_pes + pe) & 0xffff,
+				      pe, (my_pe * n_pes + pe) & 0x7fff,
 				      O + rbo[pe], (int) (rbs[pe]),
 				      FFTW_MPI_TYPE,
-				      pe, (pe * n_pes + my_pe) & 0xffff,
+				      pe, (pe * n_pes + my_pe) & 0x7fff,
 				      comm, &status);
 	       }
 	  }
@@ -350,6 +350,7 @@ nada:
      X(plan_destroy_internal)(*cld3);
      X(plan_destroy_internal)(*cld2rest);
      X(plan_destroy_internal)(*cld2);
+     *cld2 = *cld2rest = *cld3 = NULL;
      return 0;
 }
 
