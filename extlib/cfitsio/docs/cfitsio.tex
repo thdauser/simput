@@ -31,7 +31,7 @@
 \medskip
 \medskip
 \begin{center}
-{\Large Version 3.4 \\}
+{\Large Version 4.0 \\}
 \end{center}
 \bigskip
 \vskip 2.5cm
@@ -46,7 +46,7 @@ USA}
 \vfill
 \bigskip
 \begin{center}
-{\Large May 2018\\}
+{\Large May 2021\\}
 \end{center}
 \vfill
 \end{titlepage}
@@ -1110,7 +1110,7 @@ with TFORMn = '1B' and TZEROn = -128.  The calls to fits\_write\_col
 then write the arrays of unsigned integer values to the columns.
 
 
-\section{Dealing with Character Strings}
+\section{Dealing with Character Strings \label{character-strings}}
 
 The character string values in a FITS header or in an ASCII column in a
 FITS table extension are generally padded out with non-significant
@@ -1129,6 +1129,17 @@ Similarly, when writing string values to a FITS file the
 CFITSIO routines expect to get a null-terminated string as input;
 CFITSIO will pad the string with blanks if necessary when writing it
 to the FITS file.
+
+The FITS standard does not require trailing spaces to be treated in
+this way, but it does allow a more seamless transition from the
+FORTRAN FITS world where trailing spaces are often treated as
+insignificant.  Users who wish the greatest fidelity when transferring
+strings can use the \verb+_byt+ variants of column readers and writers
+(functions fits\_\{read,write\}\_col\_byt).  These routines will
+transfer the raw fixed-length vectors of character bytes of the
+column, including any trailing blanks of course. The \verb+_byt+
+variants make no attempt to null-terminate any elements.  A NULL
+string would be indicated by its first character being a NUL byte.
 
 When calling CFITSIO routines that return a character string it is
 vital that the size of the char array be large enough to hold the
@@ -1707,12 +1718,14 @@ fits\_open\_data except they will move to the first significant table
 HDU or image HDU in the file, respectively, if a HDU name or
 number is not specified as part of the filename.
 
-The fits\_open\_extname routine opens the file and attempts to move to a 'useful'
-HDU. If after opening the file CFITSIO is pointing to null primary array,
-then CFITSIO will attempt to move to the first extension that has an EXTNAME or
-HDUNAME keyword value that matches one of the names in the input extlist
-space-delimited list of names.  If that fails, then CFITSIO simply moves to the
-2nd HDU in the file.
+The fits\_open\_extlist routine opens the file and attempts to move to
+a 'useful' HDU. If after opening the file CFITSIO is pointing to null
+primary array, then CFITSIO will attempt to move to the first
+extension that has an EXTNAME or HDUNAME keyword value that matches
+one of the names in the input extlist space-delimited list of names
+(wildcards are permitted).  If that fails, then CFITSIO simply moves
+to the 2nd HDU in the file.  Upon return, the type of the HDU is
+returned in *hdutype, as described in \ref{ffmahd} HDU Access Routines.
 
 IRAF images (.imh format files) and raw binary data arrays may also be
 opened with READONLY access.  CFITSIO will automatically test if the
@@ -1729,7 +1742,7 @@ is then opened by the application program with READONLY access.
 Programs can read the input file from the 'stdin' file stream if a dash
 character ('-') is given as the filename. Files can also be opened over
 the network using FTP or HTTP protocols by supplying the appropriate URL
-as the filename.  The HTTPS protocol is also supported if the CFITSIO
+as the filename.  The HTTPS and FTPS protocols are also supported if the CFITSIO
 build includes the libcurl library.  (If the CFITSIO 'configure' script
 finds a usable libcurl library on your system, it will automatically be 
 included in the build.)
@@ -1871,17 +1884,19 @@ as a whole.
     specified absolute HDU number (starting with 1 for the primary
     array) in the FITS file, and the second routine moves a relative
     number HDUs forward or backward from the current HDU.  A null
-    pointer may be given for the hdutype parameter if it's value is not
-    needed.  The third routine moves to the (first) HDU which has the
-    specified extension type and EXTNAME and EXTVER keyword values (or
-    HDUNAME and HDUVER keywords).  The hdutype parameter may have a
-    value of IMAGE\_HDU, ASCII\_TBL, BINARY\_TBL, or ANY\_HDU where
-    ANY\_HDU means that only the extname and extver values will be used
-    to locate the correct extension.  If the input value of extver is 0
-    then the EXTVER keyword is ignored and the first HDU with a
-    matching EXTNAME (or HDUNAME) keyword will be found.  If no
-    matching HDU is found in the file then the current HDU will remain
-    unchanged and a status = BAD\_HDU\_NUM will be returned.
+    pointer may be given for the hdutype parameter if it's value is
+    not needed.  The third routine moves to the (first) HDU which has
+    the specified extension type and EXTNAME and EXTVER keyword values
+    (or HDUNAME and HDUVER keywords).  The extname parameter may
+    contain wildcards, as accepted by fits\_compare\_str().  The
+    hdutype parameter may have a value of IMAGE\_HDU, ASCII\_TBL,
+    BINARY\_TBL, or ANY\_HDU where ANY\_HDU means that only the
+    extname and extver values will be used to locate the correct
+    extension.  If the input value of extver is 0 then the EXTVER
+    keyword is ignored and the first HDU with a matching EXTNAME (or
+    HDUNAME) keyword will be found.  If no matching HDU is found in
+    the file then the current HDU will remain unchanged and a status =
+    BAD\_HDU\_NUM will be returned.
   \label{ffmahd} \label{ffmrhd} \label{ffmnhd}
 \end{description}
 
@@ -2985,6 +3000,28 @@ efficient block size.
        char *tform[], char *tunit[], char *extname, int *status)
 \end{verbatim}
 
+\begin{description}
+\item[2 ] Copy the structure of an open table to a new table, optionally
+    copying zero or more rows from the input table.  This is useful in
+    cases where a task will filter rows from the input before transferring
+    to the output, so a ``pristine'' output table with zero rows is
+    desired to start.  The input file must be open and point to a binary table
+    extension.  The output file must be open for writing; a new
+    extension is created with the same table structure as the input.
+    Optionally, a range of nrows may be copied starting from firstrow,
+    similar to fits\_copy\_rows(). The value nrows may be 0.  Note that
+    the first row in a table is at row = 1.
+   \label{ffcpht}
+\end{description}
+
+\begin{verbatim}
+  int fits_copy_hdutab / ffcpht
+      (fitsfile *infptr, fitsfile *outfptr, LONGLONG firstrow,
+       LONGLONG nrows, > int *status)
+\end{verbatim}
+
+
+
 \subsection{Column Information Routines}
 
 
@@ -3274,7 +3311,8 @@ spaces).  Trailing blank characters are not significant.
 \item[4 ] Copy 'nrows' consecutive rows from one table to another, beginning
     with row 'firstrow'.  These rows will be appended to any existing
     rows in the output table.
-   Note that the first row in a table is at row = 1. \label{ffcprw}
+   Note that the first row in a table is at row = 1. 
+   \label{ffcprw}
 \end{description}
 
 \begin{verbatim}
@@ -3331,14 +3369,20 @@ reading and writing routines where TSTRING corresponds to a C 'char*'
 data type, i.e., a single pointer to an array of characters.  When
 reading strings from a table, the char arrays obviously must have been
 allocated long enough to hold the whole FITS table string.
+See section \ref{character-strings}
+(``Dealing with Character Strings'') for more information.
+
+For complex and double complex data types, \verb+nelements+ is the number
+of numerical pairs; the number of floats or doubles stored by
+\+array+ must be \verb+2*nelements+.
 
 Numerical data values are automatically scaled by the TSCALn and TZEROn
 keyword values (if they exist).
 
-In the case of binary tables with vector elements, the 'felem'
+In the case of binary tables with vector elements, the \verb+firstelem+
 parameter defines the starting element (beginning with 1, not 0) within
 the cell (a cell is defined as the intersection of a row and a column
-and may contain a single value or a vector of values).  The felem
+and may contain a single value or a vector of values).  The \verb+firstelem+
 parameter is ignored when dealing with ASCII tables. Similarly, in the
 case of binary tables the 'nelements' parameter specifies the total
 number of vector values to be read or written (continuing on subsequent
@@ -3384,13 +3428,17 @@ rows if required) and not the number of table cells.
 
 \begin{description}
 \item[2 ] Read elements from an ASCII or binary table column.  The data type
-    parameter specifies the data type of the `nulval' and `array'  pointers;
+    parameter specifies the data type of the `nulval' and `array'  pointers.
+    The caller is required to allocate the storage of \verb+array+ before calling.  
     Undefined array elements will be returned with a value = *nullval,
     (note that this parameter gives the address of the null value, not the
     null value itself) unless nulval = 0 or *nulval = 0, in which case
     no checking for undefined pixels will be performed.  The second
     routine is similar except that any undefined pixels will have the
     corresponding nullarray element set equal to TRUE (= 1).
+
+    Reading data as TSTRING values is different than for other data types
+    as described above.
 
     Any column, regardless of it's intrinsic data type, may be read as a
     string.  It should be noted however that reading a numeric column
@@ -4372,11 +4420,19 @@ The following output patterns are special:
 
     "-" - do not copy a keyword that matches the corresponding input pattern
 
+    "--" - if match occurs, outrec will have "-KEYNAME"
+
     "+" - copy the input unchanged
 
 The inrec string could be just the 8-char keyword name, or the entire
 80-char header record.  Characters 9 - 80 in the input string simply get
 appended to the translated keyword name.
+
+Upon return, outrec will have the converted string, starting from the
+pattern[i][1] pattern and applying the numerical substitutions as 
+described above. If the output pattern is "--" then the resulting
+outrec will be "-KEYNAME", which may indicate to the calling
+routine that KEYNAME is to be deleted.
 
 If n\_range = 0, then only keywords with 'n' equal to n\_value will be
 considered as a pattern match.  If n\_range = +1, then all values of
@@ -4443,7 +4499,13 @@ an IMAGE extension:
 \begin{description}
 \item[21]  Translate the keywords in the input HDU into the keywords that are
 appropriate for the output HDU.  This is a driver routine that calls
-the previously described routine.
+the previously described routine for all keywords in the HDU.
+
+It is allowed for infptr and outfptr to point to the same HDU.
+
+If any output matched patterns are of the form "-KEYNAME" then
+this routine will attempt to delete the keyword KEYNAME.  It is
+not an error if KEYNAME is not present in the output HDU.
 \end{description}
 
 \begin{verbatim}
@@ -5538,6 +5600,7 @@ See Appendix B for the definition of each function parameter.
 
 \section{FITS File Access Routines}
 
+\subsection{File Access}
 
 \begin{description}
 \item[1 ] Open an existing FITS file residing in core computer memory.  This
@@ -5786,38 +5849,34 @@ the 'exists' parameter will have 1 of the 4 following values:
 \end{verbatim}
 
 \begin{description}
-\item[10 ] Wrapper function for global initialization of the libcurl library used
-   when accessing files with the HTTPS protocol.  If an HTTPS file transfer is to
-   be performed, it is recommended that you call this once near the start of your program
-   before any file\_open calls, and before creating any threads.  This is NOT THREAD-SAFE.
-   Returns 0 if initialization succeeded.
-   A corresponding call to fits\_cleanup\_https should be made later.
+\item[10 ] Wrapper functions for global initialization and cleanup of the libcurl library used
+   when accessing files with the HTTPS or FTPS protocols.  If an HTTPS/FTPS file transfer is to
+   be performed, it is recommended that you call the init function once near the start of your 
+   program before any file\_open calls, and before creating any threads. The cleanup function
+   should be called after all HTTPS/FTPS file accessing is completed, and after all threads are 
+   completed.  The functions return 0 upon successful initialization and cleanup.  These
+   are NOT THREAD-SAFE.    
   \label{ffihtps}
 \end{description}
 
 \begin{verbatim}
   int fits_init_https / ffihtps
       ()
+      
+  int fits_cleanup_https / ffchtps
+      ()
 \end{verbatim}
 
-\begin{description}
-\item[11 ] Wrapper function for global cleanup of the libcurl library used when
-   accessing files with the HTTPS protocol.  This is meant to be used in combination 
-   with fits\_init\_https, and should be called after all HTTPS file accessing is completed,
-   and after all threads are completed.  This is NOT THREAD-SAFE.  Returns 0 upon successful
-   cleanup.
-  \label{ffchtps}
-\end{description}
+\subsection{Download Utility Functions}
 
-\begin{verbatim}
-   int fits_cleanup_https / ffchtps
-       ()
-\end{verbatim}
+These routines do not need to be called for normal file accessing. They are
+primarily intended to help with debugging and diagnosing issues which occur 
+during file downloads.  These routines are NOT THREAD-SAFE.
 
 \begin{description}
-\item[12 ] Toggle the verbosity of the libcurl library diagnostic output when
-   accessing files with the HTTPS protocol.  'flag' = 1 turns the output
-   on, 0 turns it off (the default).  This is NOT THREAD-SAFE.
+\item[1 ] Toggle the verbosity of the libcurl library diagnostic output when
+   accessing files with the HTTPS or FTPS protocol.  `flag' = 1 turns the output
+   on, 0 turns it off (the default).
   \label{ffvhtps}
 \end{description}
 
@@ -5826,6 +5885,36 @@ the 'exists' parameter will have 1 of the 4 following values:
         (int flag)
 \end{verbatim}
 
+\begin{description}
+\item[2] If `flag' is set to 1, this will display (to stderr) a progress 
+  bar during an https file download.  (This is not yet implemented
+  for other file transfer protocols.)  `flag' = 0 by default.
+ \label{ffshdwn}
+\end{description}
+
+\begin{verbatim}
+   void fits_show_download_progress / ffshdwn
+        (int flag)
+\end{verbatim}
+
+\begin{description}
+\item[3] The timeout setting (in seconds) determines the maximum time
+  allowed for a net download to complete.  If a download has not finished within
+  the allowed time, the file transfer will terminate and the CFITSIO calling
+  function will return with an error.  Use fits\_get\_timeout will see the 
+  current timeout setting and fits\_set\_timeout to change the setting.  This
+  adjustmant may be particularly useful when having trouble downloading large 
+  files over slow connections.
+ \label{ffgtmo}
+\end{description}
+
+\begin{verbatim}
+   int fits_get_timeout / ffgtmo
+       ()
+       
+   int fits_set_timeout / ffstmo
+       (int seconds, > int *status)
+\end{verbatim}
 
 \section{HDU Access Routines}
 
@@ -7114,11 +7203,29 @@ parameters used in these routines.
 
 \begin{description}
 \item[1 ] Read elements from an ASCII or binary table column (in the CDU).  These
-    routines return the values of the table column array elements.  Undefined
+    routines return the values of the table column array elements.  The caller
+    is required to allocate the storage \verb+array+ before calling.  Undefined
     array elements will be returned with a value = nulval, unless nulval = 0
     (or = ' ' for ffgcvs) in which case no checking for undefined values will
     be performed. The anynul parameter is set to true if any of the returned
-   elements are undefined. \label{ffgcvx}
+    elements are undefined. 
+
+    For the \verb+_str+ (string) variant the number
+    of elements is the number of strings, and the caller must allocate storage
+    for both the array of pointers \verb+array+ and the character array data
+    itself (use \verb+fits_get_col_display_width+ or \verb+fits_get_coltype+ to 
+    determine the number of characters).  See section \ref{character-strings}
+    (``Dealing with Character Strings'') for more information.  Also, when
+    the \verb+_byt+ variant is used to read a column stored in the file as 
+    string data (TFORMn = 'nA'), the subroutine will read the character
+    bytes (instead of attempting to perform a numerical conversion as other
+    integer variants would do), with no attempt at null termination.
+
+    For the \verb+_cmp+ and \verb+_dblcmp+
+    (complex and double complex) variants, \verb+nelements+ is the number
+    of numerical pairs; the number of floats or doubles that must be 
+    pre-allocated is \verb+2*nelements+.
+\label{ffgcvx}
 \end{description}
 
 \begin{verbatim}
@@ -7294,7 +7401,7 @@ be read by converting them on the fly into virtual FITS images.
 
 \item
 FITS files on the Internet can be read (and sometimes written) using the FTP,
-HTTP, HTTPS, or ROOT protocols.
+HTTP, HTTPS, FTPS, or ROOT protocols.
 
 \item
 FITS files can be piped between tasks on the stdin and stdout streams.
@@ -7477,8 +7584,14 @@ components, if present, must be given in that order, but the colFilter,
 rowFilter, and binSpec specifiers may follow in any order.  Regardless
 of the order, however, the colFilter specifier, if present, will be
 processed first by CFITSIO, followed by the rowFilter specifier, and
-finally by the binSpec specifier.
+finally by the binSpec specifier.  
 
+Multiple colFilter or rowFilter specifications may appear as separated
+bracketed expressions, in any order.  Multiple colFilter or rowFilter
+expressions are treated internally as a single effective expression,
+with order of operations determined from left to right.  CFITSIO does
+not support the @filename.txt complex syntax option if multiple
+expressions are also used.
 
 \section{Filetype}
 
@@ -7498,6 +7611,9 @@ CFITSIO to read and/or write the file.  Currently supported types are
        https://  - a readonly file accessed with the HTTPS protocol.  This
                    is available only if CFITSIO was built with the libcurl
                    library (see the following note).
+       ftps://  -  a readonly file accessed with the FTPS protocol.  This
+                   is available only if CFITSIO was built with the libcurl
+                   library.
       stream://  - special driver to read an input FITS file from the stdin
                    stream, and/or write an output FITS file to the stdout
 		   stream.  This driver is fragile and has limited
@@ -7529,10 +7645,10 @@ For example
 will cause CFITSIO to use port 3128 on the heasarc proxy server whenever
 reading a FITS file with HTTP.
 
-\subsection{Notes about HTTPS file access}
+\subsection{Notes about HTTPS and FTPS file access}
 
 CFITSIO depends upon the availability of the libcurl library in order to perform 
-HTTPS file access.  (This should be the development version of the library, as
+HTTPS/FTPS file access.  (This should be the development version of the library, as
 it contains the curl.h header file required by the CFITSIO code.)   The CFITSIO
 'configure' script will search for this library on your system, and if it finds it 
 it will automatically be incorporated into the build.  
@@ -7544,13 +7660,13 @@ more about the features of your libcurl installation.
 If the CFITSIO 'configure' succeeded in finding a usable libcurl, you will see the flag
 '-DCFITSIO\_HAVE\_CURL=1' in the CFITSIO Makefile and in the compilation output.  
 If 'configure' is unable to find a usable libcurl, CFITSIO will still build 
-but it won't have HTTPS capability.
+but it won't have HTTPS/FTPS capability.
 
 The libcurl package is normally included as part of Xcode on Macs.  However on Linux platforms you 
 may need to manually install it. This can be easily done on Ubuntu Linux using
 the 'apt get' command to retrieve the libcurl4-openssl-dev or the libcurl4-gnutls-dev packages.
 
-When accessing a file with HTTPS, the default CFITSIO behavior is to attempt
+When accessing a file with HTTPS or FTPS, the default CFITSIO behavior is to attempt
 to verify both the host name and the SSL certificate.  If it cannot, it will still 
 perform the file access but will issue a warning to the terminal window.
 
@@ -7563,7 +7679,7 @@ setenv CFITSIO\_VERIFY\_HTTPS True
 
 the default setting for this is 'False'.
 
-CFITSIO has 3 functions which apply specifically to HTTPS access:  fits\_init\_https, 
+CFITSIO has 3 functions which apply specifically to HTTPS/FTPS access:  fits\_init\_https, 
 fits\_cleanup\_https, and fits\_verbose\_https. It is recommended that you call the 
 init and cleanup functions near the beginning and end of your program respectively. 
 For more information about these functions, please see the 'FITS File Access Routines'
@@ -8299,6 +8415,7 @@ The column/keyword filter can be used to perform the following
 operations.  More than one operation may be specified by separating
 them with commas or semi-colons.
 
+
 \begin{itemize}
 
 \item
@@ -8373,29 +8490,6 @@ Either of these examples will delete the keyword named \verb+VEL+.
   -VEL;
   -#VEL;
 \end{verbatim}
-It is also possible to use wildcard expressions to remove any keyword
-that matches a pattern.  Wildcard patterns are: \verb+'*'+, which matches any
-string of characters; \verb+'?'+, which matches any single character; and \verb+'#'+
-which matches any numerical string.  For example these
-statements:
-\begin{verbatim}
-  -#DEC_*;     # remove single keyword beginning with DEC_
-  -#TUNIT#;    # remove single keyword TUNIT ending w. number
-\end{verbatim}
-will remove any keyword beginning with 'DEC\_' and any
-keyword beginning with 'TUNIT' and ending with a number.
-
-However, the above expressions will only delete the {\it first}
-keyword which matches the pattern.  If multiple keywords later
-in the same CHDU match the pattern, they will not be deleted.
-To delete {\it zero or more} keywords that match the pattern, add a
-trailing \verb|'+'|.
-\begin{verbatim}
-  -#DEC_*+;     # remove all keywords beginning with DEC_
-  -#TUNIT#+;    # remove all keywords TUNIT ending w. number
-\end{verbatim}
-Note that this form will succeed if the requested keyword is not
-present.
 
 \item
 Recompute (overwrite) the values in an existing column or keyword by
@@ -8424,6 +8518,54 @@ extend over multiple lines of the  file, but multiple operations must
 still be separated by commas or semi-colons.   Any lines in the external text file
 that begin with 2 slash characters ('//') will be ignored and may be
 used to add comments into the file.
+
+When using column filtering to open a file ``on the fly,'' it is permitted
+to use multiple column filtering expressions.  For example, the
+syntax
+\begin{verbatim}
+  filename.fits[col *][col -Y][col Z=X+1]
+\end{verbatim}
+would be treated as equivalent to joining the expressions with semicolons, 
+or
+\begin{verbatim}
+  filename.fits[col *; -Y;col Z=X+1]
+\end{verbatim}
+Please note that if multiple column filtering expressions are used, it is
+not permitted to also use the \verb+[col @filename.txt]+ syntax in any
+of the individual expressions.
+
+It is possible to use wildcard syntax to delete either keywords or
+columns that match a pattern.  Recall that to delete either a keyword
+or a column, precede its name with a \verb+'-'+ character.
+
+Wildcard patterns are: \verb+'*'+, which matches any
+string of characters; \verb+'?'+, which matches any single character; and \verb+'#'+
+which matches any numerical string.  For example these
+statements:
+\begin{verbatim}
+  -VEL*;       # remove single column (or keyword) beginning with VEL
+  -VEL_?;      # remove single column (or keyword) VEL_? where ? is any character
+  -#DEC_*;     # remove single keyword beginning with DEC_
+  -#TUNIT#;    # remove single keyword TUNIT ending w. number
+\end{verbatim}
+will remove the columns or keywords as noted.  Be aware that if a
+\verb+'#'+ is not present, the CFITSIO engine will check for columns
+with the given name first, followed by keywords.
+
+The above expressions will only delete the {\it first}
+item which matches the pattern.  If following columns or keywords
+in the same CHDU match the pattern, they will not be deleted.
+To delete {\it zero or more} keywords that match the pattern, add a
+trailing \verb|'+'|.
+\begin{verbatim}
+  -VEL*+;       # remove all columns (or keywords) beginning with VEL
+  -VEL_?+;      # remove all columns (or keyword) VEL_? where ? is any character
+  -#DEC_*+;     # remove all keywords beginning with DEC_
+  -#TUNIT#+;    # remove all keywords TUNIT ending w. number
+\end{verbatim}
+Note that, as a 0-or-more matching pattern, this form will succeed if
+the requested column or keyword is not present.  In that case, the
+deletion expression will silently proceed as if no deletion was requested.
 
 Examples:
 
@@ -8520,6 +8662,37 @@ HDUs in the input file will be copied into the temporary file).
     absolute row number, only a relative offset.  Rows that fall outside
     the table will be treated as undefined, or NULLs.
 
+    When using row filtering to open a file ``on the fly,'' it is permitted
+    to use multiple row filtering expressions.  For example, the expression
+\begin{verbatim}
+  filename.fits[#ROW > 5][X.gt.7]
+\end{verbatim}
+would be treated as equivalent to joining the expressions with logical ``and''
+like this,
+\begin{verbatim}
+  filename.fits[(#ROW > 5)&&(X.gt.7)]
+\end{verbatim}
+Please note that if multiple row filtering expressions are used, it is
+not permitted to also use the \verb+[@filename.txt]+ syntax in any
+of the individual expressions.
+    
+
+%% <!-- IMPORTANT NOTE IMPORTANT NOTE IMPORTANT NOTE -->
+%% <!-- If you edit this file then you must also edit 
+%%      the following other locations where calculator 
+%%      expressions are documented:
+%%         heacore/cfitsio/docs/cfitsio.tex
+%%         heacore/cfitsio/docs/fitsio.tex
+%%         heatools/help/calc_express.html
+%%         heatools/help/rowfilter.html
+%%         heatools/help/colfilter.html
+%%         heatools/ftcalc/ftcalc.html
+%%         heatools/ftselect/ftselect.html
+%%         ftools/futils/tasks/fselect/fselect.hlp
+%%         ftools/futils/tasks/fcalc/fcalc.hlp
+%%         ftools/guis/fv/doc/expressions.html
+%%   -->
+
     Boolean   operators can be  used in  the expression  in either their
     Fortran or C forms.  The following boolean operators are available:
 
@@ -8531,69 +8704,74 @@ HDUs in the input file will be copied into the temporary file).
     "negation"     .not. .NOT. !  "approx. equal(1e-7)"  ~
 \end{verbatim}
 
-Note  that the exclamation
-point,  '!', is a special UNIX character, so if it is used  on the
-command line rather than entered at a task prompt, it must be  preceded
-by a backslash to force the UNIX shell to ignore it.
+Note that the exclamation point, '!', is a special UNIX character, so
+if it is used on the command line rather than entered at a task
+prompt, it must be preceded by a backslash to force the UNIX shell to
+ignore it.
 
-    The expression may  also include arithmetic operators and functions.
-    Trigonometric  functions use  radians,  not degrees.  The  following
-    arithmetic  operators and  functions  can be  used in the expression
-    (function names are case insensitive). A null value will be returned
-    in case of illegal operations such as divide by zero, sqrt(negative)
-    log(negative), log10(negative), arccos(.gt. 1), arcsin(.gt. 1).
-
+The expression may  also include arithmetic operators and functions.
+Trigonometric  functions use  radians,  not degrees.  The  following
+arithmetic  operators and  functions  can be  used in the expression
+(function names are case insensitive).  A null value will be returned
+in case of illegal operations such as divide by zero, sqrt(negative)
+log(negative), log10(negative), arccos(.gt. 1), arcsin(.gt. 1).
 
 \begin{verbatim}
-    "addition"          +          "subtraction"          -
-    "multiplication"    *          "division"             /
-    "negation"          -          "exponentiation"       **   ^
-    "absolute value"    abs(x)     "cosine"                cos(x)
-    "sine"              sin(x)     "tangent"               tan(x)
-    "arc cosine"        arccos(x)  "arc sine"              arcsin(x)
-    "arc tangent"       arctan(x)  "arc tangent"           arctan2(y,x)
-    "hyperbolic cos"    cosh(x)    "hyperbolic sin"        sinh(x)
-    "hyperbolic tan"    tanh(x)    "round to nearest int"  round(x)
-    "round down to int" floor(x)   "round up to int"       ceil(x)
-    "exponential"       exp(x)     "square root"           sqrt(x)
-    "natural log"       log(x)     "common log"            log10(x)
-    "modulus"           x % y      "random # [0.0,1.0)"    random()
-    "random Gaussian"   randomn()  "random Poisson"        randomp(x)
-    "minimum"           min(x,y)   "maximum"               max(x,y)
-    "cumulative sum"    accum(x)   "sequential difference" seqdiff(x)
-    "if-then-else"      b?x:y
-    "angular separation"  angsep(ra1,dec1,ra2,de2) (all in degrees)
-    "substring"      strmid(s,p,n) "string search"         strstr(s,r)
+    "addition"           +          "subtraction"          -
+    "multiplication"     *          "division"             /
+    "negation"           -          "exponentiation"       **   ^
+    "absolute value"     abs(x)     "cosine"               cos(x)
+    "sine"               sin(x)     "tangent"              tan(x)
+    "arc cosine"         arccos(x)  "arc sine"             arcsin(x)
+    "arc tangent"        arctan(x)  "arc tangent"          arctan2(y,x)
+    "hyperbolic cos"     cosh(x)    "hyperbolic sin"       sinh(x)
+    "hyperbolic tan"     tanh(x)    "round to nearest int" round(x)
+    "round down to int"  floor(x)   "round up to int"      ceil(x)
+    "exponential"        exp(x)     "square root"          sqrt(x)
+    "natural log"        log(x)     "common log"           log10(x)
+    "modulus"            x % y      
+    "bitwise AND"        x & y      "bitwise OR"           x | y
+    "bitwise XOR"        x ^^ y     (bitwise operators are 32-bit int only)
+    "random # [0.0,1.0)" random()
+    "random Gaussian"    randomn()  "random Poisson"       randomp(x)
+    "minimum"            min(x,y)   "maximum"              max(x,y)
+    "cumulative sum"     accum(x)   "sequential difference" seqdiff(x)
+    "if-then-else"       b?x:y
+    "angular separation" angsep(ra1,dec1,ra2,de2) (all in degrees)
+    "substring"          strmid(s,p,n) "string search"     strstr(s,r)
 \end{verbatim}
-Three different random number functions are provided:  random(), with
+The bitwise operators for AND, OR and XOR operate upon 32-bit integer 
+expressions only.
+
+Three different random number functions are provided: random(), with
 no arguments, produces a uniform random deviate between 0 and 1;
 randomn(), also with no arguments, produces a normal (Gaussian) random
-deviate  with zero mean and unit standard deviation; randomp(x)
+deviate with zero mean and unit standard deviation; randomp(x)
 produces a Poisson random deviate whose expected number of counts is
 X.  X may be any positive real number of expected counts, including
 fractional values, but the return value is an integer.
 
 When the random functions are used in a vector expression, by default
-the same random value will be used when evaluating each element of the vector.
-If different random numbers are desired, then the name of a vector
-column should be supplied as the single argument to the random
-function (e.g., "flux + 0.1 * random(flux)", where "flux' is the
-name of a vector column).  This will create a vector of
-random numbers that will be used in sequence when evaluating each
-element of the vector expression.
+the same random value will be used when evaluating each element of the
+vector.  If different random numbers are desired, then the name of a
+vector column should be supplied as the single argument to the random
+function (e.g., "flux + 0.1 * random(flux)", where "flux" is the name
+of a vector column).  This will create a vector of random numbers that
+will be used in sequence when evaluating each element of the vector
+expression.
 
 An alternate syntax for the min and max functions  has only a single
 argument which  should be  a  vector value (see  below).  The result
 will be the minimum/maximum element contained within the vector.
 
-The accum(x) function forms the cumulative sum of x, element by element.
-Vector columns are supported simply by performing the summation process
-through all the values.  Null values are treated as 0.  The seqdiff(x)
-function forms the sequential difference of x, element by element.
-The first value of seqdiff is the first value of x.  A single null
-value in x causes a pair of nulls in the output.  The seqdiff and
-accum functions are functional inverses, i.e., seqdiff(accum(x)) == x
-as long as no null values are present.
+The accum(x) function forms the cumulative sum of x, element by
+element.  Vector columns are supported simply by performing the
+summation process through all the values.  Null values are treated as
+0.  The seqdiff(x) function forms the sequential difference of x,
+element by element.  The first value of seqdiff is the first value of
+x.  A single null value in x causes a pair of nulls in the output.
+The seqdiff and accum functions are functional inverses, i.e.,
+seqdiff(accum(x)) == x as long as no null values are present.
 
 In the if-then-else expression, "b?x:y", b is an explicit boolean
 value or expression.  There is no automatic type conversion from
@@ -8601,11 +8779,11 @@ numeric to boolean values, so one needs to use "iVal!=0" instead of
 merely "iVal" as the boolean argument. x and y can be any scalar data
 type (including string).
 
-The angsep function computes the angular separation in degrees
-between 2 celestial positions, where the first 2 parameters
-give the RA-like and Dec-like coordinates (in decimal degrees)
-of the first position, and the 3rd and 4th parameters give the
-coordinates of the second position.
+The angsep function computes the angular separation in degrees between
+2 celestial positions, where the first 2 parameters give the RA-like
+and Dec-like coordinates (in decimal degrees) of the first position,
+and the 3rd and 4th parameters give the coordinates of the second
+position.
 
 The substring function strmid(S,P,N) extracts a substring from S,
 starting at string position P, with a substring length N.  The first
@@ -8613,14 +8791,14 @@ character position in S is labeled as 1. If P is 0, or refers to a
 position beyond the end of S, then the extracted substring will be
 NULL.  S, P, and N may be functions of other columns.
 
-The string search function strstr(S,R) searches for the first occurrence
-of the substring R in S.  The result is an integer, indicating the
-character position of the first match (where 1 is the first character
-position of S).  If no match is found, then strstr() returns a NULL
-value.
+The string search function strstr(S,R) searches for the first
+occurrence of the substring R in S.  The result is an integer,
+indicating the character position of the first match (where 1 is the
+first character position of S).  If no match is found, then strstr()
+returns a NULL value.
 
-The  following  type  casting  operators  are  available,  where the
-inclosing parentheses are required and taken  from  the  C  language
+The following type casting operators are available, where the
+enclosing parentheses are required and taken from the C language
 usage. Also, the integer to real casts values to double precision:
 
 \begin{verbatim}
@@ -8642,6 +8820,20 @@ usage. Also, the integer to real casts values to double precision:
     "null" constants  are useful for conditionally  setting table values
     to a NULL, or undefined, value (eg., "col1==-99 ? \#NULL : col1").
 
+    Integer constants may be specified using the following notation,
+\begin{verbatim}
+           13245   decimal integer
+           0x12f3  hexidecimal integer
+           0o1373  octal integer
+           0b01001 binary integer
+\end{verbatim}
+    Note that integer constants are only allowed to be 32-bit, i.e.
+    between -2\^(31) and +2\^(31).  Integer constants may be used in any
+    arithmetic expression where an integer would be appropriate.  Thus,
+    they are distinct from bitmasks (which may be of arbitrary length,
+    allow the "wildcard" bit, and may only be used in logical
+    expressions; see below).
+
     There is also a function for testing if  two  values  are  close  to
     each  other,  i.e.,  if  they are "near" each other to within a user
     specified tolerance. The  arguments,  value\_1  and  value\_2  can  be
@@ -8661,15 +8853,15 @@ usage. Also, the integer to real casts values to double precision:
 \begin{verbatim}
          "a null value?"              ISNULL(x)
          "define a value for null"    DEFNULL(x,y)
+         "declare certain value null" SETNULL(x,y)
 \end{verbatim}
-    The former
-    returns a boolean value of TRUE if the  argument  x  is  NULL.   The
-    later  "defines"  a  value  to  be  substituted  for NULL values; it
+    ISNULL(x)
+    returns a boolean value of TRUE if the  argument  x  is  NULL. DEFNULL(x,y)
+    "defines"  a  value  to  be  substituted  for NULL values; it
     returns the value of x if x is not NULL, otherwise  it  returns  the
-    value of y.
-
-
-
+    value of y.  SETNULL(x,y) allows NULL values to be inserted into
+    a variable; if x==y, a NULL value is returned; otherwise y is returned
+    (x and y must be numerical, and x must be a scalar).
 
 \subsection{Bit Masks}
 
@@ -8687,7 +8879,10 @@ usage. Also, the integer to real casts values to double precision:
     In  all  the  representations, an x or X is allowed in the mask as a
     wild card. Note that the x represents a  different  number  of  wild
     card  bits  in  each  representation.  All  representations are case
-    insensitive.
+    insensitive.  Although bitmasks may be of arbitrary length and contain
+    a wildcard, they may only be used in logical expressions, unlike 
+    integer constants (see above) which may be used in any arithmetic
+    expression.
 
     To construct the boolean expression using the mask  as  the  boolean
     equal  operator  described above on a bit table column. For example,
@@ -8835,20 +9030,26 @@ usage. Also, the integer to real casts values to double precision:
               COUNT = COUNT{-1} + 1;   # BAD - do not use
 \end{verbatim}
     will not produce an increasing counter.  Such recursive
-    calculations are often not possible with the calculator syntax.   
+    calculations are often not possible with the calculator syntax.  
+    However, for cases where the user wishes a row counter, the special 
+    variable \verb+#ROW+ can be utilized.
 
-\subsection{Good Time Interval Filtering}
+\subsection{Good Time Interval Filtering and Calculation}
 
-    A common filtering method involves selecting rows which have a time
-    value which lies within what is called a Good Time Interval or GTI.
-    The time intervals are defined in a separate FITS table extension
-    which contains 2 columns giving the start and stop time of each
-    good interval.  The filtering operation accepts only those rows of
-    the input table which have an associated time which falls within
-    one of the time intervals defined in the GTI extension. A high
-    level function, gtifilter(a,b,c,d), is available which evaluates
-    each row of the input table  and returns TRUE  or FALSE depending
-    whether the row is inside or outside the  good time interval.  The
+    There are two functions for filtering and calculating based
+    on Good Time Intervals, or GTIs.  GTIs are commonly used to
+    express fragmented time ranges that are not easy to express with a
+    single start and stop time.  The time intervals are defined in a
+    FITS table extension which contains 2 columns giving the
+    start and stop time of each good interval.
+
+    A common filtering method involves selecting rows which have a
+    time value which lies within any GTI.  The gtifilter() filtering
+    operation accepts only those rows of the input table which have an
+    associated time which falls within one of the time intervals
+    defined in a separate GTI extension.  gtifilter(a,b,c,d) evaluates
+    each row of the input table and returns TRUE or FALSE depending
+    whether the row is inside or outside the good time interval.  The
     syntax is
 
 \begin{verbatim}
@@ -8891,6 +9092,56 @@ usage. Also, the integer to real casts values to double precision:
     or  two  parameters  are  specified.   The  function   automatically
     searches   for   TIMEZERO/I/F   keywords  in  the  current  and  GTI
     extensions, applying a relative time offset, if necessary.
+
+    A separate function, gtioverlap(a,b,c,d,e), computes the overlap
+    between a user-requested time range and the entries in a GTI.  The
+    cases of no overlap, partial overlap, or overlap of many GTIs
+    within the user requested range are handled.  gtioverlap() is very
+    useful for calculating exposure times and fractional exposures of
+    individual time bins, say for a light curve.  The syntax of
+    gtioverlap() is
+
+\begin{verbatim}
+      gtioverlap( "gtifile" , startExpr, stopExpr [, "STARTCOL", "STOPCOL" ] )
+    or
+      gtioverlap( 'gtifile' , startExpr, stopExpr [, 'STARTCOL', 'STOPCOL' ] )
+\end{verbatim}
+
+    The requirements for specifying the gtifile are the same as for
+    gtifilter() as described above.  Unlike gtifilter(), the startExpr
+    and stopExpr are not optional.  startExpr provides a start of the
+    user requested time interval.  startExpr is typically TIME, but
+    can be any valid expression.  Likewise, stopExpr provides the stop
+    of the user requested time interval, and can be an expression.
+    For example, for a light curve with a TIME column and time bin
+    size of 1.0 seconds, the expression
+
+\begin{verbatim}
+      gtioverlap('gtifile',TIME,TIME+1.0)
+\end{verbatim}
+
+    would calculate the amount of overlap exposure time between each
+    one second time bin and the GTI in 'gtifile'.  In this case the
+    time bin is assumed to begin at the time specified by TIME and end
+    1 second later.  Neither startExpr nor stopExpr are required to be
+    constant, and a light curve is not required to have a constant bin
+    size.  For tables, the overlap is calculated for each entry in the
+    table.
+
+    It is also possible to calculate a single overlap value, which
+    would typically be placed in a keyword.  For example, a way to to
+    compute the total overlap exposure of a file whose TIME column is
+    bounded by the keywords TSTART and TSTOP, overlapping with the
+    specified GTI, would be
+
+\begin{verbatim}
+      #EXPOSURE = gtioverlap('gtifile',#TSTART,#TSTOP)
+\end{verbatim}
+
+    The \verb+#EXPOSURE+ syntax with a leading \+#+ ensures that the 
+    requested values are treated as keywords.  Otherwise, a column
+    named EXPOSURE will be created with the (constant) exposure value
+    in each entry.  
 
 
 \subsection{Spatial Region Filtering}
@@ -9985,7 +10236,7 @@ fits\_calculator\_rng     & \pageref{ffcalcrng} \\
 fits\_calc\_binning[d] & \pageref{calcbinning} \\
 fits\_calc\_rows    & \pageref{ffcrow} \\
 fits\_change\_group  & \pageref{ffgtch} \\
-fits\_cleanup\_https & \pageref{ffchtps} \\
+fits\_cleanup\_https & \pageref{ffihtps} \\
 fits\_clear\_errmark  & \pageref{ffpmrk} \\
 fits\_clear\_errmsg   & \pageref{ffcmsg} \\
 fits\_close\_file     & \pageref{ffclos} \\
@@ -10000,6 +10251,7 @@ fits\_copy\_data      & \pageref{ffcpdt} \\
 fits\_copy\_file      & \pageref{ffcpfl} \\
 fits\_copy\_group    & \pageref{ffgtcp} \\
 fits\_copy\_hdu       & \pageref{ffcopy} \\
+fits\_copy\_hdutab    & \pageref{ffcpht} \\
 fits\_copy\_header    & \pageref{ffcphd} \\
 fits\_copy\_image2cell & \pageref{copycell} \\
 fits\_copy\_image\_section  & \pageref{ffcpimg} \\
@@ -10076,11 +10328,12 @@ fits\_get\_num\_members  & \pageref{ffgtnm} \\
 fits\_get\_num\_rows     & \pageref{ffgnrw} \\
 fits\_get\_rowsize    & \pageref{ffgrsz} \\
 fits\_get\_system\_time  & \pageref{ffdt2s} \\
-fits\_get\_tile\_dim     & \pageref{ffgetcomp} \\
 fits\_get\_tbcol      & \pageref{ffgabc} \\
+fits\_get\_tile\_dim     & \pageref{ffgetcomp} \\
 \end{tabular}
 \newpage
 \begin{tabular}{lr}
+fits\_get\_timeout    & \pageref{ffgtmo} \\
 fits\_get\_version    & \pageref{ffvers} \\
 fits\_hdr2str         & \pageref{ffhdr2str}, \pageref{hdr2str} \\
 fits\_init\_https  & \pageref{ffihtps} \\
@@ -10128,9 +10381,9 @@ fits\_parse\_range    & \pageref{ffrwrg} \\
 fits\_parse\_rootname & \pageref{ffrtnm} \\
 fits\_parse\_template & \pageref{ffgthd} \\
 fits\_parse\_value    & \pageref{ffpsvc} \\
-fits\_pix\_to\_world & \pageref{ffwldp} \\
 \end{tabular}
 \begin{tabular}{lr}
+fits\_pix\_to\_world & \pageref{ffwldp} \\
 fits\_read\_2d\_TYP      & \pageref{ffg2dx} \\
 fits\_read\_3d\_TYP      & \pageref{ffg3dx} \\
 fits\_read\_atblhdr      & \pageref{ffghtb} \\
@@ -10178,9 +10431,9 @@ fits\_remove\_member   & \pageref{ffgmrm} \\
 fits\_reopen\_file      & \pageref{ffreopen} \\
 fits\_report\_error   & \pageref{ffrprt} \\
 fits\_resize\_img     & \pageref{ffrsim} \\
-fits\_rms\_float      & \pageref{imageRMS} \\
 \end{tabular}
 \begin{tabular}{lr}
+fits\_rms\_float      & \pageref{imageRMS} \\
 fits\_rms\_short      & \pageref{imageRMS} \\
 fits\_select\_rows  & \pageref{ffsrow} \\
 fits\_set\_atblnull   & \pageref{ffsnul} \\
@@ -10192,7 +10445,9 @@ fits\_set\_hdustruc   & \pageref{ffrdef} \\
 fits\_set\_imgnull    & \pageref{ffpnul} \\
 fits\_set\_noise\_bits  & \pageref{ffsetcomp} \\
 fits\_set\_tile\_dim  & \pageref{ffsetcomp} \\
+fits\_set\_timeout    & \pageref{ffgtmo} \\
 fits\_set\_tscale     & \pageref{fftscl} \\
+fits\_show\_download\_progress  & \pageref{ffshdwn} \\
 fits\_split\_names    & \pageref{splitnames} \\
 fits\_str2date        & \pageref{ffdt2s} \\
 fits\_str2time        & \pageref{ffdt2s} \\
@@ -10226,12 +10481,12 @@ fits\_write\_col\_TYP     & \pageref{ffpcls} \\
 fits\_write\_col\_null      & \pageref{ffpclu} \\
 fits\_write\_colnull      & \pageref{ffpcn} \\
 fits\_write\_colnull\_TYP & \pageref{ffpcnx} \\
-fits\_write\_comment      & \pageref{ffpcom} \\
-fits\_write\_date         & \pageref{ffpdat} \\
-fits\_write\_descript  & \pageref{ffpdes} \\
 \end{tabular}
 \newpage
 \begin{tabular}{lr}
+fits\_write\_comment      & \pageref{ffpcom} \\
+fits\_write\_date         & \pageref{ffpdat} \\
+fits\_write\_descript  & \pageref{ffpdes} \\
 fits\_write\_errmark   & \pageref{ffpmrk} \\
 fits\_write\_errmsg   & \pageref{ffpmsg} \\
 fits\_write\_ext        & \pageref{ffgextn} \\
@@ -10285,6 +10540,7 @@ ffcpcl     & \pageref{ffcpcl} \\
 ffcpdt      & \pageref{ffcpdt} \\
 ffcpfl      & \pageref{ffcpfl} \\
 ffcphd   & \pageref{ffcphd} \\
+ffcpht   & \pageref{ffcpht} \\
 ffcpimg  & \pageref{ffcpimg} \\
 ffcpky       & \pageref{ffcpky} \\
 ffcprw      &   \pageref{ffcprw} \\
@@ -10405,6 +10661,7 @@ ffgtdm         & \pageref{ffgtdm} \\
 ffgthd & \pageref{ffgthd} \\
 ffgtis  & \pageref{ffgtis} \\
 ffgtmg  & \pageref{ffgtmg} \\
+ffgtmo  & \pageref{ffgtmo} \\
 ffgtnm  & \pageref{ffgtnm} \\
 ffgtop    & \pageref{ffgtop} \\
 ffgtrm  & \pageref{ffgtrm} \\
@@ -10417,11 +10674,11 @@ fficol   & \pageref{fficol} \\
 ffifile  & \pageref{ffiurl} \\
 ffihtps  & \pageref{ffihtps} \\
 ffiimg     & \pageref{ffiimg} \\
-ffikls    & \pageref{ffikyx} \\
 
 \end{tabular}
 \begin{tabular}{lr}
 
+ffikls    & \pageref{ffikyx} \\
 ffikyu   & \pageref{ffikyu} \\
 ffiky\_    & \pageref{ffikyx} \\
 ffimem  & \pageref{ffimem} \\
@@ -10469,11 +10726,11 @@ ffphext       & \pageref{ffphpr} \\
 ffphis      & \pageref{ffphis} \\
 ffphpr       & \pageref{ffphpr} \\
 ffphps       & \pageref{ffphps} \\
-ffphtb      & \pageref{ffphtb} \\
 
 \end{tabular}
 \begin{tabular}{lr}
 
+ffphtb      & \pageref{ffphtb} \\
 ffpkls  & \pageref{ffpkls} \\
 ffpkn\_     & \pageref{ffpknx} \\
 ffpktp & \pageref{ffpktp} \\
@@ -10511,23 +10768,25 @@ ffrtnm & \pageref{ffrtnm} \\
 ffrwrg    & \pageref{ffrwrg} \\
 ffs2dt  & \pageref{ffdt2s} \\
 ffs2tm  & \pageref{ffdt2s} \\
+ffshdwn  & \pageref{ffshdwn} \\
 ffsnul   & \pageref{ffsnul} \\
 ffsrow  & \pageref{ffsrow} \\
+ffstmo  & \pageref{ffgtmo} \\
 fftexp    & \pageref{fftexp} \\
 ffthdu   & \pageref{ffthdu} \\
 fftheap  & \pageref{fftheap} \\
 fftkey   & \pageref{fftkey} \\
 fftm2s  & \pageref{ffdt2s} \\
 fftnul   & \pageref{fftnul} \\
-fftopn & \pageref{ffopen} \\
-fftplt & \pageref{fftplt} \\
-fftrec    & \pageref{fftrec} \\
 
 
 \end{tabular}
 \newpage
 \begin{tabular}{lr}
 
+fftopn & \pageref{ffopen} \\
+fftplt & \pageref{fftplt} \\
+fftrec    & \pageref{fftrec} \\
 fftscl     & \pageref{fftscl} \\
 ffucrd       & \pageref{ffucrd} \\
 ffukls    & \pageref{ffukyx} \\
@@ -10820,6 +11079,7 @@ improve the readability of their code.
  BAD_FILEPTR       114    invalid fitsfile pointer
  NULL_INPUT_PTR    115    NULL input pointer to routine
  SEEK_ERROR        116    error seeking position in file
+ BAD_NETTIMEOUT    117    bad value for file download timeout setting
 
  BAD_URL_PREFIX     121   invalid URL prefix on file name
  TOO_MANY_DRIVERS   122   tried to register too many IO drivers

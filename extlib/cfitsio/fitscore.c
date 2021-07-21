@@ -73,11 +73,16 @@ float ffvers(float *version)  /* IO - version number */
   return the current version number of the FITSIO software
 */
 {
-      *version = (float) 3.45;
+      *version = (float) 4.0;
 
-/*       May 2018
+/*       May 2021
 
    Previous releases:
+      *version = 3.49       Aug 2020
+      *version = 3.48       Apr 2020
+      *version = 3.47       May 2019
+      *version = 3.46       Oct 2018
+      *version = 3.45       May 2018
       *version = 3.44       Apr 2018
       *version = 3.43       Mar 2018
       *version = 3.42       Mar 2017
@@ -268,6 +273,9 @@ void ffgerr(int status,     /* I - error status value */
        break;
     case 116:
        strcpy(errtext, "error seeking file position");
+       break;
+    case 117:
+       strcpy(errtext, "bad value for file download timeout setting");
        break;
     case 121:
        strcpy(errtext, "invalid URL prefix");
@@ -2073,9 +2081,17 @@ then values of 'n' less than or equal to n_value will match.
     /* ===== Keyword rewriting and output stage */
     spat = patterns[pat][1];
 
-    /* Return case: no match, or explicit deletion pattern */
-    if (pass == 0 || spat[0] == '\0' || spat[0] == '-') return 0;
+    /* Return case: explicit deletion, return '-' */
+    if (pass && strcmp(spat,"--") == 0) {
+      strcpy(outrec, "-");
+      strncat(outrec, inrec, 8);
+      outrec[9] = 0;
+      for(i1=8; i1>1 && outrec[i1] == ' '; i1--) outrec[i1] = 0;
+      return 0;
+    }
 
+    /* Return case: no match, or do-not-transfer pattern */
+    if (pass == 0 || spat[0] == '\0' || strcmp(spat,"-") == 0) return 0;
     /* A match: we start by copying the input record to the output */
     strcpy(outrec, inrec);
 
@@ -2159,7 +2175,7 @@ int fits_translate_keywords(
 
     ffghsp(infptr, &nkeys, &nmore, status);  /* get number of keywords */
 
-    for (nrec = firstkey; nrec <= nkeys; nrec++) {
+    for (nrec = firstkey; (*status == 0) && (nrec <= nkeys); nrec++) {
       outrec[0] = '\0';
 
       ffgrec(infptr, nrec, rec, status);
@@ -2180,12 +2196,34 @@ int fits_translate_keywords(
 			     n_value, n_offset, n_range, 
 			     &pat_num, &i, &j, &m, &n, status);
       
-      if (outrec[0]) {
-	ffprec(outfptr, outrec, status); /* copy the keyword */
-	rec[8] = 0; outrec[8] = 0;
-      } else {
-	rec[8] = 0; outrec[8] = 0;
+      if (*status == 0) {
+	if (outrec[0] == '-') { /* prefix -KEYNAME means delete */
+	  int i1;
+
+	  /* Preserve only the keyword portion of name */
+	  outrec[9] = 0;
+	  for(i1=8; i1>1 && outrec[i1] == ' '; i1--) outrec[i1] = 0;
+
+	  ffpmrk();
+	  ffdkey(outfptr, outrec+1, status); /* delete the keyword */
+	  if (*status == 0) {
+	    int nkeys1;
+	    /* get number of keywords again in case of change*/
+	    ffghsp(infptr, &nkeys1, &nmore, status);  
+	    if (nkeys1 != nkeys) {
+	      nrec --;
+	      nkeys = nkeys1;
+	    }
+	  }
+	  *status = 0;
+	  ffcmrk();
+
+	} else if (outrec[0]) {
+	  ffprec(outfptr, outrec, status); /* copy the keyword */
+	}	  
       }
+      rec[8] = 0; outrec[8] = 0;
+
     }	
 
     return(*status);
@@ -5464,11 +5502,13 @@ int ffgcprll( fitsfile *fptr, /* I - FITS file pointer                      */
                         /*     the returned values of repeat and incre.     */
                         /*     If = -1, then reading data in reverse        */
                         /*     direction.                                   */
+	                /*     If writemode has 16 added, then treat        */
+	                /*        TSTRING column as TBYTE vector            */
         double *scale,  /* O - FITS scaling factor (TSCALn keyword value)   */
         double *zero,   /* O - FITS scaling zero pt (TZEROn keyword value)  */
         char *tform,    /* O - ASCII column format: value of TFORMn keyword */
         long *twidth,   /* O - width of ASCII column (characters)           */
-        int *tcode,     /* O - column datatype code: I*4=41, R*4=42, etc    */
+        int *tcode,     /* O - abs(column datatype code): I*4=41, R*4=42, etc */
         int *maxelem,   /* O - max number of elements that fit in buffer    */
         LONGLONG *startpos,/* O - offset in file to starting row & column      */
         LONGLONG *elemnum, /* O - starting element number ( 0 = 1st element)   */
@@ -5501,7 +5541,7 @@ int ffgcprll( fitsfile *fptr, /* I - FITS file pointer                      */
         if ( ffrdef(fptr, status) > 0)               
             return(*status);
 
-    } else if (writemode > 0) {
+    } else if (writemode > 0 && writemode != 15) {
 
 	/* Only terminate the header with the END card if */
 	/* writing to the stdout stream (don't have random access). */
@@ -5596,6 +5636,35 @@ int ffgcprll( fitsfile *fptr, /* I - FITS file pointer                      */
        snull[nulpos] = '\0';
     }
 
+    /* Special case: use writemode = 15,16,17,18 to interpret TSTRING columns
+       as TBYTE vectors instead (but not for ASCII tables). 
+          writemode = 15 equivalent to writemode =-1
+          writemode = 16 equivalent to writemode = 0
+          writemode = 17 equivalent to writemode = 1
+          writemode = 18 equivalent to writemode = 2
+    */
+    if (writemode >= 15 && writemode <= 18) {
+
+      if (abs(*tcode) == TSTRING && *hdutype != ASCII_TBL ) {
+        *incre = 1;          /* each element is 1 byte wide */
+	if (*tcode < 0) *repeat = *twidth;  /* variable columns appear to put width in *twidth */
+        *twidth = 1;         /* width of each element */
+        *scale = 1.0;        /* no scaling */
+        *zero  = 0.0;
+        *tnull = NULL_UNDEFINED;  /* don't test for nulls */
+        *maxelem = DBUFFSIZE;
+
+	if (*tcode < 0) {
+	  *tcode = -TBYTE; /* variable-length */
+	} else {
+	  *tcode =  TBYTE;
+	}
+      }
+
+      /* translate to the equivalent as listed above */
+      writemode -= 16;
+    }
+
     /* Special case:  interpret writemode = -1 as reading data, but */
     /* don't do error check for exceeding the range of pixels  */
     if (writemode == -1)
@@ -5613,7 +5682,10 @@ int ffgcprll( fitsfile *fptr, /* I - FITS file pointer                      */
 
     /* Special case: support the 'rAw' format in BINTABLEs */
     if (*hdutype == BINARY_TBL && *tcode == TSTRING) {
-       *repeat = *repeat / *twidth;  /* repeat = # of unit strings in field */
+       if (*twidth)
+          *repeat = *repeat / *twidth;  /* repeat = # of unit strings in field */
+       else
+          *repeat = 0;
     }
     else if (*hdutype == BINARY_TBL && *tcode == -TSTRING) {
        /* variable length string */
@@ -5647,7 +5719,11 @@ int ffgcprll( fitsfile *fptr, /* I - FITS file pointer                      */
        *maxelem = DBUFFSIZE / sizeof(double);
     else if (abs(*tcode) == TSTRING)
     {
-       *maxelem = (DBUFFSIZE - 1)/ *twidth; /* leave room for final \0 */
+       if (*twidth)
+          *maxelem = (DBUFFSIZE - 1)/ *twidth; /* leave room for final \0 */
+       else
+          *maxelem = DBUFFSIZE - 1;
+          
        if (*maxelem == 0) {
             snprintf(message,FLEN_ERRMSG,
         "ASCII string column is too wide: %ld; max supported width is %d",
@@ -7844,7 +7920,7 @@ int ffmnhd(fitsfile *fptr,      /* I - FITS file pointer                    */
                }
 
                /* see if the strings are an exact match */
-               ffcmps(extname, hduname, CASEINSEN, &match, &exact);
+               ffcmps(hduname, extname, CASEINSEN, &match, &exact);
           }
 
           /* if EXTNAME keyword doesn't exist, or it does not match, then try HDUNAME */
@@ -7863,7 +7939,7 @@ int ffmnhd(fitsfile *fptr,      /* I - FITS file pointer                    */
                    }
 
                    /* see if the strings are an exact match */
-                   ffcmps(extname, hduname, CASEINSEN, &match, &exact);
+                   ffcmps(hduname, extname, CASEINSEN, &match, &exact);
                }
           }
 

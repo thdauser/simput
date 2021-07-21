@@ -21,8 +21,9 @@
 PACKAGE		= cfitsio
 
 # CFITSIO version numbers:
-CFITSIO_MAJOR	= @CFITSIO_MAJOR@
+CFITSIO_MAJOR   = @CFITSIO_MAJOR@
 CFITSIO_MINOR	= @CFITSIO_MINOR@
+CFITSIO_MICRO   = @CFITSIO_MICRO@
 CFITSIO_SONAME	= @CFITSIO_SONAME@
 
 prefix		= @prefix@
@@ -30,7 +31,7 @@ exec_prefix	= @exec_prefix@
 CFITSIO_BIN	= ${DESTDIR}@bindir@
 CFITSIO_LIB	= ${DESTDIR}@libdir@
 CFITSIO_INCLUDE	= ${DESTDIR}@includedir@
-INSTALL_DIRS	= @INSTALL_ROOT@ ${CFITSIO_INCLUDE} ${CFITSIO_LIB} ${CFITSIO_LIB}/pkgconfig
+INSTALL_DIRS	= ${DESTDIR}@INSTALL_ROOT@ ${CFITSIO_INCLUDE} ${CFITSIO_LIB} ${CFITSIO_LIB}/pkgconfig
 
 
 SHELL =		/bin/sh
@@ -45,6 +46,7 @@ LDFLAGS =	@LDFLAGS@
 LDFLAGS_BIN =	@LDFLAGS_BIN@
 DEFS =		@DEFS@
 LIBS =		@LIBS@
+LIBS_CURL =	@LIBS_CURL@
 FLEX =		flex
 BISON =		bison
 
@@ -67,9 +69,7 @@ CORE_SOURCES = 	buffers.c cfileio.c checksum.c drvrfile.c drvrmem.c \
 		pliocomp.c fits_hcompress.c fits_hdecompress.c \
 		simplerng.c @GSIFTP_SRC@
 
-ZLIB_SOURCES =	zlib/adler32.c zlib/crc32.c zlib/deflate.c zlib/infback.c \
-		zlib/inffast.c zlib/inflate.c zlib/inftrees.c zlib/trees.c \
-		zlib/uncompr.c zlib/zcompress.c zlib/zuncompress.c zlib/zutil.c
+ZLIB_SOURCES =	zcompress.c zuncompress.c
 
 SOURCES = ${CORE_SOURCES} ${ZLIB_SOURCES} @F77_WRAPPERS@
 
@@ -93,7 +93,7 @@ all:
 all-nofitsio:
 		${MAKE} stand_alone "FITSIO_SRC="
 
-stand_alone:	lib${PACKAGE}.a
+stand_alone:	lib${PACKAGE}.a shared
 
 lib${PACKAGE}.a:	${OBJECTS}
 		${ARCHIVE} $@ ${OBJECTS}; \
@@ -102,7 +102,7 @@ lib${PACKAGE}.a:	${OBJECTS}
 shared: lib${PACKAGE}${SHLIB_SUFFIX}
 
 lib${PACKAGE}${SHLIB_SUFFIX}: ${OBJECTS}
-		${SHLIB_LD} ${LDFLAGS} -o ${CFITSIO_SHLIB} ${OBJECTS} -lm ${LIBS}
+		${SHLIB_LD} ${LDFLAGS} -o ${CFITSIO_SHLIB} ${OBJECTS} -lm ${LIBS_CURL} ${LIBS}
 		@if [ "x${CFITSIO_SHLIB_SONAME}" != x ]; then \
 			ln -sf ${CFITSIO_SHLIB} ${CFITSIO_SHLIB_SONAME}; \
 			ln -sf ${CFITSIO_SHLIB_SONAME} $@; \
@@ -133,6 +133,7 @@ UTILS		= cookbook fitscopy imcopy smem speed testprog
 
 FPACK_UTILS	= fpack funpack
 
+# Optional build target:
 utils:		${FPACK_UTILS} ${UTILS}
 
 swapproc.o:	swapproc.c

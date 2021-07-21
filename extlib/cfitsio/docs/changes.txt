@@ -1,4 +1,149 @@
                    Log of Changes Made to CFITSIO
+                   
+Version 4.0.0 - May 2021                   
+
+  - Removed separate directory for zlib/gzip code, and updated
+    configuration to check for zlib on the user's system (required).
+    When use of cURL is enabled, it may also pull in zlib such
+    that user applications may not need to link with it separately.
+
+  - Changed version numbering to 3-field format.
+      
+  - Added new calculator functions SETNULL(x,y) to allow substitution of
+    NULL values into tables, and GTIOVERLAP() for calculating the amount
+    of GTI overlap exposure for a time bin.
+    
+  - Fix added for proper handling of string columns with zero repeat
+    count.
+    
+  - Fix to column filtering expressions which write #NULL values to
+    columns of type (J) format.
+    
+  - Fix to memory clearing when using polygon shapes in region files.
+     
+  - Fix to fits_str2time function so that it now flags a particular case
+    of bad syntax which was previously getting through.
+    
+  - In ffgclb and ffpclb (read/write byte columns), the "undocumented"
+    feature of being able to transfer columns 'A' string columnss as
+    byte arrays is now handled correctly, with improved error checking
+    via updates to ffgcprll.  More documentation on string handling is
+    in cfitsio.tex.
+
+  - Fix bug in 'colfilter' functionality.  When performing a
+    column deletion of the form -COLNAM*, and multiple matches
+    existed, then none of the matches got deleted.  Now the
+    first is deleted as expected.
+    
+  - Improved handling of corner case in ffpkn functions.
+
+  - In ffgky, modified TULONG case to allow it to read unsigned
+    values greater than the 8-byte signed limit.
+    
+  - Fix to parsing of corner case of extended file syntax.
+
+  - Major updates to CMake configuration.
+		   
+Version 3.49 - Aug 2020
+
+  - Fix to imcompress.c.  It now turns off quantization if ZSCALE
+    and ZZERO columns are missing.  Treatment will be the same as
+    if ZQUANTIZ were set to 'NONE', even if ZQUANTIZ is present
+    and set to something else.
+
+  - Added mutex to fits_execute_template() function so that the
+    creation of files using ASCII templates will be thread safe.
+    		   
+  - In fpack when using -table flag, replaced warning message with a
+    more detailed description mentioning FITS format update.
+		   
+  - Added flag to CMake builds to disable curl dependency.  Also
+    only add CURL_LIBRARIES to CMake link target if curl is found.
+		   
+  - Minor adjustment to download progress output.
+                   
+Version 3.48 - Mar 2020
+
+  - Now can handle parentheses in path names rather than automatically
+    interpreting them as output file specifiers.  
+
+  - Fixed bug in imcompress.c that wasn't properly handling conversion
+    between float and double types when reading from a gzip compressed
+    float or double image.
+    
+  - Fixed bug that was preventing use of bracket and parentheses symbols
+    in pathnames when opening multiple READWRITE files, even when 
+    requesting no-extended-syntax usage. *This fix necessitates a 
+    library interface version number change.
+    
+  - Fixed bug in ffmnhd / fits_movnam_hdu to properly handle wildcard
+    syntax.
+
+  - Fixed bug in fits_open_extlist to handle filename[EXT] syntax
+    properly.  The hdutype parameter may now be null.  More documentaion
+    for this function is in cfitsio.tex.
+
+  - Added new function fits_copy_hdutab to create a new table with the same
+    structure as an existing table.
+
+  - fits_copy_col / ffcpcl handles long long integer data types more
+    natively to prevent precision loss.
+
+  - histo.c routines now recognize integer columns that have been scaled by
+    TSCALn keywords and may be closer to floating point type.
+                   
+  - Added backward compatibility for very old Rice compressed files which
+    were not using the ZVAL2 keyword in the way that later became standard.
+
+  - Change made to cfitsio.pc.in to prevent forcing downstream libraries
+    to link against cfitsio's dependencies when using pkgconfig.
+
+Version 3.47 - May 2019
+
+  - Added set of drivers for performing ftps file transfers.
+
+  - Tile sizes for compression may now be specified for any pair of
+    axes, where previously 2D tiles where limited to just X and y.
+    
+  - Fix to ffgsky and ffgkls functions for case of keyword with long
+    string values where the final CONTINUE statement ended with '&'.
+    If the final CONTINUE also contained a comment, it was being 
+    repeated twice when passed back through the 'comm' argument.
+      
+  - Fix made to ffedit_columns() for case of multiple col filters
+    containing wildcards.  Only the first filter was being searched.
+                     
+  - fits_copy_rows (ffcprw) can now handle 'P'-type variable-length 
+    columns.
+    
+  - Fix made to an obscure case in fits_modify_vector_len, where a 
+    wrongly issued EOF error may occur.
+                   
+  - Added internal fffvcl() function.
+                   
+Version 3.46 - Oct 2018 (Ftools release)
+                   
+  - Improved the algorithm for ensuring no tile dimensions are smaller 
+    than 4 pixels for HCOMPRESS compression.
+                   
+  - Added new functions intended to assist in diagnosing (primarily 
+    https) download issues: fits_show_download_progress,
+    fits_get_timeout, fits_set_timeout.
+
+  - Added the '-O <file>' option to fpack, which previously existed only
+    for funpack.  Also added fpack/funpack auto-removal of .bz2 suffix 
+    equivalent to what existed for .gz.
+
+  - For the fpack '-table' cases, warning message is now sent to stderr 
+    instead of stdout.  This is to allow users to pipe the results from
+    stdout in valid FITS format.  (The warning message is otherwise placed
+    at the start of the FITS file and therefore corrupts it.)
+
+  - Fix made to the '-P' file prefix option in funpack.
+
+  - Added wildcard deletion syntax for columns, i.e. -COLNAM* will delete
+    the first matching column as always; -COLNAM*+ will delete all matching
+    columns (or none); exact symmetry with the keyword deletion syntax.
 
 Version 3.45 - May 2018
                    

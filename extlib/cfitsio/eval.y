@@ -63,6 +63,9 @@
 /*                              determine the output dimensions         */
 /*  Craig B Markwardt Aug 2009  Add substring STRMID() and string search*/
 /*                              STRSTR() functions; more overflow checks*/
+/*  Craig B Markwardt Dec 2019  Add bit/hex/oct literal strings and     */
+/*                              bitwise operatiosn between integers     */
+/*  Craig B Markwardt Mar 2021  Add SETNULL() function                  */
 /*                                                                      */
 /************************************************************************/
 
@@ -140,7 +143,7 @@ static int  New_FuncSize( int returnType, funcOp Op, int nNodes,
 			  int Node5, int Node6, int Node7, int Size);
 static int  New_Deref ( int Var,  int nDim,
 			int Dim1, int Dim2, int Dim3, int Dim4, int Dim5 );
-static int  New_GTI   ( char *fname, int Node1, char *start, char *stop );
+static int  New_GTI   ( funcOp Op, char *fname, int Node1, int Node2, char *start, char *stop );
 static int  New_REG   ( char *fname, int NodeX, int NodeY, char *colNames );
 static int  New_Vector( int subNode );
 static int  Close_Vec ( int vecNode );
@@ -159,11 +162,15 @@ static void Do_BinOp_dbl ( Node *this );
 static void Do_Func      ( Node *this );
 static void Do_Deref     ( Node *this );
 static void Do_GTI       ( Node *this );
+static void Do_GTI_Over  ( Node *this );
 static void Do_REG       ( Node *this );
 static void Do_Vector    ( Node *this );
 
 static long Search_GTI   ( double evtTime, long nGTI, double *start,
-			   double *stop, int ordered );
+			   double *stop, int ordered, long *nextGTI );
+static double GTI_Over(double evtStart, double evtStop,
+		       long nGTI, double *start, double *stop,
+		       long *gtiout);
 
 static char  saobox (double xcen, double ycen, double xwid, double ywid,
 		     double rot,  double xcol, double ycol);
@@ -206,6 +213,7 @@ static void  yyerror(char *msg);
 %token <str>   BFUNCTION      /* Bit function */
 %token <str>   IFUNCTION      /* Integer function */
 %token <str>   GTIFILTER
+%token <str>   GTIOVERLAP
 %token <str>   REGFILTER
 %token <lng>   COLUMN
 %token <lng>   BCOLUMN
@@ -230,7 +238,7 @@ static void  yyerror(char *msg);
 %left     GT LT LTE GTE
 %left     '+' '-' '%'
 %left     '*' '/'
-%left     '|' '&'
+%left     '|' '&' XOR
 %right    POWER
 %left     NOT
 %left     INTCAST FLTCAST
@@ -417,6 +425,33 @@ expr:    LONG
        | expr '/' expr
                 { PROMOTE($1,$3); $$ = New_BinOp( TYPE($1), $1, '/', $3 ); 
 		  TEST($$);                                                }
+       | expr '&' expr
+                { 
+                   if (TYPE($1) != LONG ||
+		       TYPE($3) != LONG) {
+                     yyerror("Bitwise operations with incompatible types; only (bit OP bit) and (int OP int) are allowed");
+                      YYERROR;
+                   }
+                   $$ = New_BinOp( TYPE($1), $1, '&', $3 );
+                }
+       | expr '|' expr
+                { 
+                   if (TYPE($1) != LONG ||
+		       TYPE($3) != LONG) {
+                     yyerror("Bitwise operations with incompatible types; only (bit OP bit) and (int OP int) are allowed");
+                      YYERROR;
+                   }
+                   $$ = New_BinOp( TYPE($1), $1, '|', $3 );
+                }
+       | expr XOR expr
+                { 
+                   if (TYPE($1) != LONG ||
+		       TYPE($3) != LONG) {
+                     yyerror("Bitwise operations with incompatible types; only (bit OP bit) and (int OP int) are allowed");
+                      YYERROR;
+                   }
+                   $$ = New_BinOp( TYPE($1), $1, '^', $3 );
+                }
        | expr POWER expr
                 { PROMOTE($1,$3); $$ = New_BinOp( TYPE($1), $1, POWER, $3 );
 		  TEST($$);                                                }
@@ -709,16 +744,15 @@ expr:    LONG
 				"are not compatible");
 			YYERROR;
 		      }
-#if 0
-		   } else if (FSTRCMP($1,"STRSTR(") == 0) {
-		     if( TYPE($2) != STRING || TYPE($4) != STRING) {
-		       yyerror("Arguments to strstr(s,r) must be strings");
+		   } else if (FSTRCMP($1,"SETNULL(") == 0) {
+		     if (OPER($2) != CONST_OP
+			 || SIZE($2) != 1) {
+		       yyerror("SETNULL first argument must be a scalar constant");
 		       YYERROR;
 		     }
-		     $$ = New_Func( LONG, strpos_fct, 2, $2, $4, 0, 
-				    0, 0, 0, 0 );
-		     TEST($$);
-#endif
+		     /* Make sure first arg is same type as second arg */
+		     if ( TYPE($2) != TYPE($4) ) $2 = New_Unary( TYPE($4), 0, $2 );
+		     $$ = New_Func( 0, setnull_fct, 2, $4, $2, 0, 0, 0, 0, 0 );
 		   } else {
 		      yyerror("Function(expr,expr) not supported");
 		      YYERROR;
@@ -1015,18 +1049,27 @@ bexpr:   BOOLEAN
 
        | GTIFILTER ')'
                 { /* Use defaults for all elements */
-                   $$ = New_GTI( "", -99, "*START*", "*STOP*" );
+		   $$ = New_GTI(gtifilt_fct,  "", -99, -99, "*START*", "*STOP*" );
                    TEST($$);                                        }
        | GTIFILTER STRING ')'
                 { /* Use defaults for all except filename */
-                   $$ = New_GTI( $2, -99, "*START*", "*STOP*" );
+		  $$ = New_GTI(gtifilt_fct,  $2, -99, -99, "*START*", "*STOP*" );
                    TEST($$);                                        }
        | GTIFILTER STRING ',' expr ')'
-                {  $$ = New_GTI( $2, $4, "*START*", "*STOP*" );
+                {  $$ = New_GTI(gtifilt_fct,  $2, $4, -99, "*START*", "*STOP*" );
                    TEST($$);                                        }
        | GTIFILTER STRING ',' expr ',' STRING ',' STRING ')'
-                {  $$ = New_GTI( $2, $4, $6, $8 );
+                {  $$ = New_GTI(gtifilt_fct,  $2, $4, -99, $6, $8 );
                    TEST($$);                                        }
+
+
+       | GTIOVERLAP STRING ',' expr ',' expr ')'
+                {  $$ = New_GTI(gtiover_fct,  $2, $4, $6, "*START*", "*STOP*");
+                   TEST($$);                                        }
+       | GTIOVERLAP STRING ',' expr ',' expr ',' STRING ',' STRING ')'
+                {  $$ = New_GTI(gtiover_fct,  $2, $4, $6, $8, $10 );
+                   TEST($$);                                        }
+
 
        | REGFILTER STRING ')'
                 { /* Use defaults for all except filename */
@@ -1469,10 +1512,10 @@ static int New_Deref( int Var,  int nDim,
 
 extern int yyGetVariable( char *varName, YYSTYPE *varVal );
 
-static int New_GTI( char *fname, int Node1, char *start, char *stop )
+static int New_GTI( funcOp Op, char *fname, int Node1, int Node2, char *start, char *stop )
 {
    fitsfile *fptr;
-   Node *this, *that0, *that1;
+   Node *this, *that0, *that1, *that2;
    int  type,i,n, startCol, stopCol, Node0;
    int  hdutype, hdunum, evthdu, samefile, extvers, movetotype, tstat;
    char extname[100];
@@ -1481,7 +1524,7 @@ static int New_GTI( char *fname, int Node1, char *start, char *stop )
    char xcol[20], xexpr[20];
    YYSTYPE colVal;
 
-   if( Node1==-99 ) {
+   if( Op == gtifilt_fct && Node1==-99 ) {
       type = yyGetVariable( "TIME", &colVal );
       if( type==COLUMN ) {
 	 Node1 = New_Column( (int)colVal.lng );
@@ -1490,6 +1533,19 @@ static int New_GTI( char *fname, int Node1, char *start, char *stop )
 	 return(-1);
       }
    }
+
+   if (Op == gtiover_fct) {
+     if (Node1 == -99 || Node2 == -99) {
+       yyerror("startExpr and stopExpr values must be defined for GTIOVERLAP");
+       return(-1);
+     }
+     /* Also case TIME_STOP to double precision */
+     Node2 = New_Unary( DOUBLE, 0, Node2 );
+     if (Node2 < 0) return(-1);
+
+   }
+
+   /* Type cast TIME to double precision */
    Node1 = New_Unary( DOUBLE, 0, Node1 );
    Node0 = Alloc_Node(); /* This will hold the START/STOP times */
    if( Node1<0 || Node0<0 ) return(-1);
@@ -1603,16 +1659,30 @@ static int New_GTI( char *fname, int Node1, char *start, char *stop )
    n = Alloc_Node();
    if( n >= 0 ) {
       this                 = gParse.Nodes + n;
-      this->nSubNodes      = 2;
       this->SubNodes[1]    = Node1;
-      this->operation      = (int)gtifilt_fct;
-      this->DoOp           = Do_GTI;
-      this->type           = BOOLEAN;
+      this->operation      = (int) Op;
+      if (Op == gtifilt_fct) {
+	this->nSubNodes      = 2;
+	this->DoOp           = Do_GTI;
+	this->type           = BOOLEAN;
+      } else {
+	this->nSubNodes      = 3;
+	this->DoOp           = Do_GTI_Over;
+	this->type           = DOUBLE;
+      }
       that1                = gParse.Nodes + Node1;
       this->value.nelem    = that1->value.nelem;
       this->value.naxis    = that1->value.naxis;
       for( i=0; i < that1->value.naxis; i++ )
 	 this->value.naxes[i] = that1->value.naxes[i];
+      if (Op == gtiover_fct) {
+	this->SubNodes[2]  = Node2;
+	that2 = gParse.Nodes + Node2;
+	if (that1->value.nelem != that2->value.nelem) {
+	  yyerror("Dimensions of TIME and TIME_STOP must match for GTIOVERLAP");
+	  return(-1);
+	}
+      }
 
       /* Init START/STOP node to be treated as a "constant" */
 
@@ -1656,6 +1726,12 @@ static int New_GTI( char *fname, int Node1, char *start, char *stop )
 	       that0->type = 0;
 	       break;
 	    }
+
+	 /* GTIOVERLAP() requires ordered GTI */
+	 if (that0->type != 1 && Op == gtiover_fct) {
+	   yyerror("Input GTI must be time-ordered for GTIOVERLAP");
+	   return(-1);
+	 }
 	 
 	 /*  Handle TIMEZERO offset, if any  */
 	 
@@ -1668,8 +1744,11 @@ static int New_GTI( char *fname, int Node1, char *start, char *stop )
 	       that0->value.data.dblptr[i] += dt;
 	 }
       }
-      if( OPER(Node1)==CONST_OP )
-	 this->DoOp( this );
+      /* If Node1 is constant (gtifilt_fct) or
+	 Node1 and Node2 are constant (gtiover_fct), then evaluate now */
+      if( OPER(Node1)==CONST_OP && (Op == gtifilt_fct || OPER(Node2)==CONST_OP)) {
+	this->DoOp( this );
+      }
    }
 
    if( samefile )
@@ -2849,6 +2928,10 @@ static void Do_BinOp_lng( Node *this )
       case '-':   this->value.data.lng = (val1  - val2);   break;
       case '*':   this->value.data.lng = (val1  * val2);   break;
 
+      case '&':   this->value.data.lng = (val1  & val2);   break;
+      case '|':   this->value.data.lng = (val1  | val2);   break;
+      case '^':   this->value.data.lng = (val1  ^ val2);   break;
+
       case '%':
 	 if( val2 ) this->value.data.lng = (val1 % val2);
 	 else       yyerror("Divide by Zero");
@@ -2957,6 +3040,10 @@ static void Do_BinOp_lng( Node *this )
 	    case '+':  this->value.data.lngptr[elem] = (val1  + val2);   break;
 	    case '-':  this->value.data.lngptr[elem] = (val1  - val2);   break;
 	    case '*':  this->value.data.lngptr[elem] = (val1  * val2);   break;
+
+	    case '&':  this->value.data.lngptr[elem] = (val1  & val2);   break;
+	    case '|':  this->value.data.lngptr[elem] = (val1  | val2);   break;
+	    case '^':  this->value.data.lngptr[elem] = (val1  ^ val2);   break;
 
 	    case '%':   
 	       if( val2 ) this->value.data.lngptr[elem] = (val1 % val2);
@@ -3466,6 +3553,12 @@ static void Do_Func( Node *this )
 	       this->value.data.dbl = pVals[0].data.dbl;
             else if( this->type==STRING )
 	       strcpy(this->value.data.str,pVals[0].data.str);
+	    break;
+        case setnull_fct: /* Only defined for numeric expressions */
+            if( this->type==LONG )
+ 	      this->value.data.lng = pVals[0].data.lng;
+            else if( this->type==DOUBLE )
+	       this->value.data.dbl = pVals[0].data.dbl;
 	    break;
 
 	    /* Math functions with 1 double argument */
@@ -4148,6 +4241,34 @@ static void Do_Func( Node *this )
 		     strcpy(this->value.data.strptr[row],pVals[0].data.str);
 		  }
 	       }
+	    }
+	    break;
+         case setnull_fct:
+	    switch( this->type ) {
+	    case LONG:
+	      while( elem-- ) {
+		if ( theParams[1]->value.data.lng == 
+		     theParams[0]->value.data.lngptr[elem] ) {
+		  this->value.data.lngptr[elem] = 0;
+		  this->value.undef[elem] = 1;
+		} else {
+		  this->value.data.lngptr[elem] = theParams[0]->value.data.lngptr[elem];
+		  this->value.undef[elem] = theParams[0]->value.undef[elem];
+		}
+	      }
+	      break;
+	    case DOUBLE:
+	      while( elem-- ) {
+		if ( theParams[1]->value.data.dbl == 
+		     theParams[0]->value.data.dblptr[elem] ) {
+		  this->value.data.dblptr[elem] = 0;
+		  this->value.undef[elem] = 1;
+		} else {
+		  this->value.data.dblptr[elem] = theParams[0]->value.data.dblptr[elem];
+		  this->value.undef[elem] = theParams[0]->value.undef[elem];
+		}
+	      }
+	      break;
 	    }
 	    break;
 
@@ -5181,7 +5302,7 @@ static void Do_GTI( Node *this )
    if( theExpr->operation==CONST_OP ) {
 
       this->value.data.log = 
-	 (Search_GTI( theExpr->value.data.dbl, nGTI, start, stop, ordered )>=0);
+	(Search_GTI( theExpr->value.data.dbl, nGTI, start, stop, ordered, 0 )>=0);
       this->operation      = CONST_OP;
 
    } else {
@@ -5200,7 +5321,7 @@ static void Do_GTI( Node *this )
 
             /*  Before searching entire GTI, check the GTI found last time  */
 	       if( gti<0 || times[elem]<start[gti] || times[elem]>stop[gti] ) {
-		  gti = Search_GTI( times[elem], nGTI, start, stop, ordered );
+		 gti = Search_GTI( times[elem], nGTI, start, stop, ordered, 0 );
 	       }
 	       this->value.data.logptr[elem] = ( gti>=0 );
 	    }
@@ -5216,10 +5337,158 @@ static void Do_GTI( Node *this )
       free( theExpr->value.data.ptr );
 }
 
-static long Search_GTI( double evtTime, long nGTI, double *start,
-			double *stop, int ordered )
+static void Do_GTI_Over( Node *this )
 {
-   long gti, step;
+   Node *theTimes, *theStart, *theStop;
+   double *gtiStart, *gtiStop;
+   double *evtStart, *evtStop;
+   long elem, nGTI, gti, nextGTI;
+   int ordered;
+
+   theTimes = gParse.Nodes + this->SubNodes[0]; /* GTI times */
+   theStop  = gParse.Nodes + this->SubNodes[2]; /* User start time */
+   theStart = gParse.Nodes + this->SubNodes[1]; /* User stop time */
+
+   nGTI     = theTimes->value.nelem;
+   gtiStart = theTimes->value.data.dblptr;        /* GTI start */
+   gtiStop  = theTimes->value.data.dblptr + nGTI; /* GTI stop */
+
+   if( theStart->operation==CONST_OP && theStop->operation==CONST_OP) {
+
+      this->value.data.dbl = 
+	(GTI_Over( theStart->value.data.dbl, theStop->value.data.dbl,
+		   nGTI, gtiStart, gtiStop, &gti));
+      this->operation      = CONST_OP;
+
+   } else {
+      char undefStart = 0, undefStop = 0; /* Input values are undef? */
+      double uStart, uStop;       /* User start/stop values */
+      if (theStart->operation==CONST_OP) uStart = theStart->value.data.dbl;
+      if (theStop ->operation==CONST_OP) uStop  = theStop ->value.data.dbl;
+
+      Allocate_Ptrs( this );
+
+      evtStart = theStart->value.data.dblptr;
+      evtStop  = theStop ->value.data.dblptr;
+      if( !gParse.status ) {
+
+	 elem = gParse.nRows * this->value.nelem;
+	 if( nGTI ) {
+	    double toverlap = 0.0;
+	    gti = -1;
+	    while( elem-- ) {
+	      if (theStart->operation!=CONST_OP) {
+		undefStart = theStart->value.undef[elem];
+		uStart     = evtStart[elem];
+	      }
+	      if (theStop->operation!=CONST_OP) {
+		undefStop  = theStop ->value.undef[elem];
+		uStop      = evtStop[elem];
+	      }
+	      /* This works because at least one of the values is not const */
+	      if( (this->value.undef[elem] = (undefStart||undefStop)) )
+		  continue;
+
+            /*  Before searching entire GTI, check the GTI found last time  */
+	       if( gti<0 || 
+		   uStart<gtiStart[gti] || uStart>gtiStop[gti] ||
+		   uStop <gtiStart[gti] || uStop >gtiStop[gti]) {
+		 /* Nope, need to recalculate */
+		 toverlap = GTI_Over(uStart, uStop, 
+				     nGTI, gtiStart, gtiStop, 
+				     &gti);
+	       } else {
+		 /* We are in same GTI, the overlap is just stop-start of user range */
+		 toverlap = (uStop-uStart);
+	       }
+
+	       /* This works because at least one of the values is not const */
+	       this->value.data.dblptr[elem] = toverlap;
+	    }
+	 } else
+	    /* nGTI == 0; there is no overlap so set all values to 0.0 */
+	    while( elem-- ) {
+	       this->value.data.dblptr[elem] = 0.0;
+	       this->value.undef[elem]       = 0;
+	    }
+      }
+   }
+
+   if( theStart->operation>0 ) {
+     free( theStart->value.data.ptr );
+   }
+   if( theStop->operation>0 ) {
+     free( theStop->value.data.ptr );
+   }
+}
+
+static double GTI_Over(double evtStart, double evtStop,
+		       long nGTI, double *start, double *stop,
+		       long *gtiout)
+{
+  long gti1, gti2, nextGTI1, nextGTI2;
+  long gti, nMax;
+  double overlap = 0.0;
+
+  *gtiout = -1L;
+  /* Zero or negative bin size */
+  if (evtStop <= evtStart) return 0.0;
+
+  /* Locate adjacent GTIs for evtStart and evtStop */
+  gti1 = Search_GTI(evtStart, nGTI, start, stop, 1, &nextGTI1);
+  gti2 = Search_GTI(evtStop,  nGTI, start, stop, 1, &nextGTI2);
+
+  /* evtStart is in gti1, we return that for future processing */
+  if (gti1 >= 0) *gtiout = gti1;
+
+  /* Both evtStart/evtStop are beyond the last GTI */
+  if (nextGTI1 < 0 && nextGTI2 < 0) return 0.0;
+
+  /* Both evtStart/evtStop are in the same gap between GTIs */
+  if (gti1 < 0 && gti2 < 0 && nextGTI1 == nextGTI2) return 0.0;
+
+  /* Both evtStart/evtStop are in the same GTI */
+  if (gti1 >= 0 && gti1 == gti2) return (evtStop-evtStart);
+
+  /* Count through the remaining GTIs; there will be at least one */
+  /* The largest GTI to consider is either nextGTI2-1, if it exists,
+     or nGTI-1 */
+  if (nextGTI2 < 0) nMax = nGTI-1;
+  else if (gti2 >= 0) nMax = nextGTI2;
+  else nMax = nextGTI2-1;
+  for (gti = nextGTI1; gti <= nMax; gti++) {
+    double starti = start[gti], stopi = stop[gti];
+    /* Trim the GTI by actual evtStart/Stop times */
+    if (evtStart > starti) starti = evtStart;
+    if (evtStop  < stopi ) stopi  = evtStop;
+    overlap += (stopi - starti);
+  }
+    
+  return overlap;
+}
+
+/*
+ * Search_GTI - search GTI for requested evtTime
+ * 
+ * double evtTime - requested event time
+ * long nGTI - number of entries in start[] and stop[]
+ * double start[], stop[] - start and stop of each GTI
+ * int ordered - set to 1 if time-ordered
+ * long *nextGTI0 - upon return, *nextGTI0 is either
+ *                   the GTI evtTime is inside
+ *                   the next GTI if evtTime is not inside
+ *                   -1L if there is no next GTI
+ *                   not set if nextGTI0 is a null pointer
+ *
+ * NOTE: for *nextGTI to be well-defined, the GTI must
+ *   be ordered.  This is true when called by Do_GTI.
+ *
+ * RETURNS: gti index that evtTime is located inside, or -1L
+ */
+static long Search_GTI( double evtTime, long nGTI, double *start,
+			double *stop, int ordered, long *nextGTI0 )
+{
+   long gti, nextGTI = -1L, step;
                              
    if( ordered && nGTI>15 ) { /*  If time-ordered and lots of GTIs,   */
                               /*  use "FAST" Binary search algorithm  */
@@ -5232,6 +5501,7 @@ static long Search_GTI( double evtTime, long nGTI, double *start,
 	       if( evtTime>=start[gti+1] )
 		  gti += step;
 	       else {
+		  nextGTI = gti+1;
 		  gti = -1L;
 		  break;
 	       }
@@ -5239,22 +5509,35 @@ static long Search_GTI( double evtTime, long nGTI, double *start,
 	       if( evtTime<=stop[gti-1] )
 		  gti -= step;
 	       else {
+		  nextGTI = gti;
 		  gti = -1L;
 		  break;
 	       }
 	    } else {
+	       nextGTI = gti;
 	       break;
 	    }
 	 }
-      } else
+      } else {
+	 if (start[0] > evtTime) nextGTI = 0;
 	 gti = -1L;
+      }
       
-   } else { /*  Use "SLOW" linear search  */
+   } else { /*  Use "SLOW" linear search.  Not required to be 
+	        ordered, so we have to search the whole table
+		no matter what.
+	    */
       gti = nGTI;
-      while( gti-- )
-	 if( evtTime>=start[gti] && evtTime<=stop[gti] )
+      while( gti-- ) {
+	if( stop[gti] >= evtTime ) nextGTI = gti;
+	if( evtTime>=start[gti] && evtTime<=stop[gti] )
 	    break;
+      }
    }
+
+   if (nextGTI >= nGTI) nextGTI = -1;
+   if (nextGTI0) *nextGTI0 = nextGTI;
+
    return( gti );
 }
 
