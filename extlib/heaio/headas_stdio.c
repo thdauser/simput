@@ -389,7 +389,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
 
 #define GetFilePtr(A) (A && A->cStream ? *A->cStream : 0)
 
-  static hd_FILE *InitStream(FILE * restrict fptr) {
+  static hd_FILE *InitStream(FILE * fptr) {
     hd_FILE *retval;
     do {
       if(!fptr) {
@@ -414,7 +414,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  static FILE *CloseStream(hd_FILE * restrict theStream) {
+  static FILE *CloseStream(hd_FILE * theStream) {
     FILE *retval = 0;
     do {
       if(!theStream) continue;
@@ -471,24 +471,24 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  hd_FILE *HD_fopen(const char * restrict fileName,
-      const char * restrict mode) {
+  hd_FILE *HD_fopen(const char * fileName,
+      const char * mode) {
     return InitStream(fopen(fileName, mode));
   }
 
-  hd_FILE *HD_freopen(const char * restrict fileName,
-      const char * restrict mode, hd_FILE * restrict theStream) {
+  hd_FILE *HD_freopen(const char * fileName,
+      const char * mode, hd_FILE * theStream) {
     return InitStream(freopen(fileName, mode, CloseStream(theStream)));
   }
 
-  void HD_setbuf(hd_FILE * restrict theStream, char * restrict buf) {
+  void HD_setbuf(hd_FILE * theStream, char * buf) {
     do {
       if(theStream && theStream->cxxStream);
       else setbuf(GetFilePtr(theStream), buf);
     } while(0);
   }
 
-  void HD_setvbuf(hd_FILE * restrict theStream, char * restrict buf,
+  void HD_setvbuf(hd_FILE * theStream, char * buf,
       int mode, size_t size) {
     do {
       if(theStream && theStream->cxxStream);
@@ -497,7 +497,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
   }
 
   /* 7.19.6 Formatted input/output functions. */
-  int HD_fprintf(hd_FILE * restrict theStream, const char * restrict fmt, ...) {
+  int HD_fprintf(hd_FILE * theStream, const char * fmt, ...) {
     int retval = -1;
     va_list ap;
     va_start(ap, fmt);
@@ -509,7 +509,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_fscanf(hd_FILE * restrict theStream, const char * restrict fmt, ...) {
+  int HD_fscanf(hd_FILE * theStream, const char * fmt, ...) {
     int retval = EOF;
     va_list ap;
     va_start(ap, fmt);
@@ -528,7 +528,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_printf(const char * restrict fmt, ...) {
+  int HD_printf(const char * fmt, ...) {
     int retval = -1;
     va_list ap;
     va_start(ap, fmt);
@@ -540,7 +540,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_scanf(const char * restrict fmt, ...) {
+  int HD_scanf(const char * fmt, ...) {
     int retval = EOF;
     va_list ap;
     va_start(ap, fmt);
@@ -559,7 +559,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_snprintf(char * restrict s, size_t n, const char * restrict fmt, ...) {
+  int HD_snprintf(char * s, size_t n, const char * fmt, ...) {
     int retval = -1;
     va_list ap;
     va_start(ap, fmt);
@@ -569,7 +569,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_sprintf(char * restrict s, const char * restrict fmt, ...) {
+  int HD_sprintf(char * s, const char * fmt, ...) {
     int retval = -1;
     va_list ap;
     va_start(ap, fmt);
@@ -578,7 +578,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_sscanf(const char * restrict s, const char * restrict fmt, ...) {
+  int HD_sscanf(const char * s, const char * fmt, ...) {
     int retval = EOF;
     va_list ap;
     va_start(ap, fmt);
@@ -592,7 +592,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_vfprintf(hd_FILE * restrict theStream, const char * restrict fmt,
+  int HD_vfprintf(hd_FILE * theStream, const char * fmt,
       va_list ap) {
     int retval = -1;
     do {
@@ -602,7 +602,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_vfscanf(hd_FILE * restrict theStream, const char * restrict fmt,
+  int HD_vfscanf(hd_FILE * theStream, const char * fmt,
       va_list ap) {
     int retval = EOF;
     do {
@@ -619,7 +619,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_vprintf(const char * restrict fmt, va_list ap) {
+  int HD_vprintf(const char * fmt, va_list ap) {
     int retval = -1;
     do {
       if(hd_out && hd_out->cxxStream);
@@ -628,7 +628,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_vscanf(const char * restrict fmt, va_list ap) {
+  int HD_vscanf(const char * fmt, va_list ap) {
     int retval = EOF;
     do {
       if(hd_in && hd_in->cxxStream);
@@ -644,7 +644,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_vsnprintf(char * restrict s, size_t n, const char * restrict fmt,
+  int HD_vsnprintf(char * s, size_t n, const char * fmt,
       va_list ap) {
     int retval = -1;
     fprintf(GetFilePtr(hd_err), "HD_vsnprintf not implemented.\n");
@@ -652,11 +652,11 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_vsprintf(char * restrict s, const char * restrict fmt, va_list ap) {
+  int HD_vsprintf(char * s, const char * fmt, va_list ap) {
     return vsprintf(s, fmt, ap);
   }
 
-  int HD_vsscanf(const char * restrict s, const char * restrict fmt,
+  int HD_vsscanf(const char * s, const char * fmt,
       va_list ap) {
 #ifdef ANSI_ISO_IEC_9899_1999_COMPLIANT
     return vsscanf(s, fmt, ap);
@@ -677,7 +677,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  char *HD_fgets(char * restrict s, int n, hd_FILE * restrict theStream) {
+  char *HD_fgets(char * s, int n, hd_FILE * theStream) {
     char *retval = 0;
     do {
       if(theStream && theStream->cxxStream);
@@ -695,7 +695,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  int HD_fputs(const char * restrict s, hd_FILE * restrict theStream) {
+  int HD_fputs(const char * s, hd_FILE * theStream) {
     int retval = EOF;
     do {
       if(theStream && theStream->cxxStream);
@@ -766,8 +766,8 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
   }
 
   /* 7.19.8 Direct input/output functions. */
-  size_t HD_fread(void * restrict ptr, size_t size, size_t nmemb,
-      hd_FILE * restrict theStream) {
+  size_t HD_fread(void * ptr, size_t size, size_t nmemb,
+      hd_FILE * theStream) {
     size_t retval = 0u;
     do {
       if(theStream && theStream->cxxStream);
@@ -776,8 +776,8 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
     return retval;
   }
 
-  size_t HD_fwrite(const void * restrict ptr, size_t size, size_t nmemb,
-      hd_FILE * restrict theStream) {
+  size_t HD_fwrite(const void * ptr, size_t size, size_t nmemb,
+      hd_FILE * theStream) {
     size_t retval = 0u;
     do {
       if(theStream && theStream->cxxStream);
@@ -787,7 +787,7 @@ FCALLSCSUB2(headas_f77chat, HDCHAT, hdchat, INT, STRING)
   }
 
   /* 7.19.9 File positioning functions. */
-  int HD_fgetpos(hd_FILE * restrict theStream, fpos_t * restrict pos) {
+  int HD_fgetpos(hd_FILE * theStream, fpos_t * pos) {
     int retval = EOF;
     do {
       if(theStream && theStream->cxxStream);

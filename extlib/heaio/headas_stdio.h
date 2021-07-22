@@ -41,10 +41,6 @@ extern "C" {
   typedef struct hd_FILE_s hd_FILE_t;
   typedef hd_FILE_t hd_FILE;
 
-#ifndef ANSI_ISO_IEC_9899_1999_COMPLIANT
-#define restrict
-#endif
-
   /* On Windows, global variables which are exported must also be imported*/
 
 #ifndef IMPSYM
@@ -95,44 +91,44 @@ extern "C" {
   /* 7.19.5 File access functions. */
   int HD_fclose(hd_FILE *theStream);
   int HD_fflush(hd_FILE *theStream);
-  hd_FILE *HD_fopen(const char * restrict fileName,
-      const char * restrict mode);
-  hd_FILE *HD_freopen(const char * restrict fileName,
-      const char * restrict mode, hd_FILE * restrict theStream);
-  void HD_setbuf(hd_FILE * restrict theStream, char * restrict buf);
-  void HD_setvbuf(hd_FILE * restrict theStream, char * restrict buf,
+  hd_FILE *HD_fopen(const char * fileName,
+      const char * mode);
+  hd_FILE *HD_freopen(const char * fileName,
+      const char * mode, hd_FILE * theStream);
+  void HD_setbuf(hd_FILE * theStream, char * buf);
+  void HD_setvbuf(hd_FILE * theStream, char * buf,
       int mode, size_t size);
 
   /* 7.19.6 Formatted input/output functions. */
-  int HD_fprintf(hd_FILE * restrict theStream, const char * restrict fmt, ...);
-  int HD_fscanf(hd_FILE * restrict theStream, const char * restrict fmt, ...);
-  int HD_printf(const char * restrict fmt, ...);
-  int HD_scanf(const char * restrict fmt, ...);
-  int HD_snprintf(char * restrict s, size_t n, const char * restrict fmt, ...);
-  int HD_sprintf(char * restrict s, const char * restrict fmt, ...);
-  int HD_sscanf(const char * restrict s, const char * restrict fmt, ...);
-  int HD_vfprintf(hd_FILE * restrict theStream, const char * restrict fmt,
+  int HD_fprintf(hd_FILE * theStream, const char * fmt, ...);
+  int HD_fscanf(hd_FILE * theStream, const char * fmt, ...);
+  int HD_printf(const char * fmt, ...);
+  int HD_scanf(const char * fmt, ...);
+  int HD_snprintf(char * s, size_t n, const char * fmt, ...);
+  int HD_sprintf(char * s, const char * fmt, ...);
+  int HD_sscanf(const char * s, const char * fmt, ...);
+  int HD_vfprintf(hd_FILE * theStream, const char * fmt,
       va_list ap);
 #ifdef ANSI_ISO_IEC_9899_1999_COMPLIANT
-  int HD_vfscanf(hd_FILE * restrict theStream, const char * restrict fmt,
+  int HD_vfscanf(hd_FILE * theStream, const char * fmt,
       va_list ap);
 #endif
   
-  int HD_vprintf(const char * restrict fmt, va_list ap);
-  int HD_vscanf(const char * restrict fmt, va_list ap);
-  int HD_vsnprintf(char * restrict s, size_t n, const char * restrict fmt,
+  int HD_vprintf(const char * fmt, va_list ap);
+  int HD_vscanf(const char * fmt, va_list ap);
+  int HD_vsnprintf(char * s, size_t n, const char * fmt,
       va_list ap);
-  int HD_vsprintf(char * restrict s, const char * restrict fmt, va_list ap);
+  int HD_vsprintf(char * s, const char * fmt, va_list ap);
 #ifdef ANSI_ISO_IEC_9899_1999_COMPLIANT
-  int HD_vsscanf(const char * restrict s, const char * restrict fmt,
+  int HD_vsscanf(const char * s, const char * fmt,
       va_list ap);
 #endif
 
   /* 7.19.7 Character input/output functions. */
   int HD_fgetc(hd_FILE *theStream);
-  char *HD_fgets(char * restrict s, int n, hd_FILE * restrict theStream);
+  char *HD_fgets(char * s, int n, hd_FILE * theStream);
   int HD_fputc(int c, hd_FILE *theStream);
-  int HD_fputs(const char * restrict s, hd_FILE * restrict theStream);
+  int HD_fputs(const char * s, hd_FILE * theStream);
   int HD_getc(hd_FILE *theStream);
   int HD_getchar(void);
   char *HD_gets(char *s);
@@ -142,13 +138,13 @@ extern "C" {
   int HD_ungetc(int c, hd_FILE *theStream);
 
   /* 7.19.8 Direct input/output functions. */
-  size_t HD_fread(void * restrict ptr, size_t size, size_t nmemb,
-      hd_FILE * restrict theStream);
-  size_t HD_fwrite(const void * restrict ptr, size_t size, size_t nmemb,
-      hd_FILE * restrict theStream);
+  size_t HD_fread(void * ptr, size_t size, size_t nmemb,
+      hd_FILE * theStream);
+  size_t HD_fwrite(const void * ptr, size_t size, size_t nmemb,
+      hd_FILE * theStream);
 
   /* 7.19.9 File positioning functions. */
-  int HD_fgetpos(hd_FILE * restrict theStream, fpos_t * restrict pos);
+  int HD_fgetpos(hd_FILE * theStream, fpos_t * pos);
   int HD_fseek(hd_FILE *theStream, long int offset, int whence);
   int HD_fsetpos(hd_FILE *theStream, const fpos_t *pos);
   long int HD_ftell(hd_FILE *theStream);
@@ -169,10 +165,7 @@ extern "C" {
 #endif
 
 /******************************************************************************
- * $Log: headas_stdio.h,v $
- * Revision 1.6  2005/08/09 18:55:14  elwin
- * Fixes to import global variables properly in the Win32 build. -- LEB
- *
+ * $Log$
  * Revision 1.5  2003/02/13 18:44:53  peachey
  * Added full support for prompt and null streams. Refined logic
  * concerning the prompt stream; if HEADASNOQUERY is set prompts
