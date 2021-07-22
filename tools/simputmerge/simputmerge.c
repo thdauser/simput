@@ -236,11 +236,16 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 	simput_refs* refs=(simput_refs*)malloc(sizeof(simput_refs));
 	CHECK_NULL_RET(refs, *status,"memory allocation for SimputSrc failed", NULL);
 
+        // get the full filename (with path)
+	char fname[SIMPUT_MAXSTR];
+        strcpy(fname, incat->filepath);
+        strcat(fname, incat->filename);
+
 	// need to do this for all possible extensions (lightcurves as well?)
 
 	// SPECTRUM
 	if (is_fileref_given(insrc->spectrum) == 1){
-		refs->spectrum = add_single_data_to_buffer(incat->filename,insrc->spectrum,
+		refs->spectrum = add_single_data_to_buffer(fname,insrc->spectrum,
 				mtree,data_buffer,SIMPUT_SPEC_TYPE,status);
 		CHECK_STATUS_RET(*status,NULL);
 	} else {
@@ -249,7 +254,7 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 
 	// IMAGE
 	if (is_fileref_given(insrc->image) == 1){
-		refs->image = add_single_data_to_buffer(incat->filename,insrc->image,
+		refs->image = add_single_data_to_buffer(fname,insrc->image,
 				mtree,data_buffer,SIMPUT_IMG_TYPE,status);
 		CHECK_STATUS_RET(*status,NULL);
 	} else {
@@ -262,7 +267,7 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 		fitsfile* fptr=NULL;
 
 		char new_ref[SIMPUT_MAXSTR];
-		strcpy(new_ref, incat->filename);
+		strcpy(new_ref, fname);
 		strcat(new_ref, insrc->timing);
 
 		fits_open_table(&fptr,new_ref, READONLY, status);
@@ -279,10 +284,10 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 	    if (NULL!=fptr) fits_close_file(fptr, status);
 
 		if (opt_status==EXIT_SUCCESS) {
-			refs->timing = add_single_data_to_buffer(incat->filename,insrc->timing,
+			refs->timing = add_single_data_to_buffer(fname,insrc->timing,
 					mtree,data_buffer,SIMPUT_LC_TYPE,status);
 		} else { // assume oif not LC it's PSD
-			refs->timing = add_single_data_to_buffer(incat->filename,insrc->timing,
+			refs->timing = add_single_data_to_buffer(fname,insrc->timing,
 					mtree,data_buffer,SIMPUT_PSD_TYPE,status);
 		}
 		CHECK_STATUS_RET(*status,NULL);
