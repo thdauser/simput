@@ -14,6 +14,16 @@
 /******************************************************************************
  * Header files.                                                              *
  ******************************************************************************/
+
+#ifdef AHLOG_INTEGRATION_COMPLETE_REMOVE_THIS_IF
+#include "ahlog/cahlog.h"
+#endif
+
+#include "ape/ape_error.h"
+#include "ape/ape_msg.h"
+#include "ape/ape_trad.h"
+
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -225,8 +235,8 @@ static void ReportError(int taskStatus) {
   /* Print information about the task. This is the final message
      written to heaerr. */
   fprintf(heaerr, "Task");
-  if(task) fprintf(heaerr, " %s", task);
-  if(vers) fprintf(heaerr, " %s", vers);
+  if('\0' != *task) fprintf(heaerr, " %s", task);
+  if('\0' != *vers) fprintf(heaerr, " %s", vers);
   fprintf(heaerr, " terminating with status %d\n", taskStatus);
 
   /* Make certain the returned status is in the range the shell can
@@ -241,13 +251,258 @@ static void ReportError(int taskStatus) {
 }
   /****************************************************************************/
 
+#ifdef AHLOG_INTEGRATION_COMPLETE_REMOVE_THIS_IF
+
+#define HDMSGLEN (80)
+
+static void ape_out_redirect(const char* msg) {
+  ahlog_out(__func__, "%s", msg);
+}
+
+static void ape_err_redirect(const char* msg) {
+  ahlog_warn(LOW, __func__, "%s", msg);
+}
+
+int headas_start_up(int argc, char * argv[], const char * tooltag) {
+  /* Set up logging. Ahlog uses parameters for this: task name,
+       logfile, chatter, debug. Heainit uses environment variables.
+     Ahapp and heainit provide local functions to redirect ape logging.
+     Both read/use clobber, history.
+TODO Move the following comment block somewhere:
+     Order: goal is to set up logging ASAP, then other things as required.
+  */
+/*  std::string banner(__func__); banner += ": "; */
+  int chatter = 0;
+  char chatter_warn_msg[HDMSGLEN] = "";
+
+  char * logfilepar = 0;
+  const char * logfile = 0;
+  char logfile_warn_msg[HDMSGLEN] = "";
+
+  char c_debug = 0;
+  char debug_warn_msg[HDMSGLEN] = "";
+
+  char clobber = 0;
+
+  char c_history = 0;
+
+  int status = ape_trad_init(argc, argv);
+  if (eOK != status) {
+    /* TODO: report status code along with message. */
+    fprintf(stderr, "%s: %s %d.\n", __func__, "ape_trad_init returned status", status);
+/*    throw std::runtime_error(banner + "ape_trad_init returned non-0 status"); */
+    return status;
+  }
+
+  /* Disable all prompting if HEADASNOQUERY environment variable is set. */
+  if (0 != getenv("HEADASNOQUERY")) PILOverrideQueryMode(PIL_QUERY_OVERRIDE);
+
+  set_history(1);
+
+  /* attempt to read chatter from parameter file
+     ... if chatter out of range, adjust to appropriate limit
+     ... if other error, set chatter to max value */
+/*  int chatter=0; */
+  /* std::string chatter_warn_msg=""; */
+  status = ape_trad_query_int("chatter", &chatter);
+  if (eValueBelowMin == status) {
+    chatter=MINCHAT;
+    /* std::stringstream msg; */
+    sprintf(chatter_warn_msg, "Chatter too small; resetting to minimum value of %d", MINCHAT);
+    /* chatter_warn_msg=msg.str(); */
+  } else if (eValueAboveMax == status) {
+    chatter=MAXCHAT;
+    /* std::stringstream msg; */
+    sprintf(chatter_warn_msg, "Chatter too large; resetting to maximum value of %d", MAXCHAT);
+    /* chatter_warn_msg=msg.str(); */
+  } else if (eOK != status) {
+    chatter=MAXCHAT;
+    /* std::stringstream msg; */
+    sprintf(chatter_warn_msg, "Invalid chatter value; resetting to maximum value of %d", MAXCHAT);
+    /* chatter_warn_msg=msg.str(); */
+  }
+  status=0;    /* reset ape status */
+
+  /* attempt to read log file name */
+  /* ... if ape error, set log file name to !DEFAULT */
+  /* char* logfilepar = 0;
+  const char* logfile = 0;
+  std::string logfile_warn_msg=""; */
+  status = ape_trad_query_string("logfile",&logfilepar);
+  if (eOK == status && strlen(logfilepar) > 0) {
+    logfile = logfilepar;
+  } else {
+    logfile = "!DEFAULT"; /* Is this really what we want: create log file if logfile parameter missing? */
+    strcat(logfile_warn_msg, "APE error reading logfile parameter; setting logfile to !DEFAULT");
+  }
+  status=0;    /* reset ape status */
+
+  /* attempt to read debug parameter */
+  /* ... if ape error, set debug parameter to false */
+  /* char c_debug = 0;
+  bool debug=false;
+  std::string debug_warn_msg=""; */
+  status = ape_trad_query_bool("debug", &c_debug);
+  if (eOK != status) {
+    /* debug=false; */
+    strcat(debug_warn_msg, "APE error reading debug parameter; setting debug to false");
+  } else {
+    /* debug = 0 != c_debug ? true : false; */
+  }
+  status=0;    /* reset ape status */
+
+  /* set up ahlog as soon as possible to have as many messages sent through ahlog */
+  ahlog_setup(argv[0], logfile, chatter, c_debug);
+  free(logfilepar); logfilepar=0;
+
+  /* display any necessary warning messages */
+  if ('\0' != *chatter_warn_msg) ahlog_warn(LOW, __func__, "%s\n", chatter_warn_msg);
+  if ('\0' != *logfile_warn_msg) ahlog_warn(LOW, __func__, "%s\n", logfile_warn_msg);
+  if ('\0' != *debug_warn_msg) ahlog_warn(LOW, __func__, "%s\n", debug_warn_msg);
+
+  /* feed APE error messages through ahlog */
+  ape_msg_set_out_handler(&ape_out_redirect);
+  ape_msg_set_err_handler(&ape_err_redirect);
+
+  /* attempt to read clobber parameter */
+  /*  ... if ape error, set clobber to false */
+  /* char clobber = 0; */
+  /* bool b_clobber=false; */
+  status = ape_trad_query_bool("clobber", &clobber);
+  if (eOK != status) {
+    headas_clobpar=0;
+    ahlog_warn(LOW, __func__,  "APE error reading clobber parameter; setting clobber to false\n");
+  } else {
+    /* b_clobber = 0 != clobber ? true : false; */
+    headas_clobpar = clobber;
+  }
+  status=0;
+  /* ahgen::setClobber(b_clobber); */ /* TODO: need to find a suitable replacement? */
+  ahlog_set_clobber(clobber);
+#if 0
+  /* Skip the following block forever -- it's ahfits-specific. */
+  /* attempt to read buffer parameter */
+  /*  ... if buffer < -1; set to buffer=-1 */
+  /*  ... if ape error; set buffer=-1 */
+  int buffer = -1;    /* default is automatic buffering */
+  status = ape_trad_query_int("buffer", &buffer);
+  if (eOK != status) {
+    buffer=-1;
+    AH_WARN(ahlog::LOW) << "APE error reading buffer parameter; setting buffer to -1 (automatic buffering)" << std::endl;
+  } else if (buffer < -1) {
+    buffer=-1;
+    AH_WARN(ahlog::LOW) << "buffer parameter set smaller than -1; resetting buffer to -1 (automatic buffering)" << std::endl;
+  }
+  status=0;
+  ahgen::setBuffer(buffer);
+#endif
+
+  /* attempt to read history parameter which enables/disables parameter stamping */
+  /* char c_history = 0; */
+  /* bool history=true; */
+  status = ape_trad_query_bool("history", &c_history);
+  if (eOK != status) {
+    /* history=true; */
+    set_history(1);
+    ahlog_warn(LOW, __func__, "%s\n", "APE error reading history parameter; setting history to true");
+  } else {
+    /* history = 0 != c_history ? true : false; */
+    set_history(c_history);
+  }
+  status=0;
+  /* ahgen::setHistory(history); */ /* TODO: need to find a suitable replacement? */
+
+  /* make sure that stamped parameters match those used; this is necessary since */
+  /* in case ape errors above cause a hard-coded default value to be used */
+  ape_trad_set_int("chatter",chatter);
+  ape_trad_set_string("logfile",logfile);
+  ape_trad_set_bool("debug",c_debug);
+  ape_trad_set_bool("clobber",clobber);
+  /* ape_trad_set_int("buffer",buffer); */
+  ape_trad_set_bool("history",c_history);
+
+  /* set tool name used when stamping parameters */
+  /* std::string tname=argv[0]; */
+  /* size_t found; */
+  /* found=tname.rfind("/"); */
+  /* if (found != std::string::npos) tname.replace(0,found+1,""); */
+  { char * tname = strrchr(argv[0], '/');
+    if (0 == tname) tname = argv[0];
+    else ++tname; /* Go past the slash. */
+    set_toolname(tname);
+    ahlog_set_executable_name(tname);
+  }
+
+  /* set tool version */
+  /* the tool version is typically set using a macro set as the CVS macro, */
+  /* Name, so that the tooltag argument to this function will take the form: */
+  /* $Name$.  Before setting the tool version, we want to strip */
+  /* the CVS formatting, namely "$Name$" at the */
+  /* end. */
+  /* std::string ttooltag=tooltag; */
+  /* std::string tagstr="$Name: "; */
+  /* note: in the following search, the leading $ is ommitted to prevent CVS from expanding the keyword */
+  /* if (ttooltag.find("Name$") != std::string::npos) ttooltag=""; */     /* check if no CVS flag set yet */
+  /* if (ttooltag[ttooltag.size()-1] == '$') */
+  /*   ttooltag.erase(ttooltag.end()-1,ttooltag.end()); */
+  /* if (ttooltag.find(tagstr) != std::string::npos) */
+  /*   ttooltag.replace(ttooltag.find(tagstr),tagstr.size(),""); */
+  /* set_toolversion(ttooltag.c_str()); */
+  { const char * begin = strstr(tooltag, "$Name");
+    const char * end = 0;
+    char * ttooltag = 0;
+    size_t ttooltaglen = 0u;
+    if (0 == begin) {
+      begin = tooltag;
+    } else {
+      /* Skip over the initial $Name. */
+      begin += strlen("$Name");
+
+      /* Skip the ":", if it is present. */
+      if (':' == *begin) ++begin;
+
+      /* Remove any leading space. */
+      while ('\0' != *begin && 0 != isspace(*begin)) ++begin;
+
+      /* Terminate the string with the next occurrence of $. */
+      end = strchr(begin, '$');
+
+      /* Remove trailing space, if any. */
+      while (end > begin && 0 != isspace(*(end-1))) --end;
+    }
+    /* Make sure end has been set, and find length of version tag. */
+    if (0 == end) end = begin + strlen(begin);
+    ttooltaglen = end - begin;
+
+    /* Copy the significant portion of the tag into ttooltag string. */
+    ttooltag = (char *) calloc(ttooltaglen + 1, sizeof(char)); /* Include room for terminator. */
+    if (0 == ttooltag) status = 1;
+    else strncpy(ttooltag, begin, ttooltaglen);
+
+    /* Store the tool version string and clean up. */
+    if (0 != ttooltag) set_toolversion(ttooltag);
+    free(ttooltag); ttooltag = 0;
+  }
+  return status;
+}
+
+int headas_shut_down(void) {
+  ape_trad_close(1);
+  /* TODO: more shut-down needed here? */
+  return 0;
+}
+#endif /* AHLOG_INTEGRATION_COMPLETE_REMOVE_THIS_IF */
+
 /* C/C++ compatibility. */
 #ifdef __cplusplus
 }
 #endif
 
 /******************************************************************************
- * $Log: headas_init.c,v $
+ * $Log$
+ * Revision 1.19  2014/01/03 22:31:47  peachey
+ * Add and test new functionality headas_start_up.
+ *
  * Revision 1.18  2006/06/16 00:21:01  peachey
  * Suppress attempting to print system error messages if error code is negative.
  *

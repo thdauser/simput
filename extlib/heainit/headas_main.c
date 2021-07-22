@@ -61,8 +61,5 @@ int main(int argc, char *argv[]) {
 }
 
 /******************************************************************************
- * $Log: headas_main.c,v $
- * Revision 1.3  2002/10/04 21:51:03  peachey
- * Changes to use the new error handling facility automatically.
- *
+ * $Log$
  ******************************************************************************/
