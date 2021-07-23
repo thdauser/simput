@@ -1,6 +1,6 @@
 /^[^*]/{p;d;}
 
-s|CROTAia|<TT><B>CROTA</B>ia</TT>|g
+s|CROTAi|<TT><B>CROTA</B>i</TT>|g
 s|EPOCH|<TT><B>&</B></TT>|g
 s|VELREF|<TT><B>&</B></TT>|g
 

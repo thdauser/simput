@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,23 +18,21 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: lin.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: lin.inc,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  LINPUT, LINPTD,  LINPTI, LINGET,  LINGTD, LINGTI,
-     :          LININI, LININIT, LINDIS, LINDIST, LINCPY, LINFREE,
-     :          LINPRT, LINPERR,
-     :          LINSET, LINP2X,  LINX2P, LINWARP
+      EXTERNAL  LINPUT,  LINPTD,  LINPTI, LINGET,  LINGTD, LINGTI,
+     :          LININI,  LININIT, LINDIS, LINDIST, LINCPY, LINFREE,
+     :          LINSIZE, LINPRT,  LINPERR,
+     :          LINSET,  LINP2X,  LINX2P, LINWARP
 
-      INTEGER   LINPUT, LINPTD, LINPTI, LINGET, LINGTD, LINGTI,
-     :          LININI, LININIT, LINDIS, LINDIST, LINCPY, LINFREE,
-     :          LINPRT, LINPERR,
-     :          LINSET, LINP2X, LINX2P, LINWARP
+      INTEGER   LINPUT,  LINPTD,  LINPTI, LINGET,  LINGTD, LINGTI,
+     :          LININI,  LININIT, LINDIS, LINDIST, LINCPY, LINFREE,
+     :          LINSIZE, LINPRT,  LINPERR,
+     :          LINSET,  LINP2X,  LINX2P, LINWARP
 
 *     Length of the LINPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 22 on 32-bit machines.
@@ -63,7 +61,6 @@
       PARAMETER (LIN_UNITY  = 203)
       PARAMETER (LIN_AFFINE = 204)
       PARAMETER (LIN_SIMPLE = 205)
-
       PARAMETER (LIN_ERR    = 206)
 
 *     Error codes and messages.

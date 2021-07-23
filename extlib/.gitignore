@@ -30,7 +30,6 @@ fftw/FFTW3Config.cmake
 fftw/FFTW3ConfigVersion.cmake
 wcslib/C/fitshdr.c
 wcslib/C/libwcs.so*
-wcslib/C/libwcs.so
 wcslib/C/wcsbth.c
 wcslib/C/wcspih.c
 wcslib/C/wcsulex.c
@@ -44,6 +43,8 @@ wcslib/wcslib.pc
 wcslib/utils/fitshdr
 wcslib/utils/HPXcvt
 wcslib/utils/wcsware
+wcslib/utils/sundazel
+wcslib/utils/tofits
 wcslib/pgsbox/libpgsbox.so*
 wcslib/wcsconfig_utils.h
 wcslib/C/libwcs.*.dylib

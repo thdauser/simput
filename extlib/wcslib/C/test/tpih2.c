@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tpih2.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tpih2.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tpih2 tests wcspih(), the WCS FITS parser for image headers, by reading a
@@ -72,14 +69,14 @@ int main()
 #endif
 
 
-  /* Set line buffering in case stdout is redirected to a file, otherwise
-   * stdout and stderr messages will be jumbled (stderr is unbuffered). */
+  // Set line buffering in case stdout is redirected to a file, otherwise
+  // stdout and stderr messages will be jumbled (stderr is unbuffered).
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   printf("Testing WCSLIB parser for FITS image headers (tpih2.c)\n"
          "------------------------------------------------------\n\n");
 
-  /* Read in the FITS header, excluding COMMENT and HISTORY keyrecords. */
+  // Read in the FITS header, excluding COMMENT and HISTORY keyrecords.
 #if defined HAVE_CFITSIO && defined DO_CFITSIO
   status = 0;
 
@@ -113,12 +110,12 @@ int main()
       if (strncmp(keyrec, "COMMENT ", 8) == 0) continue;
       if (strncmp(keyrec, "HISTORY ", 8) == 0) continue;
 
-      strncpy(header+k, keyrec, 80);
+      memcpy(header+k, keyrec, 80);
       k += 80;
       nkeyrec++;
 
       if (strncmp(keyrec, "END     ", 8) == 0) {
-        /* An END keyrecord was read, but read the rest of the block. */
+        // An END keyrecord was read, but read the rest of the block.
         gotend = 1;
       }
     }
@@ -135,10 +132,10 @@ int main()
     fprintf(stderr, "wcspih ERROR %d: %s.\n", status, wcs_errmsg[status]);
   }
 #if defined HAVE_CFITSIO && defined DO_CFITSIO
-  free(header);
+  fits_free_memory(header, &status);
 #endif
 
-  /* Plot setup. */
+  // Plot setup.
   naxis[0] = 1024;
   naxis[1] = 1024;
 
@@ -155,17 +152,17 @@ int main()
   cpgask(1);
   cpgpage();
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "Right ascension");
   strcpy(idents[1], "Declination");
 
   opt[0] = 'G';
   opt[1] = 'E';
 
-  /* Compact lettering. */
+  // Compact lettering.
   cpgsch(0.8f);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   cpgsci(1);
   gcode[0] = 2;
   gcode[1] = 2;
@@ -178,18 +175,18 @@ int main()
       continue;
     }
 
-    /* Get WCSNAME out of the wcsprm struct. */
+    // Get WCSNAME out of the wcsprm struct.
     strcpy(idents[2], (wcs+i)->wcsname);
     printf("\n%s\n", idents[2]);
 
-    /* Draw the celestial grid.  The grid density is set for each world */
-    /* coordinate by specifying LABDEN = 1224. */
+    // Draw the celestial grid.  The grid density is set for each world
+    // coordinate by specifying LABDEN = 1224.
     ic = -1;
     cpgsbox(blc, trc, idents, opt, 0, 1224, c0, gcode, 0.0, 0, grid1, 0,
       grid2, 0, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(wcs+i), nldprm, 256,
       &ic, cache, &status);
 
-    /* Draw the frame. */
+    // Draw the frame.
     cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
     cpgpage();

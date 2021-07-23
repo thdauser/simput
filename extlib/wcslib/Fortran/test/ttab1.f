@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: ttab1.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: ttab1.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TTAB1
@@ -68,7 +66,7 @@
 
 *     First a 1-dimensional table from Sect. 6.2.3 of Paper III.
       WRITE (*, '(/,A)') 'One-dimensional test:'
-      STATUS = TABPUT (TAB, TAB_FLAG, -1, 0, 0)
+      STATUS = TABPTI (TAB, TAB_FLAG, -1, 0, 0)
       STATUS = TABINI (M, K, TAB)
       IF (STATUS.NE.0) THEN
         WRITE (*, 20) STATUS
@@ -76,28 +74,28 @@
         GO TO 999
       END IF
 
-      STATUS = TABPUT (TAB, TAB_M,       1, 0, 0)
-      STATUS = TABPUT (TAB, TAB_K,       8, 1, 0)
-      STATUS = TABPUT (TAB, TAB_MAP,     0, 1, 0)
-      STATUS = TABPUT (TAB, TAB_CRVAL, 0D0, 1, 0)
+      STATUS = TABPTI (TAB, TAB_M,       1, 0, 0)
+      STATUS = TABPTI (TAB, TAB_K,       8, 1, 0)
+      STATUS = TABPTI (TAB, TAB_MAP,     0, 1, 0)
+      STATUS = TABPTD (TAB, TAB_CRVAL, 0D0, 1, 0)
 
-      STATUS = TABPUT (TAB, TAB_INDEX, 0D0, 1, 1)
-      STATUS = TABPUT (TAB, TAB_INDEX, 1D0, 1, 2)
-      STATUS = TABPUT (TAB, TAB_INDEX, 1D0, 1, 3)
-      STATUS = TABPUT (TAB, TAB_INDEX, 2D0, 1, 4)
-      STATUS = TABPUT (TAB, TAB_INDEX, 2D0, 1, 5)
-      STATUS = TABPUT (TAB, TAB_INDEX, 3D0, 1, 6)
-      STATUS = TABPUT (TAB, TAB_INDEX, 3D0, 1, 7)
-      STATUS = TABPUT (TAB, TAB_INDEX, 4D0, 1, 8)
+      STATUS = TABPTD (TAB, TAB_INDEX, 0D0, 1, 1)
+      STATUS = TABPTD (TAB, TAB_INDEX, 1D0, 1, 2)
+      STATUS = TABPTD (TAB, TAB_INDEX, 1D0, 1, 3)
+      STATUS = TABPTD (TAB, TAB_INDEX, 2D0, 1, 4)
+      STATUS = TABPTD (TAB, TAB_INDEX, 2D0, 1, 5)
+      STATUS = TABPTD (TAB, TAB_INDEX, 3D0, 1, 6)
+      STATUS = TABPTD (TAB, TAB_INDEX, 3D0, 1, 7)
+      STATUS = TABPTD (TAB, TAB_INDEX, 4D0, 1, 8)
 
-      STATUS = TABPUT (TAB, TAB_COORD, 1997.84512D0, 1, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 1997.84631D0, 2, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 1993.28451D0, 3, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 1993.28456D0, 4, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 2001.59234D0, 5, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 2001.59239D0, 6, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 2002.18265D0, 7, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 2002.18301D0, 8, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 1997.84512D0, 1, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 1997.84631D0, 2, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 1993.28451D0, 3, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 1993.28456D0, 4, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 2001.59234D0, 5, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 2001.59239D0, 6, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 2002.18265D0, 7, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 2002.18301D0, 8, 0)
 
       EPSILON = 1D-3
       CRPIX4  = 0.5
@@ -166,7 +164,7 @@
 
 *     Now a 2-dimensional table.
       WRITE (*, '(A)') 'Two-dimensional test:'
-      STATUS = TABPUT (TAB, TAB_FLAG, -1, 0, 0)
+      STATUS = TABPTI (TAB, TAB_FLAG, -1, 0, 0)
       STATUS = TABINI (M, K, TAB)
       IF (STATUS.NE.0) THEN
         WRITE (*, 120) STATUS
@@ -174,14 +172,14 @@
         GO TO 999
       END IF
 
-      STATUS = TABPUT (TAB, TAB_M, M, 0, 0)
+      STATUS = TABPTI (TAB, TAB_M, M, 0, 0)
       DO 140 IM = 1, M
-        STATUS = TABPUT (TAB, TAB_K,     K(IM),     IM, 0)
-        STATUS = TABPUT (TAB, TAB_MAP,   MAP(IM),   IM, 0)
-        STATUS = TABPUT (TAB, TAB_CRVAL, CRVAL(IM), IM, 0)
+        STATUS = TABPTI (TAB, TAB_K,     K(IM),     IM, 0)
+        STATUS = TABPTI (TAB, TAB_MAP,   MAP(IM),   IM, 0)
+        STATUS = TABPTD (TAB, TAB_CRVAL, CRVAL(IM), IM, 0)
 
         DO 130 IK = 1, K(IM)
-          STATUS = TABPUT (TAB, TAB_INDEX, DBLE(IK-1), IM, IK)
+          STATUS = TABPTD (TAB, TAB_INDEX, DBLE(IK-1), IM, IK)
  130    CONTINUE
  140  CONTINUE
 
@@ -190,9 +188,9 @@
       DO 160 IK2 = 0, K2-1
         DO 150 IK1 = 0, K1-1
           N = N + 1
-          STATUS = TABPUT (TAB, TAB_COORD,  3D0*IK1*IK2*Z, N, 0)
+          STATUS = TABPTD (TAB, TAB_COORD,  3D0*IK1*IK2*Z, N, 0)
           N = N + 1
-          STATUS = TABPUT (TAB, TAB_COORD, -1D0*(K1-IK1-1)*IK2*Z +
+          STATUS = TABPTD (TAB, TAB_COORD, -1D0*(K1-IK1-1)*IK2*Z +
      :                     0.01*IK1, N, 0)
  150    CONTINUE
  160  CONTINUE

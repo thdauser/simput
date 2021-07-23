@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,12 +17,10 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO,
      and: Michael Droetboom, Space Telescope Science Institute
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcs.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: twcs.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * twcs tests wcss2p() and wcsp2s() for closure on an oblique 2-D slice through
@@ -44,11 +41,11 @@ void parser(struct wcsprm *);
 int  check_error(struct wcsprm *, int, int, char *);
 int  test_errors();
 
-/* Reporting tolerance. */
+// Reporting tolerance.
 const double tol = 1.0e-10;
 
 
-/* In real life these would be encoded as FITS header keyrecords. */
+// In real life these would be encoded as FITS header keyrecords.
 const int NAXIS = 4;
 const double CRPIX[4] =  {  513.0,  0.0,  0.0,  0.0};
 const double PC[4][4] = {{    1.1,  0.0,  0.0,  0.0},
@@ -66,7 +63,7 @@ const double RESTFRQ  =   1.42040575e9;
 const double RESTWAV  =   0.0;
 
 int NPV = 3;
-struct pvcard PV[3];		/* Projection parameters are set in main(). */
+struct pvcard PV[3];		// Projection parameters are set in main().
 
 int itest = 0;
 
@@ -91,7 +88,7 @@ int main()
          "----------------------------------------------------------"
          "-----------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of wcs status return values:\n");
   for (status = 1; status <= 13; status++) {
     printf("%4d: %s.\n", status, wcs_errmsg[status]);
@@ -102,6 +99,7 @@ int main()
   printf("      short int:%5"MODZ"u\n", sizeof(short int));
   printf("            int:%5"MODZ"u\n", sizeof(int));
   printf("       long int:%5"MODZ"u\n", sizeof(long int));
+  printf("  long long int:%5"MODZ"u\n", sizeof(long long int));
   printf("          float:%5"MODZ"u\n", sizeof(float));
   printf("         double:%5"MODZ"u\n", sizeof(double));
   printf("         char *:%5"MODZ"u\n", sizeof(char *));
@@ -114,6 +112,10 @@ int main()
   printf("struct pscard *:%5"MODZ"u\n", sizeof(struct pscard *));
 
   printf("\nSize of structs (bytes/ints):\n");
+
+  s = (sizeof(struct auxprm) == sizeof(int)*AUXLEN) ? ok : mismatch;
+  printf("         auxprm:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct auxprm),
+         AUXLEN, s);
 
   s = (sizeof(struct celprm) == sizeof(int)*CELLEN) ? ok : mismatch;
   printf("         celprm:%5"MODZ"u /%4"MODZ"u%s\n", sizeof(struct celprm),
@@ -172,28 +174,28 @@ int main()
          WCSLEN, s);
 
 
-  /* Set the PVi_ma keyvalues for the longitude axis.         */
-  /*----------------------------------------------------------*/
-  /* For test purposes, these are set so that the fiducial    */
-  /* native coordinates are at the native pole, i.e. so that  */
-  /* (phi0,theta0) = (0,90), but without any fiducial offset, */
-  /* i.e. iwith PVi_0a == 0 (by default).                     */
-  /*----------------------------------------------------------*/
-  PV[0].i = 4;			/* Longitude is on axis 4.     */
-  PV[0].m = 1;			/* Parameter number 1.         */
-  PV[0].value =  0.0;		/* Fiducial native longitude.  */
+  // Set the PVi_ma keyvalues for the longitude axis.
+  //------------------------------------------------------------
+  // For test purposes, these are set so that the fiducial
+  // native coordinates are at the native pole, i.e. so that
+  // (phi0,theta0) = (0,90), but without any fiducial offset,
+  // i.e. iwith PVi_0a == 0 (by default).
+  //------------------------------------------------------------
+  PV[0].i = 4;			// Longitude is on axis 4.
+  PV[0].m = 1;			// Parameter number 1.
+  PV[0].value =  0.0;		// Fiducial native longitude.
 
-  PV[1].i = 4;			/* Longitude is on axis 4.     */
-  PV[1].m = 2;			/* Parameter number 2.         */
-  PV[1].value = 90.0;		/* Fiducial native latitude.   */
+  PV[1].i = 4;			// Longitude is on axis 4.
+  PV[1].m = 2;			// Parameter number 2.
+  PV[1].value = 90.0;		// Fiducial native latitude.
 
-  /* Set the PVi_m keyvaluess for the latitude axis.          */
-  PV[2].i = 2;			/* Latitude is on axis 2.      */
-  PV[2].m = 1;			/* Parameter number 1.         */
-  PV[2].value = -30.0;		/* PVi_1.                      */
+  // Set the PVi_m keyvaluess for the latitude axis.
+  PV[2].i = 2;			// Latitude is on axis 2.
+  PV[2].m = 1;			// Parameter number 1.
+  PV[2].value = -30.0;		// PVi_1.
 
 
-  /* The following routine simulates the actions of a FITS header parser. */
+  // The following routine simulates the actions of a FITS header parser.
   wcs = malloc(sizeof(struct wcsprm));
   wcs->flag = -1;
   parser(wcs);
@@ -201,7 +203,7 @@ int main()
   printf("\nReporting tolerance %5.1g pixel.\n", tol);
 
 
-  /* Initialize non-celestial world coordinates. */
+  // Initialize non-celestial world coordinates.
   time = 1.0;
   freq = 1.42040595e9 - 180.0 * 62500.0;
   for (k = 0; k < 361; k++) {
@@ -277,7 +279,7 @@ int main()
   printf("wcsp2s/wcss2p: Maximum closure residual = %.1e pixel.\n", residmax);
 
 
-  /* Test wcserr and wcsprintf() as well. */
+  // Test wcserr and wcsprintf() as well.
   nFail2 = 0;
   wcsprintf_set(stdout);
   wcsprintf("\n\nIGNORE messages marked with 'OK', they test wcserr "
@@ -285,7 +287,7 @@ int main()
 
   wcserr_enable(1);
 
-  /* Test 1. */
+  // Test 1.
   wcs->pv[2].value = UNDEFINED;
   status = wcsset(wcs);
   nFail2 += check_error(wcs, status, WCSERR_BAD_PARAM,
@@ -309,14 +311,14 @@ int main()
   }
 
 
-  /* Clean up. */
+  // Clean up.
   wcsfree(wcs);
   free(wcs);
 
   return nFail1 + nFail2;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 void parser(wcs)
 
@@ -326,17 +328,17 @@ struct wcsprm *wcs;
   int i, j;
   double *pcij;
 
-  /* In practice a parser would read the FITS header until it encountered  */
-  /* the NAXIS keyword which must occur near the start, before any of the  */
-  /* WCS keywords.  It would then use wcsini() to allocate memory for      */
-  /* arrays in the wcsprm struct and set default values.  In this          */
-  /* simulation the header keyvalues are set as global variables.          */
+  // In practice a parser would read the FITS header until it encountered
+  // the NAXIS keyword which must occur near the start, before any of the
+  // WCS keywords.  It would then use wcsini() to allocate memory for
+  // arrays in the wcsprm struct and set default values.  In this
+  // simulation the header keyvalues are set as global variables.
   wcsini(1, NAXIS, wcs);
 
 
-  /* Now the parser scans the FITS header, identifying WCS keywords and    */
-  /* loading their values into the appropriate elements of the wcsprm      */
-  /* struct.                                                               */
+  // Now the parser scans the FITS header, identifying WCS keywords and
+  // loading their values into the appropriate elements of the wcsprm
+  // struct.
 
   for (j = 0; j < NAXIS; j++) {
     wcs->crpix[j] = CRPIX[j];
@@ -372,7 +374,7 @@ struct wcsprm *wcs;
     wcs->pv[i] = PV[i];
   }
 
-  /* Extract information from the FITS header. */
+  // Extract information from the FITS header.
   if (wcsset(wcs)) {
     wcsperr(wcs, "");
   }
@@ -380,7 +382,7 @@ struct wcsprm *wcs;
   return;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int check_error(struct wcsprm *wcs, int status, int exstatus, char *exmsg)
 {
@@ -401,7 +403,7 @@ int check_error(struct wcsprm *wcs, int status, int exstatus, char *exmsg)
   return 0;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int test_errors()
 
@@ -412,18 +414,18 @@ int test_errors()
   int i, nFail = 0, status;
   struct wcsprm wcs;
 
-  /* Test 2. */
+  // Test 2.
   wcs.flag = -1;
   status = wcsini(1, -32, &wcs);
   nFail += check_error(&wcs, status, WCSERR_MEMORY,
              "naxis must not be negative (got -32)");
 
-  /* Test 3. */
+  // Test 3.
   wcs.flag = 0;
   status = wcsini(1, 2, &wcs);
   nFail += check_error(&wcs, status, WCSERR_SUCCESS, "");
 
-  /* Test 4. */
+  // Test 4.
   for (i = 0; i < 2; i++) {
     strcpy(wcs.ctype[i], &multiple_cubeface[i][0]);
   }
@@ -431,7 +433,7 @@ int test_errors()
   nFail += check_error(&wcs, status, WCSERR_BAD_CTYPE,
              "Multiple CUBEFACE axes (in CTYPE1 and CTYPE2)");
 
-  /* Test 5. */
+  // Test 5.
   wcs.flag = 0;
   status = wcsini(1, 2, &wcs);
   for (i = 0; i < 2; i++) {
@@ -441,7 +443,7 @@ int test_errors()
   nFail += check_error(&wcs, status, WCSERR_BAD_CTYPE,
              "Unrecognized projection code (FOO in CTYPE1)");
 
-  /* Test 6. */
+  // Test 6.
   wcs.flag = 0;
   status = wcsini(1, 2, &wcs);
   for (i = 0; i < 2; i++) {

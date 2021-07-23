@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tfitshdr.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tfitshdr.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tfitshdr tests fitshdr(), the FITS parser for image headers, by reading a
@@ -47,8 +44,9 @@
 #include <fitsio.h>
 #endif
 
-#include <wcshdr.h>
 #include <fitshdr.h>
+#include <wcshdr.h>
+#include <wcsutil.h>
 
 int main()
 
@@ -71,14 +69,14 @@ int main()
   int  ctrl, nwcs, relax;
 
 
-  /* Set line buffering in case stdout is redirected to a file, otherwise
-   * stdout and stderr messages will be jumbled (stderr is unbuffered). */
+  // Set line buffering in case stdout is redirected to a file, otherwise
+  // stdout and stderr messages will be jumbled (stderr is unbuffered).
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   printf("Testing FITS image header parser (tfitshdr.c)\n"
          "---------------------------------------------\n\n");
 
-  /* Read in the FITS header. */
+  // Read in the FITS header.
 #if defined HAVE_CFITSIO && defined DO_CFITSIO
   status = 0;
 
@@ -108,12 +106,12 @@ int main()
         break;
       }
 
-      strncpy(header+k, keyrec, 80);
+      memcpy(header+k, keyrec, 80);
       k += 80;
       nkeyrec++;
 
       if (strncmp(keyrec, "END       ", 10) == 0) {
-        /* An END keyrecord was read, but read the rest of the block. */
+        // An END keyrecord was read, but read the rest of the block.
         end = 1;
       }
     }
@@ -126,7 +124,7 @@ int main()
   printf("Found %d header keyrecords.\n", nkeyrec);
 
 
-  /* Cull recognized, syntactically valid WCS keyrecords from the header. */
+  // Cull recognized, syntactically valid WCS keyrecords from the header.
   relax = WCSHDR_all;
   ctrl = -1;
   if ((status = wcspih(header, nkeyrec, relax, ctrl, &nreject, &nwcs,
@@ -136,11 +134,11 @@ int main()
   }
   wcsvfree(&nwcs, &wcs);
 
-  /* Number remaining. */
+  // Number remaining.
   nkeyrec = strlen(header) / 80;
 
 
-  /* Specific keywords to be located or culled. */
+  // Specific keywords to be located or culled.
   strcpy(keyids[0].name, "SIMPLE  ");
   strcpy(keyids[1].name, "BITPIX  ");
   strcpy(keyids[2].name, "NAXIS   ");
@@ -158,38 +156,38 @@ int main()
   }
 
 
-  /* Parse the header. */
+  // Parse the header.
   if ((status = fitshdr(header, nkeyrec, nkeyids, keyids, &nreject, &keys))) {
     printf("fitskey ERROR %d: %s.\n", status, fitshdr_errmsg[status]);
   }
 #if defined HAVE_CFITSIO && defined DO_CFITSIO
-  free(header);
+  fits_free_memory(header, &status);
 #endif
 
-  /* Report the results. */
+  // Report the results.
   printf("\n%d header keyrecords parsed by fitshdr(), %d rejected:\n\n",
     nkeyrec, nreject);
   kptr = keys;
   for (i = 0; i < nkeyrec; i++, kptr++) {
-    /* Skip syntactically valid keyrecords that were indexed. */
+    // Skip syntactically valid keyrecords that were indexed.
     if (kptr->keyno < 0 && !kptr->status) continue;
 
-    /* Basic keyrecord info. */
+    // Basic keyrecord info.
     printf("%4d%5d  %-8s%3d", kptr->keyno, kptr->status, kptr->keyword,
                               kptr->type);
 
-    /* Format the keyvalue for output. */
+    // Format the keyvalue for output.
     switch (abs(kptr->type)%10) {
     case 1:
-      /* Logical. */
+      // Logical.
       sprintf(text, "%c", kptr->keyvalue.i?'T':'F');
       break;
     case 2:
-      /* 32-bit signed integer. */
+      // 32-bit signed integer.
       sprintf(text, "%d", kptr->keyvalue.i);
       break;
     case 3:
-      /* 64-bit signed integer. */
+      // 64-bit signed integer.
 #ifdef WCSLIB_INT64
          sprintf(text, "%+lld", kptr->keyvalue.k);
 #else
@@ -204,7 +202,7 @@ int main()
 #endif
        break;
     case 4:
-      /* Very long integer. */
+      // Very long integer.
       k = 0;
       for (j = 7; j > 0; j--) {
         if (kptr->keyvalue.l[j]) {
@@ -220,54 +218,54 @@ int main()
 
       break;
     case 5:
-      /* Float. */
+      // Float.
       sprintf(text, "%+13.6e", kptr->keyvalue.f);
       break;
     case 6:
-      /* Int complex. */
+      // Int complex.
       sprintf(text, "%.0f  %.0f", kptr->keyvalue.c[0],
                                   kptr->keyvalue.c[1]);
       break;
     case 7:
-      /* Float complex. */
+      // Float complex.
       sprintf(text, "%+13.6e  %+13.6e", kptr->keyvalue.c[0],
                                         kptr->keyvalue.c[1]);
       break;
     case 8:
-      /* String. */
+      // String.
       sprintf(text, "\"%s\"", kptr->keyvalue.s);
       break;
     default:
-      /* No value. */
+      // No value.
       *text = '\0';
       break;
     }
 
     if (kptr->type > 0) {
-      /* Keyvalue successfully extracted. */
+      // Keyvalue successfully extracted.
       printf("  %s", text);
     } else if (kptr->type < 0) {
-      /* Syntax error of some type while extracting the keyvalue. */
+      // Syntax error of some type while extracting the keyvalue.
       printf("  (%s)", text);
     }
 
-    /* Units? */
+    // Units?
     if (kptr->ulen) {
       printf(" %.*s", kptr->ulen-2, kptr->comment+1);
     }
 
-    /* Comment text or reject keyrecord. */
+    // Comment text or reject keyrecord.
     printf("\n%s\n", kptr->comment);
   }
 
 
-  /* Print indexes. */
+  // Print indexes.
   printf("\n\nIndexes of selected keywords:\n");
   for (i = 0; i < nkeyids; i++) {
     printf("%-8s%5d%5d%5d", keyids[i].name, keyids[i].count, keyids[i].idx[0],
       keyids[i].idx[1]);
 
-    /* Print logical (SIMPLE) and integer (BITPIX, NAXIS) values. */
+    // Print logical (SIMPLE) and integer (BITPIX, NAXIS) values.
     if (keyids[i].count) {
       kptr = keys + keyids[i].idx[0];
       printf("%4d", kptr->type);
@@ -281,7 +279,7 @@ int main()
     printf("\n");
   }
 
-  free(keys);
+  wcsdealloc(keys);
 
   return 0;
 }

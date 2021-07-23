@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: wcsunits.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: wcsunits.inc,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
 *     Functions.
@@ -61,10 +59,6 @@
       PARAMETER (WCSUNITS_VOXEL       = 17)
       PARAMETER (WCSUNITS_NTYPE       = 17)
 
-      CHARACTER WCSUNITS_ERRMSG(0:12)*40,
-     :          WCSUNITS_TYPES(WCSUNITS_NTYPE)*18,
-     :          WCSUNITS_UNITS(WCSUNITS_NTYPE)*9
-
 *     Error codes and messages.
       INTEGER   UNITSERR_SUCCESS, UNITSERR_BAD_NUM_MULTIPLIER,
      :          UNITSERR_DANGLING_BINOP, UNITSERR_BAD_INITIAL_SYMBOL,
@@ -88,5 +82,8 @@
       PARAMETER (UNITSERR_BAD_FUNCS          = 11)
       PARAMETER (UNITSERR_UNSAFE_TRANS       = 12)
 
+      CHARACTER WCSUNITS_ERRMSG(0:12)*40,
+     :          WCSUNITS_TYPES(WCSUNITS_NTYPE)*18,
+     :          WCSUNITS_UNITS(WCSUNITS_NTYPE)*9
       COMMON /WCSUNITS_DATA/ WCSUNITS_ERRMSG, WCSUNITS_TYPES,
      :                       WCSUNITS_UNITS

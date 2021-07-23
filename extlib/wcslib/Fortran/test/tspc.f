@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tspc.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tspc.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TSPC
@@ -33,7 +31,7 @@
 *-----------------------------------------------------------------------
 *     Maximum length of spectral axis - see CLOSURE.
       INTEGER   NSPEC
-      PARAMETER (NSPEC = 10001)
+      PARAMETER (NSPEC = 8001)
 
       INTEGER   CLOSURE, NAXISJ, NFAIL
       DOUBLE PRECISION C, CDELTX, CRPIXJ, CRVALX, MARS(0:6), RESTFRQ,
@@ -244,7 +242,7 @@
      :  CRPIXJ, CDELTX, CRVALX)
 
       INTEGER   NSPEC
-      PARAMETER (NSPEC = 10001)
+      PARAMETER (NSPEC = 8001)
 
       INTEGER   J, NAXISJ, NFAIL, RESTREQ, STAT1(NSPEC), STAT2(NSPEC),
      :          STATUS
@@ -252,7 +250,7 @@
       DOUBLE PRECISION CDELTS, CDELTX, CLOS(NSPEC), CRPIXJ, CRVALS,
      :          CRVALX, DSDX, MARS(0:6), RESID, RESIDMAX, RESTFRQ,
      :          RESTWAV, SPEC1(NSPEC), SPEC2(NSPEC), TOL
-      CHARACTER CTYPES*8, PTYPE, SCODE*3, SNAME*21, STYPE*4, TITLE*80,
+      CHARACTER CTYPES*8, PTYPE, SCODE*3, SNAME*21, STYPE*8, TITLE*80,
      :          UNITS*7, XTYPE, YLAB*80
 
 *     On some systems, such as Sun Sparc, the struct MUST be aligned
@@ -268,12 +266,14 @@
 
       DATA TOL /1D-11/
 *-----------------------------------------------------------------------
+      CLOSURE = 0
+
 *     Get keyvalues for the required spectral axis type.
       STATUS = SPCXPS (CTYPES, CRVALX, RESTFRQ, RESTWAV, PTYPE, XTYPE,
      :                 RESTREQ, CRVALS, DSDX)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 5) STATUS, CTYPES
- 5      FORMAT ('ERROR',I2,' from SPCXPS for',A,'.')
+        WRITE (*, 10) STATUS, CTYPES
+ 10     FORMAT ('ERROR',I2,' from SPCXPS for',A,'.')
         RETURN
       END IF
       CDELTS = CDELTX * DSDX
@@ -282,47 +282,47 @@
 
       IF (CTYPES(6:6).EQ.'G') THEN
 *       KPNO MARS spectrograph grism parameters.
-        STATUS = SPCPUT (SPC, SPC_PV, MARS(0), 0)
-        STATUS = SPCPUT (SPC, SPC_PV, MARS(1), 1)
-        STATUS = SPCPUT (SPC, SPC_PV, MARS(2), 2)
-        STATUS = SPCPUT (SPC, SPC_PV, MARS(3), 3)
-        STATUS = SPCPUT (SPC, SPC_PV, MARS(4), 4)
-        STATUS = SPCPUT (SPC, SPC_PV, MARS(5), 5)
-        STATUS = SPCPUT (SPC, SPC_PV, MARS(6), 6)
+        STATUS = SPCPTD (SPC, SPC_PV, MARS(0), 0)
+        STATUS = SPCPTD (SPC, SPC_PV, MARS(1), 1)
+        STATUS = SPCPTD (SPC, SPC_PV, MARS(2), 2)
+        STATUS = SPCPTD (SPC, SPC_PV, MARS(3), 3)
+        STATUS = SPCPTD (SPC, SPC_PV, MARS(4), 4)
+        STATUS = SPCPTD (SPC, SPC_PV, MARS(5), 5)
+        STATUS = SPCPTD (SPC, SPC_PV, MARS(6), 6)
       END IF
 
 *     Construct the axis.
-      DO 10 J = 1, NAXISJ
+      DO 20 J = 1, NAXISJ
         SPEC1(J) = (J - CRPIXJ)*CDELTS
- 10   CONTINUE
+ 20   CONTINUE
 
-      WRITE (*, 20) CTYPES, CRVALS+SPEC1(1), CRVALS+SPEC1(NAXISJ),
+      WRITE (*, 30) CTYPES, CRVALS+SPEC1(1), CRVALS+SPEC1(NAXISJ),
      :              CDELTS
- 20   FORMAT (A,' (CRVALk+w) range: ',1PE13.6,' to ',1PE13.6,', step: ',
+ 30   FORMAT (A,' (CRVALk+w) range: ',1PE13.6,' to ',1PE13.6,', step: ',
      :        1PE13.6)
 
 
 *     Initialize.
-      STATUS = SPCPUT (SPC, SPC_FLAG, 0, 0)
-      STATUS = SPCPUT (SPC, SPC_CRVAL, CRVALS, 0)
-      STATUS = SPCPUT (SPC, SPC_RESTFRQ, RESTFRQ, 0)
-      STATUS = SPCPUT (SPC, SPC_RESTWAV, RESTWAV, 0)
-      STATUS = SPCPUT (SPC, SPC_TYPE, CTYPES, 0)
-      STATUS = SPCPUT (SPC, SPC_CODE, CTYPES(6:8), 0)
+      STATUS = SPCPTI (SPC, SPC_FLAG, 0, 0)
+      STATUS = SPCPTD (SPC, SPC_CRVAL, CRVALS, 0)
+      STATUS = SPCPTD (SPC, SPC_RESTFRQ, RESTFRQ, 0)
+      STATUS = SPCPTD (SPC, SPC_RESTWAV, RESTWAV, 0)
+      STATUS = SPCPTC (SPC, SPC_TYPE, CTYPES, 0)
+      STATUS = SPCPTC (SPC, SPC_CODE, CTYPES(6:8), 0)
 
 *     Convert the first to the second.
       STATUS = SPCX2S(SPC, NAXISJ, 1, 1, SPEC1, SPEC2, STAT1)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 30) STATUS
- 30     FORMAT ('SPCX2S ERROR',I2,'.')
+        WRITE (*, 40) STATUS
+ 40     FORMAT ('SPCX2S ERROR',I2,'.')
         RETURN
       END IF
 
 *     Convert the second back to the first.
       STATUS = SPCS2X(SPC, NAXISJ, 1, 1, SPEC2, CLOS, STAT2)
       IF (STATUS.NE.0) THEN
-        WRITE (*, 40) STATUS
- 40     FORMAT ('SPCS2X ERROR',I2,'.')
+        WRITE (*, 50) STATUS
+ 50     FORMAT ('SPCS2X ERROR',I2,'.')
         RETURN
       END IF
 
@@ -330,19 +330,19 @@
 *     Test closure.
       NFAIL = 0
       RESIDMAX = 0D0
-      STATUS = SPCGET (SPC, SPC_TYPE, STYPE, 0)
-      DO 80 J = 1, NAXISJ
+      STATUS = SPCGTC (SPC, SPC_TYPE, STYPE, 0)
+      DO 90 J = 1, NAXISJ
         IF (STAT1(J).NE.0) THEN
-          WRITE (*, 50) CTYPES, SPEC1(J), STYPE, STAT1(J)
- 50       FORMAT (A,': w =',1PE20.12,' -> ',A,' = ???, stat = ',I2)
-          GO TO 80
+          WRITE (*, 60) CTYPES, SPEC1(J), STYPE, STAT1(J)
+ 60       FORMAT (A,': w =',1PE20.12,' -> ',A4,' = ???, stat = ',I2)
+          GO TO 90
         END IF
 
         IF (STAT2(J).NE.0) THEN
-          WRITE (*, 60) CTYPES, SPEC1(J), STYPE, SPEC2(J), STAT2(J)
- 60       FORMAT (A,': w =',1PE20.12,' -> ',A,' =',1PE20.12,
+          WRITE (*, 70) CTYPES, SPEC1(J), STYPE, SPEC2(J), STAT2(J)
+ 70       FORMAT (A,': w =',1PE20.12,' -> ',A4,' =',1PE20.12,
      :            ' -> w = ???, stat = ',I2)
-          GO TO 80
+          GO TO 90
         END IF
 
         RESID = ABS((CLOS(J) - SPEC1(J))/CDELTS)
@@ -350,15 +350,15 @@
 
         IF (RESID.GT.TOL) THEN
           NFAIL = NFAIL + 1
-          WRITE (*, 70) CTYPES, SPEC1(J), STYPE, SPEC2(J), CLOS(J),
+          WRITE (*, 80) CTYPES, SPEC1(J), STYPE, SPEC2(J), CLOS(J),
      :                  RESID
- 70       FORMAT (A,': w =',1PE20.12,' -> ',A,' =',1PE20.12,' ->',/,
+ 80       FORMAT (A,': w =',1PE20.12,' -> ',A4,' =',1PE20.12,' ->',/,
      :           '          w =',1PE20.12,',  resid =',1PE8.1)
         END IF
- 80   CONTINUE
+ 90   CONTINUE
 
-      WRITE (*, 90) CTYPES, RESIDMAX
- 90   FORMAT (A,': Maximum closure residual =',1PE8.1,' pixel')
+      WRITE (*, 100) CTYPES, RESIDMAX
+ 100  FORMAT (A,': Maximum closure residual =',1PE8.1,' pixel')
 
 
 *     Draw graph.
@@ -369,12 +369,12 @@
       XMAX = REAL(CRVALS + SPEC1(NAXISJ))
       YMIN = REAL(SPEC2(1)) - XMIN
       YMAX = YMIN
-      DO 100 J = 1, NAXISJ
+      DO 110 J = 1, NAXISJ
         X(J) = REAL(J)
         Y(J) = REAL(SPEC2(J) - (CRVALS + SPEC1(J)))
         IF (Y(J).GT.YMAX) YMAX = Y(J)
         IF (Y(J).LT.YMIN) YMIN = Y(J)
- 100  CONTINUE
+ 110  CONTINUE
 
       J = INT(CRPIXJ+1)
       IF (Y(J).LT.0D0) then
@@ -391,10 +391,10 @@
 
       STATUS = SPCTYP (CTYPES, STYPE, SCODE, SNAME, UNITS, PTYPE, XTYPE,
      :                 RESTREQ)
-      DO 110 J = 21, 1, -1
-        IF (SNAME(J:J).NE.' ') GO TO 120
- 110  CONTINUE
- 120  YLAB  = SNAME(:J) // ' - correction ' // UNITS
+      DO 120 J = 21, 1, -1
+        IF (SNAME(J:J).NE.' ') GO TO 130
+ 120  CONTINUE
+ 130  YLAB  = SNAME(:J) // ' - correction ' // UNITS
       TITLE = CTYPES // ':  CRVALk + w ' // UNITS
       CALL PGLAB('Pixel coordinate', YLAB, TITLE)
 
@@ -412,8 +412,8 @@
       CALL PGEBUF()
 
       WRITE (*, '(A,$)') 'Type <RETURN> for next page: '
-      READ (*, *, END=130)
- 130  WRITE (*, *)
+      READ (*, *, END=140)
+ 140  WRITE (*, *)
 
       CLOSURE = NFAIL
 

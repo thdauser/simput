@@ -1,7 +1,6 @@
 /*============================================================================
-
-  PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
-  Copyright (C) 1997-2018, Mark Calabretta
+  PGSBOX 7.7 - draw curvilinear coordinate axes for PGPLOT.
+  Copyright (C) 1997-2021, Mark Calabretta
 
   This file is part of PGSBOX.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning PGSBOX to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: cpgsbox.h,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: cpgsbox.h,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * cpgsbox() and cpglbox() are C wrappers for PGSBOX and PGLBOX.  Refer to the
@@ -108,4 +105,4 @@ void cpglbox(
 }
 #endif
 
-#endif /* PGSBOX_CPGSBOX */
+#endif // PGSBOX_CPGSBOX

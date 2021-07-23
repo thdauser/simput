@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,23 +17,21 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: sph_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: sph_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <sph.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define sphx2s_ F77_FUNC(sphx2s, SPHX2S)
 #define sphs2x_ F77_FUNC(sphs2x, SPHS2X)
 #define sphdpa_ F77_FUNC(sphdpa, SPHDPA)
 #define sphpad_ F77_FUNC(sphpad, SPHPAD)
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int sphx2s_(
   const double eul[5],
@@ -51,7 +48,7 @@ int sphx2s_(
   return sphx2s(eul, *nphi, *ntheta, *spt, *sll, phi, theta, lng, lat);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int sphs2x_(
   const double eul[5],
@@ -68,7 +65,7 @@ int sphs2x_(
   return sphs2x(eul, *nlng, *nlat, *sll, *spt, lng, lat, phi, theta);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int sphdpa_(
   const int *nfield,
@@ -83,7 +80,7 @@ int sphdpa_(
   return sphdpa(*nfield, *lng0, *lat0, lng, lat, dist, pa);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int sphpad_(
   const int *nfield,

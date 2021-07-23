@@ -71,28 +71,58 @@ Testing WCSTAB and associated routines (twcstab.f)
      colnum: 0
       colax: 0x<address>
                  0      0      0      0
-    wcsname: "-TAB test file"
       cname: 0x<address>
              "Right ascension (J2000)"
              "Declination (J2000)"
              "Wavelength"
              "Observation date"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "-TAB test file"
+    timesys: UNDEFINED
+    trefpos: UNDEFINED
+    trefdir: UNDEFINED
+    plephem: UNDEFINED
+   timeunit: UNDEFINED
+    dateref: UNDEFINED
+     mjdref:      0.000000000     0.000000000
+   timeoffs: UNDEFINED
+    dateobs: UNDEFINED
+    datebeg: UNDEFINED
+    dateavg: UNDEFINED
+    dateend: UNDEFINED
+     mjdobs: UNDEFINED
+     mjdbeg: UNDEFINED
+     mjdavg: UNDEFINED
+     mjdend: UNDEFINED
+     jepoch: UNDEFINED
+     bepoch: UNDEFINED
+     tstart: UNDEFINED
+      tstop: UNDEFINED
+    xposure: UNDEFINED
+    telapse: UNDEFINED
+    timsyer: UNDEFINED
+    timrder: UNDEFINED
+    timedel: UNDEFINED
+   timepixr: UNDEFINED
+     obsgeo:        UNDEFINED       UNDEFINED       UNDEFINED
+                    UNDEFINED       UNDEFINED       UNDEFINED
+   obsorbit: UNDEFINED
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: UNDEFINED
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo: UNDEFINED     UNDEFINED     UNDEFINED     
-    dateobs: UNDEFINED
-    dateavg: UNDEFINED
-     mjdobs: UNDEFINED
-     mjdavg: UNDEFINED
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x0
        ntab: 3
         tab: 0x<address>  (see below)
        nwtb: 7
@@ -126,6 +156,9 @@ Testing WCSTAB and associated routines (twcstab.f)
     m_cname: 0x0
     m_crder: 0x0
     m_csyer: 0x0
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x0  (= aux)
       m_tab: 0x0
       m_wtb: 0x0
 

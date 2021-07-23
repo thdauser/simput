@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: cel_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: cel_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -32,7 +29,7 @@
 #include <wcsutil.h>
 #include <cel.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define celput_  F77_FUNC(celput,  CELPUT)
 #define celptc_  F77_FUNC(celptc,  CELPTC)
@@ -45,12 +42,14 @@
 
 #define celini_  F77_FUNC(celini,  CELINI)
 #define celfree_ F77_FUNC(celfree, CELFREE)
+#define celsize_ F77_FUNC(celsize, CELSIZE)
 #define celprt_  F77_FUNC(celprt,  CELPRT)
 #define celperr_ F77_FUNC(celperr, CELPERR)
 #define celset_  F77_FUNC(celset,  CELSET)
 #define celx2s_  F77_FUNC(celx2s,  CELX2S)
 #define cels2x_  F77_FUNC(cels2x,  CELS2X)
 
+// Must match the values set in cel.inc.
 #define CEL_FLAG   100
 #define CEL_OFFSET 101
 #define CEL_PHI0   102
@@ -63,7 +62,7 @@
 #define CEL_ISOLAT 202
 #define CEL_ERR    203
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int celput_(int *cel, const int *what, const void *value, const int *i)
 
@@ -74,7 +73,7 @@ int celput_(int *cel, const int *what, const void *value, const int *i)
   const double *dvalp;
   struct celprm *celp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   celp  = (struct celprm *)cel;
   ivalp = (const int *)value;
   dvalp = (const double *)value;
@@ -125,7 +124,7 @@ int celpti_(int *cel, const int *what, const int *value, const int *i)
   return celput_(cel, what, value, i);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int celget_(const int *cel, const int *what, void *value)
 
@@ -137,7 +136,7 @@ int celget_(const int *cel, const int *what, void *value)
   const int *icelp;
   const struct celprm *celp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   celp  = (const struct celprm *)cel;
   ivalp = (int *)value;
   dvalp = (double *)value;
@@ -178,7 +177,7 @@ int celget_(const int *cel, const int *what, void *value)
     *ivalp = celp->isolat;
     break;
   case CEL_ERR:
-    /* Copy the contents of the wcserr struct. */
+    // Copy the contents of the wcserr struct.
     if (celp->err) {
       icelp = (int *)(celp->err);
       for (l = 0; l < ERRLEN; l++) {
@@ -212,7 +211,7 @@ int celgti_(const int *cel, const int *what, int *value)
   return celget_(cel, what, value);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int celini_(int *cel)
 
@@ -220,7 +219,7 @@ int celini_(int *cel)
   return celini((struct celprm *)cel);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int celfree_(int *cel)
 
@@ -228,39 +227,46 @@ int celfree_(int *cel)
   return celfree((struct celprm *)cel);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
+
+int celsize_(const int *cel, int sizes[2])
+
+{
+  return celsize((const struct celprm *)cel, sizes);
+}
+
+//----------------------------------------------------------------------------
 
 int celprt_(const int *cel)
 
 {
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling CELPRT in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling CELPRT in the Fortran code.
   fflush(NULL);
 
   return celprt((const struct celprm *)cel);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-/* prefix should be null-terminated, or else of length 72 in which case
- * trailing blanks are not significant. */
+// If null-terminated (using the Fortran CHAR(0) intrinsic), prefix may be of
+// length less than but not exceeding 72 and trailing blanks are preserved.
+// Otherwise, it must be of length 72 and trailing blanks are stripped off.
 
 int celperr_(int *cel, const char prefix[72])
 
 {
-  char prefix_[72];
+  char prefix_[73];
+  wcsutil_strcvt(72, '\0', 1, prefix, prefix_);
 
-  strncpy(prefix_, prefix, 72);
-  wcsutil_null_fill(72, prefix_);
-
-  /* This may or may not force the Fortran I/O buffers to be flushed. */
-  /* If not, try CALL FLUSH(6) before calling CELPERR in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.
+  // If not, try CALL FLUSH(6) before calling CELPERR in the Fortran code.
   fflush(NULL);
 
   return celperr((struct celprm *)cel, prefix_);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int celset_(int *cel)
 
@@ -268,7 +274,7 @@ int celset_(int *cel)
   return celset((struct celprm *)cel);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int celx2s_(
   int *cel,
@@ -289,7 +295,7 @@ int celx2s_(
                 lng, lat, stat);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int cels2x_(
   int *cel,

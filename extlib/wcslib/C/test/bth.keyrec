@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------
-# WCSLIB 5.19 - an implementation of the FITS WCS standard.
-# Copyright (C) 1995-2018, Mark Calabretta
+# WCSLIB 7.7 - an implementation of the FITS WCS standard.
+# Copyright (C) 1995-2021, Mark Calabretta
 #
 # This file is part of WCSLIB.
 #
@@ -17,11 +17,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 #
-# Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-#
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: bth.keyrec,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+# $Id: bth.keyrec,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 #-----------------------------------------------------------------------------
 #
 # FITS header keyrecords used for testing by tbth1.
@@ -163,26 +161,6 @@ EQUINOXI=                 2000 / [yr] Equinox of equatorial coordinates
 SPECSYSI= 'BARYCENT'           / Reference frame of spectral coordinates
 
 COMMENT  =======================================================================
-COMMENT  By themselves, these primary image header auxiliary WCS keywords
-COMMENT  should not be sufficient to cause a wcsprm struct to be created for
-COMMENT  representation X, nor should they affect any of the others.
-COMMENT  -----------------------------------------------------------------------
-
-WCSNAMEX= 'eXtraneous'         / Name of this coordinate system
-LONPOLEX=                180.0 / [deg] Native longitude of the NCP
-LATPOLEX=                999.0 / [deg] Native latitude of the NCP
-RESTFRQX=         1.42040575e9 / [Hz] HI rest frequency
-RESTWAVX=          0.211061141 / [m] HI rest wavelength
-EQUINOXX=               2000.0 / [yr] Equinox of equatorial coordinates
-RADESYSX= 'ICRS'               / Mean equatorial coordinates, IAU 1984 system
-SPECSYSX= 'BARYCENT'           / Reference frame of spectral coordinates
-SSYSOBSX= 'TOPOCENT'           / Reference frame of observation
-SSYSSRCX= 'LSRK'               / Reference frame of source redshift
-VELANGLX=                35.25 / Velocity orientation angle
-VELOSYSX=               1500.0 / [m/s] Bary-topo velocity towards the source
-ZSOURCEX=               0.0025 / Redshift of the source
-
-COMMENT  =======================================================================
 COMMENT  Binary table column 33 contains an image array, most of whose WCS
 COMMENT  keywords would be inherited from the preceding image header keywords
 COMMENT  with a = "I" provided that wcsbth() is invoked with an option that
@@ -290,21 +268,22 @@ WCSN77B = 'St''d representation: SZP projection' / Coordinate system title
 3CRD77B =                1e-11 / [m] Random error in coordinate
 3CSY77B =                1e-12 / [m] Systematic error in coordinate
 
+DOBS77  = '1957-02-14T15:00:00' / ISO-8601 observation date
+MJDOB77 =         35883.625000 / [d] MJD of observation
+DAVG77  = '1957-02-14T16:48:00' / ISO-8601 time at midpoint of observation
+MJDA77  =         35883.700000 / [d] MJD at midpoint of observation
+
+OBSGX77 =           -4554231.5 / [m] observatory X-coordinate
+COMMENT  OBSGEO-Y (below) should be inherited for OBSGY77.
+OBSGZ77 =           -3454036.3 / [m] observatory Z-coordinate
 RADE77B = 'FK5'                / Equatorial coordinate system
 EQUI77B =                 2000 / [yr] Equinox of equatorial coordinates
 SPEC77B = 'BARYCENT'           / Reference frame of spectral coordinates
 SOBS77B = 'TOPOCENT'           / Reference frame of spectral observation
 VSYS77B =                 1500 / [m/s] Velocity towards source
-SSRC77B = 'LSRK'               / Reference frame of source redshift
 ZSOU77B =               0.0025 / Redshift of the source
-
-OBSGX77 =           -4554231.9 / [m] ITRF observatory X-coordinate
-COMMENT  OBSGEO-Y (below) should be inherited for OBSGY77.
-OBSGZ77 =           -3454035.9 / [m] ITRF observatory Z-coordinate
-MJDOB77 =            35883.625 / [d] MJD of observation matching DOBS77
-MJDA77  =              35883.7 / [d] MJD mid-observation matching DAVG77
-DOBS77  = '1957-02-14T15:00:00' / ISO-8601 observation date matching MJDOB77
-DAVG77  = '1957-02-14T16:48:00' / ISO-8601 mid-observation date matching MJDA77
+SSRC77B = 'LSRK'               / Reference frame of source redshift
+VANG77B =                 0.00 / [deg] Velocity orientation angle
 
 COMMENT  =======================================================================
 COMMENT  Pixel list keywords with axes in columns 8, 9 and 10 and alternate
@@ -332,8 +311,11 @@ COMMENT  Also, strictly speaking, alternate version codes are not defined for
 COMMENT  TCROTn (e.g. TCROT9P below), and WCSNna should be TWCSna.  However,
 COMMENT  these are considered to be natural extensions that all FITS WCS
 COMMENT  interpreters should support.  Apart from that, this representation
-COMMENT  contains standard keywords and usage.  In particular, it is self-
-COMMENT  contained, i.e. no inheritance.
+COMMENT  contains standard keywords and usage.
+COMMENT
+COMMENT  For reasons explained in the usage notes for wcsbth() in wcshdr.h,
+COMMENT  OBSGX99, OBSGEO-Y, and OBSGZ77, which appears above, apply to the
+COMMENT  pixel list image in this header.
 COMMENT  -----------------------------------------------------------------------
 TCRPX8P =                  513 / Pixel coordinate of reference point
 TCRPX9P =                  513 / Pixel coordinate of reference point
@@ -384,39 +366,124 @@ TCNAM10P= 'Redshift'           / Axis name for labelling purposes
 TCRDE10P=                5e-11 / Random error in coordinate
 TCSYE10P=                5e-12 / Systematic error in coordinate
 
+DOBS8   = '1957-02-14T15:00:00' / ISO-8601 time of observation
+MJDOB8  =         35883.625000 / [d] MJD of observation
+DAVG8   = '1957-02-14T16:48:00' / ISO-8601 time at midpoint of observation
+MJDA8   =         35883.700000 / [d] MJD at midpoint of observation
+
+OBSGX99 =          -4554231.53 / [m] observatory X-coordinate
 RADE8P  = 'FK5'                / Equatorial coordinate system
 EQUI8P  =                 2000 / [yr] Equinox of equatorial coordinates
 SPEC8P  = 'BARYCENT'           / Reference frame of spectral coordinates
 SOBS8P  = 'TOPOCENT'           / Reference frame of spectral observation
 VSYS8P  =                 1500 / [m/s] Velocity towards source
-SSRC8P  = 'LSRK'               / Reference frame of source redshift
 ZSOU8P  =     0.00250000001174 / Redshift of the source
-
-COMMENT  OBSGEO-X (below) should be inherited for OBSGX8.
-OBSGY8  =            2816758.3 / [m] ITRF observatory Y-coordinate
-OBSGZ8  =           -3454035.9 / [m] ITRF observatory Z-coordinate
-MJDOB8  =            35883.625 / [d] MJD of observation matching DOBS8
-MJDA8   =              35883.7 / [d] MJD mid-observation matching DAVG8
-DOBS8   = '1957-02-14T15:00:00' / ISO-8601 observation date matching MJDOB8
-DAVG8   = '1957-02-14T16:48:00' / ISO-8601 mid-observation date matching MJDA8
+SSRC8P  = 'LSRK'               / Reference frame of source redshift
+VANG8P  =                 0.00 / [deg] Velocity orientation angle
 
 COMMENT  =======================================================================
-COMMENT  The following keywords have no alternates; they apply to each
+COMMENT  By themselves, these primary image header auxiliary WCS keywords
+COMMENT  should not be sufficient to cause a wcsprm struct to be created for
+COMMENT  representation X, nor should they affect any of the others.
+COMMENT  -----------------------------------------------------------------------
+
+LONPOLEX=                180.0 / [deg] Native longitude of the NCP
+LATPOLEX=                999.0 / [deg] Native latitude of the NCP
+RESTFRQX=         1.42040575e9 / [Hz] HI rest frequency
+RESTWAVX=          0.211061141 / [m] HI rest wavelength
+WCSNAMEX= 'eXtraneous'         / Name of this coordinate system
+RADESYSX= 'ICRS'               / Mean equatorial coordinates, IAU 1984 system
+EQUINOXX=               2000.0 / [yr] Equinox of equatorial coordinates
+SPECSYSX= 'BARYCENT'           / Reference frame of spectral coordinates
+SSYSOBSX= 'TOPOCENT'           / Reference frame of observation
+VELOSYSX=               1500.0 / [m/s] Bary-topo velocity towards the source
+ZSOURCEX=               0.0025 / Redshift of the source
+SSYSSRCX= 'LSRK'               / Reference frame of source redshift
+VELANGLX=                35.25 / [deg] Velocity orientation angle
+
+COMMENT  =======================================================================
+COMMENT  The following global keywords have no alternates.  Except where
+COMMENT  overridden by their binary table equivalents, they apply to each
 COMMENT  coordinate representation, even that of the AIPS convention for
 COMMENT  which, strictly, only the DATE-OBS keyword should be recognized.
+COMMENT
+COMMENT  For test purposes, the remaining standard global WCS-related keywords
+COMMENT  are included here, even though there is considerable overlap between
+COMMENT  them.  Specifically, the keywords in the following groups all convey
+COMMENT  the same information, only one need be given:
+COMMENT    - MJDREF, MJDREFI + MJDREFF, JDREF, and JDREFI + JDREFF;
+COMMENT    - DATE-OBS, MJD-OBS, JEPOCH, and BEPOCH;
+COMMENT    - DATE-AVG and MJD-AVG;
+COMMENT    - DATE-BEG, MJD-BEG, and TSTART;
+COMMENT    - DATE-END, MJD-END, and TSTOP;
+COMMENT    - OBSGEO-[XYZ] and OBSGEO-[LBH];
+COMMENT    - TELAPSE, DATE-END - DATE-BEG, MJD-END - MJD-BEG, and
+COMMENT      TSTOP - TSTART.
+COMMENT  Interpretation is undefined if there are any inconsistencies between
+COMMENT  them.
 COMMENT
 COMMENT  The keycomments for OBSGEO-Y and OBSGEO-Z have been omitted
 COMMENT  deliberately for test purposes.
 COMMENT  -----------------------------------------------------------------------
 
-OBSGEO-X=           -4554231.9 / [m] ITRF observatory coordinates
-OBSGEO-Y=            2816758.3 /
-OBSGEO-Z=           -3454035.9
-MJD-OBS =            35883.625 / [d] MJD at start of observation (UTC)
-MJD-AVG =            35883.700 / [d] MJD mid-observation time (UTC)
-DATE-OBS= '1957-02-14T15:00:00'/ UTC date corresponding to MJD-OBS
-DATE-AVG= '1957-02-14T16:48:00'/ UTC date corresponding to MJD-AVG
+TIMESYS = 'UTC'                / Time scale
+TREFPOS = 'TOPOCENTRE'         / Time reference position, with OBSGEO-[XYZLBH]
+TREFDIR = 'RA_NOM,DEC_NOM'     / Time reference direction
+PLEPHEM = 'DE405'              / Ephemerides used for pathlength delays
 
-OBSGX99 =           -4000000.0 / [m] ITRF observatory X-coordinate
+TIMEUNIT= 's'                  / Time units
+DATEREF = '1957-02-14T15:00:00'/ ISO-8601 fiducial time
+MJDREF  =         35883.625000 / [d] MJD of fiducial time
+MJDREFI =         35883        / [d] MJD of fiducial time, integer part
+MJDREFF =             0.625000 / [d] MJD of fiducial time, fractional part
+JDREF   =       2435884.125000 / [d] JD of fiducial time
+JDREFI  =       2435884        / [d] JD of fiducial time, integer part
+JDREFF  =             0.125000 / [d] JD of fiducial time, fractional part
+TIMEOFFS=                0.010 / [s] Clock correction
+
+DATE-OBS= '1957-02-14T15:00:00'/ ISO-8601 time of observation
+MJD-OBS =         35883.625000 / [d] MJD of observation
+JEPOCH  =       1957.125598905 / [a] Julian epoch of observation
+BEPOCH  =       1957.125960663 / [a] Besselian epoch of observation
+
+DATE-BEG= '1957-02-14T15:00:00'/ ISO-8601 time at start of observation
+MJD-BEG =         35883.625000 / [d] MJD at start of observation
+TSTART  =                  0.0 / [s] Time elapsed since fiducial time at start
+
+DATE-AVG= '1957-02-14T16:48:00'/ ISO-8601 time at midpoint of observation
+MJD-AVG =         35883.700000 / [d] MJD at midpoint of observation
+
+DATE-END= '1957-02-14T18:36:00'/ ISO-8601 time at end of observation
+MJD-END =         35883.775000 / [d] MJD at end of observation
+TSTOP   =              12960.0 / [s] Time elapsed since fiducial time at end
+
+XPOSURE =              12960.0 / [s] Exposure (integration) time
+TELAPSE =              12960.0 / [s] Elapsed time (start to stop)
+
+TIMSYER =                 5E-5 / [s] Systematic error in time measurements
+TIMRDER =                 1E-9 / [s] Relative error in time measurements
+TIMEDEL =                  1.0 / [s] Time resolution
+TIMEPIXR=                  0.5 / Reference position of timestamp in binned data
+
+OBSGEO-X=         -4554231.533 / [m] WGS84 coordinates of Parkes radiotelescope
+OBSGEO-Y=          2816759.109 /
+OBSGEO-Z=         -3454036.323
+OBSGEO-L=           148.263510 / [deg] WGS84, IAU(1976) ellipsoid, longitude
+OBSGEO-B=           -32.998406 / [deg] WGS84, IAU(1976) ellipsoid, latitude
+OBSGEO-H=              411.793 / [m]   WGS84, IAU(1976) ellipsoid, height
+OBSORBIT= 'sputnik-1957.eph'   / Spacecraft orbit ephemeris file
+
+COMMENT  =======================================================================
+COMMENT  The following global auxiliary keywords are non-standard but widely
+COMMENT  used in particular fields of astronomy.  They reside within the
+COMMENT  auxprm struct in wcsprm.  Their presence here should cause that
+COMMENT  struct to be allocated and filled.
+COMMENT  -----------------------------------------------------------------------
+
+RSUN_REF=               696E+6 / [m] Solar radius
+DSUN_OBS=             150.7E+9 / [m] Distance from centre of Sun to observer
+CRLN_OBS=               120.0  / [deg] Carrington heliographic lng of observer
+HGLN_OBS=                 0.0  / [deg] Stonyhurst heliographic lng of observer
+HGLT_OBS=                 7.25 / [deg] heliographic latitude of the observer
 
 END

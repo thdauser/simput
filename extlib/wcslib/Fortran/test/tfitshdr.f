@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tfitshdr.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tfitshdr.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TFITSHDR
@@ -45,7 +43,7 @@
      :          KTYP, NC, NKEYRC, NKEYID, NREJECT, NWCS, RELAX, STATUS,
      :          ULEN, WCSP(2)
       DOUBLE PRECISION FVAL(2)
-      CHARACTER KEYREC*80, CVAL*72, HEADER*288001, KEYWRD*12, INFILE*12,
+      CHARACTER KEYREC*80, CVAL*72, HEADER*28801, KEYWRD*12, INFILE*12,
      :          TEXT*84
 
       INCLUDE 'wcshdr.inc'
@@ -100,11 +98,11 @@
  70   FORMAT ('Found',I4,' header keyrecords.')
 
 
-*     Cull all recognized, syntactically valid WCS keyrecords from the
+*     Cull all recognised, syntactically valid WCS keyrecords from the
 *     header.
       RELAX = WCSHDR_all
       CTRL = -1
-*     WCSPIH will allocate memory for NWCS intialized WCSPRM structs.
+*     WCSPIH will allocate memory for NWCS initialised WCSPRM structs.
       IERR = WCSPIH (HEADER, NKEYRC, RELAX, CTRL, NREJECT, NWCS, WCSP)
       IF (IERR.NE.0) THEN
         WRITE (*, 80) IERR
@@ -112,7 +110,10 @@
         GO TO 999
       END IF
 
-*     Number remaining.
+*     Free the WCSPRM structs and the memory allocated for them.
+      STATUS = WCSVFREE (NWCS, WCSP)
+
+*     Number of keyrecords remaining.
       DO 90 I = 1, 288001, 80
         IF (HEADER(I:I).EQ.CHAR(0)) GO TO 100
  90   CONTINUE
@@ -121,20 +122,20 @@
 
 
 *     Specific keywords to be located or culled.
-      IERR = KEYIDPUT (KEYIDS, 0, KEYID_NAME, 'SIMPLE  ')
-      IERR = KEYIDPUT (KEYIDS, 1, KEYID_NAME, 'BITPIX  ')
-      IERR = KEYIDPUT (KEYIDS, 2, KEYID_NAME, 'NAXIS   ')
-      IERR = KEYIDPUT (KEYIDS, 3, KEYID_NAME, 'COMMENT ')
-      IERR = KEYIDPUT (KEYIDS, 4, KEYID_NAME, 'HISTORY ')
-      IERR = KEYIDPUT (KEYIDS, 5, KEYID_NAME, '        ')
-      IERR = KEYIDPUT (KEYIDS, 6, KEYID_NAME, 'END     ')
+      IERR = KEYIDPTC (KEYIDS, 0, KEYID_NAME, 'SIMPLE  ')
+      IERR = KEYIDPTC (KEYIDS, 1, KEYID_NAME, 'BITPIX  ')
+      IERR = KEYIDPTC (KEYIDS, 2, KEYID_NAME, 'NAXIS   ')
+      IERR = KEYIDPTC (KEYIDS, 3, KEYID_NAME, 'COMMENT ')
+      IERR = KEYIDPTC (KEYIDS, 4, KEYID_NAME, 'HISTORY ')
+      IERR = KEYIDPTC (KEYIDS, 5, KEYID_NAME, '        ')
+      IERR = KEYIDPTC (KEYIDS, 6, KEYID_NAME, 'END     ')
       NKEYID = 7
 
       IF (NKEYID.GT.0) THEN
         WRITE (*, '(/,A)')
      :    'The following keyrecords will not be listed:'
         DO 120 I = 0, NKEYID-1
-          IERR = KEYIDGET (KEYIDS, I, KEYID_NAME, TEXT)
+          IERR = KEYIDGTC (KEYIDS, I, KEYID_NAME, TEXT)
           WRITE (*, 110) TEXT
  110      FORMAT ('  "',A8,'"')
  120    CONTINUE
@@ -154,21 +155,21 @@
      :       ' rejected:',/)
       DO 200 I = 0, NKEYRC-1
 *       Skip syntactically valid keyrecords that were indexed.
-        IERR = KEYGET (KEYS, I, KEY_KEYNO, KEYNO, NC)
-        IERR = KEYGET (KEYS, I, KEY_STATUS, STATUS, NC)
+        IERR = KEYGTI (KEYS, I, KEY_KEYNO, KEYNO, NC)
+        IERR = KEYGTI (KEYS, I, KEY_STATUS, STATUS, NC)
         IF (KEYNO.LT.0 .AND. STATUS.EQ.0) GO TO 200
 
 *       Basic keyrecord info.
-        IERR = KEYGET (KEYS, I, KEY_KEYWORD, KEYWRD, NC)
-        IERR = KEYGET (KEYS, I, KEY_TYPE, KEYTYP, NC)
+        IERR = KEYGTC (KEYS, I, KEY_KEYWORD, KEYWRD, NC)
+        IERR = KEYGTI (KEYS, I, KEY_TYPE, KEYTYP, NC)
         WRITE (*, '(I4,I5,2X,A,I3,$)') KEYNO, STATUS, KEYWRD(:8),
      :    KEYTYP
 
 *       Format the keyvalue for output.
-        KTYP = MOD(ABS(KEYTYP),10)
+        KTYP = MOD(ABS(KEYTYP), 10)
         IF (KTYP.EQ.1) THEN
 *         Logical.
-          IERR = KEYGET (KEYS, I, KEY_KEYVALUE, IVAL, NC)
+          IERR = KEYGTI (KEYS, I, KEY_KEYVALUE, IVAL(1), NC)
           IF (IVAL(1).EQ.0) THEN
             TEXT = 'F'
           ELSE
@@ -177,12 +178,12 @@
 
         ELSE IF (KTYP.EQ.2) THEN
 *         32-bit signed integer.
-          IERR = KEYGET (KEYS, I, KEY_KEYVALUE, IVAL, NC)
+          IERR = KEYGTI (KEYS, I, KEY_KEYVALUE, IVAL(1), NC)
           WRITE (TEXT, '(I11)') IVAL(1)
 
         ELSE IF (KTYP.EQ.3) THEN
 *         64-bit signed integer.
-          IERR = KEYGET (KEYS, I, KEY_KEYVALUE, IVAL, NC)
+          IERR = KEYGTI (KEYS, I, KEY_KEYVALUE, IVAL(1), NC)
           IF (IVAL(3).NE.0) THEN
             WRITE (TEXT, '(SP,I11,SS,2I9.9)') IVAL(3), ABS(IVAL(2)),
      :             ABS(IVAL(1))
@@ -192,7 +193,7 @@
 
         ELSE IF (KTYP.EQ.4) THEN
 *         Very long integer.
-          IERR = KEYGET (KEYS, I, KEY_KEYVALUE, IVAL, NC)
+          IERR = KEYGTI (KEYS, I, KEY_KEYVALUE, IVAL(1), NC)
           K = 0
           DO 150 J = 8, 2, -1
             IF (IVAL(J).NE.0) THEN
@@ -210,22 +211,22 @@
 
         ELSE IF (KTYP.EQ.5) THEN
 *         Float.
-          IERR = KEYGET (KEYS, I, KEY_KEYVALUE, FVAL, NC)
+          IERR = KEYGTD (KEYS, I, KEY_KEYVALUE, FVAL, NC)
           WRITE (TEXT, '(SP,1PE13.6)') FVAL(1)
 
         ELSE IF (KTYP.EQ.6) THEN
 *         Int complex.
-          IERR = KEYGET (KEYS, I, KEY_KEYVALUE, FVAL, NC)
+          IERR = KEYGTD (KEYS, I, KEY_KEYVALUE, FVAL, NC)
           WRITE (TEXT, '(2I11)') NINT(FVAL(1)), NINT(FVAL(2))
 
         ELSE IF (KTYP.EQ.7) THEN
 *         Float complex.
-          IERR = KEYGET (KEYS, I, KEY_KEYVALUE, FVAL, NC)
+          IERR = KEYGTD (KEYS, I, KEY_KEYVALUE, FVAL, NC)
           WRITE (TEXT, '(SP,1P,E13.6,2X,E13.6)') FVAL
 
         ELSE IF (KTYP.EQ.8) THEN
 *         String.
-          IERR = KEYGET (KEYS, I, KEY_KEYVALUE, CVAL, NC)
+          IERR = KEYGTC (KEYS, I, KEY_KEYVALUE, CVAL, NC)
           TEXT = '"' // CVAL(:NC) // '"'
 
         ELSE
@@ -257,8 +258,8 @@
         END IF
 
 *       Units?
-        IERR = KEYGET (KEYS, I, KEY_ULEN, ULEN, NC)
-        IERR = KEYGET (KEYS, I, KEY_COMMENT, TEXT, NC)
+        IERR = KEYGTI (KEYS, I, KEY_ULEN, ULEN, NC)
+        IERR = KEYGTC (KEYS, I, KEY_COMMENT, TEXT, NC)
         IF (ULEN.GT.0) THEN
           WRITE (*, '(X,A,$)') TEXT(2:ULEN-2)
         END IF
@@ -271,25 +272,25 @@
 *     Print indexes.
       WRITE (*, '(//,A)') 'Indexes of selected keywords:'
       DO 210 I = 0, NKEYID-1
-        IERR = KEYIDGET (KEYIDS, I, KEYID_NAME, TEXT)
-        IERR = KEYIDGET (KEYIDS, I, KEYID_COUNT, NC)
-        IERR = KEYIDGET (KEYIDS, I, KEYID_IDX, IVAL)
+        IERR = KEYIDGTC (KEYIDS, I, KEYID_NAME, TEXT)
+        IERR = KEYIDGTI (KEYIDS, I, KEYID_COUNT, NC)
+        IERR = KEYIDGTI (KEYIDS, I, KEYID_IDX, IVAL(1))
         WRITE (*, '(A8,3I5,$)') TEXT, NC, IVAL(1), IVAL(2)
 
 *       Print logical (SIMPLE) and integer (BITPIX, NAXIS) values.
         IF (NC.GT.0) THEN
-          IERR = KEYGET (KEYS, IVAL(1), KEY_TYPE, KEYTYP, NC)
+          IERR = KEYGTI (KEYS, IVAL(1), KEY_TYPE, KEYTYP, NC)
           WRITE (*, '(I4,$)') KEYTYP
 
           IF (KEYTYP.EQ.1) THEN
-            IERR = KEYGET (KEYS, I, KEY_KEYVALUE, IVAL, NC)
+            IERR = KEYGTI (KEYS, I, KEY_KEYVALUE, IVAL(1), NC)
             IF (IVAL(1).EQ.0) THEN
               WRITE (*, '(4X,A,$)') 'F'
             ELSE
               WRITE (*, '(4X,A,$)') 'T'
             END IF
           ELSE IF (KEYTYP.EQ.2) THEN
-            IERR = KEYGET (KEYS, I, KEY_KEYVALUE, IVAL, NC)
+            IERR = KEYGTI (KEYS, I, KEY_KEYVALUE, IVAL(1), NC)
             WRITE (*, '(I5,$)') IVAL(1)
           END IF
         END IF

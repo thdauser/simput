@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: ttab3.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: ttab3.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * ttab3 tests the -TAB routines using PGPLOT for graphical display.  It
@@ -47,7 +44,7 @@
 int main()
 
 {
-  /* Set up the lookup table. */
+  // Set up the lookup table.
   const int M  = 2;
   const int K[] = {K1, K2};
   const int map[] = {0, 1};
@@ -64,7 +61,7 @@ int main()
     "Testing WCSLIB inverse coordinate lookup table routines (ttab3.c)\n"
     "-----------------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of tab status return values:\n");
   for (status = 1; status <= 5; status++) {
     printf("%4d: %s.\n", status, tab_errmsg[status]);
@@ -73,7 +70,7 @@ int main()
   printf("\n");
 
 
-  /* PGPLOT initialization. */
+  // PGPLOT initialization.
   strcpy(text, "/xwindow");
   cpgbeg(0, text, 1, 1);
   cpgvstd();
@@ -92,7 +89,7 @@ int main()
   cpgscr(8, 0.30f, 0.50f, 0.30f);
 
 
-  /* Set up the lookup table. */
+  // Set up the lookup table.
   tab.flag = -1;
   if ((status = tabini(1, M, K, &tab))) {
     printf("tabini ERROR %d: %s.\n", status, tab_errmsg[status]);
@@ -110,7 +107,7 @@ int main()
     }
   }
 
-  /* Set up the lookup table to approximate Bonne's projection. */
+  // Set up the lookup table to approximate Bonne's projection.
   for (i = 0; i < K1; i++) {
     x[i] = 135 - i;
   }
@@ -121,16 +118,16 @@ int main()
   prjini(&prj);
   prj.pv[1] = 35.0;
 
-  /* Disable bounds checking (or alternatively, simply ignore out-of-bounds
-     errors).  This is necessary to provide continuity beyond the -180 and
-     +180 meridians, noting that bonx2s() computes out-of-bounds values so
-     as to provide continuity. */
+  // Disable bounds checking (or alternatively, simply ignore out-of-bounds
+  // errors).  This is necessary to provide continuity beyond the -180 and
+  // +180 meridians, noting that bonx2s() computes out-of-bounds values so
+  // as to provide continuity.
   prj.bounds = 0;
 
   status = bonx2s(&prj, K1, K2, 1, 2, x, y, tab.coord, tab.coord+1, stat);
 
 
-  /* Draw meridians. */
+  // Draw meridians.
   ci = 1;
   for (ilng = -180; ilng <= 180; ilng += 15) {
     if (++ci > 7) ci = 2;
@@ -141,7 +138,7 @@ int main()
       world[j][1] = (double)ilat;
     }
 
-    /* A fudge to account for the singularity at the poles. */
+    // A fudge to account for the singularity at the poles.
     world[0][0] = 0.0;
     world[180][0] = 0.0;
 
@@ -164,7 +161,7 @@ int main()
   }
 
 
-  /* Draw parallels. */
+  // Draw parallels.
   ci = 1;
   for (ilat = -75; ilat <= 75; ilat += 15) {
     if (++ci > 7) ci = 2;
@@ -195,7 +192,7 @@ int main()
 
   cpgend();
 
-  /* Defeat spurious reporting of memory leaks. */
+  // Defeat spurious reporting of memory leaks.
   tabfree(&tab);
 
   return 0;

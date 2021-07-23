@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tprj2.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tprj2.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TPRJ2
@@ -243,10 +241,10 @@
       STATUS = PRJINI(PRJ)
 
       DO 10 J = 0, 29
-        STATUS = PRJPUT (PRJ, PRJ_PV, PV(J), J)
+        STATUS = PRJPTD (PRJ, PRJ_PV, PV(J), J)
  10   CONTINUE
 
-      STATUS = PRJPUT (PRJ, PRJ_CODE, PCODE, 0)
+      STATUS = PRJPTC (PRJ, PRJ_CODE, PCODE, 0)
 
       WRITE (*, 20) PCODE, NORTH, SOUTH
  20   FORMAT ('Plotting ',A3,'; latitudes',I3,' to',I4,'.')
@@ -254,7 +252,7 @@
       CALL PGASK (0)
 
       STATUS = PRJSET(PRJ)
-      STATUS = PRJGET (PRJ, PRJ_CATEGORY, J)
+      STATUS = PRJGTI (PRJ, PRJ_CATEGORY, J)
       CUBIC  = J.EQ.PRJ_QUADCUBE
       HEALPX = J.EQ.PRJ_HEALPIX
       IF (CUBIC) THEN
@@ -265,8 +263,8 @@
 
         CALL PGSCI (8)
 
-        STATUS = PRJGET (PRJ, PRJ_X0, X0)
-        STATUS = PRJGET (PRJ, PRJ_Y0, Y0)
+        STATUS = PRJGTD (PRJ, PRJ_X0, X0)
+        STATUS = PRJGTD (PRJ, PRJ_Y0, Y0)
 
         XR0 = REAL(X0)
         YR0 = REAL(Y0)
@@ -305,8 +303,8 @@
             SX = 180.0 / H
             SY = SX * NINT(PV(2) + 1D0) / 2.0
 
-            STATUS = PRJGET (PRJ, PRJ_X0, X0)
-            STATUS = PRJGET (PRJ, PRJ_Y0, Y0)
+            STATUS = PRJGTD (PRJ, PRJ_X0, X0)
+            STATUS = PRJGTD (PRJ, PRJ_Y0, Y0)
 
             XR0 = REAL(X0)
             YR0 = REAL(Y0)
@@ -402,7 +400,7 @@
             GO TO 90
           END IF
 
-          IF (CUBIC .AND. J.GT.0) THEN
+          IF (CUBIC .AND. J.GT.1) THEN
             IF (ABS(X(J) - X(J-1)).GT.2D0 .OR.
      :          ABS(Y(J) - Y(J-1)).GT.5D0) THEN
               IF (K.GT.1) CALL PGLINE (K, XR, YR)
@@ -453,7 +451,7 @@
             GO TO 120
           END IF
 
-          IF (INTRRP .AND. J.GT.0) THEN
+          IF (INTRRP .AND. J.GT.1) THEN
             IF (ABS(X(J) - X(J-1)).GT.2D0 .OR.
      :          ABS(Y(J) - Y(J-1)).GT.5D0) THEN
               IF (K.GT.1) CALL PGLINE (K, XR, YR)

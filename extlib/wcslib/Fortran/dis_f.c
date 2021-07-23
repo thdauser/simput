@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: dis_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: dis_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * In these wrappers, if
@@ -44,7 +41,7 @@
 #include <wcsutil.h>
 #include <dis.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define disalloc_ F77_FUNC(disalloc, DISALLOC)
 #define disput_   F77_FUNC(disput,   DISPUT)
@@ -58,10 +55,13 @@
 
 #define disndp_   F77_FUNC(disndp,   DISNDP)
 #define dpfill_   F77_FUNC(dpfill,   DPFILL)
+#define dpkeyi_   F77_FUNC(dpkeyi,   DPKEYI)
+#define dpkeyd_   F77_FUNC(dpkeyd,   DPKEYD)
 #define disini_   F77_FUNC(disini,   DISINI)
 #define disinit_  F77_FUNC(disinit,  DISINIT)
 #define discpy_   F77_FUNC(discpy,   DISCPY)
 #define disfree_  F77_FUNC(disfree,  DISFREE)
+#define dissize_  F77_FUNC(dissize,  DISSIZE)
 #define disprt_   F77_FUNC(disprt,   DISPRT)
 #define disperr_  F77_FUNC(disperr,  DISPERR)
 #define dishdo_   F77_FUNC(dishdo,   DISHDO)
@@ -70,6 +70,7 @@
 #define disx2p_   F77_FUNC(disx2p,   DISX2P)
 #define diswarp_  F77_FUNC(diswarp,  DISWARP)
 
+// Must match the values set in dis.inc.
 #define DIS_FLAG   100
 #define DIS_NAXIS  101
 #define DIS_DTYPE  102
@@ -79,21 +80,21 @@
 #define DIS_MAXDIS 106
 #define DIS_TOTDIS 107
 
-#define DIS_AXMAP  200
+#define DIS_DOCORR 200
 #define DIS_NHAT   201
-#define DIS_OFFSET 202
-#define DIS_SCALE  203
-#define DIS_IPARM  204
-#define DIS_DPARM  205
-#define DIS_INAXIS 206
-#define DIS_NDIS   207
+#define DIS_AXMAP  202
+#define DIS_OFFSET 203
+#define DIS_SCALE  204
+#define DIS_IPARM  205
+#define DIS_DPARM  206
+#define DIS_INAXIS 207
+#define DIS_NDIS   208
+#define DIS_ERR    209
 
-#define DIS_ERR    208
+//----------------------------------------------------------------------------
 
-/*--------------------------------------------------------------------------*/
-
-/* disp should be the address of an INTEGER(2) array.  On return it holds   */
-/* the address of an allocated disprm struct.                               */
+// disp should be the address of an INTEGER(2) array.  On return it holds
+// the address of an allocated disprm struct.
 
 int disalloc_(int *disp)
 
@@ -105,7 +106,7 @@ int disalloc_(int *disp)
   return 0;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int disput_(
   const int *deref,
@@ -122,10 +123,10 @@ int disput_(
   const double *dvalp;
   struct disprm *disp;
 
-  /* Avert nuisance compiler warnings about unused parameters. */
+  // Avert nuisance compiler warnings about unused parameters.
   (void)dummy;
 
-  /* Cast pointers. */
+  // Cast pointers.
   if (*deref == 0) {
     disp = (struct disprm *)dis;
   } else {
@@ -136,8 +137,8 @@ int disput_(
   ivalp = (const int *)value;
   dvalp = (const double *)value;
 
-  /* Convert 1-relative FITS (and Fortran) axis numbers and parameter */
-  /* indices to 0-relative C array indices.                           */
+  // Convert 1-relative FITS (and Fortran) axis numbers and parameter
+  // indices to 0-relative C array indices.
   j0 = *j - 1;
 
   switch (*what) {
@@ -149,8 +150,7 @@ int disput_(
     disp->flag = 0;
     break;
   case DIS_DTYPE:
-    strncpy(disp->dtype[j0], cvalp, 72);
-    wcsutil_null_fill(72, disp->dtype[j0]);
+    wcsutil_strcvt(72, '\0', 0, cvalp, disp->dtype[j0]);
     disp->flag = 0;
     break;
   case DIS_NDP:
@@ -158,7 +158,7 @@ int disput_(
     return 1;
     break;
   case DIS_DP:
-    /* Use DPFILL to create the struct. */
+    // Use DPFILL to create the struct.
     memcpy((char *)(disp->dp + disp->ndp), cvalp, DPLEN*sizeof(int));
     (disp->ndp)++;
     disp->flag = 0;
@@ -194,7 +194,7 @@ int dispti_(const int *deref, int *dis, const int *what, const int *value,
   return disput_(deref, dis, what, value, j, k);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int disget_(const int *deref, const int *dis, const int *what, void *value)
 
@@ -207,7 +207,7 @@ int disget_(const int *deref, const int *dis, const int *what, void *value)
   const int    *idisp;
   const struct disprm *disp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   if (*deref == 0) {
     disp = (const struct disprm *)dis;
   } else {
@@ -229,8 +229,7 @@ int disget_(const int *deref, const int *dis, const int *what, void *value)
     break;
   case DIS_DTYPE:
     for (j = 0; j < naxis; j++) {
-      strncpy(cvalp, disp->dtype[j], 72);
-      wcsutil_blank_fill(72, cvalp);
+      wcsutil_strcvt(72, ' ', 0, disp->dtype[j], cvalp);
       cvalp += 72;
     }
     break;
@@ -251,16 +250,21 @@ int disget_(const int *deref, const int *dis, const int *what, void *value)
   case DIS_TOTDIS:
     *dvalp = disp->totdis;
     break;
-  case DIS_AXMAP:
+  case DIS_DOCORR:
     for (j = 0; j < naxis; j++) {
-      for (k = 0; k < naxis; k++) {
-        *(ivalp++) = disp->axmap[j][k];
-      }
+      *(ivalp++) = disp->docorr[j];
     }
     break;
   case DIS_NHAT:
     for (j = 0; j < naxis; j++) {
       *(ivalp++) = disp->Nhat[j];
+    }
+    break;
+  case DIS_AXMAP:
+    for (j = 0; j < naxis; j++) {
+      for (k = 0; k < naxis; k++) {
+        *(ivalp++) = disp->axmap[j][k];
+      }
     }
     break;
   case DIS_OFFSET:
@@ -298,7 +302,7 @@ int disget_(const int *deref, const int *dis, const int *what, void *value)
     *ivalp = disp->ndis;
     break;
   case DIS_ERR:
-    /* Copy the contents of the wcserr struct. */
+    // Copy the contents of the wcserr struct.
     if (disp->err) {
       idisp = (int *)(disp->err);
       for (l = 0; l < ERRLEN; l++) {
@@ -332,14 +336,14 @@ int disgti_(const int *deref, const int *dis, const int *what, int *value)
   return disget_(deref, dis, what, value);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int disndp_(int *ndpmax) { return disndp(*ndpmax); }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-/* keyword and field should be null-terminated, or else of length 72 in which
- * case trailing blanks are not significant. */
+// keyword and field should be null-terminated, or else of length 72 in which
+// case trailing blanks are not significant.
 
 int dpfill_(
   const int *dp,
@@ -351,19 +355,33 @@ int dpfill_(
   double *fval)
 
 {
-  char field_[72], keyword_[72];
-
-  strncpy(keyword_, keyword, 72);
-  wcsutil_null_fill(72, keyword_);
-
-  strncpy(keyword_, field, 72);
-  wcsutil_null_fill(72, field_);
+  char keyword_[73], field_[73];
+  wcsutil_strcvt(72, '\0', 1, keyword, keyword_);
+  wcsutil_strcvt(72, '\0', 1, field, field_);
 
   return dpfill((struct dpkey *)dp, keyword_, field_, *j, *type, *ival,
                  *fval);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
+
+int dpkeyi_(
+  const int *dp)
+
+{
+  return dpkeyi((struct dpkey *)dp);
+}
+
+//----------------------------------------------------------------------------
+
+double dpkeyd_(
+  const int *dp)
+
+{
+  return dpkeyd((struct dpkey *)dp);
+}
+
+//----------------------------------------------------------------------------
 
 int disini_(const int *deref, const int *naxis, int *dis)
 
@@ -379,7 +397,7 @@ int disini_(const int *deref, const int *naxis, int *dis)
   return disini(1, *naxis, disp);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int disinit_(const int *deref, const int *naxis, int *dis, int *ndpmax)
 
@@ -395,7 +413,7 @@ int disinit_(const int *deref, const int *naxis, int *dis, int *ndpmax)
   return disinit(1, *naxis, disp, *ndpmax);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int discpy_(const int *deref, const int *dissrc, int *disdst)
 
@@ -418,7 +436,7 @@ int discpy_(const int *deref, const int *dissrc, int *disdst)
   return discpy(1, dissrcp, disdstp);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int disfree_(const int *deref, int *dis)
 
@@ -434,7 +452,15 @@ int disfree_(const int *deref, int *dis)
   return disfree(disp);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
+
+int dissize_(const int *dis, int sizes[2])
+
+{
+  return dissize((const struct disprm *)dis, sizes);
+}
+
+//----------------------------------------------------------------------------
 
 int disprt_(const int *deref, const int *dis)
 
@@ -447,41 +473,40 @@ int disprt_(const int *deref, const int *dis)
     disp = *(const struct disprm **)dis;
   }
 
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling DISPRT in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling DISPRT in the Fortran code.
   fflush(NULL);
 
   return disprt(disp);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-/* prefix should be null-terminated, or else of length 72 in which case
- * trailing blanks are not significant. */
+// If null-terminated (using the Fortran CHAR(0) intrinsic), prefix may be of
+// length less than but not exceeding 72 and trailing blanks are preserved.
+// Otherwise, it must be of length 72 and trailing blanks are stripped off.
 
 int disperr_(const int *deref, int *dis, const char prefix[72])
 
 {
-  char prefix_[72];
   const struct disprm *disp;
-
   if (*deref == 0) {
     disp = (const struct disprm *)dis;
   } else {
     disp = *(const struct disprm **)dis;
   }
 
-  strncpy(prefix_, prefix, 72);
-  wcsutil_null_fill(72, prefix_);
+  char prefix_[73];
+  wcsutil_strcvt(72, '\0', 1, prefix, prefix_);
 
-  /* This may or may not force the Fortran I/O buffers to be flushed. */
-  /* If not, try CALL FLUSH(6) before calling DISPERR in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.
+  // If not, try CALL FLUSH(6) before calling DISPERR in the Fortran code.
   fflush(NULL);
 
   return wcserr_prt(disp->err, prefix_);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int dishdo_(const int *deref, int *dis)
 
@@ -497,7 +522,7 @@ int dishdo_(const int *deref, int *dis)
   return dishdo(disp);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int disset_(const int *deref, int *dis)
 
@@ -513,7 +538,7 @@ int disset_(const int *deref, int *dis)
   return disset(disp);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int disp2x_(
   const int *deref,
@@ -533,7 +558,7 @@ int disp2x_(
   return disp2x(disp, rawcrd, discrd);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int disx2p_(
   const int *deref,
@@ -553,7 +578,7 @@ int disx2p_(
   return disx2p(disp, discrd, rawcrd);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int diswarp_(
   int *dis,

@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tcel2.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tcel2.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tcel2 thoroughly tests the WCSLIB celestial coordinate transformation
@@ -57,7 +54,7 @@ int main()
   "Testing WCSLIB celestial coordinate transformation routines (tcel2.c)\n"
   "---------------------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of cel status return values:\n");
   for (status = 1; status <= 6; status++) {
     printf("%4d: %s.\n", status, cel_errmsg[status]);
@@ -105,37 +102,37 @@ int main()
   printf("\n\n");
 
 
-  /* PGPLOT initialization. */
+  // PGPLOT initialization.
   strcpy(text, "/xwindow");
   cpgbeg(0, text, 1, 1);
 
-  /* Define pen colours. */
-  cpgscr( 0, 0.0f, 0.0f, 0.0f);		/* Black      */
-  cpgscr( 1, 1.0f, 1.0f, 0.0f);		/* Yellow     */
-  cpgscr( 2, 1.0f, 1.0f, 1.0f);		/* White      */
-  cpgscr( 3, 0.5f, 0.5f, 0.8f);		/* Mauve      */
-  cpgscr( 4, 0.8f, 0.5f, 0.5f);		/* Pink       */
-  cpgscr( 5, 0.8f, 0.8f, 0.8f);		/* Grey       */
-  cpgscr( 6, 0.5f, 0.5f, 0.8f);		/* Mauve      */
-  cpgscr( 7, 0.8f, 0.5f, 0.5f);		/* Pink       */
-  cpgscr( 8, 0.3f, 0.5f, 0.3f);		/* Dark green */
-  cpgscr( 9, 0.0f, 1.0f, 0.0f);		/* Green      */
-  cpgscr(10, 1.0f, 0.0f, 0.0f);		/* Red        */
+  // Define pen colours.
+  cpgscr( 0, 0.0f, 0.0f, 0.0f);		// Black
+  cpgscr( 1, 1.0f, 1.0f, 0.0f);		// Yellow
+  cpgscr( 2, 1.0f, 1.0f, 1.0f);		// White
+  cpgscr( 3, 0.5f, 0.5f, 0.8f);		// Mauve
+  cpgscr( 4, 0.8f, 0.5f, 0.5f);		// Pink
+  cpgscr( 5, 0.8f, 0.8f, 0.8f);		// Grey
+  cpgscr( 6, 0.5f, 0.5f, 0.8f);		// Mauve
+  cpgscr( 7, 0.8f, 0.5f, 0.5f);		// Pink
+  cpgscr( 8, 0.3f, 0.5f, 0.3f);		// Dark green
+  cpgscr( 9, 0.0f, 1.0f, 0.0f);		// Green
+  cpgscr(10, 1.0f, 0.0f, 0.0f);		// Red
 
-  /* Define PGPLOT viewport. */
+  // Define PGPLOT viewport.
   cpgenv(-195.0f, 195.0f, -195.0f, 195.0f, 1, -2);
   cpgsch(0.8f);
 
 
   ctrl = 'n';
   for (iprj = 0; iprj < 4; iprj++) {
-    /* Initialize. */
+    // Initialize.
     celini(&native);
     celini(&celestial);
 
-    /* Reference coordinates for the native graticule. */
+    // Reference coordinates for the native graticule.
     if (iprj == 0) {
-      /* Set up a zenithal equidistant projection. */
+      // Set up a zenithal equidistant projection.
       strcpy(native.prj.code, "ARC");
 
       native.ref[0] =   0.0;
@@ -146,7 +143,7 @@ int main()
       celestial.theta0 = 90.0;
 
     } else if (iprj == 1) {
-      /* Set up a conic equidistant projection. */
+      // Set up a conic equidistant projection.
       strcpy(native.prj.code, "COD");
       native.prj.pv[1] = 45.0;
       native.prj.pv[2] = 25.0;
@@ -159,7 +156,7 @@ int main()
       celestial.theta0 = 45.0;
 
     } else if (iprj == 2) {
-      /* Set up a Sanson-Flamsteed projection as Bonne's equatorial. */
+      // Set up a Sanson-Flamsteed projection as Bonne's equatorial.
       strcpy(native.prj.code, "BON");
       native.prj.pv[1] = 0.0;
 
@@ -171,7 +168,7 @@ int main()
       celestial.theta0 =   0.0;
 
     } else if (iprj == 3) {
-      /* Set up a polyconic projection. */
+      // Set up a polyconic projection.
       strcpy(native.prj.code, "PCO");
 
       native.ref[0] = 0.0;
@@ -184,7 +181,7 @@ int main()
 
     celestial.prj = native.prj;
 
-    /* Loop over CRVAL2, CRVAL1 and LONPOLE. */
+    // Loop over CRVAL2, CRVAL1 and LONPOLE.
     crval1_j  = -180;
     crval2_i  =   45;
     lonpole_i =   15;
@@ -193,14 +190,14 @@ int main()
       for (crval1 = -180; crval1 <= 180; crval1 += 90) {
         first = 1;
         for (lonpole = -180; lonpole <= 180; lonpole += lonpole_i) {
-          /* lonpole = 999; */
+          // lonpole = 999;
           latpole = 999;
 
-          /* if (crval2 < 0) latpole = -999; */
-          /* if (crval2 > 0) latpole =  999; */
+          // if (crval2 < 0) latpole = -999;
+          // if (crval2 > 0) latpole =  999;
 
           if (ctrl == 'j' || ctrl == 'J') {
-            /* Restore CRVAL1 and LONPOLE from last time. */
+            // Restore CRVAL1 and LONPOLE from last time.
             crval1  = crval1_j;
             lonpole = lonpole_j;
           }
@@ -210,17 +207,17 @@ int main()
           celestial.ref[2] = (double)lonpole;
           celestial.ref[3] = (double)latpole;
 
-          /* Buffer PGPLOT output. */
+          // Buffer PGPLOT output.
           cpgbbuf();
           cpgeras();
           cpgsci(2);
 
-          /* Write parameter summary. */
+          // Write parameter summary.
           sprintf(text, "(CRVAL1, CRVAL2, LONPOLE): (%+3.3d, %+2.2d, %+3.3d)",
             crval1, crval2, lonpole);
           cpgtext(-180.0f, 200.0f, text);
 
-          /* Skip invalid values of LONPOLE. */
+          // Skip invalid values of LONPOLE.
           if (celset(&celestial)) {
             sprintf(text, "INVALID VALUE OF LONPOLE (= %+3.3d)", lonpole);
             cpgtext(-90.0f, 0.0f, text);
@@ -238,7 +235,7 @@ int main()
             goto skip;
           }
 
-          /* Write parameters. */
+          // Write parameters.
           sprintf(text, "%s projection, (\\gf\\d0\\u,\\gh\\d0\\u) = "
             "(%+3.3d, %+2.2d) - green circle with red centre",
             native.prj.code, nint(celestial.phi0),
@@ -268,10 +265,10 @@ int main()
           cpgtext(-40.0f, -239.0f, text);
 
 
-          /* Draw the native graticule in the background (dark green). */
+          // Draw the native graticule in the background (dark green).
           cpgsci(8);
 
-          /* Draw native meridians of longitude. */
+          // Draw native meridians of longitude.
           for (j = 0, ilat = -90; ilat <= 90; ilat++, j++) {
             lat[j] = (double)ilat;
           }
@@ -282,7 +279,7 @@ int main()
             if (ilng == -180) lng[0] = -179.99;
             if (ilng ==  180) lng[0] =  179.99;
 
-            /* Meridian containing the celestial pole (thick green). */
+            // Meridian containing the celestial pole (thick green).
             if (ilng == phi_p) {
               cpgslw(5);
               cpgsci(9);
@@ -308,7 +305,7 @@ int main()
             cpgsci(8);
           }
 
-          /* Draw native parallels of latitude. */
+          // Draw native parallels of latitude.
           lng[0]   = -179.99;
           lng[360] =  179.99;
           for (j = 1, ilng = -179; ilng < 180; ilng++, j++) {
@@ -336,7 +333,7 @@ int main()
             cpgline(k, xr, yr);
           }
 
-          /* Tag the longitude of the celestial pole. */
+          // Tag the longitude of the celestial pole.
           cpgslw(5);
           cpgsci(9);
           phi[0]   = celestial.ref[2];
@@ -350,10 +347,10 @@ int main()
           cpgline(2, xr, yr);
 
 
-          /* Draw a colour-coded celestial coordinate graticule. */
+          // Draw a colour-coded celestial coordinate graticule.
           ci = 1;
 
-          /* Draw celestial meridians of longitude. */
+          // Draw celestial meridians of longitude.
           for (j = 0, ilat = -90; ilat <= 90; ilat++, j++) {
             lat[j] = (double)ilat;
           }
@@ -361,11 +358,11 @@ int main()
           for (ilng = -180; ilng <= 180; ilng += 15) {
             lng[0] = (double)ilng;
 
-            /* Cycle through colours with the prime meridian in yellow. */
+            // Cycle through colours with the prime meridian in yellow.
             if (++ci > 7) ci = 2;
             cpgsci(ilng?ci:1);
 
-            /* Dash the reference longitude and make it thicker. */
+            // Dash the reference longitude and make it thicker.
             if ((ilng-crval1)%360 == 0) {
               cpgsls(2);
               cpgslw(5);
@@ -382,7 +379,7 @@ int main()
                 continue;
               }
 
-              /* Test for discontinuities. */
+              // Test for discontinuities.
               if (j > 0) {
                 if (fabs(phi[j]-phi[j-1]) > 15.0) {
                   if (k > 1) cpgline(k, xr, yr);
@@ -400,7 +397,7 @@ int main()
             cpgslw(1);
           }
 
-          /* Draw celestial parallels of latitude. */
+          // Draw celestial parallels of latitude.
           for (j = 0, ilng = -180; ilng <= 180; ilng++, j++) {
             lng[j] = (double)ilng;
           }
@@ -409,11 +406,11 @@ int main()
           for (ilat = -90; ilat <= 90; ilat += 15) {
             lat[0] = (double)ilat;
 
-            /* Cycle through colours with the prime meridian in yellow. */
+            // Cycle through colours with the prime meridian in yellow.
             if (++ci > 7) ci = 2;
             cpgsci(ilat?ci:1);
 
-            /* Dash the reference latitude and make it thicker. */
+            // Dash the reference latitude and make it thicker.
             if (ilat == crval2) {
               cpgsls(2);
               cpgslw(5);
@@ -430,7 +427,7 @@ int main()
                 continue;
               }
 
-              /* Test for discontinuities. */
+              // Test for discontinuities.
               if (j > 0) {
                 if (fabs(phi[j]-phi[j-1]) > 15.0) {
                   if (k > 1) cpgline(k, xr, yr);
@@ -448,7 +445,7 @@ int main()
             cpgslw(1);
           }
 
-          /* Mark the fiducial point (green with red centre). */
+          // Mark the fiducial point (green with red centre).
           phi[0]   = celestial.phi0;
           theta[0] = celestial.theta0;
           prjs2x(&(native.prj), 1, 1, 1, 1, phi, theta, x, y, stat);
@@ -462,7 +459,7 @@ int main()
           cpgsci(10);
           cpgpt1(xr[0], yr[0], 17);
 
-          /* Mark the celestial pole. */
+          // Mark the celestial pole.
           phi[0]   = celestial.ref[2];
           theta[0] = celestial.ref[3];
           prjs2x(&(native.prj), 1, 1, 1, 1, phi, theta, x, y, stat);
@@ -476,8 +473,8 @@ int main()
           cpgsci(0);
           cpgpt1(xr[0], yr[0], 17);
 
-          /* Mark zero celestial longitude expected for "change of origin"
-           * case with a thick yellow circle. */
+          // Mark zero celestial longitude expected for "change of origin"
+          // case with a thick yellow circle.
           if (celestial.euler[1] == 0.0 || celestial.euler[1] == 180.0) {
             if (celestial.theta0 == 90.0) {
               alpha_p = celestial.ref[0];
@@ -516,12 +513,12 @@ int main()
 
           cpgslw(1);
 
-          /* Flush PGPLOT buffer. */
+          // Flush PGPLOT buffer.
         skip:
           cpgebuf();
           if ((ctrl >= 'A' && ctrl <= 'Z') ||
              ((ctrl == 'c' || ctrl == 'b' || ctrl == 'j') && !first)) {
-            /* Keep going. */
+            // Keep going.
 
           } else {
             printf("Next, skip, break, continue, exit [%c]: ", ctrl);
@@ -539,7 +536,7 @@ int main()
           }
 
           if (ctrl == 'P') {
-            /* There's no point in skipping all projections. */
+            // There's no point in skipping all projections.
             ctrl = 'p';
             break;
           }
@@ -559,11 +556,11 @@ int main()
 
       if (ctrl == 'p') break;
       if (ctrl == 'j' || ctrl == 'J') {
-        /* Save CRVAL1 and LONPOLE for next time. */
+        // Save CRVAL1 and LONPOLE for next time.
         crval1_j  = crval1;
         lonpole_j = lonpole;
 
-        /* Slow down CRVAL2. */
+        // Slow down CRVAL2.
         crval2_i  = 1;
       } else {
         crval2_i  = 45;

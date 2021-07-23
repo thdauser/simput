@@ -1,7 +1,6 @@
 /*============================================================================
-
-  PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
-  Copyright (C) 1997-2018, Mark Calabretta
+  PGSBOX 7.7 - draw curvilinear coordinate axes for PGPLOT.
+  Copyright (C) 1997-2021, Mark Calabretta
 
   This file is part of PGSBOX.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning PGSBOX to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: cpgtest.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: cpgtest.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 *   cpgtest
@@ -38,7 +35,7 @@
 #include <wcs.h>
 #include <wcsfix.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define lngvel_ F77_FUNC(lngvel, LNGVEL)
 #define fscan_  F77_FUNC(fscan,  FSCAN)
@@ -51,37 +48,37 @@ int main()
   const double pi = 3.141592653589793238462643;
   const double d2r = pi/180.0;
 
-  char   devtyp[16], fcode[2][4], idents[3][80], nlcprm[1], opt[2];
-  int    c0[7], ci[7], gcode[2], ic, ierr, j, large, naxis[2], nliprm[2];
-  float  blc[2], scl, trc[2];
-  double cache[257][4], dec0, grid1[9], grid2[9], nldprm[8], rotn, tiklen;
-  struct wcsprm wcs;
+  // cpgsbox() function arguments.
+  char   fcode[2][4], idents[3][80], nlcprm[1], opt[2];
+  int    c0[7], ci[7], gcode[2], ic, ierr, nliprm[2];
+  double cache[257][4], grid1[9], grid2[9], nldprm[8];
   nlfunc_t lngvel_, fscan_, pgcrfn_, pgwcsl_;
 
-  /* Setup. */
-  naxis[0] = 512;
-  naxis[1] = 512;
+  // Setup.
+  int naxis[2] = {512, 512};
 
-  blc[0] = 0.5f;
-  blc[1] = 0.5f;
+  float blc[2] = {0.5f, 0.5f};
+  float trc[2];
   trc[0] = naxis[0] + 0.5f;
   trc[1] = naxis[1] + 0.5f;
 
+  char devtyp[16];
   strcpy(devtyp, "/XWINDOW");
   cpgbeg(0, devtyp, 1, 1);
 
-  j = 16;
-  cpgqinf("TYPE", devtyp, &j);
+  int nchr = 16;
+  cpgqinf("TYPE", devtyp, &nchr);
   if (strcmp(devtyp, "PS") == 0  ||
      strcmp(devtyp, "VPS") == 0 ||
      strcmp(devtyp, "CPS") == 0 ||
      strcmp(devtyp, "VCPS") == 0) {
-    /* Switch black and white. */
+    // Switch black and white.
     cpgscr(0, 1.0f, 1.0f, 1.0f);
     cpgscr(1, 0.0f, 0.0f, 0.0f);
   }
 
-  large = strcmp(devtyp, "XWINDOW") == 0;
+  int large = strcmp(devtyp, "XWINDOW") == 0;
+  float scl;
   if (large) {
     scl = 1.0f;
     cpgvstd();
@@ -90,17 +87,17 @@ int main()
     cpgvsiz(1.0f, 3.0f, 1.0f, 3.0f);
   }
 
-  /* Yellow. */
+  // Yellow.
   cpgscr(2, 1.0f, 1.0f, 0.0f);
-  /* White. */
+  // White.
   cpgscr(3, 1.0f, 1.0f, 1.0f);
-  /* Pale blue. */
+  // Pale blue.
   cpgscr(4, 0.5f, 0.5f, 0.8f);
-  /* Pale red. */
+  // Pale red.
   cpgscr(5, 0.8f, 0.5f, 0.5f);
-  /* Grey. */
+  // Grey.
   cpgscr(6, 0.7f, 0.7f, 0.7f);
-  /* Dark green. */
+  // Dark green.
   cpgscr(7, 0.3f, 0.5f, 0.3f);
 
   c0[0] = -1;
@@ -115,43 +112,44 @@ int main()
   cpgask(1);
   cpgpage();
 
+  struct wcsprm wcs;
   wcs.flag = -1;
 
-  /*--------------------------------------------------------------------------
-  * Longitude-velocity map; the y-axis is regularly spaced in frequency but is
-  * to be labelled as a true relativistic velocity.
-  *   - PGSBOX uses subroutine LNGVEL.
-  *   - Separable (i.e. orthogonal), non-linear coordinate system.
-  *   - Automatic choice of coordinate increments.
-  *   - Extraction of a common scaling factor.
-  *   - Automatic choice of what edges to label.
-  *   - Request for tickmarks (internal) for one coordinate and grid lines
-  *     for the other.
-  *   - Simple two-colour grid using two calls with deferred labelling on
-  *     the first call.
-  *   - Degree labelling.
-  *   - Suppression of zero arcmin and arcsec fields in sexagesimal degree
-  *     format.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Longitude-velocity map; the y-axis is regularly spaced in frequency but
+  // is to be labelled as a true relativistic velocity.
+  //   - PGSBOX uses subroutine LNGVEL.
+  //   - Separable (i.e. orthogonal), non-linear coordinate system.
+  //   - Automatic choice of coordinate increments.
+  //   - Extraction of a common scaling factor.
+  //   - Automatic choice of what edges to label.
+  //   - Request for tickmarks (internal) for one coordinate and grid lines
+  //     for the other.
+  //   - Simple two-colour grid using two calls with deferred labelling on
+  //     the first call.
+  //   - Degree labelling.
+  //   - Suppression of zero arcmin and arcsec fields in sexagesimal degree
+  //     format.
+  //--------------------------------------------------------------------------
 
   printf("\nLongitude-velocity map\n");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   nldprm[0] =   1.0;
   nldprm[1] = 256.0;
 
-  /* Reference pixel values. */
+  // Reference pixel values.
   nldprm[2] = 0.0;
   nldprm[3] = 1.420e9;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   nldprm[4] = 360.0/(naxis[0]-1);
   nldprm[5] = 4e6;
 
-  /* Rest frequency. */
+  // Rest frequency.
   nldprm[6] = 1.420e9;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "galactic longitude");
   strcpy(idents[1], "velocity (m/s)");
   strcpy(idents[2], "HI line");
@@ -159,22 +157,22 @@ int main()
   opt[0] = 'F';
   opt[1] = ' ';
 
-  /* Normal size lettering. */
+  // Normal size lettering.
   cpgsch(1.0f*scl);
 
-  /* Yellow tick marks for longitude and grid lines for velocity. */
+  // Yellow tick marks for longitude and grid lines for velocity.
   cpgsci(2);
   gcode[0] = 1;
   gcode[1] = 2;
   grid1[0] = 0.0;
   grid2[0] = 0.0;
 
-  /* Defer labelling. */
+  // Defer labelling.
   ic = -1;
   cpgsbox(blc, trc, idents, opt, -1, 0, c0, gcode, 2.0, 0, grid1, 0, grid2,
     0, lngvel_, 1, 1, 7, nlcprm, nliprm, nldprm, 256, &ic, cache, &ierr);
 
-  /* Draw fiducial grid lines in white and do labelling. */
+  // Draw fiducial grid lines in white and do labelling.
   cpgsci(1);
   gcode[0] = 2;
   gcode[1] = 2;
@@ -183,48 +181,48 @@ int main()
   cpgsbox(blc, trc, idents, opt, 0, 0, c0, gcode, 0.0, 1, grid1, 1, grid2,
     0, lngvel_, 1, 1, 7, nlcprm, nliprm, nldprm, 256, &ic, cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Azimuth-frequency scan; this sort of output might be obtained from an
-  * antenna that scans in azimuth with a receiver that scans simultaneously
-  * in frequency.
-  *   - PGSBOX uses subroutine FSCAN.
-  *   - Non-separable (i.e. non-orthogonal) non-linear coordinate system.
-  *   - Automatic choice of what edges to label; results in labelling the
-  *     bottom, left and right sides of the plot.
-  *   - Cyclic labelling.  FSCAN returns the azimuth in the range
-  *     0 - 720 degrees but PGSBOX is set to normalize this to two cycles of
-  *     0 - 360 degrees.
-  *   - Logarithmic labelling.
-  *   - Automatic choice of coordinate increments but with request for all
-  *     grid lines for the logarithmic coordinate.
-  *   - Degree labelling.
-  *   - Suppression of common zero arcmin and arcsec fields in sexagesimal
-  *     degree format.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Azimuth-frequency scan; this sort of output might be obtained from an
+  // antenna that scans in azimuth with a receiver that scans simultaneously
+  // in frequency.
+  //   - PGSBOX uses subroutine FSCAN.
+  //   - Non-separable (i.e. non-orthogonal) non-linear coordinate system.
+  //   - Automatic choice of what edges to label; results in labelling the
+  //     bottom, left and right sides of the plot.
+  //   - Cyclic labelling.  FSCAN returns the azimuth in the range
+  //     0 - 720 degrees but PGSBOX is set to normalize this to two cycles of
+  //     0 - 360 degrees.
+  //   - Logarithmic labelling.
+  //   - Automatic choice of coordinate increments but with request for all
+  //     grid lines for the logarithmic coordinate.
+  //   - Degree labelling.
+  //   - Suppression of common zero arcmin and arcsec fields in sexagesimal
+  //     degree format.
+  //--------------------------------------------------------------------------
 
   printf("\nAzimuth-frequency scan\n");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   nldprm[0] = 0.5;
   nldprm[1] = 0.5;
 
-  /* Reference pixel values. */
+  // Reference pixel values.
   nldprm[2] = 0.0;
   nldprm[3] = 8.5;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   nldprm[4] = 720.0/(naxis[0]+1);
   nldprm[5] = 0.002;
 
-  /* Rate of change of NLDPRM[3] with x-pixel. */
+  // Rate of change of NLDPRM[3] with x-pixel.
   nldprm[6] = -0.002;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "azimuth");
   strcpy(idents[1], "\\gn/Hz");
   strcpy(idents[2], "Frequency/azimuth scan");
@@ -232,58 +230,58 @@ int main()
   opt[0] = 'D';
   opt[1] = 'L';
 
-  /* Normal size lettering. */
+  // Normal size lettering.
   cpgsch(1.0f*scl);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   cpgsci(1);
   gcode[0] = 2;
   gcode[1] = 2;
   grid1[0] = 0.0;
   grid2[0] = 0.0;
 
-  /* Setting labden = 9900 forces all logarithmic grid lines to be drawn. */
+  // Setting labden = 9900 forces all logarithmic grid lines to be drawn.
   ic = -1;
   cpgsbox(blc, trc, idents, opt, 0, 9900, c0, gcode, 2.0, 0, grid1, 0, grid2,
     0, fscan_, 1, 1, 7, nlcprm, nliprm, nldprm, 256, &ic, cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
 
-  /*--------------------------------------------------------------------------
-  * Z versus time plot.
-  *   - PGSBOX uses subroutine PGCRFN.
-  *   - Separable (i.e. orthogonal), non-linear coordinate system.
-  *   - Use of function PGCRFN for separable axis types.
-  *   - Automatic choice of what edges to label; results in labelling the
-  *     bottom and left sides of the plot.
-  *   - Automatic choice of coordinate increments.
-  *   - Logarithmic labelling over many orders of magnitude.
-  *   - Single-character annotation on a vertical axis is upright.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Z versus time plot.
+  //   - PGSBOX uses subroutine PGCRFN.
+  //   - Separable (i.e. orthogonal), non-linear coordinate system.
+  //   - Use of function PGCRFN for separable axis types.
+  //   - Automatic choice of what edges to label; results in labelling the
+  //     bottom and left sides of the plot.
+  //   - Automatic choice of coordinate increments.
+  //   - Logarithmic labelling over many orders of magnitude.
+  //   - Single-character annotation on a vertical axis is upright.
+  //--------------------------------------------------------------------------
 
   printf("\nZ versus time plot\n");
 
-  /* Function types. */
-  strncpy(fcode[0], "Lin ", 4);
-  strncpy(fcode[1], "Log ", 4);
+  // Function types.
+  memcpy(fcode[0], "Lin ", 4);
+  memcpy(fcode[1], "Log ", 4);
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   nldprm[0] =   0.5;
   nldprm[1] = -50.0;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   nldprm[2] = 0.04;
   nldprm[3] = 0.02;
 
-  /* Reference pixel values. */
+  // Reference pixel values.
   nldprm[4] = -3.0;
   nldprm[5] =  1.0;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "Age of universe (sec)");
   strcpy(idents[1], "Y");
   strcpy(idents[2], "");
@@ -291,10 +289,10 @@ int main()
   opt[0] = 'L';
   opt[1] = ' ';
 
-  /* Normal size lettering. */
+  // Normal size lettering.
   cpgsch(1.0f*scl);
 
-  /* Draw ticks for the first coordinate, grid lines for the second. */
+  // Draw ticks for the first coordinate, grid lines for the second.
   cpgsci(1);
   gcode[0] = 1;
   gcode[1] = 2;
@@ -305,55 +303,55 @@ int main()
   cpgsbox(blc, trc, idents, opt, 0, 0, c0, gcode, 2.0, 0, grid1, 0, grid2, 0,
     pgcrfn_, 8, 2, 4, fcode[0], nliprm, nldprm, 256, &ic, cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Simple SIN projection near the south celestial pole.
-  *   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
-  *   - Non-separable (i.e. non-orthogonal) curvilinear coordinate system.
-  *   - Demonstrate parameter definition for PGWCSL.
-  *   - Discovery of grid lines that do not cross any axis.
-  *   - Automatic choice of what edges to label; results in labelling all
-  *     sides of the plot.
-  *   - Automatic choice of coordinate increments but with request for
-  *     increased grid density for each coordinate.
-  *   - Double precision accuracy.
-  *   - Cyclic coordinates.  PGWCSL returns the right ascension in the range
-  *     -180 to +180 degrees, i.e. with a discontinuity at +/- 180 degrees.
-  *   - Labelling of degrees as time in the range 0 - 24h.
-  *   - Suppression of labels that would overlap one another.
-  *   - Sexagesimal degree labelling with automatically determined
-  *     precision.
-  *   - Suppression of common zero minute and second fields in sexagesimal
-  *     time format.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Simple SIN projection near the south celestial pole.
+  //   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
+  //   - Non-separable (i.e. non-orthogonal) curvilinear coordinate system.
+  //   - Demonstrate parameter definition for PGWCSL.
+  //   - Discovery of grid lines that do not cross any axis.
+  //   - Automatic choice of what edges to label; results in labelling all
+  //     sides of the plot.
+  //   - Automatic choice of coordinate increments but with request for
+  //     increased grid density for each coordinate.
+  //   - Double precision accuracy.
+  //   - Cyclic coordinates.  PGWCSL returns the right ascension in the range
+  //     -180 to +180 degrees, i.e. with a discontinuity at +/- 180 degrees.
+  //   - Labelling of degrees as time in the range 0 - 24h.
+  //   - Suppression of labels that would overlap one another.
+  //   - Sexagesimal degree labelling with automatically determined
+  //     precision.
+  //   - Suppression of common zero minute and second fields in sexagesimal
+  //     time format.
+  //--------------------------------------------------------------------------
 
   printf("\nSimple SIN projection\n");
 
   wcs.flag = -1;
   wcsini(1, 2, &wcs);
 
-  /* Set projection type to SIN. */
+  // Set projection type to SIN.
   strcpy(wcs.ctype[0], "RA---SIN");
   strcpy(wcs.ctype[1], "DEC--SIN");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   wcs.crpix[0] = 384.0;
   wcs.crpix[1] = 256.0;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   wcs.cdelt[0] = -1.0/3600000.0;
   wcs.cdelt[1] =  1.0/3600000.0;
 
-  /* Spherical coordinate references. */
-  dec0 = -89.99995;
+  // Spherical coordinate references.
+  double dec0 = -89.99995;
   wcs.crval[0] = 25.0;
   wcs.crval[1] = dec0;
 
-  /* Set parameters for an NCP projection. */
+  // Set parameters for an NCP projection.
   dec0 *= d2r;
   wcs.pv[0].i = 2;
   wcs.pv[0].m = 1;
@@ -362,7 +360,7 @@ int main()
   wcs.pv[1].m = 2;
   wcs.pv[1].value = cos(dec0)/sin(dec0);
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "Right ascension");
   strcpy(idents[1], "Declination");
   strcpy(idents[2], "WCS SIN projection");
@@ -370,70 +368,70 @@ int main()
   opt[0] = 'G';
   opt[1] = 'E';
 
-  /* Compact lettering. */
+  // Compact lettering.
   cpgsch(0.8f*scl);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   cpgsci(1);
   gcode[0] = 2;
   gcode[1] = 2;
   grid1[0] = 0.0;
   grid2[0] = 0.0;
 
-  /* Draw the celestial grid.  The grid density is set for each world */
-  /* coordinate by specifying LABDEN = 1224. */
+  // Draw the celestial grid.  The grid density is set for each world
+  // coordinate by specifying LABDEN = 1224.
   ic = -1;
   cpgsbox(blc, trc, idents, opt, 0, 1224, c0, gcode, 0.0, 0, grid1, 0, grid2,
     0, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*-------------------------------------------------------------------------
-  * Conic equal area projection.
-  *   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
-  *   - Non-separable (i.e. non-orthogonal) curvilinear coordinate system.
-  *   - Coordinate system undefined in areas of the plot.
-  *   - Demonstrate parameter definition for PGWCSL.
-  *   - Discontinuous grid lines handled by PGWCSL.
-  *   - Discovery of grid lines that do not cross any axis.
-  *   - Colour control for grid and labelling.
-  *   - Reduced size lettering.
-  *   - Automatic choice of what edges to label; results in labelling all
-  *     sides of the plot.
-  *   - Automatic choice of coordinate increments.
-  *   - Cyclic coordinates.  PGWCSL returns the longitude in the range -180
-  *     to +180 degrees, i.e. with a discontinuity at +/- 180 degrees.
-  *   - Suppression of labels that would overlap one another.
-  *   - Suppression of common zero arcmin and arcsec fields in sexagesimal
-  *     degree format.
-  *------------------------------------------------------------------------*/
+  //-------------------------------------------------------------------------
+  // Conic equal area projection.
+  //   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
+  //   - Non-separable (i.e. non-orthogonal) curvilinear coordinate system.
+  //   - Coordinate system undefined in areas of the plot.
+  //   - Demonstrate parameter definition for PGWCSL.
+  //   - Discontinuous grid lines handled by PGWCSL.
+  //   - Discovery of grid lines that do not cross any axis.
+  //   - Colour control for grid and labelling.
+  //   - Reduced size lettering.
+  //   - Automatic choice of what edges to label; results in labelling all
+  //     sides of the plot.
+  //   - Automatic choice of coordinate increments.
+  //   - Cyclic coordinates.  PGWCSL returns the longitude in the range -180
+  //     to +180 degrees, i.e. with a discontinuity at +/- 180 degrees.
+  //   - Suppression of labels that would overlap one another.
+  //   - Suppression of common zero arcmin and arcsec fields in sexagesimal
+  //     degree format.
+  //--------------------------------------------------------------------------
 
   printf("\nConic equal area projection\n");
 
   wcsini(1, 2, &wcs);
 
-  /* Set projection type to conic equal-area. */
+  // Set projection type to conic equal-area.
   strcpy(wcs.ctype[0], "RA---COE");
   strcpy(wcs.ctype[1], "DEC--COE");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   wcs.crpix[0] = 256.0;
   wcs.crpix[1] = 256.0;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   wcs.cdelt[0] = -1.0/3.0;
   wcs.cdelt[1] =  1.0/3.0;
 
-  /* Spherical coordinate references. */
+  // Spherical coordinate references.
   wcs.crval[0] =  90.0;
   wcs.crval[1] =  30.0;
   wcs.lonpole  = 150.0;
 
-  /* Middle latitude and offset from standard parallels. */
+  // Middle latitude and offset from standard parallels.
   wcs.npv = 2;
   wcs.pv[0].i = 2;
   wcs.pv[0].m = 1;
@@ -442,7 +440,7 @@ int main()
   wcs.pv[1].m = 2;
   wcs.pv[1].value = 15.0;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "longitude");
   strcpy(idents[1], "latitude");
   strcpy(idents[2], "WCS conic equal area projection");
@@ -450,29 +448,29 @@ int main()
   opt[0] = 'E';
   opt[1] = 'E';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.8f*scl);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   gcode[0] = 2;
   gcode[1] = 2;
   grid1[0] = 0.0;
   grid2[0] = 0.0;
 
-  /* Use colour to associate grid lines and labels. */
-  /* Meridians in red. */
+  // Use colour to associate grid lines and labels.
+  // Meridians in red.
   cpgscr(10, 0.5f, 0.0f, 0.0f);
-  /* Parallels in blue. */
+  // Parallels in blue.
   cpgscr(11, 0.0f, 0.2f, 0.5f);
-  /* Longitudes in red. */
+  // Longitudes in red.
   cpgscr(12, 0.8f, 0.3f, 0.0f);
-  /* Latitudes in blue. */
+  // Latitudes in blue.
   cpgscr(13, 0.0f, 0.4f, 0.7f);
-  /* Longitude labels in red. */
+  // Longitude labels in red.
   cpgscr(14, 0.8f, 0.3f, 0.0f);
-  /* Latitude labels in blue. */
+  // Latitude labels in blue.
   cpgscr(15, 0.0f, 0.4f, 0.7f);
-  /* Title in cyan. */
+  // Title in cyan.
   cpgscr(16, 0.3f, 1.0f, 1.0f);
 
   ci[0] = 10;
@@ -483,20 +481,20 @@ int main()
   ci[5] = 15;
   ci[6] = 16;
 
-  /* Draw the celestial grid letting PGSBOX choose the increments. */
+  // Draw the celestial grid letting PGSBOX choose the increments.
   ic = -1;
   cpgsbox(blc, trc, idents, opt, 0, 0, ci, gcode, 0.0, 0, grid1, 0, grid2, 1,
     pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic, cache,
     &ierr);
 
-  /* Set parameters to draw the native grid. */
+  // Set parameters to draw the native grid.
   wcs.crval[0] =   0.0;
   wcs.crval[1] =  60.0;
   wcs.lonpole  = 999.0;
   wcs.latpole  = 999.0;
   wcsset(&wcs);
 
-  /* We just want to delineate the boundary, in green. */
+  // We just want to delineate the boundary, in green.
   cpgsci(7);
   grid1[1] = -180.0;
   grid1[2] =  180.0;
@@ -508,65 +506,65 @@ int main()
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgsci(1);
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Polyconic projection with colour-coded grid.
-  *   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
-  *   - Non-separable (i.e. non-orthogonal) curvilinear coordinate system.
-  *   - Coordinate system undefined in areas of the plot.
-  *   - Demonstrate parameter definition for PGWCSL.
-  *   - Discontinuous grid lines handled by PGWCSL.
-  *   - Colour coded labelling.
-  *   - Colour coded grid implemented by the caller.
-  *   - Basic management of the axis-crossing table (see code).
-  *   - Reduced size lettering.
-  *   - Tick marks external to the frame.
-  *   - User selection of what edges to label with request for both
-  *     coordinates to be labelled on bottom, left and top edges.
-  *   - User selection of grid lines to plot.
-  *   - Concatenation of annotation at bottom and left; automatically
-  *     suppressed at the top since only one coordinate is labelled there.
-  *   - Suppression of labels that would overlap one another.
-  *   - Degree labelling.
-  *   - Labelling of degrees as time in the range -12 - +12h.
-  *   - Suppression of common zero minute and second fields in sexagesimal
-  *     time format.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Polyconic projection with colour-coded grid.
+  //   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
+  //   - Non-separable (i.e. non-orthogonal) curvilinear coordinate system.
+  //   - Coordinate system undefined in areas of the plot.
+  //   - Demonstrate parameter definition for PGWCSL.
+  //   - Discontinuous grid lines handled by PGWCSL.
+  //   - Colour coded labelling.
+  //   - Colour coded grid implemented by the caller.
+  //   - Basic management of the axis-crossing table (see code).
+  //   - Reduced size lettering.
+  //   - Tick marks external to the frame.
+  //   - User selection of what edges to label with request for both
+  //     coordinates to be labelled on bottom, left and top edges.
+  //   - User selection of grid lines to plot.
+  //   - Concatenation of annotation at bottom and left; automatically
+  //     suppressed at the top since only one coordinate is labelled there.
+  //   - Suppression of labels that would overlap one another.
+  //   - Degree labelling.
+  //   - Labelling of degrees as time in the range -12 - +12h.
+  //   - Suppression of common zero minute and second fields in sexagesimal
+  //     time format.
+  //--------------------------------------------------------------------------
 
   printf("\nPolyconic projection with colour-coded grid\n");
 
   wcsini(1, 2, &wcs);
 
-  /* Set projection type to polyconic. */
+  // Set projection type to polyconic.
   strcpy(wcs.ctype[0], "RA---PCO");
   strcpy(wcs.ctype[1], "DEC--PCO");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   wcs.crpix[0] = 192.0;
   wcs.crpix[1] = 640.0;
 
-  /* Rotate 30 degrees. */
-  rotn = 30.0*d2r;
+  // Rotate 30 degrees.
+  double rotn = 30.0*d2r;
   *(wcs.pc)   =  cos(rotn);
   *(wcs.pc+1) =  sin(rotn);
   *(wcs.pc+2) = -sin(rotn);
   *(wcs.pc+3) =  cos(rotn);
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   wcs.cdelt[0] = -1.0/5.0;
   wcs.cdelt[1] =  1.0/5.0;
 
-  /* Spherical coordinate references. */
+  // Spherical coordinate references.
   wcs.crval[0] = 332.0;
   wcs.crval[1] =  40.0;
   wcs.lonpole  = -30.0;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "Hour angle");
   strcpy(idents[1], "Declination");
   strcpy(idents[2], "WCS polyconic projection");
@@ -574,13 +572,13 @@ int main()
   opt[0] = 'H';
   opt[1] = 'B';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.9f*scl);
 
-  /* Draw external (TIKLEN < 0) tick marks every 5 degrees. */
+  // Draw external (TIKLEN < 0) tick marks every 5 degrees.
   gcode[0] = 1;
   gcode[1] = 1;
-  tiklen = -2.0;
+  double tiklen = -2.0;
 
   cpgsci(6);
   grid1[0] = 5.0;
@@ -591,28 +589,28 @@ int main()
     grid2, 1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256,
     &ic, cache, &ierr);
 
-  /* Resetting the table index to zero causes information about the */
-  /* tick marks to be discarded. */
+  // Resetting the table index to zero causes information about the
+  // tick marks to be discarded.
   ic = 0;
 
-  /* Draw full grid lines in yellow rather than tick marks. */
+  // Draw full grid lines in yellow rather than tick marks.
   cpgsci(2);
   gcode[0] = 2;
   gcode[1] = 2;
 
-  /* Draw the primary meridian and equator. */
+  // Draw the primary meridian and equator.
   grid1[1] = 0.0;
   grid2[1] = 0.0;
   cpgsbox(blc, trc, idents, opt, -1, 0, c0, gcode, 0.0, 1, grid1, 1, grid2,
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* At this point the axis-crossing table will have entries for the  */
-  /* primary meridian and equator.  Labelling was deferred in the     */
-  /* previous call, and the table is passed intact on the second call */
-  /* to accumulate further axis-crossings.                            */
+  // At this point the axis-crossing table will have entries for the
+  // primary meridian and equator.  Labelling was deferred in the
+  // previous call, and the table is passed intact on the second call
+  // to accumulate further axis-crossings.
 
-  /* Draw 90 degree meridians and poles in white. */
+  // Draw 90 degree meridians and poles in white.
   cpgsci(3);
   grid1[1] =  90.0;
   grid1[2] = 180.0;
@@ -623,7 +621,7 @@ int main()
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Draw the first set of 15 degree meridians and parallels in blue. */
+  // Draw the first set of 15 degree meridians and parallels in blue.
   cpgsci(4);
   grid1[1] =  15.0;
   grid1[2] =  60.0;
@@ -641,7 +639,7 @@ int main()
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Draw the second set of 15 degree meridians and parallels in red. */
+  // Draw the second set of 15 degree meridians and parallels in red.
   cpgsci(5);
   grid1[1] =  30.0;
   grid1[2] =  75.0;
@@ -659,26 +657,26 @@ int main()
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* The axis-crossing table has now accumulated information for all of */
-  /* the preceding meridians and parallels but no labels have been      */
-  /* produced.  It will acquire information for the the next set of     */
-  /* meridians and parallels before being processed by this call to     */
-  /* PGSBOX which finally produces the labels.                          */
+  // The axis-crossing table has now accumulated information for all of
+  // the preceding meridians and parallels but no labels have been
+  // produced.  It will acquire information for the the next set of
+  // meridians and parallels before being processed by this call to
+  // PGSBOX which finally produces the labels.
 
-  /* Draw the 45 degree meridians and parallels in grey and use colour  */
-  /* to differentiate grid labels. */
-  /* Meridians and parallels in grey. */
+  // Draw the 45 degree meridians and parallels in grey and use colour
+  // to differentiate grid labels.
+  // Meridians and parallels in grey.
   cpgscr(10, 0.7f, 0.7f, 0.7f);
   cpgscr(11, 0.7f, 0.7f, 0.7f);
-  /* Longitudes tinged red. */
+  // Longitudes tinged red.
   cpgscr(12, 1.0f, 0.9f, 0.6f);
-  /* Latitudes tinged green. */
+  // Latitudes tinged green.
   cpgscr(13, 0.8f, 1.0f, 0.9f);
-  /* Longitude labels tinged red. */
+  // Longitude labels tinged red.
   cpgscr(14, 1.0f, 0.9f, 0.6f);
-  /* Latitude labels tinged green. */
+  // Latitude labels tinged green.
   cpgscr(15, 0.8f, 1.0f, 0.9f);
-  /* Title in white. */
+  // Title in white.
   cpgscr(16, 1.0f, 1.0f, 1.0f);
 
   ci[0] = 10;
@@ -691,7 +689,7 @@ int main()
 
   cpgsci(6);
 
-  /* Tell PGSBOX what edges to label. */
+  // Tell PGSBOX what edges to label.
   grid1[1] =  45.0;
   grid1[2] = 135.0;
   grid1[3] = 225.0;
@@ -702,7 +700,7 @@ int main()
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Native grid in green (delineates boundary). */
+  // Native grid in green (delineates boundary).
   cpgsci(7);
   grid1[1] = -180.0;
   grid1[2] =  180.0;
@@ -718,28 +716,28 @@ int main()
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgsci(1);
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Plate Carree projection.
-  *   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
-  *   - Rectangular image.
-  *   - Dual coordinate grids.
-  *   - Non-separable (i.e. non-orthogonal) curvilinear coordinate system.
-  *   - Demonstrate parameter definition for PGWCSL.
-  *   - Discontinuous grid lines handled by PGWCSL.
-  *   - Colour coding of grid and labelling.
-  *   - Reduced size lettering.
-  *   - Manual labelling control.
-  *   - Manual and automatic choice of coordinate increments.
-  *   - Cyclic coordinates.  PGWCSL returns the longitude in the range -180
-  *     to +180 degrees, i.e. with a discontinuity at +/- 180 degrees.
-  *   - Suppression of labels that would overlap one another.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Plate Carree projection.
+  //   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
+  //   - Rectangular image.
+  //   - Dual coordinate grids.
+  //   - Non-separable (i.e. non-orthogonal) curvilinear coordinate system.
+  //   - Demonstrate parameter definition for PGWCSL.
+  //   - Discontinuous grid lines handled by PGWCSL.
+  //   - Colour coding of grid and labelling.
+  //   - Reduced size lettering.
+  //   - Manual labelling control.
+  //   - Manual and automatic choice of coordinate increments.
+  //   - Cyclic coordinates.  PGWCSL returns the longitude in the range -180
+  //     to +180 degrees, i.e. with a discontinuity at +/- 180 degrees.
+  //   - Suppression of labels that would overlap one another.
+  //--------------------------------------------------------------------------
 
   printf("\nPlate Carree projection\n");
 
@@ -751,7 +749,7 @@ int main()
   trc[0] = naxis[0] + 0.5;
   trc[1] = naxis[1] + 0.5;
 
-  /* Reset viewport for rectangular image. */
+  // Reset viewport for rectangular image.
   if (large) {
     cpgvstd();
   } else {
@@ -761,38 +759,38 @@ int main()
 
   wcsini(1, 2, &wcs);
 
-  /* Set projection type to plate carree. */
+  // Set projection type to plate carree.
   strcpy(wcs.ctype[0], "GLON-CAR");
   strcpy(wcs.ctype[1], "GLAT-CAR");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   wcs.crpix[0] = 226.0;
   wcs.crpix[1] =  46.0;
 
-  /* Linear transformation matrix. */
+  // Linear transformation matrix.
   rotn = 15.0*d2r;
   *(wcs.pc)   =  cos(rotn);
   *(wcs.pc+1) =  sin(rotn);
   *(wcs.pc+2) = -sin(rotn);
   *(wcs.pc+3) =  cos(rotn);
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   wcs.cdelt[0] = -1.0;
   wcs.cdelt[1] =  1.0;
 
-  /* Set parameters to draw the native grid. */
+  // Set parameters to draw the native grid.
   wcs.crval[0] = 0.0;
   wcs.crval[1] = 0.0;
 
-  /* The reference pixel was defined so that the native longitude runs   */
-  /* from 225 deg to 45 deg and this will cause the grid to be truncated */
-  /* at the 180 deg boundary.  However, being a cylindrical projection   */
-  /* it is possible to recentre it in longitude.  cylfix() will modify   */
-  /* modify CRPIX, CRVAL, and LONPOLE to suit.                           */
+  // The reference pixel was defined so that the native longitude runs
+  // from 225 deg to 45 deg and this will cause the grid to be truncated
+  // at the 180 deg boundary.  However, being a cylindrical projection
+  // it is possible to recentre it in longitude.  cylfix() will modify
+  // modify CRPIX, CRVAL, and LONPOLE to suit.
 
   cylfix(naxis, &wcs);
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "");
   strcpy(idents[1], "");
   strcpy(idents[2], "WCS plate caree projection");
@@ -800,16 +798,16 @@ int main()
   opt[0] = 'C';
   opt[1] = 'C';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.8f*scl);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   gcode[0] = 2;
   gcode[1] = 2;
 
-  /* Draw native grid in green. */
+  // Draw native grid in green.
   cpgscr(16, 0.0f, 0.2f, 0.0f);
-  /* Title in cyan. */
+  // Title in cyan.
   cpgscr(17, 0.3f, 1.0f, 1.0f);
 
   ci[0] = 16;
@@ -827,11 +825,11 @@ int main()
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Reset CRPIX previously modified by cylfix(). */
+  // Reset CRPIX previously modified by cylfix().
   wcs.crpix[0] = 226.0;
   wcs.crpix[1] =  46.0;
 
-  /* Galactic reference coordinates. */
+  // Galactic reference coordinates.
   wcs.crval[0] =  30.0;
   wcs.crval[1] =  35.0;
   wcs.lonpole  = 999.0;
@@ -839,7 +837,7 @@ int main()
 
   cylfix(naxis, &wcs);
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "longitude");
   strcpy(idents[1], "latitude");
   strcpy(idents[2], "");
@@ -847,18 +845,18 @@ int main()
   opt[0] = 'E';
   opt[1] = 'E';
 
-  /* Use colour to associate grid lines and labels. */
-  /* Meridians in red. */
+  // Use colour to associate grid lines and labels.
+  // Meridians in red.
   cpgscr(10, 0.5f, 0.0f, 0.0f);
-  /* Parallels in blue. */
+  // Parallels in blue.
   cpgscr(11, 0.0f, 0.2f, 0.5f);
-  /* Longitudes in red. */
+  // Longitudes in red.
   cpgscr(12, 0.8f, 0.3f, 0.0f);
-  /* Latitudes in blue. */
+  // Latitudes in blue.
   cpgscr(13, 0.0f, 0.4f, 0.7f);
-  /* Longitude labels in red. */
+  // Longitude labels in red.
   cpgscr(14, 0.8f, 0.3f, 0.0f);
-  /* Latitude labels in blue. */
+  // Latitude labels in blue.
   cpgscr(15, 0.0f, 0.4f, 0.7f);
 
   ci[0] = 10;
@@ -872,29 +870,29 @@ int main()
   grid1[0] = 0.0;
   grid2[0] = 0.0;
 
-  /* Draw the celestial grid letting PGSBOX choose the increments. */
+  // Draw the celestial grid letting PGSBOX choose the increments.
   ic = -1;
   cpgsbox(blc, trc, idents, opt, 21, 0, ci, gcode, 0.0, 0, grid1, 0, grid2,
     1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgsci(1);
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Plate Carree projection.
-  *   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
-  *   - BLC, TRC unrelated to pixel coordinates.
-  *   - Demonstrate parameter definition for PGWCSL.
-  *   - Poles and 180 meridian projected along edges of the frame.
-  *   - Reduced size lettering.
-  *   - Manual and automatic choice of coordinate increments.
-  *   - Suppression of common zero minute and second fields in sexagesimal
-  *     time format.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Plate Carree projection.
+  //   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
+  //   - BLC, TRC unrelated to pixel coordinates.
+  //   - Demonstrate parameter definition for PGWCSL.
+  //   - Poles and 180 meridian projected along edges of the frame.
+  //   - Reduced size lettering.
+  //   - Manual and automatic choice of coordinate increments.
+  //   - Suppression of common zero minute and second fields in sexagesimal
+  //     time format.
+  //--------------------------------------------------------------------------
 
   printf("\nPlate Carree projection\n");
 
@@ -903,7 +901,7 @@ int main()
   trc[0] =  180.0;
   trc[1] =  +90.0;
 
-  /*  Reset viewport for rectangular image. */
+  //  Reset viewport for rectangular image.
   if (large) {
     cpgvstd();
   } else {
@@ -913,23 +911,23 @@ int main()
 
   wcsini(1, 2, &wcs);
 
-  /* Set projection type to plate carree. */
+  // Set projection type to plate carree.
   strcpy(wcs.ctype[0], "RA---CAR");
   strcpy(wcs.ctype[1], "DEC--CAR");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   wcs.crpix[0] = 0.0;
   wcs.crpix[1] = 0.0;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   wcs.cdelt[0] = -1.0;
   wcs.cdelt[1] =  1.0;
 
-  /* Set parameters to draw the native grid. */
+  // Set parameters to draw the native grid.
   wcs.crval[0] = 0.0;
   wcs.crval[1] = 0.0;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "Right ascension");
   strcpy(idents[1], "Declination");
   strcpy(idents[2], "WCS plate caree projection");
@@ -937,10 +935,10 @@ int main()
   opt[0] = 'G';
   opt[1] = 'E';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.7f*scl);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   gcode[0] = 2;
   gcode[1] = 2;
 
@@ -954,21 +952,21 @@ int main()
     grid2, 1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256,
     &ic, cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Cylindrical perspective projection.
-  *   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
-  *   - BLC, TRC unrelated to pixel coordinates.
-  *   - Demonstrate parameter definition for PGWCSL.
-  *   - Reduced size lettering.
-  *   - Manual and automatic choice of coordinate increments.
-  *   - Suppression of common zero minute and second fields in sexagesimal
-  *     time format.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Cylindrical perspective projection.
+  //   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
+  //   - BLC, TRC unrelated to pixel coordinates.
+  //   - Demonstrate parameter definition for PGWCSL.
+  //   - Reduced size lettering.
+  //   - Manual and automatic choice of coordinate increments.
+  //   - Suppression of common zero minute and second fields in sexagesimal
+  //     time format.
+  //--------------------------------------------------------------------------
 
   printf("\nCylindrical perspective projection\n");
 
@@ -977,7 +975,7 @@ int main()
   trc[0] =  180.0;
   trc[1] =  +90.0;
 
-  /*  Reset viewport for rectangular image. */
+  //  Reset viewport for rectangular image.
   if (large) {
     cpgvstd();
   } else {
@@ -987,24 +985,24 @@ int main()
 
   wcsini(1, 2, &wcs);
 
-  /* Set projection type to cylindrical perspective. */
+  // Set projection type to cylindrical perspective.
   strcpy(wcs.ctype[0], "RA---CYP");
   strcpy(wcs.ctype[1], "DEC--CYP");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   wcs.crpix[0] = 0.0;
   wcs.crpix[1] = 0.0;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   wcs.cdelt[0] = -1.0;
   wcs.cdelt[1] =  1.0;
 
-  /* Set parameters to draw the native grid. */
+  // Set parameters to draw the native grid.
   wcs.crval[0] =  45.0;
   wcs.crval[1] = -90.0;
   wcs.lonpole  = 999.0;
 
-  /* mu and lambda projection parameters. */
+  // mu and lambda projection parameters.
   wcs.npv = 2;
   wcs.pv[0].i = 2;
   wcs.pv[0].m = 1;
@@ -1013,7 +1011,7 @@ int main()
   wcs.pv[1].m = 2;
   wcs.pv[1].value = 1.0;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "Right ascension");
   strcpy(idents[1], "Declination");
   strcpy(idents[2], "WCS cylindrical perspective projection");
@@ -1021,10 +1019,10 @@ int main()
   opt[0] = 'G';
   opt[1] = 'E';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.7f*scl);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   gcode[0] = 2;
   gcode[1] = 2;
 
@@ -1038,20 +1036,20 @@ int main()
     grid2, 1, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256,
     &ic, cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Gnomonic projection.
-  *   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
-  *   - Demonstrate parameter definition for PGWCSL.
-  *   - Reduced size lettering.
-  *   - Manual and automatic choice of coordinate increments.
-  *   - Suppression of common zero minute and second fields in sexagesimal
-  *     time format.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Gnomonic projection.
+  //   - PGSBOX uses subroutine PGWCSL to interface to WCSLIB.
+  //   - Demonstrate parameter definition for PGWCSL.
+  //   - Reduced size lettering.
+  //   - Manual and automatic choice of coordinate increments.
+  //   - Suppression of common zero minute and second fields in sexagesimal
+  //     time format.
+  //--------------------------------------------------------------------------
 
   printf("\nTAN projection\n");
 
@@ -1063,7 +1061,7 @@ int main()
   trc[0] = naxis[0] + 0.5;
   trc[1] = naxis[1] + 0.5;
 
-  /*  Reset viewport for rectangular image. */
+  //  Reset viewport for rectangular image.
   if (large) {
     cpgvstd();
   } else {
@@ -1073,24 +1071,24 @@ int main()
 
   wcsini(1, 2, &wcs);
 
-  /* Set projection type to gnomonic. */
+  // Set projection type to gnomonic.
   strcpy(wcs.ctype[0], "RA---TAN");
   strcpy(wcs.ctype[1], "DEC--TAN");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   wcs.crpix[0] = 50.5;
   wcs.crpix[1] =  1.0;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   wcs.cdelt[0] = 1e-3;
   wcs.cdelt[1] = 1e-3;
 
-  /* Set parameters to draw the native grid. */
+  // Set parameters to draw the native grid.
   wcs.crval[0] =  45.0;
   wcs.crval[1] = -89.7;
   wcs.lonpole  = 999.0;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "Right ascension");
   strcpy(idents[1], "Declination");
   strcpy(idents[2], "WCS TAN projection");
@@ -1098,10 +1096,10 @@ int main()
   opt[0] = 'E';
   opt[1] = 'E';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.7f*scl);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   gcode[0] = 2;
   gcode[1] = 2;
 
@@ -1115,22 +1113,22 @@ int main()
     grid2, 0, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256,
     &ic, cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Linear-linear plot with two types of alternative labelling.
-  *   - PGSBOX uses subroutine PGCRFN.
-  *   - Separable (i.e. orthogonal), linear coordinate system.
-  *   - Use of function PGCRFN for separable axis types.
-  *   - Alternative labelling and axis annotation.
-  *   - Direct manipulation of the axis-crossing table.
-  *   - Tick mark and grid line control.
-  *   - User selection of what edges to label.
-  *   - Automatic choice of coordinate increments.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Linear-linear plot with two types of alternative labelling.
+  //   - PGSBOX uses subroutine PGCRFN.
+  //   - Separable (i.e. orthogonal), linear coordinate system.
+  //   - Use of function PGCRFN for separable axis types.
+  //   - Alternative labelling and axis annotation.
+  //   - Direct manipulation of the axis-crossing table.
+  //   - Tick mark and grid line control.
+  //   - User selection of what edges to label.
+  //   - Automatic choice of coordinate increments.
+  //--------------------------------------------------------------------------
 
   printf("\nLinear plot with alternative labelling\n");
 
@@ -1149,23 +1147,23 @@ int main()
   trc[0] = naxis[0] + 0.5;
   trc[1] = naxis[1] + 0.5;
 
-  /* Function types. */
-  strncpy(fcode[0], "Lin ", 4);
-  strncpy(fcode[1], "Lin ", 4);
+  // Function types.
+  memcpy(fcode[0], "Lin ", 4);
+  memcpy(fcode[1], "Lin ", 4);
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   nldprm[0] = 0.5;
   nldprm[1] = 0.5;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   nldprm[2] = 0.03;
   nldprm[3] = 0.03;
 
-  /* Reference pixel values. */
+  // Reference pixel values.
   nldprm[4] = 20.0;
   nldprm[5] =  0.0;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "temperature of frog (\\uo\\dC)");
   strcpy(idents[1], "distance hopped (m)");
   strcpy(idents[2], "");
@@ -1173,92 +1171,92 @@ int main()
   opt[0] = ' ';
   opt[1] = ' ';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.8f*scl);
 
-  /* Draw tick marks at the bottom for the first coordinate, grid lines  */
-  /* for the second.  Setting GCODE[0] = -1 inhibits information being   */
-  /* stored for labels on the top edge while GCODE[1] = 2 causes         */
-  /* information to be stored for labels on the right edge even if those */
-  /* labels are not actually produced.                                   */
+  // Draw tick marks at the bottom for the first coordinate, grid lines
+  // for the second.  Setting GCODE[0] = -1 inhibits information being
+  // stored for labels on the top edge while GCODE[1] = 2 causes
+  // information to be stored for labels on the right edge even if those
+  // labels are not actually produced.
   cpgsci(1);
   gcode[0] = -1;
   gcode[1] =  2;
   grid1[0] = 0.0;
   grid2[0] = 0.0;
 
-  /* Set LABCTL = 21 to label the bottom and left edges only. */
+  // Set LABCTL = 21 to label the bottom and left edges only.
   ic = -1;
   cpgsbox(blc, trc, idents, opt, 21, 0, c0, gcode, 2.0, 0, grid1, 0, grid2,
     0, pgcrfn_, 8, 2, 4, fcode[0], nliprm, nldprm, 256, &ic, cache, &ierr);
 
-  /* Information for labels on the right edge was stored in the crossing   */
-  /* table on the first call to PGSBOX.  We now want to manipulate it to   */
-  /* convert metres to feet.  Note that while it's a simple matter to draw */
-  /* alternative sets of tick marks on opposite edges of the frame, as     */
-  /* with the two temperature scales, we have the slightly more difficult  */
-  /* requirement of labelling grid lines with different values at each     */
-  /* end.                                                                  */
-  for (j = 0; j <= ic; j++) {
-    /* Look for entries associated with the right edge of the frame. */
+  // Information for labels on the right edge was stored in the crossing
+  // table on the first call to PGSBOX.  We now want to manipulate it to
+  // convert metres to feet.  Note that while it's a simple matter to draw
+  // alternative sets of tick marks on opposite edges of the frame, as
+  // with the two temperature scales, we have the slightly more difficult
+  // requirement of labelling grid lines with different values at each
+  // end.
+  for (int j = 0; j <= ic; j++) {
+    // Look for entries associated with the right edge of the frame.
     if (cache[j][0] == 4.0) {
-      /* Convert to feet, rounding to the nearest 0.1. */
+      // Convert to feet, rounding to the nearest 0.1.
       cache[j][3] *= 1e3/(25.4*12.0);
       cache[j][3] = floor(cache[j][3]*10.0 + 0.5)/10.0;
     }
   }
 
-  /* Annotation for the right edge. */
+  // Annotation for the right edge.
   strcpy(idents[0], "");
   strcpy(idents[1], "(feet)");
 
-  /* Set LABCTL = 12000 to label the right edge with the second coordinate */
-  /* without redrawing the grid lines. */
+  // Set LABCTL = 12000 to label the right edge with the second coordinate
+  // without redrawing the grid lines.
   cpgsbox(blc, trc, idents, opt, 12000, 0, c0, gcode, 2.0, 0, grid1, 0,
     grid2, 0, pgcrfn_, 8, 2, 4, fcode[0], nliprm, nldprm, 256, &ic, cache,
     &ierr);
 
-  /* The alternative temperature scale in Fahrenheit is to be constructed */
-  /* with a new set of tick marks. */
+  // The alternative temperature scale in Fahrenheit is to be constructed
+  // with a new set of tick marks.
   nldprm[2] = nldprm[2]*1.8;
   nldprm[4] = nldprm[4]*1.8 + 32.0;
 
-  /* Draw tick marks at the top for the first coordinate, don't redo grid */
-  /* lines for the second. */
+  // Draw tick marks at the top for the first coordinate, don't redo grid
+  // lines for the second.
   gcode[0] = -100;
   gcode[1] = 0;
 
-  /* Annotation for the top edge. */
+  // Annotation for the top edge.
   strcpy(idents[0], "(\\uo\\dF)");
   strcpy(idents[1], "");
 
-  /* Set LABCTL = 100 to label the top edge; Set IC = -1 to redetermine */
-  /* the coordinate extrema. */
+  // Set LABCTL = 100 to label the top edge; Set IC = -1 to redetermine
+  // the coordinate extrema.
   ic = -1;
   cpgsbox(blc, trc, idents, opt, 100, 0, c0, gcode, 2.0, 0, grid1, 0, grid2,
     0, pgcrfn_, 8, 2, 4, fcode[0], nliprm, nldprm, 256, &ic, cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("bc", 0.0f, 0, "bc", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Calendar axes using subroutine PGLBOX.
-  *   - Separable (i.e. orthogonal), linear coordinate system.
-  *   - Use of PGLBOX for simple linear axis types.
-  *   - Automatic choice of what edges to label; results in labelling the
-  *     bottom and left sides of the plot.
-  *   - Automatic choice of coordinate increments.
-  *   - Calendar date axis labelling.
-  *   - Single-character annotation on a vertical axis is upright.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Calendar axes using subroutine PGLBOX.
+  //   - Separable (i.e. orthogonal), linear coordinate system.
+  //   - Use of PGLBOX for simple linear axis types.
+  //   - Automatic choice of what edges to label; results in labelling the
+  //     bottom and left sides of the plot.
+  //   - Automatic choice of coordinate increments.
+  //   - Calendar date axis labelling.
+  //   - Single-character annotation on a vertical axis is upright.
+  //--------------------------------------------------------------------------
 
   printf("\nCalendar axes using subroutine PGLBOX\n");
 
   cpgswin(51900.0f, 52412.0f, 51900.0f, 57020.0f);
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "Date started");
   strcpy(idents[1], "Date finished");
   strcpy(idents[2], "Calendar axes using subroutine PGLBOX");
@@ -1266,10 +1264,10 @@ int main()
   opt[0] = 'Y';
   opt[1] = 'Y';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.7f*scl);
 
-  /* Draw tick marks on each axis. */
+  // Draw tick marks on each axis.
   cpgsci(1);
   gcode[0] = 1;
   gcode[1] = 1;
@@ -1280,20 +1278,20 @@ int main()
   cpglbox(idents, opt, 0, 0, c0, gcode, 2.0, 0, grid1, 0, grid2, 0, 256, &ic,
     cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*--------------------------------------------------------------------------
-  * Simple linear axes handled by PGWCSL.
-  *   - Separable (i.e. orthogonal), linear coordinate system.
-  *   - Automatic choice of what edges to label; results in labelling the
-  *     bottom and left sides of the plot.
-  *   - Automatic choice of coordinate increments.
-  *   - Tick marks and labels at the edges of the frame.
-  *   - Single-character annotation on a vertical axis is upright.
-  *------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
+  // Simple linear axes handled by PGWCSL.
+  //   - Separable (i.e. orthogonal), linear coordinate system.
+  //   - Automatic choice of what edges to label; results in labelling the
+  //     bottom and left sides of the plot.
+  //   - Automatic choice of coordinate increments.
+  //   - Tick marks and labels at the edges of the frame.
+  //   - Single-character annotation on a vertical axis is upright.
+  //--------------------------------------------------------------------------
 
   printf("\nSimple linear axes handled by pgwcsl()\n");
 
@@ -1310,19 +1308,19 @@ int main()
   strcpy(wcs.ctype[0], "x");
   strcpy(wcs.ctype[1], "y");
 
-  /* Reference pixel coordinates. */
+  // Reference pixel coordinates.
   wcs.crpix[0] = 2.0;
   wcs.crpix[1] = 2.0;
 
-  /* Coordinate increments. */
+  // Coordinate increments.
   wcs.cdelt[0] = 1.0;
   wcs.cdelt[1] = 1.0;
 
-  /* Spherical coordinate references. */
+  // Spherical coordinate references.
   wcs.crval[0] = 2.0;
   wcs.crval[1] = 2.0;
 
-  /* Annotation. */
+  // Annotation.
   strcpy(idents[0], "X");
   strcpy(idents[1], "Y");
   strcpy(idents[2], "Simple linear axes handled by pgwcsl()");
@@ -1330,10 +1328,10 @@ int main()
   opt[0] = ' ';
   opt[1] = ' ';
 
-  /* Reduced size lettering. */
+  // Reduced size lettering.
   cpgsch(0.8f*scl);
 
-  /* Draw full grid lines. */
+  // Draw full grid lines.
   cpgsci(1);
   gcode[0] = 1;
   gcode[1] = 1;
@@ -1346,12 +1344,12 @@ int main()
     0, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(&wcs), nldprm, 256, &ic,
     cache, &ierr);
 
-  /* Draw the frame. */
+  // Draw the frame.
   cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
   cpgpage();
 
-  /*------------------------------------------------------------------------*/
+  //--------------------------------------------------------------------------
 
   wcsfree(&wcs);
 

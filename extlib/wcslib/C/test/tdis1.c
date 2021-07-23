@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tdis1.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tdis1.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tdis1 tests the WCSLIB distortion functions for closure.  Input comes from
@@ -47,9 +44,9 @@
 
 int tpv2poly(struct wcsprm *wcs);
 
-/* Absolute and fractional tolerance.  Distortions are typically used on  */
-/* large images, so the absolute tolerance in the corners may not be very */
-/* high, simply due to floating point precision.                          */
+// Absolute and fractional tolerance.  Distortions are typically used on
+// large images, so the absolute tolerance in the corners may not be very
+// high, simply due to floating point precision.
 const double ATOL = 1.0e-9;
 const double FTOL = 1.0e-10;
 
@@ -75,27 +72,27 @@ int main(int argc, char *argv[])
   wcserr_enable(1);
   wcsprintf_set(stdout);
 
-  /* Set line buffering in case stdout is redirected to a file, otherwise
-   * stdout and stderr messages will be jumbled (stderr is unbuffered). */
+  // Set line buffering in case stdout is redirected to a file, otherwise
+  // stdout and stderr messages will be jumbled (stderr is unbuffered).
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   wcsprintf("Testing closure of WCSLIB distortion routines (tdis1.c)\n"
             "-------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   wcsprintf("\nList of dis status return values:\n");
   for (status = 1; status <= 5; status++) {
     wcsprintf("%4d: %s.\n", status, dis_errmsg[status]);
   }
   wcsprintf("\n");
 
-  /* Optional file name specified? */
+  // Optional file name specified?
   if (1 < argc) {
     infile = argv[1];
   }
 
 
-  /* Read in the FITS header, excluding COMMENT and HISTORY keyrecords. */
+  // Read in the FITS header, excluding COMMENT and HISTORY keyrecords.
   if ((fptr = fopen(infile, "r")) == 0) {
     wcsprintf("ERROR opening %s\n", infile);
     return 1;
@@ -131,12 +128,12 @@ int main(int argc, char *argv[])
         continue;
       }
 
-      strncpy(header+k, keyrec, 80);
+      memcpy(header+k, keyrec, 80);
       k += 80;
       nkeyrec++;
 
       if (strncmp(keyrec, "END       ", 10) == 0) {
-        /* An END keyrecord was read, but read the rest of the block. */
+        // An END keyrecord was read, but read the rest of the block.
         gotend = 1;
       }
     }
@@ -146,23 +143,23 @@ int main(int argc, char *argv[])
   fclose(fptr);
 
 
-  /* Parse the header. */
+  // Parse the header.
   if ((wcspih(header, nkeyrec, WCSHDR_none, 2, &nreject, &nwcs, &wcs))) {
     wcsperr(wcs, 0x0);
     return 1;
   }
 
-  /* Is it TPV? */
+  // Is it TPV?
   dopoly = 0;
   if (strcmp(wcs->ctype[0], "RA---TPV") == 0) {
-    /* Copy it and translate to Polynomial for later use. */
+    // Copy it and translate to Polynomial for later use.
     wcspol.flag = -1;
     if (wcscopy(1, wcs, &wcspol)) {
       wcsperr(wcs, 0x0);
       return 1;
     }
 
-    /* Translate TPV to Polynomial. */
+    // Translate TPV to Polynomial.
     tpv2poly(&wcspol);
 
     wcspol.flag = -1;
@@ -175,16 +172,16 @@ int main(int argc, char *argv[])
   }
 
 
-  /* wcsset() translates the TPV "projection" into a sequent distortion. */
+  // wcsset() translates the TPV "projection" into a sequent distortion.
   if (wcsset(wcs)) {
     wcsperr(wcs, 0x0);
     return 1;
   }
 
-  /* Henceforth, we will work with linprm. */
+  // Henceforth, we will work with linprm.
   lin = &(wcs->lin);
 
-  /* Get statistics on the distortion in the inner quarter of the image. */
+  // Get statistics on the distortion in the inner quarter of the image.
   maxdis = stats;
   maxtot = maxdis + 2;
   avgdis = maxtot + 1;
@@ -226,12 +223,12 @@ int main(int argc, char *argv[])
                    rmsdis[0], rmsdis[1], *rmstot);
 
   if (lin->disseq) {
-    /* Exercise diswarp() as well. */
+    // Exercise diswarp() as well.
     wcsprintf("\n");
 
-    /* Define a rectangle in intermediate pixel coordinates that just */
-    /* encompasses the inner quarter of the image.  For this we need  */
-    /* to switch off CDELTia scaling and all distortions.             */
+    // Define a rectangle in intermediate pixel coordinates that just
+    // encompasses the inner quarter of the image.  For this we need
+    // to switch off CDELTia scaling and all distortions.
     affine.flag = -1;
     if ((status = lincpy(1, lin, &affine))) {
       linperr(lin, 0x0);
@@ -305,7 +302,7 @@ int main(int argc, char *argv[])
   }
 
 
-  /* The image size determines the test domain. */
+  // The image size determines the test domain.
   if ((naxis1 = naxis[0]) == 0) {
     naxis1 = 2*wcs->crpix[0] + 1;
   }
@@ -313,7 +310,7 @@ int main(int argc, char *argv[])
     naxis2 = 2*wcs->crpix[1] + 1;
   }
 
-  /* Limit the number of tests. */
+  // Limit the number of tests.
   inc = 1;
   while ((naxis1/inc)*(naxis2/inc) > 800000) {
     inc *= 2;
@@ -343,7 +340,7 @@ int main(int argc, char *argv[])
 
     wcsprintf("\n");
 
-    /* Now the closure test. */
+    // Now the closure test.
     tp2x  = 0;
     tx2p  = 0;
     nTest = 0;
@@ -374,7 +371,7 @@ int main(int argc, char *argv[])
       }
       tx2p += clock() - t0;
 
-      /* Check closure. */
+      // Check closure.
       k = 0;
       for (k = 0; k < 2*n ; k += 2) {
         dp1 = fabs(px1[k]   - px0[k]);
@@ -440,7 +437,7 @@ int main(int argc, char *argv[])
   }
 
 
-  /* Compare TPV with Polynomial over the test domain. */
+  // Compare TPV with Polynomial over the test domain.
   if (dopoly) {
     wcsprintf("\n");
 
@@ -466,7 +463,7 @@ int main(int argc, char *argv[])
         break;
       }
 
-      /* Check agreement. */
+      // Check agreement.
       k = 0;
       for (k = 0; k < 2*n ; k += 2) {
         dp1 = fabs(img2[k]   - img1[k]);
@@ -521,38 +518,38 @@ int tpv2poly(struct wcsprm *wcs)
 
 {
   const int tpvpow[40][3] = {
-    {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {2, 0, 0},	/*  0 -  4 */
-    {1, 1, 0}, {0, 2, 0}, {3, 0, 0}, {2, 1, 0}, {1, 2, 0},	/*  5 -  9 */
-    {0, 3, 0}, {0, 0, 3}, {4, 0, 0}, {3, 1, 0}, {2, 2, 0},	/* 10 - 14 */
-    {1, 3, 0}, {0, 4, 0}, {5, 0, 0}, {4, 1, 0}, {3, 2, 0},	/* 15 - 19 */
-    {2, 3, 0}, {1, 4, 0}, {0, 5, 0}, {0, 0, 5}, {6, 0, 0},	/* 20 - 24 */
-    {5, 1, 0}, {4, 2, 0}, {3, 3, 0}, {2, 4, 0}, {1, 5, 0},	/* 25 - 29 */
-    {0, 6, 0}, {7, 0, 0}, {6, 1, 0}, {5, 2, 0}, {4, 3, 0},	/* 30 - 34 */
-    {3, 4, 0}, {2, 5, 0}, {1, 6, 0}, {0, 7, 0}, {0, 0, 7}};	/* 35 - 39 */
+    {0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}, {2, 0, 0},	//  0 -  4
+    {1, 1, 0}, {0, 2, 0}, {3, 0, 0}, {2, 1, 0}, {1, 2, 0},	//  5 -  9
+    {0, 3, 0}, {0, 0, 3}, {4, 0, 0}, {3, 1, 0}, {2, 2, 0},	// 10 - 14
+    {1, 3, 0}, {0, 4, 0}, {5, 0, 0}, {4, 1, 0}, {3, 2, 0},	// 15 - 19
+    {2, 3, 0}, {1, 4, 0}, {0, 5, 0}, {0, 0, 5}, {6, 0, 0},	// 20 - 24
+    {5, 1, 0}, {4, 2, 0}, {3, 3, 0}, {2, 4, 0}, {1, 5, 0},	// 25 - 29
+    {0, 6, 0}, {7, 0, 0}, {6, 1, 0}, {5, 2, 0}, {4, 3, 0},	// 30 - 34
+    {3, 4, 0}, {2, 5, 0}, {1, 6, 0}, {0, 7, 0}, {0, 0, 7}};	// 35 - 39
 
-  char dqi[8], dqifield[32];
+  char dqi[16], dqifield[32];
   int  i, k, m, naux, nterms;
   struct disprm *dis;
   struct dpkey  *keyp;
 
-  /* Attach a disprm struct to linprm.  Also inits it. */
+  // Attach a disprm struct to linprm.  Also inits it.
   if ((dis = calloc(1, sizeof(struct disprm))) == 0x0) {
     return 1;
   }
 
-  /* Set values in the disprm struct. */
+  // Set values in the disprm struct.
   dis->flag = -1;
-  disndp(22 + 3*wcs->npv);
+  disndp(24 + 3*wcs->npv);
   lindis(2, &(wcs->lin), dis);
 
 
-  /* The asterisk after the name prevents translation to TPD. */
+  // The asterisk after the name prevents translation to TPD.
   sprintf(dis->dtype[0], "Polynomial*");
   sprintf(dis->dtype[1], "Polynomial*");
 
   keyp = dis->dp;
   for (i = 1; i <= 2; i++) {
-    /* Glean essential information from the PVi_ma. */
+    // Glean essential information from the PVi_ma.
     naux   = 0;
     nterms = 0;
     for (k = 0; k < wcs->npv; k++) {
@@ -563,11 +560,12 @@ int tpv2poly(struct wcsprm *wcs)
       nterms++;
     }
 
-    /* Distortion parameters for axis i. */
+    // Distortion parameters for axis i.
     sprintf(dqi, "DQ%d", i);
     dpfill(keyp++, dqi, "NAXES",  i, 0, 2, 0.0);
     dpfill(keyp++, dqi, "AXIS.1", i, 0, (i==1)?1:2, 0.0);
     dpfill(keyp++, dqi, "AXIS.2", i, 0, (i==1)?2:1, 0.0);
+    dpfill(keyp++, dqi, "DOCORR", i, 0, 0, 0.0);
 
     if (naux) {
       dpfill(keyp++, dqi, "NAUX",   i, 0, 1, 0.0);
@@ -605,7 +603,7 @@ int tpv2poly(struct wcsprm *wcs)
   dis->ndp = keyp - dis->dp;
 
 
-  /* TPV now becomes TAN. */
+  // TPV now becomes TAN.
   strcpy(wcs->ctype[0]+5, "TAN");
   strcpy(wcs->ctype[1]+5, "TAN");
   wcs->npv = 0;

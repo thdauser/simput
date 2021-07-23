@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcserr_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: wcserr_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -31,23 +28,27 @@
 #include <wcserr.h>
 #include <wcsutil.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define wcserr_get_  F77_FUNC(wcserr_get, WCSERR_GET)
 #define wcserr_gtc_  F77_FUNC(wcserr_gtc, WCSERR_GTC)
 #define wcserr_gti_  F77_FUNC(wcserr_gti, WCSERR_GTI)
 
 #define wcserr_enable_  F77_FUNC(wcserr_enable, WCSERR_ENABLE)
+#define wcserr_size_    F77_FUNC(wcserr_size, WCSERR_SIZE)
 #define wcserr_prt_     F77_FUNC(wcserr_prt, WCSERR_PRT)
 #define wcserr_clear_   F77_FUNC(wcserr_clear, WCSERR_CLEAR)
 
+// Must match the values set in wcserr.inc.
 #define WCSERR_STATUS   200
 #define WCSERR_LINE_NO  201
 #define WCSERR_FUNCTION 202
 #define WCSERR_FILE     203
 #define WCSERR_MSG      204
 
-/*--------------------------------------------------------------------------*/
+#define WCSERR_MSG_LENGTH 512
+
+//----------------------------------------------------------------------------
 
 int wcserr_get_(const int *err, const int *what, void *value)
 
@@ -56,7 +57,7 @@ int wcserr_get_(const int *err, const int *what, void *value)
   int    *ivalp;
   const struct wcserr *errp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   errp  = (const struct wcserr *)err;
   cvalp = (char *)value;
   ivalp = (int *)value;
@@ -69,16 +70,18 @@ int wcserr_get_(const int *err, const int *what, void *value)
     *ivalp = errp->line_no;
     break;
   case WCSERR_FUNCTION:
-    strncpy(cvalp, errp->function, 72);
-    wcsutil_blank_fill(72, cvalp);
+    wcsutil_strcvt(72, ' ', 0, errp->function, cvalp);
     break;
   case WCSERR_FILE:
-    strncpy(cvalp, errp->file, 72);
-    wcsutil_blank_fill(72, cvalp);
+    wcsutil_strcvt(72, ' ', 0, errp->file, cvalp);
     break;
   case WCSERR_MSG:
-    strncpy(cvalp, errp->msg, WCSERR_MSG_LENGTH);
-    wcsutil_blank_fill(WCSERR_MSG_LENGTH, cvalp);
+    // The character variable must be of length WCSERR_MSG_LENGTH.
+    if (errp) {
+      wcsutil_strcvt(WCSERR_MSG_LENGTH, ' ', 0, errp->msg, cvalp);
+    } else {
+      wcsutil_strcvt(WCSERR_MSG_LENGTH, ' ', 0, "", cvalp);
+    }
     break;
   default:
     return 1;
@@ -97,7 +100,7 @@ int wcserr_gti_(const int *wcs, const int *what, int *value)
   return wcserr_get_(wcs, what, value);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcserr_enable_(const int *enable)
 
@@ -105,23 +108,34 @@ int wcserr_enable_(const int *enable)
   return wcserr_enable(*enable);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
+
+int wcserr_size_(const int *err, int sizes[2])
+
+{
+  return wcserr_size((const struct wcserr *)err, sizes);
+}
+
+//----------------------------------------------------------------------------
+
+// If null-terminated (using the Fortran CHAR(0) intrinsic), prefix may be of
+// length less than but not exceeding 72 and trailing blanks are preserved.
+// Otherwise, it must be of length 72 and trailing blanks are stripped off.
 
 int wcserr_prt_(const int *err, const char prefix[72])
 
 {
-  char prefix_[72];
-  strncpy(prefix_, prefix, 72);
-  prefix_[71] = '\0';
+  char prefix_[73];
+  wcsutil_strcvt(72, '\0', 1, prefix, prefix_);
 
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling WCSERR_PRT in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling WCSERR_PRT in the Fortran code.
   fflush(NULL);
 
   return wcserr_prt((const struct wcserr *)err, prefix_);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcserr_clear_(int **errp)
 

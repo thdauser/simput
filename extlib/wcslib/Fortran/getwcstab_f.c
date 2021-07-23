@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,24 +17,22 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: getwcstab_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: getwcstab_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <getwcstab.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define ftwcst_ F77_FUNC(ftwcst, FTWCST)
 
-/* CFITSIO global variable defined by/for the FITSIO wrappers that maps
- * Fortran unit numbers to fitsfile *; see f77_wrap.h and f77_wrap1.c.  */
+// CFITSIO global variable defined by/for the FITSIO wrappers that maps
+// Fortran unit numbers to fitsfile *; see f77_wrap.h and f77_wrap1.c.
 extern fitsfile *gFitsFiles[];
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int ftwcst_(
   int *unit,
@@ -44,8 +41,8 @@ int ftwcst_(
   int *status)
 
 {
-  /* *wtb is meant to hold a pointer to a wtbarr struct.  On 64-bit machines
-     sizeof(void *) = 2 * sizeof(int) = sizeof(long). */
+  // *wtb is meant to hold a pointer to a wtbarr struct.  On 64-bit machines
+  // sizeof(void *) = 2 * sizeof(int) = sizeof(long).
   long wtbp = *((long *)wtb);
   return fits_read_wcstab(gFitsFiles[*unit], *nwtb, (void *)wtbp, status);
 }

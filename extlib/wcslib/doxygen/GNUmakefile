@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building the documentation for WCSLIB 5.19
+# GNU makefile for building the documentation for WCSLIB 7.7
 #
 # Summary of the main targets
 # ---------------------------
@@ -15,9 +15,10 @@
 #
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: GNUmakefile,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+# $Id: GNUmakefile,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 #-----------------------------------------------------------------------------
 # Get configure settings.
+SUBDIR := doxygen
 include ../makedefs
 
 DOXHDRS  := $(notdir $(wildcard ../C/*.h))
@@ -77,6 +78,7 @@ clean :
 	- $(RM) core
 
 cleaner distclean realclean : clean
+	- $(RM) *.log
 	- $(RM) doxextr doxextr.c wcslib.h
 	- $(RM) $(DOXMARX)
 	- $(RM) wcslib.tag

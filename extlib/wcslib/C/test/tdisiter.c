@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tdisiter.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tdisiter.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tdisiter tests the external setting of ITERMAX in disx2p(), particularly
@@ -62,17 +59,17 @@ int main(int argc, char *argv[])
   wcserr_enable(1);
   wcsprintf_set(stdout);
 
-  /* Set line buffering in case stdout is redirected to a file, otherwise
-   * stdout and stderr messages will be jumbled (stderr is unbuffered). */
+  // Set line buffering in case stdout is redirected to a file, otherwise
+  // stdout and stderr messages will be jumbled (stderr is unbuffered).
   setvbuf(stdout, NULL, _IOLBF, 0);
 
-  /* Optional file name specified? */
+  // Optional file name specified?
   if (1 < argc) {
     infile = argv[1];
   }
 
 
-  /* Read in the FITS header, excluding COMMENT and HISTORY keyrecords. */
+  // Read in the FITS header, excluding COMMENT and HISTORY keyrecords.
   if ((fptr = fopen(infile, "r")) == 0) {
     wcsprintf("ERROR opening %s\n", infile);
     return 1;
@@ -113,7 +110,7 @@ int main(int argc, char *argv[])
       nkeyrec++;
 
       if (strncmp(keyrec, "END       ", 10) == 0) {
-        /* An END keyrecord was read, but read the rest of the block. */
+        // An END keyrecord was read, but read the rest of the block.
         gotend = 1;
       }
     }
@@ -123,7 +120,7 @@ int main(int argc, char *argv[])
   fclose(fptr);
 
 
-  /* Parse the header. */
+  // Parse the header.
   if ((wcspih(header, nkeyrec, WCSHDR_none, 2, &nreject, &nwcs, &wcs))) {
     wcsperr(wcs, 0x0);
     return 1;

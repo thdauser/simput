@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tdis2.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tdis2.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TDIS2
@@ -44,9 +42,9 @@
 
       LOGICAL   GOTEND
       INTEGER   DISP(2), IBLOCK, IKEYRC, J, JK, JN, K, NAXIS, NDP,
-     :          NKEYRC, NREJECT, NWCS, STATUS, WCSP(2)
+     :          NKEYRC, NREJECT, NWCS, STATL, STATP, STATUS, WCSP(2)
       DOUBLE PRECISION MAXDIS(2), TOTDIS
-      CHARACTER DTYPE(2)*72, KEYREC*80, HEADER*288000, INFILE*9
+      CHARACTER DTYPE(2)*72, KEYREC*80, HEADER*28801, INFILE*9
 
 *     On some systems, such as Sun Sparc, the structs MUST be aligned
 *     on a double precision boundary, done here using an equivalence.
@@ -65,7 +63,7 @@
 
       DATA INFILE /'TPV7.fits'/
 *-----------------------------------------------------------------------
-      STATUS = WCSERR_ENABLE(1)
+      STATUS = WCSERR_ENABLE (1)
 
       WRITE (*, 10)
  10   FORMAT (
@@ -124,39 +122,40 @@
       STATUS = WCSVCOPY (WCSP, 0, WCS)
       IF (STATUS.NE.0) GO TO 999
 
-*     Translate the TPV "projection" into a sequent distortion.
-      STATUS = WCSSET(WCS)
+*     WCSSET translates the TPV "projection" into a sequent distortion.
+      STATUS = WCSSET (WCS)
       IF (STATUS.NE.0) THEN
-        STATUS = WCSPERR(WCS, CHAR(0))
+        STATUS = WCSPERR (WCS, CHAR(0))
         GO TO 999
       END IF
 
-*     Extract the linprm struct.
-      STATUS = WCSGET (WCS, WCS_LIN, LIN)
+*     Make a shallow copy of the linprm struct.
+      STATUS = WCSGTI (WCS, WCS_LIN, LIN)
       IF (STATUS.NE.0) THEN
-        STATUS = WCSPERR(WCS, CHAR(0))
+        STATUS = WCSPERR (WCS, CHAR(0))
         GO TO 999
       END IF
 
 *     Extract a "pointer" to the disprm struct.
-      STATUS = LINGET(LIN, LIN_DISSEQ, DISP)
+      STATUS = LINGTI (LIN, LIN_DISSEQ, DISP)
       IF (STATUS.NE.0) THEN
-        STATUS = LINPERR(LIN, CHAR(0))
+        STATUS = LINPERR (LIN, CHAR(0))
         GO TO 999
       END IF
 
-*     Add a little texture.
-      STATUS = DISPTD (1, DISP, DIS_MAXDIS, 2.0010D0, 1, 0)
-      IF (STATUS.NE.0) GO TO 997
-      STATUS = DISPTD (1, DISP, DIS_MAXDIS, 2.0020D0, 2, 0)
-      IF (STATUS.NE.0) GO TO 997
-      STATUS = DISPTD (1, DISP, DIS_TOTDIS, 3.0000D0, 0, 0)
-      IF (STATUS.NE.0) GO TO 997
+*     Add a little texture.  The first argument of DISPTD (and DISPRT,
+*     DISGET, etc.) is unity to indicate that DISP is a "pointer".
+      STATP = DISPTD (1, DISP, DIS_MAXDIS, 2.0010D0, 1, 0)
+      IF (STATP.NE.0) GO TO 998
+      STATP = DISPTD (1, DISP, DIS_MAXDIS, 2.0020D0, 2, 0)
+      IF (STATP.NE.0) GO TO 998
+      STATP = DISPTD (1, DISP, DIS_TOTDIS, 3.0000D0, 0, 0)
+      IF (STATP.NE.0) GO TO 998
 
 *     Print its contents.
       CALL FLUSH(6)
-      STATUS = DISPRT(1, DISP)
-      IF (STATUS.NE.0) GO TO 997
+      STATP = DISPRT (1, DISP)
+      IF (STATP.NE.0) GO TO 998
 
       WRITE (*, 70)
  70   FORMAT (/,'------------------------------------',
@@ -165,90 +164,92 @@
 
 *   Copy it the long way first to test the various PUT and GET routines.
 *     Start by reading everything from the first.
-      STATUS = DISGET (1, DISP, DIS_NAXIS,  NAXIS)
-      IF (STATUS.NE.0) GO TO 997
-      STATUS = DISGTC (1, DISP, DIS_DTYPE,  DTYPE)
-      IF (STATUS.NE.0) GO TO 997
-      STATUS = DISGTI (1, DISP, DIS_NDP,    NDP)
-      IF (STATUS.NE.0) GO TO 997
-      STATUS = DISGTD (1, DISP, DIS_DP,     DP)
-      IF (STATUS.NE.0) GO TO 997
-      STATUS = DISGTD (1, DISP, DIS_MAXDIS, MAXDIS)
-      IF (STATUS.NE.0) GO TO 997
-      STATUS = DISGTD (1, DISP, DIS_TOTDIS, TOTDIS)
-      IF (STATUS.NE.0) GO TO 997
+      STATP = DISGTI (1, DISP, DIS_NAXIS,  NAXIS)
+      IF (STATP.NE.0) GO TO 998
+      STATP = DISGTC (1, DISP, DIS_DTYPE,  DTYPE)
+      IF (STATP.NE.0) GO TO 998
+      STATP = DISGTI (1, DISP, DIS_NDP,    NDP)
+      IF (STATP.NE.0) GO TO 998
+      STATP = DISGTI (1, DISP, DIS_DP,     DP(1))
+      IF (STATP.NE.0) GO TO 998
+      STATP = DISGTD (1, DISP, DIS_MAXDIS, MAXDIS(1))
+      IF (STATP.NE.0) GO TO 998
+      STATP = DISGTD (1, DISP, DIS_TOTDIS, TOTDIS)
+      IF (STATP.NE.0) GO TO 998
 
-*     Initialize the destination.
-      STATUS = DISPUT (0, DISL, DIS_FLAG, -1, 0, 0)
-      IF (STATUS.NE.0) GO TO 998
-      STATUS = DISINI (0, NAXIS, DISL)
-      IF (STATUS.NE.0) GO TO 998
+*     Initialize the destination.  The first argument of DISPUT (and
+*     DISINI, etc.) is zero to indicate that DISL is an array (struct).
+      STATL = DISPTI (0, DISL, DIS_FLAG, -1, 0, 0)
+      IF (STATL.NE.0) GO TO 997
+      STATL = DISINI (0, NAXIS, DISL)
+      IF (STATL.NE.0) GO TO 997
 
 *     Copy to the destination.
       JK = 0
       JN = 0
       DO 110 J = 1, NAXIS
-        STATUS = DISPTD (0, DISL, DIS_DTYPE, DTYPE, J, 0)
-        IF (STATUS.NE.0) GO TO 998
+        STATL = DISPTC (0, DISL, DIS_DTYPE, DTYPE, J, 0)
+        IF (STATL.NE.0) GO TO 997
  110  CONTINUE
 
       DO 120 K = 1, NDP*DPLEN, DPLEN
-        STATUS = DISPTI (0, DISL, DIS_DP, DP(K), 0, 0)
+        STATL = DISPTI (0, DISL, DIS_DP, DP(K), 0, 0)
  120  CONTINUE
 
       DO 130 J = 1, NAXIS
-        STATUS = DISPTI (0, DISL, DIS_MAXDIS, MAXDIS(J), J, 0)
-        IF (STATUS.NE.0) GO TO 998
+        STATL = DISPTD (0, DISL, DIS_MAXDIS, MAXDIS(J), J, 0)
+        IF (STATL.NE.0) GO TO 997
  130  CONTINUE
 
-      STATUS = DISPTI (0, DISL, DIS_TOTDIS, TOTDIS, J, 0)
-      IF (STATUS.NE.0) GO TO 998
+      STATL = DISPTD (0, DISL, DIS_TOTDIS, TOTDIS, J, 0)
+      IF (STATL.NE.0) GO TO 997
 
-      STATUS = DISSET (0, DISL)
-      IF (STATUS.NE.0) GO TO 998
+      STATL = DISSET (0, DISL)
+      IF (STATL.NE.0) GO TO 997
 
 *     Print the second.
       CALL FLUSH(6)
-      STATUS = DISPRT(0, DISL)
-      IF (STATUS.NE.0) GO TO 998
+      STATL = DISPRT (0, DISL)
+      IF (STATL.NE.0) GO TO 997
 
       WRITE (*, 70)
 
 
 *   Now copy it the fast way.
-*     Start with a clean slate.
-      STATUS = DISINI (0, NAXIS, DISL)
-      IF (STATUS.NE.0) GO TO 998
-
-*     Here the source is a "pointer", and the destination a local array.
-      STATUS = DISCPY (1, DISP, DISL)
-      IF (STATUS.NE.0) GO TO 998
+*     DISCPY's first argument indicates that the source, DISP, is a
+*     "pointer", and the destination, DISL, a local array.  DISCPY
+*     will invoke DISINI on the destination, reusing memory allocated
+*     previously by DISINI and DISSET.
+      STATL = DISCPY (1, DISP, DISL)
+      IF (STATL.NE.0) GO TO 997
 
 *     A reset is required before printing.
-      STATUS = DISSET (0, DISL)
-      IF (STATUS.NE.0) GO TO 998
+      STATL = DISSET (0, DISL)
+      IF (STATL.NE.0) GO TO 997
 
 *     Print the copy.
       CALL FLUSH(6)
-      STATUS = DISPRT(0, DISL)
-      IF (STATUS.NE.0) GO TO 998
+      STATL = DISPRT (0, DISL)
+      IF (STATL.NE.0) GO TO 997
 
 
 *   Cleanup.
- 997  IF (STATUS.NE.0) THEN
-        STATUS = DISPERR(1, DISP, CHAR(0))
+ 997  IF (STATL.NE.0) THEN
+        STATUS = DISPERR (0, DISL, CHAR(0))
       END IF
 
-      GO TO 999
-
- 998  IF (STATUS.NE.0) THEN
-        STATUS = DISPERR(0, DISL, CHAR(0))
-      END IF
-
+*     Free memory allocated in the disprm struct.
       STATUS = DISFREE (0, DISL)
 
+ 998  IF (STATP.NE.0) THEN
+        STATUS = DISPERR (1, DISP, CHAR(0))
+      END IF
+
 *     Free memory allocated by WCSPIH, WCSINI, etc.
-*     Should free DISP as well.
  999  STATUS = WCSVFREE (NWCS, WCSP)
+
+*     Free memory, allocated via the call to WCSSET, in the copy we made.
+*     Also frees allocated memory in the shallow copy we made of linprm.
+      STATUS = WCSFREE (WCS)
 
       END

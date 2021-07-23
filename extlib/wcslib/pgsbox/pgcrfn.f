@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
-* Copyright (C) 1997-2018, Mark Calabretta
+* PGSBOX 7.7 - draw curvilinear coordinate axes for PGPLOT.
+* Copyright (C) 1997-2021, Mark Calabretta
 *
 * This file is part of PGSBOX.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning PGSBOX to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: pgcrfn.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: pgcrfn.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 *
 * PGCRFN defines separable pairs of non-linear coordinate systems for
@@ -104,6 +102,9 @@
 
       DATA FCODES(1:20)  /'Lin Log Pow         '/
 *-----------------------------------------------------------------------
+*     Circumvent "unused dummy argument" compiler warnings.
+      CONTXT(1) = 0D0
+
       IERR = 0
 
       IF (OPCODE.GT.0) THEN

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: ttab3.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: ttab3.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TTAB3
@@ -85,7 +83,7 @@
 
 
 *     Set up the lookup table.
-      STATUS = TABPUT (TAB, TAB_FLAG, -1, 0, 0)
+      STATUS = TABPTI (TAB, TAB_FLAG, -1, 0, 0)
       STATUS = TABINI(M, K, TAB)
       IF (STATUS.NE.0) THEN
         WRITE (*, 20) STATUS
@@ -93,14 +91,14 @@
         GO TO 999
       END IF
 
-      STATUS = TABPUT (TAB, TAB_M, M, 0, 0)
+      STATUS = TABPTI (TAB, TAB_M, M, 0, 0)
       DO 40 IM = 1, M
-        STATUS = TABPUT (TAB, TAB_K,     K(IM),     IM, 0)
-        STATUS = TABPUT (TAB, TAB_MAP,   MAP(IM),   IM, 0)
-        STATUS = TABPUT (TAB, TAB_CRVAL, CRVAL(IM), IM, 0)
+        STATUS = TABPTI (TAB, TAB_K,     K(IM),     IM, 0)
+        STATUS = TABPTI (TAB, TAB_MAP,   MAP(IM),   IM, 0)
+        STATUS = TABPTD (TAB, TAB_CRVAL, CRVAL(IM), IM, 0)
 
         DO 30 IK = 1, K(IM)
-          STATUS = TABPUT (TAB, TAB_INDEX, DBLE(IK-1), IM, IK)
+          STATUS = TABPTD (TAB, TAB_INDEX, DBLE(IK-1), IM, IK)
  30     CONTINUE
  40   CONTINUE
 
@@ -127,8 +125,8 @@
       IK = 1
       DO 80 J = 1, K2
         DO 70 I = 1, K1
-          STATUS = TABPUT (TAB, TAB_COORD, COORD(1,I,J), IK, 0)
-          STATUS = TABPUT (TAB, TAB_COORD, COORD(2,I,J), IK+1, 0)
+          STATUS = TABPTD (TAB, TAB_COORD, COORD(1,I,J), IK, 0)
+          STATUS = TABPTD (TAB, TAB_COORD, COORD(2,I,J), IK+1, 0)
           IK = IK + 2
  70     CONTINUE
  80   CONTINUE
@@ -161,7 +159,7 @@
         IK = 0
         DO 100 J = 1, 181
           IF (STAT(J,1).NE.0) THEN
-            IF (IK.GT.1) CALL PGLINE (K, XR, YR)
+            IF (IK.GT.1) CALL PGLINE (IK, XR, YR)
             IK = 0
             GO TO 100
           END IF

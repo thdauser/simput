@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcssub.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: twcssub.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * twcssub tests wcssub() which extracts the coordinate description for a
@@ -37,7 +34,7 @@
 #include <wcserr.h>
 
 
-/* In real life these would be encoded as FITS header keyrecords. */
+// In real life these would be encoded as FITS header keyrecords.
 const int NAXIS = 4;
 const double CRPIX[4] =  { 1025.0,  64.0, 512.0, 513.0};
 const double PC[4][4] = {{    1.1,   0.0,   0.0,   0.0},
@@ -68,27 +65,27 @@ int main()
   struct wcsprm wcs, wcsext;
   double *pcij;
 
-  PV[0].i = 1;			/* Frequency on axis 1. */
-  PV[0].m = 1;			/* Parameter number 1.  */
-  PV[0].value = -1.0;		/* PV1_1.               */
+  PV[0].i = 1;			// Frequency on axis 1.
+  PV[0].m = 1;			// Parameter number 1.
+  PV[0].value = -1.0;		// PV1_1.
 
-  PV[1].i = 3;			/* Latitude on axis 3.  */
-  PV[1].m = 1;			/* Parameter number 1.  */
-  PV[1].value = 2.0;		/* PV3_1.               */
+  PV[1].i = 3;			// Latitude on axis 3.
+  PV[1].m = 1;			// Parameter number 1.
+  PV[1].value = 2.0;		// PV3_1.
 
-  PV[2].i = 3;			/* Latitude on axis 3.  */
-  PV[2].m = 2;			/* Parameter number 2.  */
-  PV[2].value = 210.0;		/* PV3_2.               */
+  PV[2].i = 3;			// Latitude on axis 3.
+  PV[2].m = 2;			// Parameter number 2.
+  PV[2].value = 210.0;		// PV3_2.
 
-  PV[3].i = 3;			/* Latitude on axis 3.  */
-  PV[3].m = 3;			/* Parameter number 3.  */
-  PV[3].value = 60.0;		/* PV3_3.               */
+  PV[3].i = 3;			// Latitude on axis 3.
+  PV[3].m = 3;			// Parameter number 3.
+  PV[3].value = 60.0;		// PV3_3.
 
   NPV = 4;
 
-  PS[0].i = 2;			/* Time on axis 2.      */
-  PS[0].m = 1;			/* Parameter number 1.  */
-  strcpy(PS[0].value, "UTC");	/* PS2_1.               */
+  PS[0].i = 2;			// Time on axis 2.
+  PS[0].m = 1;			// Parameter number 1.
+  strcpy(PS[0].value, "UTC");	// PS2_1.
 
   NPS = 1;
 
@@ -137,7 +134,7 @@ int main()
   }
 
 
-  /* Initialize the wcsprm struct. */
+  // Initialize the wcsprm struct.
   wcserr_enable(1);
   (void) wcsset(&wcs);
 
@@ -147,7 +144,7 @@ int main()
   wcsprt(&wcs);
 
 
-  /* Extract the coordinate description for a subimage and add a new axis. */
+  // Extract the coordinate description for a subimage and add a new axis.
   nsub = 4;
   wcsext.flag = -1;
   axes[0] = WCSSUB_LONGITUDE;
@@ -166,7 +163,7 @@ int main()
   }
 
 
-  /* Set it up for failure by setting PC1_3 non-zero. */
+  // Set it up for failure by setting PC1_3 non-zero.
   *(wcs.pc+2) = 1.0;
   nsub = 2;
   axes[0] = 4;

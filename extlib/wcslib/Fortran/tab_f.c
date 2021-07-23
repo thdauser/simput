@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tab_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: tab_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -32,7 +29,7 @@
 #include <wcsutil.h>
 #include <tab.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define tabput_  F77_FUNC(tabput,  TABPUT)
 #define tabptd_  F77_FUNC(tabptd,  TABPTD)
@@ -46,12 +43,14 @@
 #define tabcpy_  F77_FUNC(tabcpy,  TABCPY)
 #define tabcmp_  F77_FUNC(tabcmp,  TABCMP)
 #define tabfree_ F77_FUNC(tabfree, TABFREE)
+#define tabsize_ F77_FUNC(tabsize, TABSIZE)
 #define tabprt_  F77_FUNC(tabprt,  TABPRT)
 #define tabperr_ F77_FUNC(tabperr, TABPERR)
 #define tabset_  F77_FUNC(tabset,  TABSET)
 #define tabx2s_  F77_FUNC(tabx2s,  TABX2S)
 #define tabs2x_  F77_FUNC(tabs2x,  TABS2X)
 
+// Must match the value set in tab.inc.
 #define TAB_FLAG     100
 #define TAB_M        101
 #define TAB_K        102
@@ -67,7 +66,7 @@
 #define TAB_EXTREMA  204
 #define TAB_ERR      205
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabput_(
   int *tab,
@@ -82,12 +81,12 @@ int tabput_(
   const double *dvalp;
   struct tabprm *tabp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   tabp  = (struct tabprm *)tab;
   ivalp = (const int *)value;
   dvalp = (const double *)value;
 
-  /* Convert 1-relative FITS axis numbers to 0-relative C array indices. */
+  // Convert 1-relative FITS axis numbers to 0-relative C array indices.
   m0 = *m - 1;
   k0 = *k - 1;
 
@@ -134,7 +133,7 @@ int tabpti_(int *tab, const int *what, const int *value, const int *m,
   return tabput_(tab, what, value, m, k);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabget_(const int *tab, const int *what, void *value)
 
@@ -146,7 +145,7 @@ int tabget_(const int *tab, const int *what, void *value)
   const int *itabp;
   const struct tabprm *tabp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   tabp  = (const struct tabprm *)tab;
   ivalp = (int *)value;
   dvalp = (double *)value;
@@ -181,7 +180,7 @@ int tabget_(const int *tab, const int *what, void *value)
     }
     break;
   case TAB_COORD:
-    /* Don't rely on tabprm.nc being set. */
+    // Don't rely on tabprm.nc being set.
     n = tabp->M;
     for (m = 0; m < tabp->M; m++) {
       n *= tabp->K[m];
@@ -220,7 +219,7 @@ int tabget_(const int *tab, const int *what, void *value)
     }
     break;
   case TAB_ERR:
-    /* Copy the contents of the wcserr struct. */
+    // Copy the contents of the wcserr struct.
     if (tabp->err) {
       itabp = (int *)(tabp->err);
       for (l = 0; l < ERRLEN; l++) {
@@ -249,7 +248,7 @@ int tabgti_(const int *tab, const int *what, int *value)
   return tabget_(tab, what, value);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabini_(const int *M, const int *K, int *tab)
 
@@ -257,7 +256,7 @@ int tabini_(const int *M, const int *K, int *tab)
   return tabini(1, *M, K, (struct tabprm *)tab);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabmem_(int *tab)
 
@@ -265,7 +264,7 @@ int tabmem_(int *tab)
   return tabmem((struct tabprm *)tab);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabcpy_(const int *tabsrc, int *tabdst)
 
@@ -273,7 +272,7 @@ int tabcpy_(const int *tabsrc, int *tabdst)
   return tabcpy(1, (const struct tabprm *)tabsrc, (struct tabprm *)tabdst);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabcmp_(
   const int *cmp,
@@ -287,7 +286,7 @@ int tabcmp_(
                 (const struct tabprm *)tab2, equal);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabfree_(int *tab)
 
@@ -295,39 +294,46 @@ int tabfree_(int *tab)
   return tabfree((struct tabprm *)tab);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
+
+int tabsize_(const int *tab, int sizes[2])
+
+{
+  return tabsize((const struct tabprm *)tab, sizes);
+}
+
+//----------------------------------------------------------------------------
 
 int tabprt_(const int *tab)
 
 {
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling TABPRT in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling TABPRT in the Fortran code.
   fflush(NULL);
 
   return tabprt((const struct tabprm *)tab);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-/* prefix should be null-terminated, or else of length 72 in which case
- * trailing blanks are not significant. */
+// If null-terminated (using the Fortran CHAR(0) intrinsic), prefix may be of
+// length less than but not exceeding 72 and trailing blanks are preserved.
+// Otherwise, it must be of length 72 and trailing blanks are stripped off.
 
 int tabperr_(int *tab, const char prefix[72])
 
 {
-  char prefix_[72];
+  char prefix_[73];
+  wcsutil_strcvt(72, '\0', 1, prefix, prefix_);
 
-  strncpy(prefix_, prefix, 72);
-  wcsutil_null_fill(72, prefix_);
-
-  /* This may or may not force the Fortran I/O buffers to be flushed. */
-  /* If not, try CALL FLUSH(6) before calling TABPERR in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.
+  // If not, try CALL FLUSH(6) before calling TABPERR in the Fortran code.
   fflush(NULL);
 
   return wcserr_prt(((struct tabprm *)tab)->err, prefix_);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabset_(int *tab)
 
@@ -335,7 +341,7 @@ int tabset_(int *tab)
   return tabset((struct tabprm *)tab);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabx2s_(
   int *tab,
@@ -349,7 +355,7 @@ int tabx2s_(
   return tabx2s((struct tabprm *)tab, *ncoord, *nelem, x, world, stat);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int tabs2x_(
   struct tabprm* tab,

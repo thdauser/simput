@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tcel1.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tcel1.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TCEL1
@@ -61,19 +59,19 @@
       STATUS = CELINI (NTV)
 
 *     Reference angles for the native graticule (in fact, the defaults).
-      STATUS = CELPUT (NTV, CEL_REF,   0D0, 1)
-      STATUS = CELPUT (NTV, CEL_REF,   0D0, 2)
+      STATUS = CELPTD (NTV, CEL_REF,   0D0, 1)
+      STATUS = CELPTD (NTV, CEL_REF,   0D0, 2)
 
 *     Set up Bonne's projection with conformal latitude at +35.
-      STATUS = CELGET (NTV, CEL_PRJ, PRJ)
-      STATUS = PRJPUT (PRJ, PRJ_CODE, 'BON', 0)
-      STATUS = PRJPUT (PRJ, PRJ_PV, 35D0, 1)
-      STATUS = CELPUT (NTV, CEL_PRJ, PRJ, 0)
+      STATUS = CELGTI (NTV, CEL_PRJ, PRJ)
+      STATUS = PRJPTC (PRJ, PRJ_CODE, 'BON', 0)
+      STATUS = PRJPTD (PRJ, PRJ_PV, 35D0, 1)
+      STATUS = CELPTI (NTV, CEL_PRJ, PRJ(1), 0)
 
 
 *     Celestial graticule.
       STATUS = CELINI (CEL)
-      STATUS = CELPUT (CEL, CEL_PRJ, PRJ, 0)
+      STATUS = CELPTI (CEL, CEL_PRJ, PRJ, 0)
 
 
 *     PGPLOT initialization.
@@ -107,18 +105,18 @@
 *           needed to determine the celestial latitude of the native
 *           pole.  These correspond to FITS keywords CRVAL1, CRVAL2,
 *           LONPOLE, and LATPOLE.
-            STATUS = CELPUT (CEL, CEL_FLAG, 0, 0)
-            STATUS = CELPUT (CEL, CEL_REF, DBLE(CRVAL1), 1)
-            STATUS = CELPUT (CEL, CEL_REF, DBLE(CRVAL2), 2)
-            STATUS = CELPUT (CEL, CEL_REF, DBLE(LNGPOL), 3)
-            STATUS = CELPUT (CEL, CEL_REF, DBLE(LATPOL), 4)
+            STATUS = CELPTI (CEL, CEL_FLAG, 0, 0)
+            STATUS = CELPTD (CEL, CEL_REF, DBLE(CRVAL1), 1)
+            STATUS = CELPTD (CEL, CEL_REF, DBLE(CRVAL2), 2)
+            STATUS = CELPTD (CEL, CEL_REF, DBLE(LNGPOL), 3)
+            STATUS = CELPTD (CEL, CEL_REF, DBLE(LATPOL), 4)
 
 *           Skip invalid values of LONPOLE.
             STATUS = CELSET (CEL)
             IF (STATUS.NE.0) GO TO 170
 
 *           Skip redundant values of LATPOLE.
-            STATUS = CELGET (CEL, CEL_REF, REF)
+            STATUS = CELGTD (CEL, CEL_REF, REF)
             IF (LATPOL.EQ.1 .AND. ABS(REF(4)).LT.0.1D0) GO TO 170
 
 *           Buffer PGPLOT output.

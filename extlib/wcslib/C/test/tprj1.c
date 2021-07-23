@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tprj1.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tprj1.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tproj1 tests spherical projections for closure.
@@ -52,7 +49,7 @@ int main()
     "Testing closure of WCSLIB spherical projection routines (tprj1.c)\n"
     "-----------------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of prj status return values:\n");
   for (status = 1; status <= 4; status++) {
     printf("%4d: %s.\n", status, prj_errmsg[status]);
@@ -63,32 +60,32 @@ int main()
 
   prjini(&prj);
 
-  /* AZP: zenithal/azimuthal perspective. */
+  // AZP: zenithal/azimuthal perspective.
   prj.pv[1] =   0.5;
   prj.pv[2] =  30.0;
   nFail += projex("AZP", &prj, 90, 5, tol);
 
-  /* SZP: slant zenithal perspective. */
+  // SZP: slant zenithal perspective.
   prj.pv[1] =   0.5;
   prj.pv[2] = 210.0;
   prj.pv[3] =  60.0;
   nFail += projex("SZP", &prj, 90, -90, tol);
 
-  /* TAN: gnomonic. */
+  // TAN: gnomonic.
   nFail += projex("TAN", &prj, 90, 5, tol);
 
-  /* STG: stereographic. */
+  // STG: stereographic.
   nFail += projex("STG", &prj, 90, -85, tol);
 
-  /* SIN: orthographic/synthesis. */
+  // SIN: orthographic/synthesis.
   prj.pv[1] = -0.3;
   prj.pv[2] =  0.5;
   nFail += projex("SIN", &prj, 90, 45, tol);
 
-  /* ARC: zenithal/azimuthal equidistant. */
+  // ARC: zenithal/azimuthal equidistant.
   nFail += projex("ARC", &prj, 90, -90, tol);
 
-  /* ZPN: zenithal/azimuthal polynomial. */
+  // ZPN: zenithal/azimuthal polynomial.
   prj.pv[0] =  0.00000;
   prj.pv[1] =  0.95000;
   prj.pv[2] = -0.02500;
@@ -101,82 +98,82 @@ int main()
   prj.pv[9] =  0.00000;
   nFail += projex("ZPN", &prj, 90, 10, tol);
 
-  /* ZEA: zenithal/azimuthal equal area. */
+  // ZEA: zenithal/azimuthal equal area.
   nFail += projex("ZEA", &prj, 90, -85, tol);
 
-  /* AIR: Airy's zenithal projection. */
+  // AIR: Airy's zenithal projection.
   prj.pv[1] = 45.0;
   nFail += projex("AIR", &prj, 90, -85, tol);
 
-  /* CYP: cylindrical perspective. */
+  // CYP: cylindrical perspective.
   prj.pv[1] = 3.0;
   prj.pv[2] = 0.8;
   nFail += projex("CYP", &prj, 90, -90, tol);
 
-  /* CEA: cylindrical equal area. */
+  // CEA: cylindrical equal area.
   prj.pv[1] = 0.75;
   nFail += projex("CEA", &prj, 90, -90, tol);
 
-  /* CAR: plate carree. */
+  // CAR: plate carree.
   nFail += projex("CAR", &prj, 90, -90, tol);
 
-  /* MER: Mercator's. */
+  // MER: Mercator's.
   nFail += projex("MER", &prj, 85, -85, tol);
 
-  /* SFL: Sanson-Flamsteed. */
+  // SFL: Sanson-Flamsteed.
   nFail += projex("SFL", &prj, 90, -90, tol);
 
-  /* PAR: parabolic. */
+  // PAR: parabolic.
   nFail += projex("PAR", &prj, 90, -90, tol);
 
-  /* MOL: Mollweide's projection. */
+  // MOL: Mollweide's projection.
   nFail += projex("MOL", &prj, 90, -90, tol);
 
-  /* AIT: Hammer-Aitoff. */
+  // AIT: Hammer-Aitoff.
   nFail += projex("AIT", &prj, 90, -90, tol);
 
-  /* COP: conic perspective. */
+  // COP: conic perspective.
   prj.pv[1] =  60.0;
   prj.pv[2] =  15.0;
   nFail += projex("COP", &prj, 90, -25, tol);
 
-  /* COE: conic equal area. */
+  // COE: conic equal area.
   prj.pv[1] =  60.0;
   prj.pv[2] = -15.0;
   nFail += projex("COE", &prj, 90, -90, tol);
 
-  /* COD: conic equidistant. */
+  // COD: conic equidistant.
   prj.pv[1] = -60.0;
   prj.pv[2] =  15.0;
   nFail += projex("COD", &prj, 90, -90, tol);
 
-  /* COO: conic orthomorphic. */
+  // COO: conic orthomorphic.
   prj.pv[1] = -60.0;
   prj.pv[2] = -15.0;
   nFail += projex("COO", &prj, 85, -90, tol);
 
-  /* BON: Bonne's projection. */
+  // BON: Bonne's projection.
   prj.pv[1] = 30.0;
   nFail += projex("BON", &prj, 90, -90, tol);
 
-  /* PCO: polyconic. */
+  // PCO: polyconic.
   nFail += projex("PCO", &prj, 90, -90, tol);
 
-  /* TSC: tangential spherical cube. */
+  // TSC: tangential spherical cube.
   nFail += projex("TSC", &prj, 90, -90, tol);
 
-  /* CSC: COBE quadrilateralized spherical cube. */
+  // CSC: COBE quadrilateralized spherical cube.
   nFail += projex("CSC", &prj, 90, -90, 4.0e-2);
 
-  /* QSC: quadrilateralized spherical cube. */
+  // QSC: quadrilateralized spherical cube.
   nFail += projex("QSC", &prj, 90, -90, tol);
 
-  /* HPX: HEALPix projection. */
+  // HPX: HEALPix projection.
   prj.pv[1] = 4.0;
   prj.pv[2] = 3.0;
   nFail += projex("HPX", &prj, 90, -90, tol);
 
-  /* XPH: HEALPix polar, aka "butterfly" projection. */
+  // XPH: HEALPix polar, aka "butterfly" projection.
   nFail += projex("XPH", &prj, 90, -90, tol);
 
 
@@ -225,9 +222,9 @@ int projex(
 
   strcpy(prj->code, pcode);
 
-  /* Uncomment the next line to test alternative initializations of */
-  /* projection parameters.                                         */
-  /* prj->r0 = R2D; */
+  // Uncomment the next line to test alternative initializations of
+  // projection parameters.
+  // prj->r0 = R2D;
 
   printf("Testing %s; latitudes%3d to%4d, reporting tolerance%8.1e deg.\n",
     prj->code, north, south, tol);
@@ -299,7 +296,7 @@ int projex(
     dlngmx, dlatmx);
 
 
-  /* Test closure in the neighbourhood of the reference point. */
+  // Test closure in the neighbourhood of the reference point.
   r = 1.0;
   x1[12] = y1[12] = 0.0;
   for (i = 0; i < 12; i++) {

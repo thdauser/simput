@@ -1,35 +1,35 @@
 Testing WCSLIB parser for FITS binary table headers (tbth1.c)
 -------------------------------------------------------------
 
-Found 198 non-comment header keyrecords.
+Found 234 non-comment header keyrecords.
 
 
 Illegal or extraneous WCS header keyrecords rejected by wcsbth():
-WCSNAMEX= 'eXtraneous'         / Name of this coordinate system                 
-  Rejected (1), syntactically valid WCS keyrecord has no effect.
 LONPOLEX=                180.0 / [deg] Native longitude of the NCP              
-  Rejected (2), syntactically valid WCS keyrecord has no effect.
+  Rejected (1), syntactically valid WCS keyrecord has no effect.
 LATPOLEX=                999.0 / [deg] Native latitude of the NCP               
-  Rejected (3), syntactically valid WCS keyrecord has no effect.
+  Rejected (2), syntactically valid WCS keyrecord has no effect.
 RESTFRQX=         1.42040575e9 / [Hz] HI rest frequency                         
-  Rejected (4), syntactically valid WCS keyrecord has no effect.
+  Rejected (3), syntactically valid WCS keyrecord has no effect.
 RESTWAVX=          0.211061141 / [m] HI rest wavelength                         
+  Rejected (4), syntactically valid WCS keyrecord has no effect.
+WCSNAMEX= 'eXtraneous'         / Name of this coordinate system                 
   Rejected (5), syntactically valid WCS keyrecord has no effect.
-EQUINOXX=               2000.0 / [yr] Equinox of equatorial coordinates         
-  Rejected (6), syntactically valid WCS keyrecord has no effect.
 RADESYSX= 'ICRS'               / Mean equatorial coordinates, IAU 1984 system   
+  Rejected (6), syntactically valid WCS keyrecord has no effect.
+EQUINOXX=               2000.0 / [yr] Equinox of equatorial coordinates         
   Rejected (7), syntactically valid WCS keyrecord has no effect.
 SPECSYSX= 'BARYCENT'           / Reference frame of spectral coordinates        
   Rejected (8), syntactically valid WCS keyrecord has no effect.
 SSYSOBSX= 'TOPOCENT'           / Reference frame of observation                 
   Rejected (9), syntactically valid WCS keyrecord has no effect.
-SSYSSRCX= 'LSRK'               / Reference frame of source redshift             
-  Rejected (10), syntactically valid WCS keyrecord has no effect.
-VELANGLX=                35.25 / Velocity orientation angle                     
-  Rejected (11), syntactically valid WCS keyrecord has no effect.
 VELOSYSX=               1500.0 / [m/s] Bary-topo velocity towards the source    
-  Rejected (12), syntactically valid WCS keyrecord has no effect.
+  Rejected (10), syntactically valid WCS keyrecord has no effect.
 ZSOURCEX=               0.0025 / Redshift of the source                         
+  Rejected (11), syntactically valid WCS keyrecord has no effect.
+SSYSSRCX= 'LSRK'               / Reference frame of source redshift             
+  Rejected (12), syntactically valid WCS keyrecord has no effect.
+VELANGLX=                35.25 / [deg] Velocity orientation angle               
   Rejected (13), syntactically valid WCS keyrecord has no effect.
 
 
@@ -111,28 +111,63 @@ Extracted 5 coordinate descriptions:
      colnum: 0
       colax: 0x<address>
                  0      0      0      0
-    wcsname: "AIPS convention: TAN projection"
       cname: 0x<address>
              UNDEFINED
              UNDEFINED
              UNDEFINED
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "AIPS convention: TAN projection"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.533000  2816759.109000 -3454036.323000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x<address>
+   rsun_ref:  696000000.000000000
+   dsun_obs:  150700000000.000000000
+   crln_obs:    120.000000000
+   hgln_obs:      0.000000000
+   hglt_obs:      7.250000000
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -166,6 +201,9 @@ Extracted 5 coordinate descriptions:
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x<address>  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -307,28 +345,63 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
      colnum: 33
       colax: 0x<address>
                  0      0      0      0
-    wcsname: "All WCS keywords inherited except for this one"
       cname: 0x<address>
              UNDEFINED
              UNDEFINED
              UNDEFINED
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "All WCS keywords inherited except for this one"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.533000  2816759.109000 -3454036.323000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x<address>
+   rsun_ref:  696000000.000000000
+   dsun_obs:  150700000000.000000000
+   crln_obs:    120.000000000
+   hgln_obs:      0.000000000
+   hglt_obs:      7.250000000
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -362,6 +435,9 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x<address>  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -503,28 +579,63 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
      colnum: 44
       colax: 0x<address>
                  0      0      0      0
-    wcsname: "Most WCS keywords inherited"
       cname: 0x<address>
              UNDEFINED
              UNDEFINED
              UNDEFINED
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "Most WCS keywords inherited"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.533000  2816759.109000 -3454036.323000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x<address>
+   rsun_ref:  696000000.000000000
+   dsun_obs:  150700000000.000000000
+   crln_obs:    120.000000000
+   hgln_obs:      0.000000000
+   hglt_obs:      7.250000000
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -558,6 +669,9 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x<address>  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -708,28 +822,63 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
      colnum: 77
       colax: 0x<address>
                  0      0      0      0
-    wcsname: "St'd representation: SZP projection"
       cname: 0x<address>
              "Right ascension (J2000)"
              "Declination (J2000)"
              "Wavelength"
              "Time offset"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED      1.0000e-11  UNDEFINED   
+               UNDEFINED    UNDEFINED   1.0000e-11    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED      1.0000e-12  UNDEFINED   
+               UNDEFINED    UNDEFINED   1.0000e-12    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "St'd representation: SZP projection"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.500000  2816759.109000 -3454036.300000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: "BARYCENT"
     ssysobs: "TOPOCENT"
-    velosys: 1500.000000
+    velosys:   1500.000000000
+    zsource:      0.002500000
     ssyssrc: "LSRK"
-    zsource:  0.002500
-     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    velangl:      0.000000000
+        aux: 0x<address>
+   rsun_ref:  696000000.000000000
+   dsun_obs:  150700000000.000000000
+   crln_obs:    120.000000000
+   hgln_obs:      0.000000000
+   hglt_obs:      7.250000000
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -763,6 +912,9 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x<address>  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -911,27 +1063,62 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
      colnum: 0
       colax: 0x<address>
                  8      9     10
-    wcsname: "IRAF representation: ZPN projection"
       cname: 0x<address>
              "Right ascension (J2000)"
              "Declination (J2000)"
              "Redshift"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED      5.0000e-11
+               UNDEFINED    UNDEFINED   5.0000e-11
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED      5.0000e-12
+               UNDEFINED    UNDEFINED   5.0000e-12
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "IRAF representation: ZPN projection"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.530000  2816759.109000 -3454036.300000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: "BARYCENT"
     ssysobs: "TOPOCENT"
-    velosys: 1500.000000
+    velosys:   1500.000000000
+    zsource:      0.002500000
     ssyssrc: "LSRK"
-    zsource:  0.002500
-     obsgeo:   -4.0000e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    velangl:      0.000000000
+        aux: 0x<address>
+   rsun_ref:  696000000.000000000
+   dsun_obs:  150700000000.000000000
+   crln_obs:    120.000000000
+   hgln_obs:      0.000000000
+   hglt_obs:      7.250000000
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -965,6 +1152,9 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x<address>  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 

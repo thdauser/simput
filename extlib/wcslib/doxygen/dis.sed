@@ -12,6 +12,7 @@ s|CPDISja|<TT><B>CPDIS</B>ja</TT>|g
 s|CQDISia|<TT><B>CQDIS</B>ia</TT>|g
 s|CPERRja|<TT><B>CPERR</B>ja</TT>|g
 s|CQERRia|<TT><B>CQERR</B>ia</TT>|g
+s|DOCORR|<TT><B>DOCORR</B></TT>|g
 s|DPja|<TT><B>DP</B>ja</TT>|g
 s|DQia|<TT><B>DQ</B>ia</TT>|g
 s|DVERRa|<TT><B>DVERR</B>a</TT>|g

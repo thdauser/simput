@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tlin.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tlin.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TLIN
@@ -69,17 +67,17 @@
      :  'Testing WCSLIB linear transformation routines (tlin.f)',/,
      :  '------------------------------------------------------')
 
-      STATUS = LINPUT (LIN, LIN_FLAG, -1, 0, 0)
+      STATUS = LINPTI (LIN, LIN_FLAG, -1, 0, 0)
       STATUS = LININI (NAXIS, LIN)
 
       DO 30 I = 1, NAXIS
-        STATUS = LINPUT (LIN, LIN_CRPIX, CRPIX(I), I, 0)
+        STATUS = LINPTD (LIN, LIN_CRPIX, CRPIX(I), I, 0)
 
         DO 20 J = 1, NAXIS
-          STATUS = LINPUT (LIN, LIN_PC, PC(I,J), I, J)
+          STATUS = LINPTD (LIN, LIN_PC, PC(I,J), I, J)
  20     CONTINUE
 
-        STATUS = LINPUT (LIN, LIN_CDELT, CDELT(I), I, 0)
+        STATUS = LINPTD (LIN, LIN_CDELT, CDELT(I), I, 0)
  30   CONTINUE
 
       WRITE (*, *)

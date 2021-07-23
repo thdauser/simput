@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: lin_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: lin_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -33,7 +30,7 @@
 #include <dis.h>
 #include <lin.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define linput_  F77_FUNC(linput,  LINPUT)
 #define linptd_  F77_FUNC(linptd,  LINPTD)
@@ -48,6 +45,7 @@
 #define lindist_ F77_FUNC(lindist, LINDIST)
 #define lincpy_  F77_FUNC(lincpy,  LINCPY)
 #define linfree_ F77_FUNC(linfree, LINFREE)
+#define linsize_ F77_FUNC(linsize, LINSIZE)
 #define linprt_  F77_FUNC(linprt,  LINPRT)
 #define linperr_ F77_FUNC(linperr, LINPERR)
 #define linset_  F77_FUNC(linset,  LINSET)
@@ -55,6 +53,7 @@
 #define linx2p_  F77_FUNC(linx2p,  LINX2P)
 #define linwarp_ F77_FUNC(linwarp, LINWARP)
 
+// Must match the values set in lin.inc.
 #define LIN_FLAG   100
 #define LIN_NAXIS  101
 #define LIN_CRPIX  102
@@ -71,7 +70,7 @@
 #define LIN_SIMPLE 205
 #define LIN_ERR    206
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int linput_(
   int *lin,
@@ -86,12 +85,12 @@ int linput_(
   const double *dvalp;
   struct linprm *linp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   linp  = (struct linprm *)lin;
   ivalp = (const int *)value;
   dvalp = (const double *)value;
 
-  /* Convert 1-relative FITS axis numbers to 0-relative C array indices. */
+  // Convert 1-relative FITS axis numbers to 0-relative C array indices.
   i0 = *i - 1;
   j0 = *j - 1;
 
@@ -116,12 +115,12 @@ int linput_(
     linp->flag = 0;
     break;
   case LIN_DISPRE:
-    /* N.B. value is the address of an allocated disprm struct. */
+    // N.B. value is the address of an allocated disprm struct.
     status = lindis(1, linp, (struct disprm *)value);
     linp->flag = 0;
     break;
   case LIN_DISSEQ:
-    /* N.B. value is the address of an allocated disprm struct. */
+    // N.B. value is the address of an allocated disprm struct.
     status = lindis(2, linp, (struct disprm *)value);
     linp->flag = 0;
     break;
@@ -144,7 +143,7 @@ int linpti_(int *lin, const int *what, const int *value,
   return linput_(lin, what, value, i, j);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int linget_(const int *lin, const int *what, void *value)
 
@@ -158,7 +157,7 @@ int linget_(const int *lin, const int *what, void *value)
   const double *dlinp;
   const struct linprm *linp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   linp  = (const struct linprm *)lin;
   ivalp = (int *)value;
   dvalp = (double *)value;
@@ -179,7 +178,7 @@ int linget_(const int *lin, const int *what, void *value)
     }
     break;
   case LIN_PC:
-    /* C row-major to FORTRAN column-major. */
+    // C row-major to FORTRAN column-major.
     for (j = 0; j < naxis; j++) {
       dlinp = linp->pc + j;
       for (i = 0; i < naxis; i++) {
@@ -194,15 +193,15 @@ int linget_(const int *lin, const int *what, void *value)
     }
     break;
   case LIN_DISPRE:
-    /* N.B. the value returned is the address of a disprm struct. */
+    // N.B. the value returned is the address of a disprm struct.
     *disvalp = linp->dispre;
     break;
   case LIN_DISSEQ:
-    /* N.B. the value returned is the address of a disprm struct. */
+    // N.B. the value returned is the address of a disprm struct.
     *disvalp = linp->disseq;
     break;
   case LIN_PIXIMG:
-    /* C row-major to FORTRAN column-major. */
+    // C row-major to FORTRAN column-major.
     for (j = 0; j < naxis; j++) {
       dlinp = linp->piximg + j;
       for (i = 0; i < naxis; i++) {
@@ -212,7 +211,7 @@ int linget_(const int *lin, const int *what, void *value)
     }
     break;
   case LIN_IMGPIX:
-    /* C row-major to FORTRAN column-major. */
+    // C row-major to FORTRAN column-major.
     for (j = 0; j < naxis; j++) {
       dlinp = linp->imgpix + j;
       for (i = 0; i < naxis; i++) {
@@ -234,7 +233,7 @@ int linget_(const int *lin, const int *what, void *value)
     *ivalp = linp->simple;
     break;
   case LIN_ERR:
-    /* Copy the contents of the wcserr struct. */
+    // Copy the contents of the wcserr struct.
     if (linp->err) {
       ilinp = (int *)(linp->err);
       for (l = 0; l < ERRLEN; l++) {
@@ -263,7 +262,7 @@ int lingti_(const int *lin, const int *what, int *value)
   return linget_(lin, what, value);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int linini_(const int *naxis, int *lin)
 
@@ -271,7 +270,7 @@ int linini_(const int *naxis, int *lin)
   return linini(1, *naxis, (struct linprm *)lin);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int lininit_(const int *naxis, int *lin, int *ndpmax)
 
@@ -279,7 +278,7 @@ int lininit_(const int *naxis, int *lin, int *ndpmax)
   return lininit(1, *naxis, (struct linprm *)lin, *ndpmax);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int lindis_(const int *sequence, int *lin, int *dis)
 
@@ -287,7 +286,7 @@ int lindis_(const int *sequence, int *lin, int *dis)
   return lindis(*sequence, (struct linprm *)lin, (struct disprm *)dis);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int lindist_(const int *sequence, int *lin, int *dis, int *ndpmax)
 
@@ -296,7 +295,7 @@ int lindist_(const int *sequence, int *lin, int *dis, int *ndpmax)
                  *ndpmax);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int lincpy_(const int *linsrc, int *lindst)
 
@@ -304,7 +303,7 @@ int lincpy_(const int *linsrc, int *lindst)
   return lincpy(1, (const struct linprm *)linsrc, (struct linprm *)lindst);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int linfree_(int *lin)
 
@@ -312,39 +311,46 @@ int linfree_(int *lin)
   return linfree((struct linprm *)lin);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
+
+int linsize_(const int *lin, int sizes[2])
+
+{
+  return linsize((const struct linprm *)lin, sizes);
+}
+
+//----------------------------------------------------------------------------
 
 int linprt_(const int *lin)
 
 {
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling LINPRT in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling LINPRT in the Fortran code.
   fflush(NULL);
 
   return linprt((const struct linprm *)lin);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-/* prefix should be null-terminated, or else of length 72 in which case
- * trailing blanks are not significant. */
+// If null-terminated (using the Fortran CHAR(0) intrinsic), prefix may be of
+// length less than but not exceeding 72 and trailing blanks are preserved.
+// Otherwise, it must be of length 72 and trailing blanks are stripped off.
 
 int linperr_(int *lin, const char prefix[72])
 
 {
-  char prefix_[72];
+  char prefix_[73];
+  wcsutil_strcvt(72, '\0', 1, prefix, prefix_);
 
-  strncpy(prefix_, prefix, 72);
-  wcsutil_null_fill(72, prefix_);
-
-  /* This may or may not force the Fortran I/O buffers to be flushed. */
-  /* If not, try CALL FLUSH(6) before calling LINPERR in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.
+  // If not, try CALL FLUSH(6) before calling LINPERR in the Fortran code.
   fflush(NULL);
 
   return linperr((struct linprm *)lin, prefix_);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int linset_(int *lin)
 
@@ -352,7 +358,7 @@ int linset_(int *lin)
   return linset((struct linprm *)lin);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int linp2x_(
   int *lin,
@@ -365,7 +371,7 @@ int linp2x_(
   return linp2x((struct linprm *)lin, *ncoord, *nelem, pixcrd, imgcrd);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int linx2p_(
   int *lin,
@@ -378,7 +384,7 @@ int linx2p_(
   return linx2p((struct linprm *)lin, *ncoord, *nelem, imgcrd, pixcrd);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int linwarp_(
   int *lin,

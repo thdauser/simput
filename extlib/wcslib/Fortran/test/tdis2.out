@@ -57,13 +57,13 @@ Testing WCSLIB Fortran disprm access routines (tdis2.f)
      maxdis: 0x<address>
                2.0010       2.0020    
      totdis:   3.0000    
-      axmap: 0x<address>
- axmap[0][]:     0     1
-                 0     1
- axmap[1][]:     1     0
-                 1     0
+     docorr: 0x<address>
+                 0     0
        Nhat: 0x<address>
                  2     2
+      axmap: 0x<address>
+ axmap[0][]:     0     1
+ axmap[1][]:     1     0
      offset: 0x<address>
 offset[0][]:   0.0000       0.0000    
 offset[1][]:   0.0000       0.0000    
@@ -72,11 +72,11 @@ offset[1][]:   0.0000       0.0000
  scale[1][]:   1.0000       1.0000    
       iparm: 0x<address>
  iparm[0]  : 0x<address>
- iparm[0][]:            1            8           40            0           40
-                        0            0            1
+ iparm[0][]:            1            7           40           40            0
+                        0            1
  iparm[1]  : 0x<address>
- iparm[1][]:            1            8           40            0           40
-                        0            0            0
+ iparm[1][]:            1            7           40           40            0
+                        0            0
       dparm: 0x<address>
  dparm[0]  : 0x<address>
  dparm[0][]:   0.30939      0.98842      0.0000      -0.0021924    2.8381e-06
@@ -170,13 +170,13 @@ offset[1][]:   0.0000       0.0000
      maxdis: 0x<address>
                2.0010       2.0020    
      totdis:   3.0000    
-      axmap: 0x<address>
- axmap[0][]:     0     1
-                 0     1
- axmap[1][]:     1     0
-                 1     0
+     docorr: 0x<address>
+                 0     0
        Nhat: 0x<address>
                  2     2
+      axmap: 0x<address>
+ axmap[0][]:     0     1
+ axmap[1][]:     1     0
      offset: 0x<address>
 offset[0][]:   0.0000       0.0000    
 offset[1][]:   0.0000       0.0000    
@@ -185,11 +185,11 @@ offset[1][]:   0.0000       0.0000
  scale[1][]:   1.0000       1.0000    
       iparm: 0x<address>
  iparm[0]  : 0x<address>
- iparm[0][]:            1            8           40            0           40
-                        0            0            1
+ iparm[0][]:            1            7           40           40            0
+                        0            1
  iparm[1]  : 0x<address>
- iparm[1][]:            1            8           40            0           40
-                        0            0            0
+ iparm[1][]:            1            7           40           40            0
+                        0            0
       dparm: 0x<address>
  dparm[0]  : 0x<address>
  dparm[0][]:   0.30939      0.98842      0.0000      -0.0021924    2.8381e-06
@@ -283,13 +283,13 @@ offset[1][]:   0.0000       0.0000
      maxdis: 0x<address>
                2.0010       2.0020    
      totdis:   3.0000    
-      axmap: 0x<address>
- axmap[0][]:     0     1
-                 0     1
- axmap[1][]:     1     0
-                 1     0
+     docorr: 0x<address>
+                 0     0
        Nhat: 0x<address>
                  2     2
+      axmap: 0x<address>
+ axmap[0][]:     0     1
+ axmap[1][]:     1     0
      offset: 0x<address>
 offset[0][]:   0.0000       0.0000    
 offset[1][]:   0.0000       0.0000    
@@ -298,11 +298,11 @@ offset[1][]:   0.0000       0.0000
  scale[1][]:   1.0000       1.0000    
       iparm: 0x<address>
  iparm[0]  : 0x<address>
- iparm[0][]:            1            8           40            0           40
-                        0            0            1
+ iparm[0][]:            1            7           40           40            0
+                        0            1
  iparm[1]  : 0x<address>
- iparm[1][]:            1            8           40            0           40
-                        0            0            0
+ iparm[1][]:            1            7           40           40            0
+                        0            0
       dparm: 0x<address>
  dparm[0]  : 0x<address>
  dparm[0][]:   0.30939      0.98842      0.0000      -0.0021924    2.8381e-06

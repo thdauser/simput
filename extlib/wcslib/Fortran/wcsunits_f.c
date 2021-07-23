@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcsunits_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: wcsunits_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -31,18 +28,18 @@
 #include <wcsutil.h>
 #include <wcsunits.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define wcsunitse_ F77_FUNC(wcsunitse, WCSUNITSE)
 #define wcsutrne_  F77_FUNC(wcsutrne,  WCSUTRNE)
 #define wcsulexe_  F77_FUNC(wcsulexe,  WCSULEXE)
 
-/* Deprecated. */
+// Deprecated.
 #define wcsunits_ F77_FUNC(wcsunits, WCSUNITS)
 #define wcsutrn_  F77_FUNC(wcsutrn,  WCSUTRN)
 #define wcsulex_  F77_FUNC(wcsulex,  WCSULEX)
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcsunitse_(
   const char have[72],
@@ -53,17 +50,14 @@ int wcsunitse_(
   iptr err)
 
 {
-  char have_[72], want_[72];
-
-  strncpy(have_, have, 72);
-  strncpy(want_, want, 72);
-  have_[71] = '\0';
-  want_[71] = '\0';
+  char have_[73], want_[73];
+  wcsutil_strcvt(72, '\0', 1, have, have_);
+  wcsutil_strcvt(72, '\0', 1, want, want_);
 
   return wcsunitse(have_, want_, scale, offset, power, (struct wcserr **)err);
 }
 
-/* : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :  */
+// : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :
 
 int wcsunits_(
   const char have[72],
@@ -76,7 +70,7 @@ int wcsunits_(
   return wcsunitse_(have, want, scale, offset, power, 0x0);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcsutrne_(
   const int *ctrl,
@@ -84,25 +78,21 @@ int wcsutrne_(
   iptr err)
 
 {
-  int status;
-  char unitstr_[72];
+  char unitstr_[73];
+  wcsutil_strcvt(72, '\0', 1, unitstr, unitstr_);
 
-  strncpy(unitstr_, unitstr, 72);
-  unitstr_[71] = '\0';
-
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling WCSUTRNE in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling WCSUTRNE in the Fortran code.
   fflush(NULL);
 
-  status = wcsutrne(*ctrl, unitstr_, (struct wcserr **)err);
+  int status = wcsutrne(*ctrl, unitstr_, (struct wcserr **)err);
 
-  wcsutil_blank_fill(72, unitstr_);
-  strncpy(unitstr, unitstr_, 72);
+  wcsutil_strcvt(72, ' ', 0, unitstr_, unitstr);
 
   return status;
 }
 
-/* : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :  */
+// : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :
 
 int wcsutrn_(
   const int *ctrl,
@@ -112,7 +102,7 @@ int wcsutrn_(
   return wcsutrne_(ctrl, unitstr, 0x0);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcsulexe_(
   const char unitstr[72],
@@ -122,19 +112,17 @@ int wcsulexe_(
   iptr err)
 
 {
-  char unitstr_[72];
+  char unitstr_[73];
+  wcsutil_strcvt(72, '\0', 1, unitstr, unitstr_);
 
-  strncpy(unitstr_, unitstr, 72);
-  unitstr_[71] = '\0';
-
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling WCSULEXE in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling WCSULEXE in the Fortran code.
   fflush(NULL);
 
   return wcsulexe(unitstr_, func, scale, units, (struct wcserr **)err);
 }
 
-/* : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :  */
+// : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :
 
 int wcsulex_(
   const char unitstr[72],

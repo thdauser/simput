@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,19 +18,21 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: fitshdr.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: fitshdr.inc,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  KEYIDPUT, KEYIDPTC, KEYIDGET, KEYIDGTC, KEYIDGTI,
-     :          KEYGET,   FREEKEYS, FITSHDR
+      EXTERNAL  KEYIDPUT, KEYIDPTC,
+     :          KEYIDGET, KEYIDGTC,           KEYIDGTI,
+     :          KEYGET,   KEYGTC,   KEYGTD,   KEYGTI,
+     :          FREEKEYS, FITSHDR
 
-      INTEGER   KEYIDPUT, KEYIDPTC, KEYIDGET, KEYIDGTC, KEYIDGTI,
-     :          KEYGET,   FREEKEYS, FITSHDR
+      INTEGER   KEYIDPUT, KEYIDPTC,
+     :          KEYIDGET, KEYIDGTC,           KEYIDGTI,
+     :          KEYGET,   KEYGTC,   KEYGTD,   KEYGTI,
+     :          FREEKEYS, FITSHDR
 
 *     Length of FITSKEY and FITSKEYID data structures (INTEGER arrays)
 *     on 64-bit machines.  These are the same for 32-bit machines.
@@ -57,6 +59,15 @@
       PARAMETER (KEY_KEYVALUE  = 205)
       PARAMETER (KEY_ULEN      = 206)
       PARAMETER (KEY_COMMENT   = 207)
+
+*     Error codes and messages.
+      INTEGER   FITSHDRERR_SUCCESS, FITSHDRERR_NULL_POINTER,
+     :          FITSHDRERR_MEMORY, FITSHDRERR_FLEX_PARSER
+
+      PARAMETER (FITSHDRERR_SUCCESS      = 0)
+      PARAMETER (FITSHDRERR_NULL_POINTER = 1)
+      PARAMETER (FITSHDRERR_MEMORY       = 2)
+      PARAMETER (FITSHDRERR_FLEX_PARSER  = 3)
 
       CHARACTER FITSHDR_ERRMSG(0:3)*80
       COMMON /FITSHDR_DATA/ FITSHDR_ERRMSG

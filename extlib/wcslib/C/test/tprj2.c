@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,22 +17,25 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tprj2.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tprj2.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tproj2 tests projection routines by plotting test graticules using PGPLOT.
 *
 *---------------------------------------------------------------------------*/
 
-#include <cpgplot.h>
+// Needed to get nanosleep() from time.h.
+#define _POSIX_C_SOURCE 199309L
+
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
+#include <cpgplot.h>
 
 #include <prj.h>
 
@@ -50,7 +52,7 @@ int main()
   printf("Testing WCSLIB spherical projection routines (tprj2.c)\n"
          "------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of prj status return values:\n");
   for (status = 1; status <= 4; status++) {
     printf("%4d: %s.\n", status, prj_errmsg[status]);
@@ -59,11 +61,11 @@ int main()
   printf("\n");
 
 
-  /* PGPLOT initialization. */
+  // PGPLOT initialization.
   strcpy(text, "/xwindow");
   cpgbeg(0, text, 1, 1);
 
-  /* Define pen colours. */
+  // Define pen colours.
   cpgscr(0, 0.00f, 0.00f, 0.00f);
   cpgscr(1, 1.00f, 1.00f, 0.00f);
   cpgscr(2, 1.00f, 1.00f, 1.00f);
@@ -79,14 +81,14 @@ int main()
 
   prjini(&prj);
 
-  /* AZP: zenithal/azimuthal perspective. */
+  // AZP: zenithal/azimuthal perspective.
   prj.pv[1] =   2.0;
   prj.pv[2] =  30.0;
   printf(text2, "Zenithal/azimuthal perspective");
   printf("%12.5f%12.5f\n", prj.pv[1], prj.pv[2]);
   prjplt("AZP", 90, -90, &prj);
 
-  /* SZP: slant zenithal perspective. */
+  // SZP: slant zenithal perspective.
   prj.pv[1] =   2.0;
   prj.pv[2] = 210.0;
   prj.pv[3] =  60.0;
@@ -94,26 +96,26 @@ int main()
   printf("%12.5f%12.5f%12.5f\n", prj.pv[1], prj.pv[2], prj.pv[3]);
   prjplt("SZP", 90, -90, &prj);
 
-  /* TAN: gnomonic. */
+  // TAN: gnomonic.
   printf(text1, "Gnomonic");
   prjplt("TAN", 90,   5, &prj);
 
-  /* STG: stereographic. */
+  // STG: stereographic.
   printf(text1, "Stereographic");
   prjplt("STG", 90, -85, &prj);
 
-  /* SIN: orthographic. */
+  // SIN: orthographic.
   prj.pv[1] = -0.3;
   prj.pv[2] =  0.5;
   printf(text2, "Orthographic/synthesis");
   printf("%12.5f%12.5f\n", prj.pv[1], prj.pv[2]);
   prjplt("SIN", 90, -90, &prj);
 
-  /* ARC: zenithal/azimuthal equidistant. */
+  // ARC: zenithal/azimuthal equidistant.
   printf(text1, "Zenithal/azimuthal equidistant");
   prjplt("ARC", 90, -90, &prj);
 
-  /* ZPN: zenithal/azimuthal polynomial. */
+  // ZPN: zenithal/azimuthal polynomial.
   prj.pv[0] =  0.05000;
   prj.pv[1] =  0.95000;
   prj.pv[2] = -0.02500;
@@ -131,110 +133,110 @@ int main()
     prj.pv[5], prj.pv[6], prj.pv[7], prj.pv[8], prj.pv[9]);
   prjplt("ZPN", 90,  10, &prj);
 
-  /* ZEA: zenithal/azimuthal equal area. */
+  // ZEA: zenithal/azimuthal equal area.
   printf(text1, "Zenithal/azimuthal equal area");
   prjplt("ZEA", 90, -90, &prj);
 
-  /* AIR: Airy's zenithal projection. */
+  // AIR: Airy's zenithal projection.
   prj.pv[1] = 45.0;
   printf(text2, "Airy's zenithal");
   printf("%12.5f\n", prj.pv[1]);
   prjplt("AIR", 90, -85, &prj);
 
-  /* CYP: cylindrical perspective. */
+  // CYP: cylindrical perspective.
   prj.pv[1] = 3.0;
   prj.pv[2] = 0.8;
   printf(text2, "Cylindrical perspective");
   printf("%12.5f%12.5f\n", prj.pv[1], prj.pv[2]);
   prjplt("CYP", 90, -90, &prj);
 
-  /* CEA: cylindrical equal area. */
+  // CEA: cylindrical equal area.
   prj.pv[1] = 0.75;
   printf(text2, "Cylindrical equal area");
   printf("%12.5f\n", prj.pv[1]);
   prjplt("CEA", 90, -90, &prj);
 
-  /* CAR: plate carree. */
+  // CAR: plate carree.
   printf(text1, "Plate carree");
   prjplt("CAR", 90, -90, &prj);
 
-  /* MER: Mercator's. */
+  // MER: Mercator's.
   printf(text1, "Mercator's");
   prjplt("MER", 85, -85, &prj);
 
-  /* SFL: Sanson-Flamsteed. */
+  // SFL: Sanson-Flamsteed.
   printf(text1, "Sanson-Flamsteed (global sinusoid)");
   prjplt("SFL", 90, -90, &prj);
 
-  /* PAR: parabolic. */
+  // PAR: parabolic.
   printf(text1, "Parabolic");
   prjplt("PAR", 90, -90, &prj);
 
-  /* MOL: Mollweide's projection. */
+  // MOL: Mollweide's projection.
   printf(text1, "Mollweide's");
   prjplt("MOL", 90, -90, &prj);
 
-  /* AIT: Hammer-Aitoff. */
+  // AIT: Hammer-Aitoff.
   printf(text1, "Hammer-Aitoff");
   prjplt("AIT", 90, -90, &prj);
 
-  /* COP: conic perspective. */
+  // COP: conic perspective.
   prj.pv[1] =  60.0;
   prj.pv[2] =  15.0;
   printf(text2, "Conic perspective");
   printf("%12.5f%12.5f\n", prj.pv[1], prj.pv[2]);
   prjplt("COP", 90, -25, &prj);
 
-  /* COE: conic equal area. */
+  // COE: conic equal area.
   prj.pv[1] =  60.0;
   prj.pv[2] = -15.0;
   printf(text2, "Conic equal area");
   printf("%12.5f%12.5f\n", prj.pv[1], prj.pv[2]);
   prjplt("COE", 90, -90, &prj);
 
-  /* COD: conic equidistant. */
+  // COD: conic equidistant.
   prj.pv[1] = -60.0;
   prj.pv[2] =  15.0;
   printf(text2, "Conic equidistant");
   printf("%12.5f%12.5f\n", prj.pv[1], prj.pv[2]);
   prjplt("COD", 90, -90, &prj);
 
-  /* COO: conic orthomorphic. */
+  // COO: conic orthomorphic.
   prj.pv[1] = -60.0;
   prj.pv[2] = -15.0;
   printf(text2, "Conic orthomorphic");
   printf("%12.5f%12.5f\n", prj.pv[1], prj.pv[2]);
   prjplt("COO", 85, -90, &prj);
 
-  /* BON: Bonne's projection. */
+  // BON: Bonne's projection.
   prj.pv[1] = 30.0;
   printf(text2, "Bonne's");
   printf("%12.5f\n", prj.pv[1]);
   prjplt("BON", 90, -90, &prj);
 
-  /* PCO: polyconic. */
+  // PCO: polyconic.
   printf(text1, "Polyconic");
   prjplt("PCO", 90, -90, &prj);
 
-  /* TSC: tangential spherical cube. */
+  // TSC: tangential spherical cube.
   printf(text1, "Tangential spherical cube");
   prjplt("TSC", 90, -90, &prj);
 
-  /* CSC: COBE quadrilateralized spherical cube. */
+  // CSC: COBE quadrilateralized spherical cube.
   printf(text1, "COBE quadrilateralized spherical cube");
   prjplt("CSC", 90, -90, &prj);
 
-  /* QSC: quadrilateralized spherical cube. */
+  // QSC: quadrilateralized spherical cube.
   printf(text1, "Quadrilateralized spherical cube");
   prjplt("QSC", 90, -90, &prj);
 
-  /* HPX: HEALPix projection. */
+  // HPX: HEALPix projection.
   prj.pv[1] = 4.0;
   prj.pv[2] = 3.0;
   printf(text1, "HEALPix");
   prjplt("HPX", 90, -90, &prj);
 
-  /* XPH: HEALPix polar, aka "butterfly" projection. */
+  // XPH: HEALPix polar, aka "butterfly" projection.
   printf(text1, "Butterfly");
   prjplt("XPH", 90, -90, &prj);
 
@@ -278,7 +280,7 @@ struct prjprm *prj;
 
   prjset(prj);
   if (prj->category == QUADCUBE) {
-    /* Draw the perimeter of the quadcube projection. */
+    // Draw the perimeter of the quadcube projection.
     cpgenv(-335.0f, 65.0f, -200.0f, 200.0f, 1, -2);
     cpgsci(2);
     sprintf(text,"%s - 15 degree graticule", pcode);
@@ -316,7 +318,7 @@ struct prjprm *prj;
       cpgsci(8);
 
       if (strcmp(pcode, "HPX") == 0) {
-        /* Draw the perimeter of the HEALPix projection. */
+        // Draw the perimeter of the HEALPix projection.
         h = (int)(prj->pv[1] + 0.5);
         sx = 180.0f / h;
         sy = sx * (int)(prj->pv[2] + 1.5) / 2.0f;
@@ -463,6 +465,9 @@ struct prjprm *prj;
   yr[0] = 0.0f;
   cpgpt(1, xr, yr, 21);
 
+  // Allow 250ms to view the plot on fast machines.
+  struct timespec nano = {(time_t)0, 250000000L};
+  nanosleep(&nano, 0x0);
 
   cpgask(1);
   cpgpage();

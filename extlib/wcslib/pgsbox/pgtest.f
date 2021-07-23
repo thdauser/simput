@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
-* Copyright (C) 1997-2018, Mark Calabretta
+* PGSBOX 7.7 - draw curvilinear coordinate axes for PGPLOT.
+* Copyright (C) 1997-2021, Mark Calabretta
 *
 * This file is part of PGSBOX.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning PGSBOX to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: pgtest.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: pgtest.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
       PROGRAM PGTEST
 *=======================================================================
@@ -46,9 +44,6 @@
       EXTERNAL FSCAN
       EXTERNAL PGCRFN
       EXTERNAL PGWCSL
-
-*     A portability fix - does '\' itself need to be escaped?
-      DATA ESCAPE /'\\'/
 *-----------------------------------------------------------------------
 *     Setup.
       NAXIS(1) = 512
@@ -59,7 +54,9 @@
       TRC(1) = NAXIS(1) + 0.5
       TRC(2) = NAXIS(2) + 0.5
 
-*      CALL PGBEG (0, '?', 1, 1)
+      ESCAPE = CHAR(92)
+
+*     CALL PGBEG (0, '?', 1, 1)
       call pgbeg (0, '/xw', 1, 1)
 
       CALL PGQINF ('TYPE', DEVTYP, J)
@@ -106,7 +103,7 @@
       CALL PGASK (.TRUE.)
       CALL PGPAGE ()
 
-      STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, -1, 0, 0)
 
 *-----------------------------------------------------------------------
 
@@ -160,9 +157,11 @@
 
 *     Defer labelling.
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 2D0, 0, 0D0,
-     :  0, 0D0, .FALSE., LNGVEL, 1, 1, 7, ' ', 0, NLDPRM, 256, IC,
-     :  CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 2D0,
+     :  0, GRID1, 0, GRID2, .FALSE., LNGVEL, 1, 1, 7, ' ', 0,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw fiducial grid lines in white and do labelling.
       CALL PGSCI (1)
@@ -170,9 +169,9 @@
       GCODE(2) = 2
       GRID1(1) = 180D0
       GRID2(1) = 0D0
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 0, C0, GCODE, 0D0, 1,
-     :  GRID1, 1, GRID2, .FALSE., LNGVEL, 1, 1, 7, ' ', 0, NLDPRM, 256,
-     :  IC, CACHE, IERR)
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 0, C0, GCODE, 0D0,
+     :  1, GRID1, 1, GRID2, .FALSE., LNGVEL, 1, 1, 7, ' ', 0,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
       CALL PGBOX ('BC', 0.0, 0, 'BC', 0.0, 0)
@@ -236,9 +235,11 @@
 *     Setting LABDEN = 9900 forces all logarithmic grid lines to be
 *     drawn.
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 9900, C0, GCODE, 2D0, 0,
-     :  0D0, 0, 0D0, .FALSE., FSCAN, 1, 1, 7, ' ', 0, NLDPRM, 256, IC,
-     :  CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 9900, C0, GCODE, 2D0,
+     :  0, GRID1, 0, GRID2, .FALSE., FSCAN, 1, 1, 7, ' ', 0,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
       CALL PGBOX ('BC', 0.0, 0, 'BC', 0.0, 0)
@@ -292,9 +293,11 @@
       GCODE(2) = 2
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 0, C0, GCODE, 2D0, 0, 0D0,
-     :  0, 0D0, .FALSE., PGCRFN, 8, 2, 4, FCODE, NLIPRM, NLDPRM, 256,
-     :  IC, CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 0, C0, GCODE, 2D0,
+     :  0, GRID1, 0, GRID2, .FALSE., PGCRFN, 8, 2, 4, FCODE, NLIPRM,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
       CALL PGBOX ('BC', 0.0, 0, 'BC', 0.0, 0)
@@ -331,26 +334,26 @@
 *     Set projection type to SIN.
       CTYPE(1) = 'RA---SIN'
       CTYPE(2) = 'DEC--SIN'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
 
 *     Reference pixel coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 384D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 256D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 384D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 256D0, 2, 0)
 
 *     Coordinate increments.
-      STATUS = WCSPUT (WCS, WCS_CDELT, -1D0/3600000D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CDELT,  1D0/3600000D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, -1D0/3600000D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT,  1D0/3600000D0, 2, 0)
 
 *     Spherical coordinate references.
       DEC0 = -89.99995D0
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 25D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, DEC0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 25D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, DEC0, 2, 0)
 
 *     Set parameters for an NCP projection.
       DEC0 = DEC0*D2R
-      STATUS = WCSPUT (WCS, WCS_PV, 0D0, 2, 1)
-      STATUS = WCSPUT (WCS, WCS_PV, COS(DEC0)/SIN(DEC0), 2, 2)
+      STATUS = WCSPTD (WCS, WCS_PV, 0D0, 2, 1)
+      STATUS = WCSPTD (WCS, WCS_PV, COS(DEC0)/SIN(DEC0), 2, 2)
 
 *     Annotation.
       IDENTS(1) = 'Right ascension'
@@ -371,8 +374,10 @@
 *     Draw the celestial grid.  The grid density is set for each world
 *     coordinate by specifying LABDEN = 1224.
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 1224, C0, GCODE, 0D0, 0,
-     :  0D0, 0, 0D0, .FALSE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 1224, C0, GCODE, 0D0,
+     :  0, GRID1, 0, GRID2, .FALSE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
@@ -409,25 +414,25 @@
 *     Set projection type to conic equal-area.
       CTYPE(1) = 'RA---COE'
       CTYPE(2) = 'DEC--COE'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
 
 *     Reference pixel coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 256D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 256D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 256D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 256D0, 2, 0)
 
 *     Coordinate increments.
-      STATUS = WCSPUT (WCS, WCS_CDELT, -1D0/3D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CDELT,  1D0/3D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, -1D0/3D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT,  1D0/3D0, 2, 0)
 
 *     Spherical coordinate references.
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 90D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 30D0, 2, 0)
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, 150D0, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 90D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 30D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, 150D0, 0, 0)
 
 *     Middle latitude and offset from standard parallels.
-      STATUS = WCSPUT (WCS, WCS_PV, 60D0, 2, 1)
-      STATUS = WCSPUT (WCS, WCS_PV, 15D0, 2, 2)
+      STATUS = WCSPTD (WCS, WCS_PV, 60D0, 2, 1)
+      STATUS = WCSPTD (WCS, WCS_PV, 15D0, 2, 2)
 
 *     Annotation.
       IDENTS(1) = 'longitude'
@@ -470,15 +475,17 @@
 
 *     Draw the celestial grid letting PGSBOX choose the increments.
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 0, CI, GCODE, 0D0, 0, 0D0,
-     :  0, 0D0, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS, NLDPRM, 256,
-     :  IC, CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 0, CI, GCODE, 0D0,
+     :  0, GRID1, 0, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Set parameters to draw the native grid.
-      STATUS = WCSPUT (WCS, WCS_CRVAL,  0D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 60D0, 2, 0)
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, 999D0, 0, 0)
-      STATUS = WCSPUT (WCS, WCS_LATPOLE, 999D0, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL,  0D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 60D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, 999D0, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_LATPOLE, 999D0, 0, 0)
 
 *     We just want to delineate the boundary, in green.
       CALL PGSCI (7)
@@ -488,8 +495,8 @@
       GRID2(2) =   90D0
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0, 2,
-     :  GRID1, 2, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0,
+     :  2, GRID1, 2, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
@@ -531,28 +538,28 @@
 *     Set projection type to polyconic.
       CTYPE(1) = 'RA---PCO'
       CTYPE(2) = 'DEC--PCO'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
 
 *     Reference pixel coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 192D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 640D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 192D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 640D0, 2, 0)
 
 *     Rotate 30 degrees.
       ROTN = 30D0*D2R
-      STATUS = WCSPUT (WCS, WCS_PC,  COS(ROTN), 1, 1)
-      STATUS = WCSPUT (WCS, WCS_PC,  SIN(ROTN), 1, 2)
-      STATUS = WCSPUT (WCS, WCS_PC, -SIN(ROTN), 2, 1)
-      STATUS = WCSPUT (WCS, WCS_PC,  COS(ROTN), 2, 2)
+      STATUS = WCSPTD (WCS, WCS_PC,  COS(ROTN), 1, 1)
+      STATUS = WCSPTD (WCS, WCS_PC,  SIN(ROTN), 1, 2)
+      STATUS = WCSPTD (WCS, WCS_PC, -SIN(ROTN), 2, 1)
+      STATUS = WCSPTD (WCS, WCS_PC,  COS(ROTN), 2, 2)
 
 *     Coordinate increments.
-      STATUS = WCSPUT (WCS, WCS_CDELT, -1D0/5D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CDELT,  1D0/5D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, -1D0/5D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT,  1D0/5D0, 2, 0)
 
 *     Spherical coordinate references.
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 332D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL,  40D0, 2, 0)
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, -30D0, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 332D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL,  40D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, -30D0, 0, 0)
 
 *     Annotation.
       IDENTS(1) = 'Hour angle'
@@ -572,9 +579,11 @@
       TIKLEN = -2D0
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, TIKLEN, 0,
-     :  5D0, 0, 5D0, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS, NLDPRM,
-     :  256, IC, CACHE, IERR)
+      GRID1(0) = 5D0
+      GRID2(0) = 5D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, TIKLEN,
+     :  0, GRID1, 0, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Resetting the table index to zero causes information about the
 *     tick marks to be discarded.
@@ -588,8 +597,8 @@
 *     Draw the primary meridian and equator.
       GRID1(1) = 0D0
       GRID2(1) = 0D0
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0, 1,
-     :  GRID1, 1, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0,
+     :  1, GRID1, 1, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     At this point the axis-crossing table will have entries for the
@@ -604,8 +613,8 @@
       GRID1(3) = 270D0
       GRID2(1) = -90D0
       GRID2(2) =  90D0
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0, 3,
-     :  GRID1, 2, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0,
+     :  3, GRID1, 2, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the first set of 15 degree meridians and parallels in blue.
@@ -622,8 +631,8 @@
       GRID2(2) = -30D0
       GRID2(3) =  15D0
       GRID2(4) =  60D0
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0, 8,
-     :  GRID1, 4, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0,
+     :  8, GRID1, 4, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the second set of 15 degree meridians and parallels in red.
@@ -640,8 +649,8 @@
       GRID2(2) = -15D0
       GRID2(3) =  30D0
       GRID2(4) =  75D0
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0, 8,
-     :  GRID1, 4, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0,
+     :  8, GRID1, 4, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     The axis-crossing table has now accumulated information for all of
@@ -683,8 +692,8 @@
       GRID1(4) = 315D0
       GRID2(1) = -45D0
       GRID2(2) =  45D0
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 2333, 0, CI, GCODE, 0D0, 4,
-     :  GRID1, 2, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 2333, 0, CI, GCODE, 0D0,
+     :  4, GRID1, 2, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Native grid in green (delineates boundary).
@@ -693,13 +702,13 @@
       GRID1(2) =  180D0
       GRID2(1) = -999D0
 
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 0D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 0D0, 2, 0)
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, 999D0, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 0D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 0D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, 999D0, 0, 0)
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0, 2,
-     :  GRID1, 1, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, -1, 0, C0, GCODE, 0D0,
+     :  2, GRID1, 1, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
@@ -751,27 +760,27 @@
 *     Set projection type to plate carree.
       CTYPE(1) = 'GLON-CAR'
       CTYPE(2) = 'GLAT-CAR'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
 
 *     Reference pixel coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 226D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX,  46D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 226D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX,  46D0, 2, 0)
 
 *     Linear transformation matrix.
       ROTN = 15D0*D2R
-      STATUS = WCSPUT (WCS, WCS_PC,  COS(ROTN), 1, 1)
-      STATUS = WCSPUT (WCS, WCS_PC,  SIN(ROTN), 1, 2)
-      STATUS = WCSPUT (WCS, WCS_PC, -SIN(ROTN), 2, 1)
-      STATUS = WCSPUT (WCS, WCS_PC,  COS(ROTN), 2, 2)
+      STATUS = WCSPTD (WCS, WCS_PC,  COS(ROTN), 1, 1)
+      STATUS = WCSPTD (WCS, WCS_PC,  SIN(ROTN), 1, 2)
+      STATUS = WCSPTD (WCS, WCS_PC, -SIN(ROTN), 2, 1)
+      STATUS = WCSPTD (WCS, WCS_PC,  COS(ROTN), 2, 2)
 
 *     Coordinate increments.
-      STATUS = WCSPUT (WCS, WCS_CDELT, -1D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CDELT,  1D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, -1D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT,  1D0, 2, 0)
 
 *     Set parameters to draw the native grid.
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 0D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 0D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 0D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 0D0, 2, 0)
 
 *     The reference pixel was defined so that the native longitude runs
 *     from 225 deg to 45 deg and this will cause the grid to be
@@ -810,18 +819,20 @@
       CI(7) = 17
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 2100, 0, CI, GCODE, 0D0, 0,
-     :  15D0, 0, 15D0, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      GRID1(0) = 15D0
+      GRID2(0) = 15D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 2100, 0, CI, GCODE, 0D0,
+     :  0, GRID1, 0, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Reset CRPIX previously modified by CYLFIX.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 226D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX,  46D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 226D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX,  46D0, 2, 0)
 
 *     Galactic reference coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 30D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 35D0, 2, 0)
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, 999D0, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 30D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 35D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, 999D0, 0, 0)
 
       CALL CYLFIX (NAXIS, WCS)
 
@@ -857,9 +868,11 @@
 
 *     Draw the celestial grid letting PGSBOX choose the increments.
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 21, 0, CI, GCODE, 0D0, 0, 0D0,
-     :  0, 0D0, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS, NLDPRM, 256,
-     :  IC, CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 21, 0, CI, GCODE, 0D0,
+     :  0, GRID1, 0, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
       CALL PGSCI (1)
@@ -900,20 +913,20 @@
 *     Set projection type to plate carree.
       CTYPE(1) = 'RA---CAR'
       CTYPE(2) = 'DEC--CAR'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
 
 *     Reference pixel coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 0D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 0D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 0D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 0D0, 2, 0)
 
 *     Coordinate increments.
-      STATUS = WCSPUT (WCS, WCS_CDELT, -1D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CDELT,  1D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, -1D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT,  1D0, 2, 0)
 
 *     Set parameters to draw the native grid.
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 0D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 0D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 0D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 0D0, 2, 0)
 
 *     Annotation.
       IDENTS(1) = 'Right ascension'
@@ -933,9 +946,11 @@
       CALL PGSCI (1)
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 2121, 1212, C0, GCODE, 0D0, 0,
-     :  0D0, 0, 0D0, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS, NLDPRM,
-     :  256, IC, CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 2121, 1212, C0, GCODE, 0D0,
+     :  0, GRID1, 0, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
       CALL PGBOX ('BC', 0.0, 0, 'BC', 0.0, 0)
@@ -974,25 +989,25 @@
 *     Set projection type to cylindrical perspective.
       CTYPE(1) = 'RA---CYP'
       CTYPE(2) = 'DEC--CYP'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
 
 *     Reference pixel coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 0D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 0D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 0D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 0D0, 2, 0)
 
 *     Coordinate increments.
-      STATUS = WCSPUT (WCS, WCS_CDELT, -1D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CDELT,  1D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, -1D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT,  1D0, 2, 0)
 
 *     Set parameters to draw the native grid.
-      STATUS = WCSPUT (WCS, WCS_CRVAL,  45D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, -90D0, 2, 0)
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, 999D0, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL,  45D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, -90D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, 999D0, 0, 0)
 
 *     mu and lambda projection parameters.
-      STATUS = WCSPUT (WCS, WCS_PV, 0D0, 2, 1)
-      STATUS = WCSPUT (WCS, WCS_PV, 1D0, 2, 2)
+      STATUS = WCSPTD (WCS, WCS_PV, 0D0, 2, 1)
+      STATUS = WCSPTD (WCS, WCS_PV, 1D0, 2, 2)
 
 *     Annotation.
       IDENTS(1) = 'Right ascension'
@@ -1012,9 +1027,11 @@
       CALL PGSCI (1)
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 2121, 1212, C0, GCODE, 0D0, 0,
-     :  0D0, 0, 0D0, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS, NLDPRM,
-     :  256, IC, CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 2121, 1212, C0, GCODE, 0D0,
+     :  0, GRID1, 0, GRID2, .TRUE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
       CALL PGBOX ('BC', 0.0, 0, 'BC', 0.0, 0)
@@ -1053,21 +1070,21 @@
 *     Set projection type to gnomonic.
       CTYPE(1) = 'RA---TAN'
       CTYPE(2) = 'DEC--TAN'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
 
 *     Reference pixel coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 50.5D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX,  1.0D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 50.5D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX,  1.0D0, 2, 0)
 
 *     Coordinate increments.
-      STATUS = WCSPUT (WCS, WCS_CDELT, 1D-3, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CDELT, 1D-3, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, 1D-3, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, 1D-3, 2, 0)
 
 *     Set parameters to draw the native grid.
-      STATUS = WCSPUT (WCS, WCS_CRVAL, -45.0D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, -89.7D0, 2, 0)
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, 999D0, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, -45.0D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, -89.7D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, 999D0, 0, 0)
 
 *     Annotation.
       IDENTS(1) = 'Right ascension'
@@ -1087,8 +1104,10 @@
       CALL PGSCI (1)
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 1212, C0, GCODE, 0D0, 0,
-     :  0D0, 0, 0D0, .FALSE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 1212, C0, GCODE, 0D0,
+     :  0, GRID1, 0, GRID2, .FALSE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
@@ -1164,9 +1183,11 @@
 
 *     Set LABCTL = 21 to label the bottom and left edges only.
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 21, 0, C0, GCODE, 2D0, 0, 0D0,
-     :  0, 0D0, .FALSE., PGCRFN, 8, 2, 4, FCODE, NLIPRM, NLDPRM, 256,
-     :  IC, CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 21, 0, C0, GCODE, 2D0,
+     :  0, GRID1, 0, GRID2, .FALSE., PGCRFN, 8, 2, 4, FCODE, NLIPRM,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Information for labels on the right edge was stored in the
 *     crossing table on the first call to PGSBOX.  We now want to
@@ -1190,9 +1211,11 @@
 
 *     Set LABCTL = 12000 to label the right edge with the second
 *     coordinate without redrawing the grid lines.
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 12000, 0, C0, GCODE, 2D0, 0,
-     :  0D0, 0, 0D0, .FALSE., PGCRFN, 8, 2, 4, FCODE, NLIPRM, NLDPRM,
-     :  256, IC, CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 12000, 0, C0, GCODE, 2D0,
+     :  0, GRID1, 0, GRID2, .FALSE., PGCRFN, 8, 2, 4, FCODE, NLIPRM,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     The alternative temperature scale in Fahrenheit is to be
 *     constructed with a new set of tick marks.
@@ -1211,9 +1234,11 @@
 *     Set LABCTL = 100 to label the top edge; Set IC = -1 to redetermine
 *     the coordinate extrema.
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 100, 0, C0, GCODE, 2D0, 0,
-     :  0D0, 0, 0D0, .FALSE., PGCRFN, 8, 2, 4, FCODE, NLIPRM, NLDPRM,
-     :  256, IC, CACHE, IERR)
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 100, 0, C0, GCODE, 2D0,
+     :  0, GRID1, 0, GRID2, .FALSE., PGCRFN, 8, 2, 4, FCODE, NLIPRM,
+     :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
       CALL PGBOX ('BC', 0.0, 0, 'BC', 0.0, 0)
@@ -1284,20 +1309,20 @@
 
       CTYPE(1) = 'X'
       CTYPE(2) = 'Y'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(1), 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(2), 2, 0)
 
 *     Reference pixel coordinates.
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 2D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRPIX, 2D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 2D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRPIX, 2D0, 2, 0)
 
 *     Coordinate increments.
-      STATUS = WCSPUT (WCS, WCS_CDELT, 1D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CDELT, 1D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, 1D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CDELT, 1D0, 2, 0)
 
 *     Spherical coordinate references.
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 2D0, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CRVAL, 2D0, 2, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 2D0, 1, 0)
+      STATUS = WCSPTD (WCS, WCS_CRVAL, 2D0, 2, 0)
 
 *     Annotation.
       IDENTS(1) = 'X'
@@ -1316,8 +1341,10 @@
       GCODE(2) = 1
 
       IC = -1
-      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 0, C0, GCODE, 2D0, 0,
-     :  0D0, 0, 0D0, .FALSE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
+      GRID1(0) = 0D0
+      GRID2(0) = 0D0
+      CALL PGSBOX (BLC, TRC, IDENTS, OPT, 0, 0, C0, GCODE, 2D0,
+     :  0, GRID1, 0, GRID2, .FALSE., PGWCSL, 1, WCSLEN, 1, NLCPRM, WCS,
      :  NLDPRM, 256, IC, CACHE, IERR)
 
 *     Draw the frame.
@@ -1329,7 +1356,7 @@
 
       STATUS = WCSFREE (WCS)
 
-      CALL PGASK (0)
+      CALL PGASK (.FALSE.)
       CALL PGEND ()
 
       END

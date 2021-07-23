@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tsph.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tsph.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tsph tests the spherical coordinate transformation routines for closure.
@@ -57,12 +54,12 @@ int main()
   dlatmx = 0.0;
 
   for (k = 0; k < 3; k++) {
-    /* Set reference angles. */
+    // Set reference angles.
     eul[0] =  90.0;
     eul[2] = -90.0;
 
     if (k < 2) {
-      /* Special-case transformations. */
+      // Special-case transformations.
       eul[1] = (k==0) ? 0.0 : 180.0;
     } else {
       eul[1] =  30.0;
@@ -75,7 +72,7 @@ int main()
     eul[3] = cosd(eul[1]);
     eul[4] = sind(eul[1]);
 
-    /* Test points at constant latitude. */
+    // Test points at constant latitude.
     for (lat = 90; lat >= -90; lat--) {
       lat1 = (double)lat;
       coslat = cosd(lat1);
@@ -87,9 +84,9 @@ int main()
       sphs2x(eul, 361, 1, 1, 1, lng1, &lat1, phi, theta);
       sphx2s(eul, 361, 0, 1, 1, phi, theta, lng2, lat2);
 
-      /* Exact results are expected for special-case transformations. */
+      // Exact results are expected for special-case transformations.
       if (k == 0) {
-        /* Identity transformation. */
+        // Identity transformation.
         for (j = 0; j <= 360; j++) {
           if (phi[j] != lng1[j] || theta[j] != lat1) {
             nFail++;
@@ -101,7 +98,7 @@ int main()
         }
 
       } else if (k == 1) {
-        /* Antipodal transformation. */
+        // Antipodal transformation.
         for (j = 0; j <= 360; j++) {
           if (phi[j] != -lng1[j] || theta[j] != -lat1) {
             nFail++;
@@ -113,11 +110,11 @@ int main()
         }
       }
 
-      /* Do another round trip, just for good measure. */
+      // Do another round trip, just for good measure.
       sphs2x(eul, 361, 0, 1, 1, lng2, lat2, phi, theta);
       sphx2s(eul, 361, 0, 1, 1, phi, theta, lng2, lat2);
 
-      /* Check closure. */
+      // Check closure.
       for (j = 0; j <= 360; j++) {
         dlng = fabs(lng2[j] - lng1[j]);
         if (dlng > 180.0) dlng = fabs(dlng-360.0);
@@ -136,7 +133,7 @@ int main()
       }
     }
 
-    /* Test vector strides using points in spirals from south to north. */
+    // Test vector strides using points in spirals from south to north.
     for (lng = 0; lng <= 360; lng++) {
       for (j = 0, lat = -90; lat <= 90; j++, lat++) {
         cel1[j][0] = (double)((lng+j)%360 - 180);
@@ -148,9 +145,9 @@ int main()
       sphx2s(eul, 181, 0, 2, 2, &(ntv[0][0]), &(ntv[0][1]),
              &(cel2[0][0]), &(cel2[0][1]));
 
-      /* Exact results are expected for special-case transformations. */
+      // Exact results are expected for special-case transformations.
       if (k == 0) {
-        /* Identity transformation. */
+        // Identity transformation.
         for (j = 0; j <= 180; j++) {
           if (ntv[j][0] != cel1[j][0] || ntv[j][1] != cel1[j][1]) {
             nFail++;
@@ -162,7 +159,7 @@ int main()
         }
 
       } else if (k == 1) {
-        /* Antipodal transformation. */
+        // Antipodal transformation.
         for (j = 0; j <= 180; j++) {
           if (ntv[j][0] != -cel1[j][0] || ntv[j][1] != -cel1[j][1]) {
             nFail++;
@@ -174,7 +171,7 @@ int main()
         }
       }
 
-      /* Check closure. */
+      // Check closure.
       for (j = 0; j <= 180; j++) {
         dlng = fabs(cel2[j][0] - cel1[j][0]);
         if (dlng > 180.0) dlng = fabs(dlng - 360.0);
@@ -198,7 +195,7 @@ int main()
   }
 
 
-  /* Test closure at points close to the pole. */
+  // Test closure at points close to the pole.
   for (j = -1; j <= 1; j += 2) {
     zeta = 1.0;
     lng1[0] = -180.0;

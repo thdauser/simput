@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tdis2.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tdis2.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tdis2 tests wcssub()'s handling of distortion functions.  Input comes from
@@ -61,20 +58,20 @@ int main(int argc, char *argv[])
   wcserr_enable(1);
   wcsprintf_set(stdout);
 
-  /* Set line buffering in case stdout is redirected to a file, otherwise
-   * stdout and stderr messages will be jumbled (stderr is unbuffered). */
+  // Set line buffering in case stdout is redirected to a file, otherwise
+  // stdout and stderr messages will be jumbled (stderr is unbuffered).
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   wcsprintf("Testing wcssub() with distortions (tdis2.c)\n"
             "-------------------------------------------\n");
 
-  /* Optional file name specified? */
+  // Optional file name specified?
   if (1 < argc) {
     infile = argv[1];
   }
 
 
-  /* Read in the FITS header, excluding COMMENT and HISTORY keyrecords. */
+  // Read in the FITS header, excluding COMMENT and HISTORY keyrecords.
   if ((fptr = fopen(infile, "r")) == 0) {
     wcsprintf("ERROR opening %s\n", infile);
     return 1;
@@ -110,12 +107,12 @@ int main(int argc, char *argv[])
         continue;
       }
 
-      strncpy(header+k, keyrec, 80);
+      memcpy(header+k, keyrec, 80);
       k += 80;
       nkeyrec++;
 
       if (strncmp(keyrec, "END       ", 10) == 0) {
-        /* An END keyrecord was read, but read the rest of the block. */
+        // An END keyrecord was read, but read the rest of the block.
         gotend = 1;
       }
     }
@@ -125,14 +122,14 @@ int main(int argc, char *argv[])
   fclose(fptr);
 
 
-  /* Parse the header. */
+  // Parse the header.
   if ((wcspih(header, nkeyrec, WCSHDR_none, 2, &nreject, &nwcs, &wcs))) {
     wcsperr(wcs, 0x0);
     return 1;
   }
 
-  /* Extract the coordinate description for a transposed subimage and prepend
-     a new axis.  Also tests wcssub() on a struct that hasn't been set up. */
+  // Extract the coordinate description for a transposed subimage and prepend
+  // a new axis.  Also tests wcssub() on a struct that hasn't been set up.
   nsub = 3;
   axes[0] = 0;
   axes[1] = WCSSUB_LATITUDE;
@@ -148,7 +145,7 @@ int main(int argc, char *argv[])
   }
 
 
-  /* Print the original and extracted structs. */
+  // Print the original and extracted structs.
   printf("\nInitial contents of wcsprm struct:\n");
   if ((status = wcsset(wcs))) {
     wcsperr(wcs, "");
@@ -166,7 +163,7 @@ int main(int argc, char *argv[])
   wcsprt(&wcsext);
 
 
-  /* Compute distortion statistics in the initial struct. */
+  // Compute distortion statistics in the initial struct.
   maxdis = stats;
   maxtot = maxdis + 4;
   avgdis = maxtot + 1;
@@ -220,7 +217,7 @@ int main(int argc, char *argv[])
            rmsdis[0], rmsdis[1], rmsdis[2], rmsdis[3], *rmstot);
 
 
-  /* Compute distortion statistics in the extracted struct. */
+  // Compute distortion statistics in the extracted struct.
   pixtrc[0]  =   1.0;
   pixtrc[1]  = 256.0;
   pixtrc[2]  = 256.0;

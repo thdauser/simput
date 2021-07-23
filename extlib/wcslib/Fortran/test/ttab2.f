@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: ttab2.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: ttab2.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TTAB2
@@ -92,7 +90,7 @@
 
 
 *     Set up the lookup table.
-      STATUS = TABPUT (TAB, TAB_FLAG, -1, 0, 0)
+      STATUS = TABPTI (TAB, TAB_FLAG, -1, 0, 0)
       STATUS = TABINI(M, K, TAB)
       IF (STATUS.NE.0) THEN
         WRITE (*, 30) STATUS
@@ -100,14 +98,14 @@
         GO TO 999
       END IF
 
-      STATUS = TABPUT (TAB, TAB_M, M, 0, 0)
+      STATUS = TABPTI (TAB, TAB_M, M, 0, 0)
       DO 50 IM = 1, M
-        STATUS = TABPUT (TAB, TAB_K,     K(IM),     IM, 0)
-        STATUS = TABPUT (TAB, TAB_MAP,   MAP(IM),   IM, 0)
-        STATUS = TABPUT (TAB, TAB_CRVAL, CRVAL(IM), IM, 0)
+        STATUS = TABPTI (TAB, TAB_K,     K(IM),     IM, 0)
+        STATUS = TABPTI (TAB, TAB_MAP,   MAP(IM),   IM, 0)
+        STATUS = TABPTD (TAB, TAB_CRVAL, CRVAL(IM), IM, 0)
 
         DO 40 IK = 1, K(IM)
-          STATUS = TABPUT (TAB, TAB_INDEX, DBLE(IK-1), IM, IK)
+          STATUS = TABPTD (TAB, TAB_INDEX, DBLE(IK-1), IM, IK)
  40     CONTINUE
  50   CONTINUE
 
@@ -120,27 +118,27 @@
  70   CONTINUE
 
 *     The first coordinate element is static.
-      STATUS = TABPUT (TAB, TAB_COORD, 0D0, 1, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 0D0, 3, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 0D0, 5, 0)
-      STATUS = TABPUT (TAB, TAB_COORD, 0D0, 7, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 0D0, 1, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 0D0, 3, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 0D0, 5, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 0D0, 7, 0)
 
 *     (k1,k2) = (1,1).
-      STATUS = TABPUT (TAB, TAB_COORD, 0D0, 2, 0)
+      STATUS = TABPTD (TAB, TAB_COORD, 0D0, 2, 0)
 
 *     The second coordinate element varies in three of the corners.
       DO 170 L3 = 0, 100, 20
 *       (k1,k2) = (2,2).
-        STATUS = TABPUT (TAB, TAB_COORD, 0.01D0*L3, 8, 0)
+        STATUS = TABPTD (TAB, TAB_COORD, 0.01D0*L3, 8, 0)
 
         DO 160 L2 = 0, 100, 20
 *         (k1,k2) = (1,2).
-          STATUS = TABPUT (TAB, TAB_COORD, 0.01D0*L2, 6, 0)
+          STATUS = TABPTD (TAB, TAB_COORD, 0.01D0*L2, 6, 0)
 
           CALL PGPAGE ()
           DO 150 L1 = 0, 100, 2
 *           (k1,k2) = (2,1).
-            STATUS = TABPUT (TAB, TAB_COORD, 0.01D0*L1, 4, 0)
+            STATUS = TABPTD (TAB, TAB_COORD, 0.01D0*L1, 4, 0)
 
 *           Compute coordinates within the interpolation element.
             STATUS = TABX2S (TAB, NP*NP, 2, X, WORLD, STAT)

@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,25 +18,25 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: wcs.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: wcs.inc,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  WCSPUT,  WCSPTC, WCSPTD,  WCSPTI,
-     :          WCSGET,  WCSGTC, WCSGTD,  WCSGTI,
-     :          WCSNPV,  WCSNPS, WCSINI,  WCSINIT, WCSSUB, WCSCOMPARE,
-     :          WCSFREE, WCSPRT, WCSPERR, WCSBCHK,
-     :          WCSSET,  WCSP2S, WCSS2P,  WCSMIX,  WCSSPTR, WCSCOPY
+      EXTERNAL  WCSPUT,  WCSPTC,  WCSPTD,  WCSPTI,
+     :          WCSGET,  WCSGTC,  WCSGTD,  WCSGTI,
+     :          WCSNPV,  WCSNPS,  WCSINI,  WCSINIT, WCSSUB, WCSCOMPARE,
+     :          WCSFREE, WCSTRIM, WCSSIZE, AUXSIZE, WCSPRT, WCSPERR,
+     :          WCSBCHK, WCSSET,  WCSP2S,  WCSS2P,  WCSMIX,
+     :          WCSCCS,  WCSSPTR, WCSCOPY
 
-      INTEGER   WCSPUT,  WCSPTC, WCSPTD,  WCSPTI,
-     :          WCSGET,  WCSGTC, WCSGTD,  WCSGTI,
-     :          WCSNPV,  WCSNPS, WCSINI,  WCSINIT, WCSSUB, WCSCOMPARE,
-     :          WCSFREE, WCSPRT, WCSPERR, WCSBCHK,
-     :          WCSSET,  WCSP2S, WCSS2P,  WCSMIX,  WCSSPTR, WCSCOPY
+      INTEGER   WCSPUT,  WCSPTC,  WCSPTD,  WCSPTI,
+     :          WCSGET,  WCSGTC,  WCSGTD,  WCSGTI,
+     :          WCSNPV,  WCSNPS,  WCSINI,  WCSINIT, WCSSUB,  WCSCOMPARE,
+     :          WCSFREE, WCSTRIM, WCSSIZE, AUXSIZE, WCSPRT, WCSPERR,
+     :          WCSBCHK, WCSSET,  WCSP2S,  WCSS2P,  WCSMIX,
+     :          WCSCCS,  WCSSPTR, WCSCOPY
 
 *     Note that the Fortran API differs from that of the C function.
       EXTERNAL  WCSLIB_VERSION
@@ -44,21 +44,28 @@
 
 
 *     Length of the WCSPRM data structure (INTEGER array) on 64-bit
-*     machines.  Only needs to be 420 on 32-bit machines.
+*     machines.  Only needs to be 622 on 32-bit machines.
       INTEGER   WCSLEN
-      PARAMETER (WCSLEN = 482)
+      PARAMETER (WCSLEN = 688)
 
 *     Codes for WCS data structure elements used by WCSPUT and WCSGET.
-      INTEGER   WCS_FLAG,  WCS_NAXIS, WCS_CRPIX, WCS_PC, WCS_CDELT,
+      INTEGER   WCS_FLAG, WCS_NAXIS, WCS_CRPIX, WCS_PC, WCS_CDELT,
      :          WCS_CRVAL, WCS_CUNIT, WCS_CTYPE, WCS_LONPOLE,
      :          WCS_LATPOLE, WCS_RESTFRQ, WCS_RESTWAV, WCS_NPV,
      :          WCS_NPVMAX, WCS_PV, WCS_NPS, WCS_NPSMAX, WCS_PS, WCS_CD,
      :          WCS_CROTA, WCS_ALTLIN, WCS_VELREF, WCS_ALT, WCS_COLNUM,
-     :          WCS_COLAX, WCS_CNAME, WCS_CRDER, WCS_CSYER, WCS_DATEAVG,
-     :          WCS_DATEOBS, WCS_EQUINOX, WCS_MJDAVG, WCS_MJDOBS,
-     :          WCS_OBSGEO, WCS_RADESYS, WCS_SPECSYS, WCS_SSYSOBS,
-     :          WCS_VELOSYS, WCS_ZSOURCE, WCS_SSYSSRC, WCS_VELANGL,
-     :          WCS_WCSNAME
+     :          WCS_COLAX, WCS_CNAME,  WCS_CRDER, WCS_CSYER, WCS_CZPHS,
+     :          WCS_CPERI, WCS_WCSNAME, WCS_TIMESYS, WCS_TREFPOS,
+     :          WCS_TREFDIR, WCS_PLEPHEM, WCS_TIMEUNIT, WCS_DATEREF,
+     :          WCS_MJDREF, WCS_TIMEOFFS, WCS_DATEOBS, WCS_DATEBEG,
+     :          WCS_DATEAVG, WCS_DATEEND, WCS_MJDOBS, WCS_MJDBEG,
+     :          WCS_MJDAVG, WCS_MJDEND, WCS_JEPOCH, WCS_BEPOCH,
+     :          WCS_TSTART, WCS_TSTOP, WCS_XPOSURE, WCS_TELAPSE,
+     :          WCS_TIMSYER, WCS_TIMRDER, WCS_TIMEDEL, WCS_TIMEPIXR,
+     :          WCS_OBSGEO, WCS_OBSORBIT, WCS_RADESYS, WCS_EQUINOX,
+     :          WCS_SPECSYS, WCS_SSYSOBS, WCS_VELOSYS, WCS_ZSOURCE,
+     :          WCS_SSYSSRC, WCS_VELANGL, WCS_RSUN_REF, WCS_DSUN_OBS,
+     :          WCS_CRLN_OBS, WCS_HGLN_OBS, WCS_HGLT_OBS
 
       PARAMETER (WCS_FLAG     = 100)
       PARAMETER (WCS_NAXIS    = 101)
@@ -90,20 +97,56 @@
       PARAMETER (WCS_CNAME    = 125)
       PARAMETER (WCS_CRDER    = 126)
       PARAMETER (WCS_CSYER    = 127)
-      PARAMETER (WCS_DATEAVG  = 128)
-      PARAMETER (WCS_DATEOBS  = 129)
-      PARAMETER (WCS_EQUINOX  = 130)
-      PARAMETER (WCS_MJDAVG   = 131)
-      PARAMETER (WCS_MJDOBS   = 132)
-      PARAMETER (WCS_OBSGEO   = 133)
-      PARAMETER (WCS_RADESYS  = 134)
-      PARAMETER (WCS_SPECSYS  = 135)
-      PARAMETER (WCS_SSYSOBS  = 136)
-      PARAMETER (WCS_VELOSYS  = 137)
-      PARAMETER (WCS_ZSOURCE  = 138)
-      PARAMETER (WCS_SSYSSRC  = 139)
-      PARAMETER (WCS_VELANGL  = 140)
-      PARAMETER (WCS_WCSNAME  = 141)
+      PARAMETER (WCS_CZPHS    = 128)
+      PARAMETER (WCS_CPERI    = 129)
+
+      PARAMETER (WCS_WCSNAME  = 130)
+
+      PARAMETER (WCS_TIMESYS  = 131)
+      PARAMETER (WCS_TREFPOS  = 132)
+      PARAMETER (WCS_TREFDIR  = 133)
+      PARAMETER (WCS_PLEPHEM  = 134)
+      PARAMETER (WCS_TIMEUNIT = 135)
+      PARAMETER (WCS_DATEREF  = 136)
+      PARAMETER (WCS_MJDREF   = 137)
+      PARAMETER (WCS_TIMEOFFS = 138)
+
+      PARAMETER (WCS_DATEOBS  = 139)
+      PARAMETER (WCS_DATEBEG  = 140)
+      PARAMETER (WCS_DATEAVG  = 141)
+      PARAMETER (WCS_DATEEND  = 142)
+      PARAMETER (WCS_MJDOBS   = 143)
+      PARAMETER (WCS_MJDBEG   = 144)
+      PARAMETER (WCS_MJDAVG   = 145)
+      PARAMETER (WCS_MJDEND   = 146)
+      PARAMETER (WCS_JEPOCH   = 147)
+      PARAMETER (WCS_BEPOCH   = 148)
+      PARAMETER (WCS_TSTART   = 149)
+      PARAMETER (WCS_TSTOP    = 150)
+      PARAMETER (WCS_XPOSURE  = 151)
+      PARAMETER (WCS_TELAPSE  = 152)
+
+      PARAMETER (WCS_TIMSYER  = 153)
+      PARAMETER (WCS_TIMRDER  = 154)
+      PARAMETER (WCS_TIMEDEL  = 155)
+      PARAMETER (WCS_TIMEPIXR = 156)
+
+      PARAMETER (WCS_OBSGEO   = 157)
+      PARAMETER (WCS_OBSORBIT = 158)
+      PARAMETER (WCS_RADESYS  = 159)
+      PARAMETER (WCS_EQUINOX  = 160)
+      PARAMETER (WCS_SPECSYS  = 161)
+      PARAMETER (WCS_SSYSOBS  = 162)
+      PARAMETER (WCS_VELOSYS  = 163)
+      PARAMETER (WCS_ZSOURCE  = 164)
+      PARAMETER (WCS_SSYSSRC  = 165)
+      PARAMETER (WCS_VELANGL  = 166)
+
+      PARAMETER (WCS_RSUN_REF = 167)
+      PARAMETER (WCS_DSUN_OBS = 168)
+      PARAMETER (WCS_CRLN_OBS = 169)
+      PARAMETER (WCS_HGLN_OBS = 170)
+      PARAMETER (WCS_HGLT_OBS = 171)
 
 *     Codes for WCS data structure elements used by WCSGET (only).
       INTEGER   WCS_NTAB,   WCS_NWTB, WCS_TAB,   WCS_WTB, WCS_LNGTYP,

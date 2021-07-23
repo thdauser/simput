@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: twcssub.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: twcssub.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TWCSSUB
@@ -87,35 +85,35 @@
       DATA (PSI(K), PSM(K), PS(K), K=1,NPS)
      :             /2, 1, 'UTC'/
 *-----------------------------------------------------------------------
-      STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, -1, 0, 0)
       STATUS = WCSINI (NAXIS, WCS)
 
       DO 20 I = 1, NAXIS
-        STATUS = WCSPUT (WCS, WCS_CRPIX, CRPIX(I), I, 0)
+        STATUS = WCSPTD (WCS, WCS_CRPIX, CRPIX(I), I, 0)
 
         DO 10 J = 1, NAXIS
-          STATUS = WCSPUT (WCS, WCS_PC, PC(I,J), I, J)
+          STATUS = WCSPTD (WCS, WCS_PC, PC(I,J), I, J)
  10     CONTINUE
 
-        STATUS = WCSPUT (WCS, WCS_CDELT, CDELT(I), I, 0)
-        STATUS = WCSPUT (WCS, WCS_CUNIT, CUNIT(I), I, 0)
-        STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(I), I, 0)
-        STATUS = WCSPUT (WCS, WCS_CRVAL, CRVAL(I), I, 0)
-        STATUS = WCSPUT (WCS, WCS_CNAME, CNAME(I), I, 0)
+        STATUS = WCSPTD (WCS, WCS_CDELT, CDELT(I), I, 0)
+        STATUS = WCSPTC (WCS, WCS_CUNIT, CUNIT(I), I, 0)
+        STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(I), I, 0)
+        STATUS = WCSPTD (WCS, WCS_CRVAL, CRVAL(I), I, 0)
+        STATUS = WCSPTC (WCS, WCS_CNAME, CNAME(I), I, 0)
  20   CONTINUE
 
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, LONPOLE, 0, 0)
-      STATUS = WCSPUT (WCS, WCS_LATPOLE, LATPOLE, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, LONPOLE, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_LATPOLE, LATPOLE, 0, 0)
 
-      STATUS = WCSPUT (WCS, WCS_RESTFRQ, RESTFRQ, 0, 0)
-      STATUS = WCSPUT (WCS, WCS_RESTWAV, RESTWAV, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_RESTFRQ, RESTFRQ, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_RESTWAV, RESTWAV, 0, 0)
 
       DO 30 K = 1, NPV
-        STATUS = WCSPUT (WCS, WCS_PV, PV(K), PVI(K), PVM(K))
+        STATUS = WCSPTD (WCS, WCS_PV, PV(K), PVI(K), PVM(K))
  30   CONTINUE
 
       DO 40 K = 1, NPS
-        STATUS = WCSPUT (WCS, WCS_PS, PS(K), PSI(K), PSM(K))
+        STATUS = WCSPTC (WCS, WCS_PS, PS(K), PSI(K), PSM(K))
  40   CONTINUE
 
 *     Extract information from the FITS header.
@@ -144,7 +142,7 @@
       WRITE (6, 70)
  70   FORMAT (//,'Extracted contents of wcsprm struct:')
 
-      STATUS = WCSPUT (WCSEXT, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSPTI (WCSEXT, WCS_FLAG, -1, 0, 0)
       STATUS = WCSSUB (WCS, NSUB, AXES, WCSEXT)
 
       CALL FLUSH(6)
@@ -161,7 +159,7 @@
 
 
 *     Set it up for failure by setting PC1_3 non-zero.
-      STATUS = WCSPUT (WCS, WCS_PC, 1D0, 1, 3)
+      STATUS = WCSPTD (WCS, WCS_PC, 1D0, 1, 3)
       NSUB = 2
       AXES(1) = 4
       AXES(2) = 3

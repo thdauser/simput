@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------
-# WCSLIB 5.19 - an implementation of the FITS WCS standard.
-# Copyright (C) 1995-2018, Mark Calabretta
+# WCSLIB 7.7 - an implementation of the FITS WCS standard.
+# Copyright (C) 1995-2021, Mark Calabretta
 #
 # This file is part of WCSLIB.
 #
@@ -17,15 +17,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 #
-# Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-#
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: wcslint.keyrec,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+# $Id: wcslint.keyrec,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 #-----------------------------------------------------------------------------
 #
-# List of FITS header keyrecords, mostly invalid, for testing 'wcslint' and
-# also, by extension, wcspih() which it uses.
+# List of FITS header keyrecords, many of them invalid, for testing 'wcslint'
+# and also, by extension, wcspih() which it uses.
 #
 # Use 'tofits' (supplied) to convert this file to proper FITS format via
 #
@@ -103,13 +101,52 @@ CRVAL4A =                 -2e3 / [s] Time at the reference point
 CNAME4A = 'Time offset'        / Axis name for labelling purposes
 PS4_0A  = 'UTC'                / Time measurement system
 
-DATE-OBS= '1957-02-14T15:00:00'/ UTC date corresponding to MJD-OBS
-DATE-AVG= '1957-02-14T16:48:00'/ UTC date corresponding to MJD-AVG
-MJD-OBS =            35883.625 / [d] MJD at start of observation (UTC)
-MJD-AVG =            35883.700 / [d] MJD mid-observation time (UTC)
-OBSGEO-X=           -4554231.9 / [m] ITRF observatory coordinates
-OBSGEO-Y=            2816758.3 /
-OBSGEO-Z=           -3454035.9
+TIMESYS = 'UTC'                / Time scale
+TREFPOS = 'TOPOCENTRE'         / Time reference position, with OBSGEO-[XYZLBH]
+TREFDIR = 'RA_NOM,DEC_NOM'     / Time reference direction
+PLEPHEM = 'DE405'              / Ephemerides used for pathlength delays
+
+TIMEUNIT= 's'                  / Time units
+DATEREF = '1957-02-14T15:00:00'/ Date-time of fiducial time
+MJDREF  =            35883.625 / [d] MJD corresponding to DATEREF
+MJDREFI =            35883     / [d] MJDREF, integer part
+MJDREFF =                0.625 / [d] MJDREF, fractional part
+JDREF   =          2435884.125 / [d] JD corresponding to DATEREF
+JDREFI  =          2435884     / [d] JDREF, integer part
+JDREFF  =                0.125 / [d] JDREF, fractional part
+TIMEOFFS=                0.010 / [s] Clock correction
+
+DATE-OBS= '1957-02-14T15:00:00'/ UTC Date-time at start of observation
+MJD-OBS =            35883.625 / [d] MJD corresponding to DATE-OBS
+JEPOCH  =       1957.125598905 / [a] Julian epoch corresponding to DATE-OBS
+BEPOCH  =       1957.125960663 / [a] Besselian epoch corresponding to DATE-OBS
+
+DATE-BEG= '1957-02-14T15:00:00'/ Date-time at start of observation (UTC)
+MJD-BEG =            35883.625 / [d] MJD corresponding to DATE-BEG
+TSTART  =                  0.0 / [s] Start time with respect to DATEREF
+
+DATE-AVG= '1957-02-14T16:48:00'/ UTC Date-time at midpoint of observation
+MJD-AVG =            35883.700 / [d] MJD corresponding to DATE-AVG
+
+DATE-END= '1957-02-14T18:36:00'/ UTC Date-time at end of observation
+MJD-END =            35883.775 / [d] MJD corresponding to DATE-END
+TSTOP   =              12960.0 / [s] Stop time with respect to DATEREF
+
+XPOSURE =              12960.0 / [s] Exposure (integration) time
+TELAPSE =              12960.0 / [s] Elapsed time (start to stop)
+
+TIMSYER =                 5E-5 / [s] Systematic error in time measurements
+TIMRDER =                 1E-9 / [s] Relative error in time measurements
+TIMEDEL =                  1.0 / [s] Time resolution
+TIMEPIXR=                  0.5 / Reference position of timestamp in binned data
+
+OBSGEO-X=         -4554231.533 / [m] WGS84 coordinates of Parkes radiotelescope
+OBSGEO-Y=          2816759.109 / [m] WGS84 observatory y-coordinate
+OBSGEO-Z=         -3454036.323 / [m] WGS84 observatory z-coordinate
+OBSGEO-L=           148.263510 / [deg] WGS84, IAU(1976) ellipsoid, longitude
+OBSGEO-B=           -32.998406 / [deg] WGS84, IAU(1976) ellipsoid, latitude
+OBSGEO-H=              411.793 / [m]   WGS84, IAU(1976) ellipsoid, height
+OBSORBIT= 'sputnik-1957.eph'   / Spacecraft orbit ephemeris file
 
 COMMENT   The following test parser boundary conditions:
 PV4_1A  =                                                                    1.0
@@ -210,7 +247,8 @@ WCSNAMEb= 'INVALID'            / Invalid WCSNAMEa keyword syntax
 ZSOURCE*=                  0.0 / Invalid ZSOURCEa keyword syntax
 
 COMMENT  -----------------------------------------------------------------------
-COMMENT  The following have invalid keyvalues.
+COMMENT  The following have invalid keyvalues (and many should not appear more
+COMMENT  than once in a header).
 COMMENT  -----------------------------------------------------------------------
 
 CRPIX2B =  INVALID             / Not a valid CRPIXja  keyvalue
@@ -225,27 +263,64 @@ PC1_1B  =                 0xff / Not a valid PCi_ja   keyvalue
 CD1_1B  = 'INVALID'            / Not a valid CDi_ja   keyvalue
 PV1_1B  = 'INVALID'            / Not a valid PVi_ma   keyvalue
 PS1_1B  =                    0 / Not a valid PSi_ma   keyvalue
-EQUINOXB=             '2000.0' / Not a valid EQUINOXa keyvalue
-EPOCH   = 'B1950.0'            / Not a valid EPOCH    keyvalue
 LONPOLEB= 'INVALID'            / Not a valid LONPOLEa keyvalue
 LATPOLEB= 'INVALID'            / Not a valid LATPOLEa keyvalue
 RESTFRQB= 'INVALID'            / Not a valid RESTFRQa keyvalue
 RESTWAVB= 'INVALID'            / Not a valid RESTWAVa keyvalue
-RADESYSB=                 ICRS / Not a valid RADESYSa keyvalue
-SPECSYSB=                  0.0 / Not a valid SPECSYSa keyvalue
-SSYSOBSB=                  0.0 / Not a valid SSYSOBSa keyvalue
-SSYSSRCB=                  0.0 / Not a valid SSYSSRCa keyvalue
-VELANGLB= 'INVALID'            / Not a valid VELANGLa keyvalue
-VELOSYSB= 'INVALID'            / Not a valid VELOSYSa keyvalue
+
 WCSNAMEB=                  0.0 / Not a valid WCSNAMEa keyvalue
-ZSOURCEB= 'INVALID'            / Not a valid ZSOURCEa keyvalue
-DATE-AVG=                  0.0 / Not a valid DATE-AVG keyvalue
+
+TIMESYS =                    F / Not a valid TIMESYS  keyvalue
+TREFPOS =                    F / Not a valid TREFPOS  keyvalue
+TREFDIR =                    F / Not a valid TREFDIR  keyvalue
+PLEPHEM =                    F / Not a valid PLEPHEM  keyvalue
+TIMEUNIT=                    F / Not a valid TIMEUNIT keyvalue
+DATEREF =                    F / Not a valid DATEREF  keyvalue
+MJDREF  =                    F / Not a valid MJDREF   keyvalue
+MJDREFI =                    F / Not a valid MJDREFI  keyvalue
+MJDREFF =                    F / Not a valid MJDREFF  keyvalue
+JDREF   = 'INVALID'            / Not a valid JDREF    keyvalue
+JDREFI  = 'INVALID'            / Not a valid JDREFI   keyvalue
+JDREFF  = 'INVALID'            / Not a valid JDREFF   keyvalue
+TIMEOFFS=                    F / Not a valid TIMEOFFS keyvalue
+
 DATE-OBS=                  0.0 / Not a valid DATE-OBS keyvalue
-MJD-AVG = 'INVALID'            / Not a valid MJD-AVG  keyvalue
+DATE-BEG=                  0.0 / Not a valid DATE-BEG keyvalue
+DATE-AVG=                  0.0 / Not a valid DATE-AVG keyvalue
+DATE-END=                  0.0 / Not a valid DATE-END keyvalue
 MJD-OBS = 'INVALID'            / Not a valid MJD-OBS  keyvalue
+MJD-BEG = 'INVALID'            / Not a valid MJD-BEG  keyvalue
+MJD-AVG = 'INVALID'            / Not a valid MJD-AVG  keyvalue
+MJD-END = 'INVALID'            / Not a valid MJD-END  keyvalue
+JEPOCH  =                    F / Not a valid JEPOCH   keyvalue
+BEPOCH  =                    F / Not a valid BEPOCH   keyvalue
+TSTART  =                    F / Not a valid TSTART   keyvalue
+TSTOP   =                    F / Not a valid TSTOP    keyvalue
+XPOSURE =                    F / Not a valid XPOSURE  keyvalue
+TELAPSE =                    F / Not a valid TELAPSE  keyvalue
+
+TIMSYER = 'INVALID'            / Not a valid TIMSYER  keyvalue
+TIMRDER = 'INVALID'            / Not a valid TIMRDER  keyvalue
+TIMEDEL = 'INVALID'            / Not a valid TIMEDEL  keyvalue
+TIMEPIXR=                  2.0 / Not a valid TIMEPIXR keyvalue
+
 OBSGEO-X= 'INVALID'            / Not a valid OBSGEO-X keyvalue
 OBSGEO-Y= 'INVALID'            / Not a valid OBSGEO-Y keyvalue
 OBSGEO-Z= 'INVALID'            / Not a valid OBSGEO-Z keyvalue
+OBSGEO-L= 'INVALID'            / Not a valid OBSGEO-L keyvalue
+OBSGEO-B= 'INVALID'            / Not a valid OBSGEO-B keyvalue
+OBSGEO-H= 'INVALID'            / Not a valid OBSGEO-H keyvalue
+OBSORBIT=                    T / Not a valid OBSORBIT keyvalue
+
+RADESYSB=                 ICRS / Not a valid RADESYSa keyvalue
+EPOCH   = 'B1950.0'            / Not a valid EPOCH    keyvalue
+EQUINOXB=             '2000.0' / Not a valid EQUINOXa keyvalue
+SPECSYSB=                  0.0 / Not a valid SPECSYSa keyvalue
+SSYSOBSB=                  0.0 / Not a valid SSYSOBSa keyvalue
+VELOSYSB= 'INVALID'            / Not a valid VELOSYSa keyvalue
+ZSOURCEB= 'INVALID'            / Not a valid ZSOURCEa keyvalue
+SSYSSRCB=                  0.0 / Not a valid SSYSSRCa keyvalue
+VELANGLB= 'INVALID'            / Not a valid VELANGLa keyvalue
 
 COMMENT  -----------------------------------------------------------------------
 COMMENT  The following are basic syntax errors.

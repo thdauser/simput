@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: twcsmix.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: twcsmix.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TWCS2
@@ -219,7 +217,7 @@
       DOUBLE PRECISION IMG(4), LAT1, LATSPN(2), LNGSPN(2), LNG1, PHI,
      :          PIX1(4), PIX2(4), PIX3(4), PIXLAT, PIXLNG, THETA, TOL,
      :          WORLD(4)
-      CHARACTER PCODE*3
+      CHARACTER PCODE*4
 
 *     On some systems, such as Sun Sparc, the structs MUST be aligned
 *     on a double precision boundary, done here using equivalences.
@@ -232,7 +230,7 @@
       EQUIVALENCE (CEL,DUMMY1), (PRJ,DUMMY2), (WCS,DUMMY3)
 *-----------------------------------------------------------------------
 *     This routine simulates the actions of a FITS header parser.
-      STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, -1, 0, 0)
       CALL PARSER (WCS)
 
 
@@ -240,15 +238,15 @@
       CALL GRDPLT(WCS, IMIN, IMAX, JMIN, JMAX)
 
 
-      STATUS = WCSGET (WCS, WCS_CEL, CEL)
-      STATUS = CELGET (CEL, CEL_PRJ, PRJ)
-      STATUS = PRJGET (PRJ, PRJ_CODE, PCODE)
+      STATUS = WCSGTI (WCS, WCS_CEL, CEL(1))
+      STATUS = CELGTI (CEL, CEL_PRJ, PRJ(1))
+      STATUS = PRJGTC (PRJ, PRJ_CODE, PCODE)
       WRITE (*, 10) PCODE, TOL
- 10   FORMAT ('Testing ',A,'; reporting tolerance',1PG8.1,' deg.')
+ 10   FORMAT ('Testing ',A3,'; reporting tolerance',1PG8.1,' deg.')
 
-      STATUS = WCSGET (WCS, WCS_LNG, LNGIDX)
-      STATUS = WCSGET (WCS, WCS_LAT, LATIDX)
-      STATUS = WCSGET (WCS, WCS_SPEC, SPCIDX)
+      STATUS = WCSGTI (WCS, WCS_LNG, LNGIDX)
+      STATUS = WCSGTI (WCS, WCS_LAT, LATIDX)
+      STATUS = WCSGTI (WCS, WCS_SPEC, SPCIDX)
       WORLD(1) = 0D0
       WORLD(2) = 0D0
       WORLD(3) = 0D0
@@ -263,8 +261,8 @@
 
           WORLD(LNGIDX) = LNG1
           WORLD(LATIDX) = LAT1
-          STATUS = WCSS2P (WCS, 1, 4, WORLD, PHI, THETA, IMG, PIX1,
-     :                     STAT)
+          STATUS = WCSS2P (WCS, 1, 4, WORLD(1), PHI, THETA, IMG(1),
+     :                     PIX1(1), STAT)
           IF (STATUS.NE.0) THEN
             WRITE (*, 20) PCODE, LNG1, LAT1, STATUS
  20         FORMAT (A3,': LNG1 =',F20.15,'  LAT1 =',F20.15,
@@ -297,8 +295,8 @@
             CALL ID (WCS, DOID, LNG1, LAT1, PIXLNG, PIXLAT)
             WRITE (*, '(A,I2)') '  A: WCSMIX ERROR', STATUS
           ELSE
-            STATUS = WCSS2P (WCS, 1, 0, WORLD, PHI, THETA, IMG, PIX3,
-     :                       STAT)
+            STATUS = WCSS2P (WCS, 1, 0, WORLD(1), PHI, THETA, IMG(1),
+     :                       PIX3(1), STAT)
             IF (STATUS.NE.0) THEN
               CALL ID (WCS, DOID, LNG1, LAT1, PIXLNG, PIXLAT)
               WRITE (*, '(A,I2)') '  A: WCSS2P ERROR', STATUS
@@ -321,8 +319,8 @@
             CALL ID (WCS, DOID, LNG1, LAT1, PIXLNG, PIXLAT)
             WRITE (*, '(A,I2)') '  B: WCSMIX ERROR', STATUS
           ELSE
-            STATUS = WCSS2P (WCS, 1, 0, WORLD, PHI, THETA, IMG, PIX3,
-     :                       STAT)
+            STATUS = WCSS2P (WCS, 1, 0, WORLD(1), PHI, THETA,
+     :                       IMG(1), PIX3(1), STAT)
             IF (STATUS.NE.0) THEN
               CALL ID (WCS, DOID, LNG1, LAT1, PIXLNG, PIXLAT)
               WRITE (*, '(A,I2)') '  B: WCSS2P ERROR', STATUS
@@ -347,8 +345,8 @@
             CALL ID (WCS, DOID, LNG1, LAT1, PIXLNG, PIXLAT)
             WRITE (*, '(A,I2)') '  C: WCSMIX ERROR', STATUS
           ELSE
-            STATUS = WCSS2P (WCS, 1, 0, WORLD, PHI, THETA, IMG, PIX3,
-     :                       STAT)
+            STATUS = WCSS2P (WCS, 1, 0, WORLD(1), PHI, THETA,
+     :                       IMG(1), PIX3(1), STAT)
             IF (STATUS.NE.0) THEN
               CALL ID (WCS, DOID, LNG1, LAT1, PIXLNG, PIXLAT)
               WRITE (*, '(A,I2)') '  C: WCSS2P ERROR', STATUS
@@ -371,8 +369,8 @@
             CALL ID (WCS, DOID, LNG1, LAT1, PIXLNG, PIXLAT)
             WRITE (*, '(A,I2)') '  D: WCSMIX ERROR', STATUS
           ELSE
-            STATUS = WCSS2P (WCS, 1, 0, WORLD, PHI, THETA, IMG, PIX3,
-     :                       STAT)
+            STATUS = WCSS2P (WCS, 1, 0, WORLD(1), PHI, THETA, IMG(1),
+     :                       PIX3(1), STAT)
             IF (STATUS.NE.0) THEN
               CALL ID (WCS, DOID, LNG1, LAT1, PIXLNG, PIXLAT)
               WRITE (*, '(A,I2)') '  D: WCSS2P ERROR', STATUS
@@ -403,7 +401,7 @@
       INTEGER   DOID, STATUS
       REAL      IPT(1), JPT(1)
       DOUBLE PRECISION EULER(5), LNG1, LAT1, PHI, PIXLAT, PIXLNG, THETA
-      CHARACTER PCODE*3
+      CHARACTER PCODE*4
 
 *     On some systems, such as Sun Sparc, the structs MUST be aligned
 *     on a double precision boundary.  As a dummy argument, WCS should
@@ -419,12 +417,12 @@
 *-----------------------------------------------------------------------
       IF (DOID.NE.0) THEN
 *       Compute native coordinates.
-        STATUS = WCSGET (WCS, WCS_CEL, CEL)
-        STATUS = CELGET (CEL, CEL_EULER, EULER)
+        STATUS = WCSGTI (WCS, WCS_CEL, CEL(1))
+        STATUS = CELGTD (CEL, CEL_EULER, EULER)
         CALL SPHS2X (EULER, 1, 1, 1, 1, LNG1, LAT1, PHI, THETA)
 
-        STATUS = CELGET (CEL, CEL_PRJ, PRJ)
-        STATUS = PRJGET (PRJ, PRJ_CODE, PCODE)
+        STATUS = CELGTI (CEL, CEL_PRJ, PRJ)
+        STATUS = PRJGTC (PRJ, PRJ_CODE, PCODE)
         WRITE (*, 10) PCODE, LNG1, LAT1, PHI, THETA, PIXLNG, PIXLAT
  10     FORMAT (/,A3,':  LNG1  =',F20.15,'   LAT1  =',F20.15,/,
      :            '       PHI  =',F20.15,'  THETA  =',F20.15,/,
@@ -456,7 +454,7 @@
       DOUBLE PRECISION FREQ, IMG(NELEM,0:360), LAT, LNG, PHI(0:360),
      :          PIX(NELEM,0:360), REF(4), STEP, THETA(0:360), W(10),
      :          WORLD(NELEM,0:360)
-      CHARACTER PCODE*3, TEXT*80
+      CHARACTER PCODE*4, TEXT*80
 
 *     On some systems, such as Sun Sparc, the structs MUST be aligned
 *     on a double precision boundary.  As a dummy argument, WCS should
@@ -474,9 +472,9 @@
      :          (NATIVE,DUMMY4)
 *-----------------------------------------------------------------------
 *     Initialize non-celestial world coordinates.
-      STATUS = WCSGET (WCS, WCS_LNG, LNGIDX)
-      STATUS = WCSGET (WCS, WCS_LAT, LATIDX)
-      STATUS = WCSGET (WCS, WCS_SPEC, SPCIDX)
+      STATUS = WCSGTI (WCS, WCS_LNG, LNGIDX)
+      STATUS = WCSGTI (WCS, WCS_LAT, LATIDX)
+      STATUS = WCSGTI (WCS, WCS_SPEC, SPCIDX)
 
       FREQ = 1.42040595D9 - 180D0 * 62500D0
       DO 10 J = 0, 360
@@ -493,9 +491,9 @@
 *     Define PGPLOT viewport.
       CALL PGENV (IMIN, IMAX, JMIN, JMAX, 1, -2)
 
-      STATUS = WCSGET (WCS, WCS_CEL, CEL)
-      STATUS = CELGET (CEL, CEL_PRJ, PRJ)
-      STATUS = PRJGET (PRJ, PRJ_CATEGORY, CATEG)
+      STATUS = WCSGTI (WCS, WCS_CEL, CEL(1))
+      STATUS = CELGTI (CEL, CEL_PRJ, PRJ)
+      STATUS = PRJGTI (PRJ, PRJ_CATEGORY, CATEG)
       CUBIC = CATEG.EQ.7
       IF (CUBIC) THEN
 *       Some sort of quad-cube projection.
@@ -509,7 +507,7 @@
           IMG(4,J) = 0D0
  20     CONTINUE
 
-        STATUS = PRJGET (PRJ, PRJ_W, W)
+        STATUS = PRJGTD (PRJ, PRJ_W, W)
         IMG(LNGIDX,0) = -W(1)
         IMG(LATIDX,0) =  W(1)
         IMG(LNGIDX,1) = -W(1)
@@ -529,7 +527,7 @@
         IMG(LNGIDX,8) = -W(1)
         IMG(LATIDX,8) = -W(1)
 
-        STATUS = WCSGET (WCS, WCS_LIN, LIN)
+        STATUS = WCSGTI (WCS, WCS_LIN, LIN(1))
         STATUS = LINX2P (LIN, 9, NELEM, IMG, PIX)
 
         DO 30 J = 0, 8
@@ -549,11 +547,11 @@
 
 
 *     Draw the native coordinate graticule faintly in the background.
-      STATUS = WCSPUT (NATIVE, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSPTI (NATIVE, WCS_FLAG, -1, 0, 0)
       STATUS = WCSCOPY (WCS, NATIVE)
-      STATUS = WCSPUT (NATIVE, WCS_CRVAL,     0D0, LNGIDX, 0)
-      STATUS = WCSPUT (NATIVE, WCS_CRVAL,    90D0, LATIDX, 0)
-      STATUS = WCSPUT (NATIVE, WCS_LONPOLE, 180D0, 0, 0)
+      STATUS = WCSPTD (NATIVE, WCS_CRVAL,     0D0, LNGIDX, 0)
+      STATUS = WCSPTD (NATIVE, WCS_CRVAL,    90D0, LATIDX, 0)
+      STATUS = WCSPTD (NATIVE, WCS_LONPOLE, 180D0, 0, 0)
       STATUS = WCSSET (NATIVE)
 
       CALL PGSCI (8)
@@ -571,8 +569,8 @@
           J = J + 1
  40     CONTINUE
 
-        STATUS = WCSS2P (NATIVE, 181, NELEM, WORLD, PHI, THETA, IMG,
-     :                   PIX, STAT)
+        STATUS = WCSS2P (NATIVE, 181, NELEM, WORLD(1,0),
+     :                   PHI(0), THETA(0), IMG(1,0), PIX(1,0), STAT(0))
         IF (STATUS.NE.0) GO TO 60
 
         J = 0
@@ -610,8 +608,8 @@
           J = J + 1
  70     CONTINUE
 
-        STATUS = WCSS2P (NATIVE, 361, NELEM, WORLD, PHI, THETA, IMG,
-     :                   PIX, STAT)
+        STATUS = WCSS2P (NATIVE, 361, NELEM, WORLD(1,0),
+     :                   PHI(0), THETA(0), IMG(1,0), PIX(1,0), STAT(0))
         IF (STATUS.NE.0) GO TO 90
 
         J = 0
@@ -661,8 +659,8 @@
           J = J + 1
  100    CONTINUE
 
-        STATUS = WCSS2P (WCS, 181, NELEM, WORLD, PHI, THETA, IMG, PIX,
-     :                   STAT)
+        STATUS = WCSS2P (WCS, 181, NELEM, WORLD(1,0), PHI(0), THETA(0),
+     :                   IMG(1,0), PIX(1,0), STAT(0))
         IF (STATUS.NE.0) GO TO 120
 
         J = 0
@@ -706,8 +704,8 @@
           J = J + 1
  130    CONTINUE
 
-        STATUS = WCSS2P (WCS, 361, NELEM, WORLD, PHI, THETA, IMG, PIX,
-     :                   STAT)
+        STATUS = WCSS2P (WCS, 361, NELEM, WORLD(1,0), PHI(0), THETA(0),
+     :                   IMG(1,0), PIX(1,0), STAT(0))
         IF (STATUS.NE.0) GO TO 150
 
         J = 0
@@ -734,12 +732,12 @@
 
 *     Write a descriptive title.
       CALL PGSCI (1)
-      STATUS = PRJGET (PRJ, PRJ_CODE, PCODE)
-      TEXT = PCODE // ' projection - 15 degree graticule'
+      STATUS = PRJGTC (PRJ, PRJ_CODE, PCODE)
+      TEXT = PCODE // 'projection - 15 degree graticule'
       WRITE (*, '(//,A)') TEXT
       CALL PGTEXT (IMIN, JMIN-10.0, TEXT)
 
-      STATUS = CELGET (CEL, CEL_REF, REF)
+      STATUS = CELGTD (CEL, CEL_REF, REF)
       WRITE (TEXT, 160) REF(1), REF(2)
  160  FORMAT ('centered on celestial coordinates (',F6.2,',',F6.2,')')
       WRITE (*, '(A)') TEXT
@@ -784,29 +782,29 @@
      :                LATPOLE, RESTFRQ, RESTWAV, PVI, PVM, PV
       COMMON /HEADCH/ CTYPE
 *-----------------------------------------------------------------------
-      STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, -1, 0, 0)
       STATUS = WCSINI (NAXIS, WCS)
 
       DO 20 I = 1, NAXIS
-        STATUS = WCSPUT (WCS, WCS_CRPIX, CRPIX(I), I, 0)
+        STATUS = WCSPTD (WCS, WCS_CRPIX, CRPIX(I), I, 0)
 
         DO 10 J = 1, NAXIS
-          STATUS = WCSPUT (WCS, WCS_PC, PC(I,J), I, J)
+          STATUS = WCSPTD (WCS, WCS_PC, PC(I,J), I, J)
  10     CONTINUE
 
-        STATUS = WCSPUT (WCS, WCS_CDELT, CDELT(I), I, 0)
-        STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(I), I, 0)
-        STATUS = WCSPUT (WCS, WCS_CRVAL, CRVAL(I), I, 0)
+        STATUS = WCSPTD (WCS, WCS_CDELT, CDELT(I), I, 0)
+        STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(I), I, 0)
+        STATUS = WCSPTD (WCS, WCS_CRVAL, CRVAL(I), I, 0)
  20   CONTINUE
 
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, LONPOLE, 0, 0)
-      STATUS = WCSPUT (WCS, WCS_LATPOLE, LATPOLE, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, LONPOLE, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_LATPOLE, LATPOLE, 0, 0)
 
-      STATUS = WCSPUT (WCS, WCS_RESTFRQ, RESTFRQ, 0, 0)
-      STATUS = WCSPUT (WCS, WCS_RESTWAV, RESTWAV, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_RESTFRQ, RESTFRQ, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_RESTWAV, RESTWAV, 0, 0)
 
       DO 30 K = 1, NPV
-        STATUS = WCSPUT (WCS, WCS_PV, PV(K), PVI(K), PVM(K))
+        STATUS = WCSPTD (WCS, WCS_PV, PV(K), PVI(K), PVM(K))
  30   CONTINUE
 
 *     Extract information from the FITS header.

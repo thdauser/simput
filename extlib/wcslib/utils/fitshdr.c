@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,16 +17,15 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: fitshdr.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: fitshdr.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
-* Usage: fitshdr [infile]
+* Usage: fitshdr [<fitsfile>]
 *-----------------------------------------------------------------------------
 * List headers from a FITS file specified on the command line, or else on
 * stdin, printing them as 80-character keyrecords without trailing blanks.
+* Refer to the usage notes below.
 *
 * If invoked as 'rpfhdr' rather than 'fitshdr' it also handles RPFITS format
 * which has a block size of 2560 (rather than 2880) but otherwise looks like
@@ -44,7 +42,7 @@ char usage[] =
 "  -q N         Quit after reading the Nth header, where N is an integer\n"
 "               (optional space between -q and N).\n";
 
-/* Get LFS definitions for stdio.h. */
+// Get LFS definitions for stdio.h.
 #include <wcsconfig_utils.h>
 
 #include <errno.h>
@@ -59,20 +57,16 @@ char usage[] =
 int main(int argc, char **argv)
 
 {
-  char cbuff[2880], *cptr;
-  char dashes[84] = "----------------------------------------"
-                    "----------------------------------------";
-  char equals[84] = "========================================"
-                    "========================================";
-  char spaces[84] = "                                        "
-                    "                                        ";
-  char *format, rpfits[8] = "RPFITS";
-  int  i, len;
-  unsigned int blksiz = 2880, ihdr = 0, inhdr = 0, nhdr = 0, seekable = 1;
-  unsigned long long int iblock = 0, nblock = 0, nbyte;
-  struct stat instat;
+  const char dashes[84] = "----------------------------------------"
+                          "----------------------------------------";
+  const char equals[84] = "========================================"
+                          "========================================";
+  const char spaces[84] = "                                        "
+                          "                                        ";
 
-  /* Parse options. */
+  // Parse options.
+  int i;
+  unsigned int nhdr = 0;
   for (i = 1; i < argc && argv[i][0] == '-'; i++) {
     switch (argv[i][1]) {
     case 'q':
@@ -91,8 +85,8 @@ int main(int argc, char **argv)
     }
   }
 
-  /* If an input file name was specified then reopen it as stdin */
-  /* (doesn't affect seekability).                               */
+  // If an input file name was specified then reopen it as stdin
+  // (doesn't affect seekability).
   if (i < argc) {
     if (access(argv[i], R_OK) == -1) {
       perror(argv[i]);
@@ -105,37 +99,41 @@ int main(int argc, char **argv)
     }
   }
 
-  /* Check for standard FITS or RPFITS. */
+  // Check for standard FITS or RPFITS.
+  char cbuff[2880];
   if (!fread(cbuff, (size_t)80, (size_t)1, stdin)) {
     perror(argv[i]);
     return 2;
   }
 
+  char *format, rpfits[8] = "RPFITS";
+  unsigned int blksiz = 2880, inhdr = 0;
+  unsigned long long int iblock = 0, nblock = 0, nbyte;
   if (strncmp(cbuff, "SIMPLE  = ", 10) == 0) {
     if (!fread(cbuff+80, (size_t)80, (size_t)1, stdin)) {
       perror(argv[i]);
       return 2;
     }
 
-    /* Assume FITS by default. */
+    // Assume FITS by default.
     format = rpfits + 2;
     blksiz = 2880;
 
-    /* Check for RPFITS. */
+    // Check for RPFITS.
     if (strncmp(cbuff+80, "FORMAT  =               RPFITS", 30) == 0 ||
         strncmp(cbuff+80, "FORMAT  =             'RPFITS'", 30) == 0) {
       if (strcmp(*argv, "rpfhdr") == 0) {
-        /* If invoked as 'rpfhdr' then allow RPFITS. */
+        // If invoked as 'rpfhdr' then allow RPFITS.
         format = rpfits;
         blksiz = 2560;
       } else {
-        /* Otherwise disallow RPFITS but issue a warning. */
+        // Otherwise disallow RPFITS but issue a warning.
         printf("WARNING: Input appears to be RPFITS, continuing anyway using "
           "2880-byte blocks.\n" );
       }
     }
 
-    /* Read the rest of the first block. */
+    // Read the rest of the first block.
     if (!fread(cbuff+160, (size_t)(blksiz-160), (size_t)1, stdin)) {
       perror(argv[i]);
       return 2;
@@ -144,13 +142,13 @@ int main(int argc, char **argv)
     inhdr = 1;
 
   } else {
-    /* If we have not been invoked as 'rpfhdr' then bail out now. */
+    // If we have not been invoked as 'rpfhdr' then bail out now.
     if (strcmp(*argv, "rpfhdr") != 0) {
       fprintf(stderr, "Input file does not appear to be standard FITS.\n" );
       return 1;
     }
 
-    /* RPFITS may have a block or two of rubbish before the first header. */
+    // RPFITS may have a block or two of rubbish before the first header.
     format = rpfits;
     blksiz = 2560;
 
@@ -184,19 +182,21 @@ int main(int argc, char **argv)
     }
   }
 
+  unsigned int ihdr = 0;
   printf("%s\n%s header number %d at block number %lld.\n%s\n", equals,
     format, ++ihdr, ++iblock, dashes);
 
 
-  /* Scan through the file. */
+  // Scan through the file.
+  unsigned int seekable = 1;
   while (1) {
     if (!inhdr) {
-      /* Searching for a header. */
+      // Searching for a header.
       if (!fread(cbuff, (size_t)10, (size_t)1, stdin)) break;
 
       if (strncmp(cbuff, "SIMPLE  = ", 10) == 0 ||
           strncmp(cbuff, "XTENSION= ", 10) == 0) {
-        /* Found a header. */
+        // Found a header.
         if (iblock) {
           nbyte = blksiz * nblock;
           printf("Skipped %lld block%s of data of size %d bytes (%lld "
@@ -211,7 +211,7 @@ int main(int argc, char **argv)
         nblock = 0;
 
       } else {
-        /* Seek past it if possible. */
+        // Seek past it if possible.
         if (seekable) {
 #ifdef HAVE_FSEEKO
           if (fseeko(stdin, (off_t)(blksiz-10), SEEK_CUR)) {
@@ -235,14 +235,15 @@ int main(int argc, char **argv)
     }
 
     if (inhdr) {
-      for (cptr = cbuff; cptr < cbuff + blksiz; cptr += 80) {
-        /* Write out a keyrecord without trailing blanks. */
+      for (char *cptr = cbuff; cptr < cbuff + blksiz; cptr += 80) {
+        // Write out a keyrecord without trailing blanks.
+        int len;
         for (len = 80; len > 0; len--) {
           if (cptr[len-1] != ' ') break;
         }
         printf("%.*s\n", len, cptr);
 
-        /* Check for end-of-header. */
+        // Check for end-of-header.
         if (strncmp(cptr, "END     ", 8) == 0) {
           inhdr = 0;
           printf("%s\n", dashes);
@@ -251,7 +252,7 @@ int main(int argc, char **argv)
         }
       }
 
-      /* Get the next header block. */
+      // Get the next header block.
       if (inhdr) {
         if (!fread(cbuff, (size_t)blksiz, (size_t)1, stdin)) break;
         iblock++;
@@ -272,7 +273,7 @@ int main(int argc, char **argv)
       nblock++;
 
       if (nblock%1000 == 0) {
-        /* Report progress on stderr in case it's saved to file. */
+        // Report progress on stderr in case it's saved to file.
         nbyte = blksiz * nblock;
         fprintf(stderr, "Skipping %lld blocks of data of size %d bytes "
           "(%lld bytes).   \r", nblock, blksiz, nbyte);
@@ -290,8 +291,9 @@ int main(int argc, char **argv)
     printf("%s\nEnd-of-file after %d HDU%s in %lld x %d-byte blocks (%lld "
       "bytes).\n", equals, ihdr, (ihdr == 1)?"":"s", iblock, blksiz, nbyte);
 
+    struct stat instat;
     if (argc > 1 && !stat(argv[i], &instat)) {
-      if (nbyte != instat.st_size) {
+      if ((off_t)nbyte != instat.st_size) {
         printf("WARNING: File is too short by %lld bytes.\n",
           nbyte - instat.st_size);
       }

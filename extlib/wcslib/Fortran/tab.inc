@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,21 +18,19 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tab.inc,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tab.inc,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
 *     Functions.
-      EXTERNAL  TABPUT, TABPTD, TABPTI, TABGET, TABGTD, TABGTI,
-     :          TABINI, TABMEM, TABCPY, TABCMP, TABFREE, TABPRT,
-     :          TABPERR, TABSET, TABX2S, TABS2X
+      EXTERNAL  TABPUT, TABPTD,  TABPTI, TABGET, TABGTD,  TABGTI,
+     :          TABINI, TABMEM,  TABCPY, TABCMP, TABFREE, TABSIZE,
+     :          TABPRT, TABPERR, TABSET, TABX2S, TABS2X
 
-      INTEGER   TABPUT, TABPTD, TABPTI, TABGET, TABGTD, TABGTI,
-     :          TABINI, TABMEM, TABCPY, TABCMP, TABFREE, TABPRT,
-     :          TABPERR, TABSET, TABX2S, TABS2X
+      INTEGER   TABPUT, TABPTD,  TABPTI, TABGET, TABGTD,  TABGTI,
+     :          TABINI, TABMEM,  TABCPY, TABCMP, TABFREE, TABSIZE,
+     :          TABPRT, TABPERR, TABSET, TABX2S, TABS2X
 
 *     Length of the TABPRM data structure (INTEGER array) on 64-bit
 *     machines.  Only needs to be 24 on 32-bit machines.

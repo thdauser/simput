@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
-* Copyright (C) 1997-2018, Mark Calabretta
+* PGSBOX 7.7 - draw curvilinear coordinate axes for PGPLOT.
+* Copyright (C) 1997-2021, Mark Calabretta
 *
 * This file is part of PGSBOX.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning PGSBOX to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: pgsbox.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: pgsbox.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 *
 * PGSBOX draws and labels a curvilinear coordinate grid.  The caller
@@ -1297,27 +1295,27 @@
               INSIDE = X2.GT.BLC(1) .AND. X2.LT.TRC(1) .AND.
      :                 Y2.GT.BLC(2) .AND. Y2.LT.TRC(2)
 
-              IF (.NOT.INSIDE) THEN
-*               For tick marks at the left or right edge.
-                IF ((X2.EQ.BLC(1) .OR.  X2.EQ.TRC(1)) .AND.
-     :               Y2.GT.BLC(2) .AND. Y2.LT.TRC(2)) THEN
-                  INSIDE = X2.EQ.XR(NP)
-                END IF
-              END IF
-
-              IF (.NOT.INSIDE) THEN
-*               For tick marks at the bottom or top edge.
-                IF ((Y2.EQ.BLC(2) .OR.  Y2.EQ.TRC(2)) .AND.
-     :               X2.GT.BLC(1) .AND. X2.LT.TRC(1)) THEN
-                  INSIDE = Y2.EQ.YR(NP)
-                END IF
-              END IF
-
               IF (NP.EQ.0) THEN
                 NP = 1
                 XR(1) = X2
                 YR(1) = Y2
               ELSE
+                IF (.NOT.INSIDE) THEN
+*                 For tick marks at the left or right edge.
+                  IF ((X2.EQ.BLC(1) .OR.  X2.EQ.TRC(1)) .AND.
+     :                 Y2.GT.BLC(2) .AND. Y2.LT.TRC(2)) THEN
+                    INSIDE = X2.EQ.XR(NP)
+                  END IF
+                END IF
+
+                IF (.NOT.INSIDE) THEN
+*                 For tick marks at the bottom or top edge.
+                  IF ((Y2.EQ.BLC(2) .OR.  Y2.EQ.TRC(2)) .AND.
+     :                 X2.GT.BLC(1) .AND. X2.LT.TRC(1)) THEN
+                    INSIDE = Y2.EQ.YR(NP)
+                  END IF
+                END IF
+
                 IF (INSIDE) THEN
 *                 This point is inside the frame...
                   IF (.NOT.PREVIN) THEN
@@ -1578,8 +1576,6 @@
       DOUBLE PRECISION CACHE(4,0:NC), MJD1(2), MJD2(2), TMP, VS
       CHARACTER ESCAPE*1, EXPONT*20, FMT*8, IDENTS(3)*(*), TEXT*80,
      :          FTYPE(2)*1, TXT(2)*80
-
-      DATA ESCAPE /'\\'/
 
 *     These are to stop compiler messages about uninitialized variables.
       DATA DODEG, DOMIN, DOYEAR /3 * .FALSE./
@@ -1993,6 +1989,9 @@
       MJD1(2) =  1D99
       MJD2(1) = -1D99
       MJD2(2) = -1D99
+
+*     Backslash.
+      ESCAPE = CHAR(92)
 
 *     Character height.
       CALL PGQCS (4, XCH, YCH)

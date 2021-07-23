@@ -1,7 +1,6 @@
 /*============================================================================
-
-  PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
-  Copyright (C) 1997-2018, Mark Calabretta
+  PGSBOX 7.7 - draw curvilinear coordinate axes for PGPLOT.
+  Copyright (C) 1997-2021, Mark Calabretta
 
   This file is part of PGSBOX.
 
@@ -18,17 +17,15 @@
   You should have received a copy of the GNU Lesser General Public License
   along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning PGSBOX to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: cpgsbox.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: cpgsbox.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <string.h>
 #include "cpgsbox.h"
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define pgsbok_ F77_FUNC(pgsbok, PGSBOK)
 #define pglbok_ F77_FUNC(pglbok, PGLBOK)
@@ -76,17 +73,14 @@ void cpgsbox(
   int *ierr)
 
 {
+  // Convert variable length strings to fixed-length char arrays.
   char ids[3][80];
-  int j, k;
-
-  /* Convert variable length strings to fixed-length char arrays. */
-  k = 0;
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
     if (strlen(idents[j]) > 80) {
       strncpy(ids[j], idents[j], 80);
     } else {
       strcpy(ids[j], idents[j]);
-      for (k = strlen(idents[j]); k < 80; k++) {
+      for (int k = strlen(idents[j]); k < 80; k++) {
         ids[j][k] = ' ';
       }
     }
@@ -98,7 +92,7 @@ void cpgsbox(
   return;
 }
 
-/*==========================================================================*/
+//----------------------------------------------------------------------------
 
 void cpglbox(
   char (*idents)[80],
@@ -119,17 +113,14 @@ void cpglbox(
   int *ierr)
 
 {
+  // Convert variable length strings to fixed-length char arrays.
   char ids[3][80];
-  int j, k;
-
-  /* Convert variable length strings to fixed-length char arrays. */
-  k = 0;
-  for (j = 0; j < 3; j++) {
+  for (int j = 0; j < 3; j++) {
     if (strlen(idents[j]) > 80) {
       strncpy(ids[j], idents[j], 80);
     } else {
       strcpy(ids[j], idents[j]);
-      for (k = strlen(idents[j]); k < 80; k++) {
+      for (int k = strlen(idents[j]); k < 80; k++) {
         ids[j][k] = ' ';
       }
     }

@@ -1,35 +1,35 @@
 Testing WCSLIB parser for FITS image headers (tpih1.c)
 ------------------------------------------------------
 
-Found 151 non-comment header keyrecords.
+Found 197 non-comment header keyrecords.
 
 
 Illegal or extraneous WCS header keyrecords rejected by wcspih():
-WCSNAMEX= 'eXtraneous'         / Name of this coordinate system                 
-  Rejected (1), syntactically valid WCS keyrecord has no effect.
 LONPOLEX=                180.0 / [deg] Native longitude of the celestial pole   
-  Rejected (2), syntactically valid WCS keyrecord has no effect.
+  Rejected (1), syntactically valid WCS keyrecord has no effect.
 LATPOLEX=               -999.0 / [deg] Native latitude of the celestial pole    
-  Rejected (3), syntactically valid WCS keyrecord has no effect.
+  Rejected (2), syntactically valid WCS keyrecord has no effect.
 RESTFRQX=          1667.3590E6 / [Hz] OH maser line rest frequency              
-  Rejected (4), syntactically valid WCS keyrecord has no effect.
+  Rejected (3), syntactically valid WCS keyrecord has no effect.
 RESTWAVX=           0.17980079 / [m] OH maser line rest wavelength              
+  Rejected (4), syntactically valid WCS keyrecord has no effect.
+WCSNAMEX= 'eXtraneous'         / Name of this coordinate system                 
   Rejected (5), syntactically valid WCS keyrecord has no effect.
-EQUINOXX=               1950.0 / [yr] Equinox of equatorial coordinates         
-  Rejected (6), syntactically valid WCS keyrecord has no effect.
 RADESYSX= 'ICRS'               / Mean equatorial coordinates, IAU 1984 system   
+  Rejected (6), syntactically valid WCS keyrecord has no effect.
+EQUINOXX=               1950.0 / [yr] Equinox of equatorial coordinates         
   Rejected (7), syntactically valid WCS keyrecord has no effect.
 SPECSYSX= 'HELIOCEN'           / Reference frame of spectral coordinates        
   Rejected (8), syntactically valid WCS keyrecord has no effect.
 SSYSOBSX= 'GEOCENTR'           / Reference frame of observation                 
   Rejected (9), syntactically valid WCS keyrecord has no effect.
-SSYSSRCX= 'LSRK'               / Reference frame of source redshift             
-  Rejected (10), syntactically valid WCS keyrecord has no effect.
-VELANGLX=                35.25 / Velocity orientation angle                     
-  Rejected (11), syntactically valid WCS keyrecord has no effect.
 VELOSYSX=              30000.0 / [m/s] Bary-topo velocity towards the source    
-  Rejected (12), syntactically valid WCS keyrecord has no effect.
+  Rejected (10), syntactically valid WCS keyrecord has no effect.
 ZSOURCEX=               0.0456 / Redshift of the source                         
+  Rejected (11), syntactically valid WCS keyrecord has no effect.
+SSYSSRCX= 'LSRK'               / Reference frame of source redshift             
+  Rejected (12), syntactically valid WCS keyrecord has no effect.
+VELANGLX=                35.25 / Velocity orientation angle                     
   Rejected (13), syntactically valid WCS keyrecord has no effect.
 
 
@@ -77,9 +77,9 @@ Found 3 alternate coordinate descriptions with indices:
         npv: 3
      npvmax: 3
          pv: 0x<address>
-               0   0   0.0000    
-               0   1   0.0000    
-               0   2   0.0000    
+               2   0   0.0000    
+               2   1   0.0000    
+               2   2   0.0000    
         nps: 0
      npsmax: 0
          ps: 0x0
@@ -96,28 +96,63 @@ Found 3 alternate coordinate descriptions with indices:
      colnum: 0
       colax: 0x<address>
                  0      0      0      0
-    wcsname: "AIPS convention: TAN projection"
       cname: 0x<address>
              UNDEFINED
              UNDEFINED
              UNDEFINED
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "AIPS convention: TAN projection"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.533000  2816759.109000 -3454036.323000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x<address>
+   rsun_ref:  696000000.000000000
+   dsun_obs:  150700000000.000000000
+   crln_obs:    120.000000000
+   hgln_obs:      0.000000000
+   hglt_obs:      7.250000000
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -151,6 +186,9 @@ Found 3 alternate coordinate descriptions with indices:
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x<address>  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -300,28 +338,63 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
      colnum: 0
       colax: 0x<address>
                  0      0      0      0
-    wcsname: "Standard representation: SZP projection"
       cname: 0x<address>
              "Right ascension (J2000)"
              "Declination (J2000)"
              "Wavelength"
              "Time offset"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED      1.0000e-11  UNDEFINED   
+               UNDEFINED    UNDEFINED   1.0000e-11    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED      1.0000e-12  UNDEFINED   
+               UNDEFINED    UNDEFINED   1.0000e-12    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "Standard representation: SZP projection"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.533000  2816759.109000 -3454036.323000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: "BARYCENT"
     ssysobs: "TOPOCENT"
-    velosys: 1500.000000
+    velosys:   1500.000000000
+    zsource:      0.002500000
     ssyssrc: "LSRK"
-    zsource:  0.002500
-     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    velangl: UNDEFINED
+        aux: 0x<address>
+   rsun_ref:  696000000.000000000
+   dsun_obs:  150700000000.000000000
+   crln_obs:    120.000000000
+   hgln_obs:      0.000000000
+   hglt_obs:      7.250000000
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -355,6 +428,9 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x<address>  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -452,25 +528,28 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
 
 ------------------------------------------------------------------------
        flag: 137
-      naxis: 3
+      naxis: 4
       crpix: 0x<address>
-               513.00       513.00       1025.0    
+               513.00       513.00       1025.0       1.0000    
          pc: 0x<address>
-    pc[0][]:  -0.086603    -0.050000     0.0000    
-    pc[1][]:  -0.050000     0.086603     0.0000    
-    pc[2][]:   0.0000       0.0000      -4.5652e-05
+    pc[0][]:  -0.086603    -0.050000     0.0000       0.0000    
+    pc[1][]:  -0.050000     0.086603     0.0000       0.0000    
+    pc[2][]:   0.0000       0.0000      -4.5652e-05   0.0000    
+    pc[3][]:   0.0000       0.0000       0.0000       0.010000  
       cdelt: 0x<address>
-               1.0000       1.0000       1.0000    
+               1.0000       1.0000       1.0000       1.0000    
       crval: 0x<address>
-               150.00      -30.000       0.018577  
+               150.00      -30.000       0.018577     0.0000    
       cunit: 0x<address>
              "deg"
              "deg"
              ""
+             "turn"
       ctype: 0x<address>
              "RA---ZPN"
              "DEC--ZPN"
              "ZOPT-F2W"
+             "PHASE"
     lonpole: 195.000000
     latpole: -30.000000
     restfrq: 1420405750.000000
@@ -492,44 +571,81 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
      npsmax: 0
          ps: 0x0
          cd: 0x<address>
-    cd[0][]:  -0.086603    -0.050000     0.0000    
-    cd[1][]:  -0.050000     0.086603     0.0000    
-    cd[2][]:   0.0000       0.0000      -4.5652e-05
+    cd[0][]:  -0.086603    -0.050000     0.0000       0.0000    
+    cd[1][]:  -0.050000     0.086603     0.0000       0.0000    
+    cd[2][]:   0.0000       0.0000      -4.5652e-05   0.0000    
+    cd[3][]:   0.0000       0.0000       0.0000       0.010000  
       crota: 0x<address>
-               0.0000       30.000       0.0000    
+               0.0000       30.000       0.0000       0.0000    
      altlin: 6
      velref: 258
         alt: 'I'
      colnum: 0
       colax: 0x<address>
-                 0      0      0
-    wcsname: "IRAF representation: ZPN projection"
+                 0      0      0      0
       cname: 0x<address>
              "Right ascension (J2000)"
              "Declination (J2000)"
              "Redshift"
+             "Phase"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED      5.0000e-11
+               UNDEFINED    UNDEFINED   5.0000e-11    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED      5.0000e-12
+               UNDEFINED    UNDEFINED   5.0000e-12    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED   0.0000    
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED   100.00    
+    wcsname: "IRAF representation: ZPN projection"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.533000  2816759.109000 -3454036.323000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: UNDEFINED
     ssysobs: "TOPOCENT"
-    velosys: 1500.000000
+    velosys:   1500.000000000
+    zsource:      0.002500000
     ssyssrc: "LSRK"
-    zsource:  0.002500
-     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    velangl:      0.000000000
+        aux: 0x<address>
+   rsun_ref:  696000000.000000000
+   dsun_obs:  150700000000.000000000
+   crln_obs:    120.000000000
+   hgln_obs:      0.000000000
+   hglt_obs:      7.250000000
        ntab: 0
         tab: 0x0
        nwtb: 0
         wtb: 0x0
       types: 0x<address>
-            2200 2201 3300
+            2200 2201 3300    0
      lngtyp: "RA"
      lattyp: "DEC"
         lng: 0
@@ -541,7 +657,7 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
         cel: (see below)
         spc: (see below)
      m_flag: 137
-    m_naxis: 3
+    m_naxis: 4
     m_crpix: 0x<address>  (= crpix)
        m_pc: 0x<address>  (= pc)
     m_cdelt: 0x<address>  (= cdelt)
@@ -557,29 +673,35 @@ imgpix[3][]:   0.0000       0.0000       0.0000       1.0000
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x<address>  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
    lin.*
        flag: 137
-      naxis: 3
+      naxis: 4
       crpix: 0x<address>
-               513.00       513.00       1025.0    
+               513.00       513.00       1025.0       1.0000    
          pc: 0x<address>
-    pc[0][]:  -0.086603    -0.050000     0.0000    
-    pc[1][]:  -0.050000     0.086603     0.0000    
-    pc[2][]:   0.0000       0.0000      -4.5652e-05
+    pc[0][]:  -0.086603    -0.050000     0.0000       0.0000    
+    pc[1][]:  -0.050000     0.086603     0.0000       0.0000    
+    pc[2][]:   0.0000       0.0000      -4.5652e-05   0.0000    
+    pc[3][]:   0.0000       0.0000       0.0000       0.010000  
       cdelt: 0x<address>
-               1.0000       1.0000       1.0000    
+               1.0000       1.0000       1.0000       1.0000    
      dispre: 0x0
      disseq: 0x0
-piximg[0][]:  -0.086603    -0.050000     0.0000    
-piximg[1][]:  -0.050000     0.086603     0.0000    
-piximg[2][]:   0.0000       0.0000      -4.5652e-05
-imgpix[0][]:  -8.6603      -5.0000      -0.0000    
-imgpix[1][]:  -5.0000       8.6603       0.0000    
-imgpix[2][]:  -0.0000      -0.0000      -21905.    
-    i_naxis: 3
+piximg[0][]:  -0.086603    -0.050000     0.0000       0.0000    
+piximg[1][]:  -0.050000     0.086603     0.0000       0.0000    
+piximg[2][]:   0.0000       0.0000      -4.5652e-05   0.0000    
+piximg[3][]:   0.0000       0.0000       0.0000       0.010000  
+imgpix[0][]:  -8.6603      -5.0000      -0.0000      -0.0000    
+imgpix[1][]:  -5.0000       8.6603       0.0000       0.0000    
+imgpix[2][]:  -0.0000      -0.0000      -21905.      -0.0000    
+imgpix[3][]:   0.0000       0.0000       0.0000       100.00    
+    i_naxis: 4
       unity: 0
      affine: 1
      simple: 0

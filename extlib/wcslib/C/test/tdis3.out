@@ -107,7 +107,7 @@ Using SIPTPV alternate 4:
 -------------------------
 Found 10 coordinate representations.
 
-SIPTPV-4: native TPD representation
+SIPTPV-4: native TPV representation
 
 Enter 2 pixel coordinate elements: Pixel:              1,              1
 Image:       1.109607,       1.219086
@@ -132,7 +132,7 @@ Using SIPTPV alternate 5:
 -------------------------
 Found 10 coordinate representations.
 
-SIPTPV-6: TPV translated to a 'TPD' distortion
+SIPTPV-5: TPV translated to a 'TPV' distortion
 
 Enter 2 pixel coordinate elements: Pixel:              1,              1
 Image:       1.109607,       1.219086
@@ -156,6 +156,8 @@ Enter 2 pixel coordinate elements:
 Using SIPTPV alternate 6:
 -------------------------
 Found 10 coordinate representations.
+
+SIPTPV-6: TPV translated to a 'TPD' distortion
 
 Enter 2 pixel coordinate elements: Pixel:              1,              1
 Image:       1.109607,       1.219086

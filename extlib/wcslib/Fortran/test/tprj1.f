@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tprj1.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tprj1.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TPRJ1
@@ -221,7 +219,7 @@
       INCLUDE 'prj.inc'
       INTEGER   PRJ(PRJLEN)
       DOUBLE PRECISION DUMMY
-      EQUIVALENCE (PRJ,DUMMY)
+      EQUIVALENCE (PRJ, DUMMY)
 
       DOUBLE PRECISION D2R, PI
       PARAMETER (PI = 3.141592653589793238462643D0)
@@ -230,14 +228,15 @@
       STATUS = PRJINI(PRJ)
 
       DO 10 J = 0, 29
-        STATUS = PRJPUT (PRJ, PRJ_PV, PV(J), J)
+        STATUS = PRJPTD (PRJ, PRJ_PV, PV(J), J)
  10   CONTINUE
 
-      STATUS = PRJPUT (PRJ, PRJ_CODE, PCODE, 0)
+*     N.B. special case - only three characters need be given.
+      STATUS = PRJPTC (PRJ, PRJ_CODE, PCODE, 0)
 
 *     Uncomment the next line to test alternative initializations of
 *     projection parameters.
-*     STATUS = PRJPUT (PRJ, PRJ_R0, 180D0/PI, 0)
+*     STATUS = PRJPTD (PRJ, PRJ_R0, 180D0/PI, 0)
 
       WRITE (*, 20) PCODE, NORTH, SOUTH, TOL
  20   FORMAT ('Testing ',A3,'; latitudes',I3,' to',I4,
@@ -256,14 +255,16 @@
           J = J + 1
  30     CONTINUE
 
-        STATUS = PRJS2X (PRJ, 361, 1, 1, 1, LNG1, LAT1, X, Y, STAT1)
+        STATUS = PRJS2X (PRJ, 361, 1, 1, 1, LNG1(1), LAT1, X(1), Y(1),
+     :                   STAT1(1))
         IF (STATUS.EQ.1) THEN
           WRITE (*, 40) PCODE, STATUS
  40       FORMAT (3X,A3,'(S2X) ERROR',I2)
           GO TO 90
         END IF
 
-        STATUS = PRJX2S (PRJ, 361, 0, 1, 1, X, Y, LNG2, LAT2, STAT2)
+        STATUS = PRJX2S (PRJ, 361, 0, 1, 1, X(1), Y(1),
+     :                   LNG2(1), LAT2(1), STAT2(1))
         IF (STATUS.EQ.1) THEN
           WRITE (*, 50) PCODE, STATUS
  50       FORMAT (3X,A3,'(X2S) ERROR',I2)
@@ -325,14 +326,16 @@
         R = R / 10D0
  110  CONTINUE
 
-      STATUS = PRJX2S (PRJ, 25, 25, 1, 1, X1, Y1, LNGR, LATR, STATR)
+      STATUS = PRJX2S (PRJ, 25, 25, 1, 1, X1(1), Y1(1),
+     :                 LNGR(1,1), LATR(1,1), STATR(1,1))
       IF (STATUS.NE.0) THEN
         WRITE (*, 120) PCODE, STATUS
  120    FORMAT (8X,A3,'(X2S): ERROR',I3)
         GO TO 999
       END IF
 
-      STATUS = PRJS2X (PRJ, 625, 0, 1, 1, LNGR, LATR, X2, Y2, STATR)
+      STATUS = PRJS2X (PRJ, 625, 0, 1, 1, LNGR(1,1), LATR(1,1),
+     :                 X2(1,1), Y2(1,1), STATR(1,1))
       IF (STATUS.NE.0) THEN
         WRITE (*, 130) PCODE, STATUS
  130    FORMAT (3X,A3,' ERROR',I3)

@@ -1,15 +1,29 @@
 Testing WCSLIB translator for non-standard usage (twcsfix.c)
 ------------------------------------------------------------
 
-wcsfix status returns: (-1, 0, 0, 0, 0, -1)
+wcsfix status returns: (-1, 0, 0, 0, 0, 0, -1)
 
-INFORMATIVE message from datfix() at line 429 of file wcsfix.c:
-Changed '1957/02/15 01:10:00' to '1957-02-15T01:10:00'.
+INFORMATIVE message from datfix() at line 593 of file wcsfix.c:
+Set MJD-OBS to 35884.048611 from BEPOCH.
+Set DATE-OBS to '1957-02-15T01:10:00.018' from MJD-OBS.
+Set DATE-BEG to '1957-02-15T01:09:59.990' from MJD-BEG.
+Set MJD-AVG to 35884.090278 from DATE-AVG.
+Changed DATE-AVG from '1957/02/15 02:10:00' to '1957-02-15T02:10:00'.
+Set MJD-END to 35884.131944 from DATE-END.
+Changed DATE-END from '1957/02/15 03:10:00' to '1957-02-15T03:10:00'.
 
-INFORMATIVE message from unitfix() at line 471 of file wcsfix.c:
-Changed units: 'ARCSEC' -> 'arcsec', 'ARCSEC' -> 'arcsec', 'KM/SEC' -> 'km/s'.
+INFORMATIVE message from obsfix() at line 699 of file wcsfix.c:
+Set OBSGEO-X to -4554231.538 from OBSGEO-[LBH].
+Set OBSGEO-Y to  2816759.125 from OBSGEO-[LBH].
+Set OBSGEO-Z to -3454036.303 from OBSGEO-[LBH].
 
-INFORMATIVE message from spcfix() at line 519 of file wcsfix.c:
+INFORMATIVE message from unitfix() at line 840 of file wcsfix.c:
+Changed units:
+  'ARCSEC' -> 'arcsec',
+  'ARCSEC' -> 'arcsec',
+  'KM/SEC' -> 'km/s.
+
+INFORMATIVE message from spcfix() at line 885 of file wcsfix.c:
 Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
 
        flag: 137
@@ -23,7 +37,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
       cdelt: 0x<address>
               -0.00027778   0.00027778   19687.    
       crval: 0x<address>
-               265.62      -28.988       5.5693e+06
+               192.25       27.400       5.5693e+06
       cunit: 0x<address>
              "deg"
              "deg"
@@ -33,7 +47,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
              "DEC--SIN"
              "VOPT-F2W"
     lonpole: 180.000000
-    latpole: -28.988500
+    latpole: 27.400000
     restfrq: 1420405750.000000
     restwav: 0.000000
         npv: 3
@@ -41,7 +55,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
          pv: 0x<address>
               -1  -1  -1.0000    
                2   1   0.0000    
-               2   2  -1.8049    
+               2   2   1.9292    
         nps: 0
      npsmax: 8
          ps: 0x<address>
@@ -57,27 +71,57 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
      colnum: 0
       colax: 0x<address>
                  0      0      0
-    wcsname: UNDEFINED
       cname: 0x<address>
              UNDEFINED
              UNDEFINED
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED   
-    radesys: "ICRS"
-    equinox: UNDEFINED
+               UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: UNDEFINED
+    timesys: UNDEFINED
+    trefpos: UNDEFINED
+    trefdir: UNDEFINED
+    plephem: UNDEFINED
+   timeunit: UNDEFINED
+    dateref: UNDEFINED
+     mjdref:      0.000000000     0.000000000
+   timeoffs: UNDEFINED
+    dateobs: "1957-02-15T01:10:00.018"
+    datebeg: "1957-02-15T01:09:59.990"
+    dateavg: "1957-02-15T02:10:00"
+    dateend: "1957-02-15T03:10:00"
+     mjdobs:  35884.048611317
+     mjdbeg:  35884.048611000
+     mjdavg:  35884.090277778
+     mjdend:  35884.131944444
+     jepoch: UNDEFINED
+     bepoch:   1957.124382563
+     tstart: UNDEFINED
+      tstop: UNDEFINED
+    xposure: UNDEFINED
+    telapse: UNDEFINED
+    timsyer: UNDEFINED
+    timrder: UNDEFINED
+    timedel: UNDEFINED
+   timepixr: UNDEFINED
+     obsgeo:  -4554231.538450  2816759.125233 -3454036.303343
+                   148.263510      -32.998406      411.793000
+   obsorbit: UNDEFINED
+    radesys: "FK4"
+    equinox:   1950.000000000
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo: UNDEFINED     UNDEFINED     UNDEFINED     
-    dateobs: "1957-02-15T01:10:00"
-    dateavg: UNDEFINED
-     mjdobs: 35884.048611
-     mjdavg: UNDEFINED
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x0
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -111,6 +155,9 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x0  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -148,9 +195,9 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
      offset: 0
        phi0:  0.000000
      theta0: 90.000000
-        ref:   265.62      -28.988       180.00      -28.988    
+        ref:   192.25       27.400       180.00       27.400    
         prj: (see below)
-      euler:   265.62       118.99       180.00      -0.48463      0.87472   
+      euler:   192.25       62.600       180.00       0.46020      0.88782   
     latpreq: 0 (not required)
      isolat: 0
         err: 0x0
@@ -160,7 +207,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
        code: "SIN"
          r0: 57.295780
          pv: (0)
-              0.0000      -1.8049    
+              0.0000       1.9292    
        phi0:  0.000000
      theta0: 90.000000
      bounds: 7
@@ -176,7 +223,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
          x0: 0.000000
          y0: 0.000000
         err: 0x0
-        w[]:   0.017453     3.2577       4.2577       2.2577       0.0000    
+        w[]:   0.017453     3.7218       4.7218       2.7218       0.0000    
                0.0000       0.0000       0.0000       0.0000       0.0000    
           m: 0
           n: 0
@@ -211,28 +258,27 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
       cdelt: 0x<address>
               -0.00027778   0.00027778  -89906.    
       crval: 0x<address>
-               265.62      -28.988       1.3945e+09
+               303.00       90.000       1.3945e+09
       cunit: 0x<address>
              "deg"
              "deg"
              "Hz"
       ctype: 0x<address>
-             "RA---SIN"
-             "DEC--SIN"
+             "GLON-SIN"
+             "GLAT-SIN"
              "FREQ"
     lonpole: 180.000000
-    latpole: -28.988500
+    latpole: 90.000000
     restfrq: 1420405750.000000
     restwav: 0.000000
-        npv: 3
-     npvmax: 3
+        npv: 2
+     npvmax: 2
          pv: 0x<address>
-              -1  -1  -1.0000    
                2   1   0.0000    
-               2   2  -1.8049    
+               2   2   1.9292    
         nps: 0
-     npsmax: 8
-         ps: 0x<address>
+     npsmax: 0
+         ps: 0x0
          cd: 0x<address>
     cd[0][]:   0.0000       0.0000       0.0000    
     cd[1][]:   0.0000       0.0000       0.0000    
@@ -241,39 +287,69 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
                0.0000       0.0000       0.0000    
      altlin: 0
      velref: 2
-        alt: ' '
+        alt: 'G'
      colnum: 0
       colax: 0x<address>
                  0      0      0
-    wcsname: UNDEFINED
       cname: 0x<address>
              UNDEFINED
              UNDEFINED
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED   
-    radesys: "ICRS"
+               UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: UNDEFINED
+    timesys: UNDEFINED
+    trefpos: UNDEFINED
+    trefdir: UNDEFINED
+    plephem: UNDEFINED
+   timeunit: UNDEFINED
+    dateref: UNDEFINED
+     mjdref:      0.000000000     0.000000000
+   timeoffs: UNDEFINED
+    dateobs: "1957-02-15T01:10:00.018"
+    datebeg: "1957-02-15T01:09:59.990"
+    dateavg: "1957-02-15T02:10:00"
+    dateend: "1957-02-15T03:10:00"
+     mjdobs:  35884.048611317
+     mjdbeg:  35884.048611000
+     mjdavg:  35884.090277778
+     mjdend:  35884.131944444
+     jepoch: UNDEFINED
+     bepoch:   1957.124382563
+     tstart: UNDEFINED
+      tstop: UNDEFINED
+    xposure: UNDEFINED
+    telapse: UNDEFINED
+    timsyer: UNDEFINED
+    timrder: UNDEFINED
+    timedel: UNDEFINED
+   timepixr: UNDEFINED
+     obsgeo:  -4554231.538450  2816759.125233 -3454036.303343
+                   148.263510      -32.998406      411.793000
+   obsorbit: UNDEFINED
+    radesys: UNDEFINED
     equinox: UNDEFINED
     specsys: "BARYCENT"
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo: UNDEFINED     UNDEFINED     UNDEFINED     
-    dateobs: "1957-02-15T01:10:00"
-    dateavg: UNDEFINED
-     mjdobs: 35884.048611
-     mjdavg: UNDEFINED
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x0
        ntab: 0
         tab: 0x0
        nwtb: 0
         wtb: 0x0
       types: 0x<address>
             2200 2201 3000
-     lngtyp: "RA"
-     lattyp: "DEC"
+     lngtyp: "GLON"
+     lattyp: "GLAT"
         lng: 0
         lat: 1
        spec: 2
@@ -291,7 +367,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
     m_cunit: 0x<address>  (= cunit)
     m_ctype: 0x<address>  (= ctype)
        m_pv: 0x<address>  (= pv)
-       m_ps: 0x<address>  (= ps)
+       m_ps: 0x0  (= ps)
        m_cd: 0x<address>  (= cd)
     m_crota: 0x<address>  (= crota)
 
@@ -299,6 +375,9 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x0  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -336,11 +415,11 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
      offset: 0
        phi0:  0.000000
      theta0: 90.000000
-        ref:   265.62      -28.988       180.00      -28.988    
+        ref:   303.00       90.000       180.00       90.000    
         prj: (see below)
-      euler:   265.62       118.99       180.00      -0.48463      0.87472   
+      euler:   303.00       0.0000       180.00       1.0000       0.0000    
     latpreq: 0 (not required)
-     isolat: 0
+     isolat: 1
         err: 0x0
 
    prj.*
@@ -348,7 +427,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
        code: "SIN"
          r0: 57.295780
          pv: (0)
-              0.0000      -1.8049    
+              0.0000       1.9292    
        phi0:  0.000000
      theta0: 90.000000
      bounds: 7
@@ -364,7 +443,7 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
          x0: 0.000000
          y0: 0.000000
         err: 0x0
-        w[]:   0.017453     3.2577       4.2577       2.2577       0.0000    
+        w[]:   0.017453     3.7218       4.7218       2.7218       0.0000    
                0.0000       0.0000       0.0000       0.0000       0.0000    
           m: 0
           n: 0
@@ -386,3 +465,11 @@ Changed CTYPE3 from 'FELO-HEL' to 'VOPT-F2W' (VELREF=2).
      spxP2S: 0x0
      spxS2P: 0x0
      spxP2X: 0x0
+
+Original and new coordinates of reference point (90.0, 90.0, 1.0), lonpole, and latpole:
+    192.250000,      27.400000,     5569271.04,     180.000000,      27.400000
+    303.000000,      90.000000,  1394500000.01,     180.000000,      90.000000
+
+Original and new coordinates of field point (1000.0, 1000.0, 1.0):
+    191.964631,      27.650355,     5569271.04
+    168.242805,      89.644021,  1394500000.01

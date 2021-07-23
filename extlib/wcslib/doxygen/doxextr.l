@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: doxextr.l,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: doxextr.l,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * doxextr.l is a Flex description file containing a lexical scanner definition
@@ -53,6 +50,7 @@
 /* Options. */
 /* %option full */
 %option never-interactive
+%option noinput
 %option nounput
 %option noyywrap
 %option outfile="doxextr.c"
@@ -108,20 +106,21 @@ DASH {WS1}-{WS1}
 	             int *ilist);
 	void endspecial(int *special);
 	void printe(const char *text, const char *name);
+
+	*listype = '-';
+	memset(name, 0, 32);
 	
-	ilist   = 0;
-	listndt[0] = -1;
-	listype[0] = '-';
-	lmore   = 0;
-	*name   = '\0';
-	nfunc   = 0;
-	pass1   = 1;
-	pcont   = 0;
-	plist   = 0;
-	section = PROLOG;
-	special = 0;
+	ilist      = 0;
+	*listndt   = -1;
+	lmore      = 0;
+	nfunc      = 0;
+	pass1      = 1;
+	pcont      = 0;
+	plist      = 0;
+	section    = PROLOG;
+	special    = 0;
 	subsection = 0;
-	td = 0;
+	td         = 0;
 	
 	BEGIN(PROLOG);
 	
@@ -130,12 +129,12 @@ DASH {WS1}-{WS1}
 <PROLOG>^\/ |
 <PROLOG>^{WS1} |
 <PROLOG>^\*=+ {
-	  /* Copyright notice. */
+	  // Copyright notice.
 	  BEGIN(FLUSH);
 	}
 
 <*>^\*{WS0}\n\*{WS0}\n {
-	  /* Consecutive blank lines denoting the end of a section. */
+	  // Consecutive blank lines denoting the end of a section.
 	  if (pass1) {
 	    BEGIN(FLUSH);
 	  } else if (section != BODY) {
@@ -152,7 +151,7 @@ DASH {WS1}-{WS1}
 	}
 
 <*>^\*=+\*\/ {
-	  /* End of prologue. */
+	  // End of prologue.
 	  if (pass1) {
 	    section = BODY;
 	    BEGIN(FLUSH);
@@ -163,12 +162,18 @@ DASH {WS1}-{WS1}
 	
 	      printf("*/\n");
 	    }
+	
+	    for (ifunc = 0; ifunc < nfunc; ifunc++) {
+	      free(proto[ifunc]);
+	      free(func[ifunc]);
+	    }
+	
 	    return 0;
 	  }
 	}
 
-<*>{WS0}-+\n {
-	  /* Discard underlining. */
+<*>{WS0}--+\n {
+	  // Discard underlining.
 	}
 
 <*>^\*{WS0}\n {
@@ -181,7 +186,7 @@ DASH {WS1}-{WS1}
 	}
 
 <*>^\*" " {
-	  /* First-level prologue indentation. */
+	  // First-level prologue indentation.
 	  if (pass1) {
 	    BEGIN(FLUSH);
 	  } else {
@@ -193,7 +198,7 @@ DASH {WS1}-{WS1}
 	}
 
 <*>^-/\n {
-	  /* Horizontal rule. */
+	  // Horizontal rule.
 	  if (!pass1) {
 	    printf("* <HR>\n");
 	  }
@@ -201,7 +206,7 @@ DASH {WS1}-{WS1}
 	}
 
 <*>^#{WS0} {
-	  /* HTML table. */
+	  // HTML table.
 	  if (pass1) {
 	    BEGIN(FLUSH);
 	  } else {
@@ -211,8 +216,10 @@ DASH {WS1}-{WS1}
 	      printf("* <HR><TABLE BORDER=0>\n");
 	      special = TABLE;
 	    }
-	    printf("* <TR>\n");
-	    printf("*%s", yytext+lmore+1);
+	    printf("* <TR>\n*");
+	    if (lmore+1 < yyleng) {
+	      printf("%s", yytext+lmore+1);
+	    }
 	    td = 0;
 	    BEGIN(TABLEROW);
 	  }
@@ -220,7 +227,7 @@ DASH {WS1}-{WS1}
 
 <*>^=/\n |
 <*>^=" ".* {
-	  /* Verbatim text (code). */
+	  // Verbatim text (code).
 	  if (!pass1) {
 	    if (special != VERBATIM) {
 	      endspecial(&special);
@@ -235,13 +242,13 @@ DASH {WS1}-{WS1}
 
 <PROLOG>"Summary of the"{WS1} |
 <PROLOG>"Summary of"{WS1} {
-	  /* The next token will be the file name. */
+	  // The next token will be the file name.
 	  section = SUMMARY;
 	  BEGIN(FILEMARK);
 	}
 
 <PROLOG>{NAME}"()"{DASH} {
-	  /* Description of a function API. */
+	  // Description of a function API.
 	  section = FUNCTION;
 	  subsection = 0;
 	
@@ -250,7 +257,7 @@ DASH {WS1}-{WS1}
 	}
 
 <PROLOG>{NAME}{WS1}struct{DASH} {
-	  /* Description of structure members. */
+	  // Description of structure members.
 	  section = STRUCTURE;
 	  subsection = 0;
 	
@@ -259,7 +266,7 @@ DASH {WS1}-{WS1}
 	}
 
 <PROLOG>{NAME}{WS1}union{DASH} {
-	  /* Description of union members. */
+	  // Description of union members.
 	  section = STRUCTURE;
 	  subsection = 0;
 	
@@ -268,7 +275,7 @@ DASH {WS1}-{WS1}
 	}
 
 <PROLOG>Global" "variable:" ".*{DASH} {
-	  /* Description of global variable. */
+	  // Description of global variable.
 	  section = VARIABLE;
 	
 	  yyless(lmore+17);
@@ -276,7 +283,7 @@ DASH {WS1}-{WS1}
 	}
 
 <PROLOG>{NAME}("()")*{WS1}(define|macro){DASH} {
-	  /* Description of preprocessor definition. */
+	  // Description of preprocessor definition.
 	  section = DEFINE;
 	
 	  yyless(lmore);
@@ -293,7 +300,7 @@ DASH {WS1}-{WS1}
 	}
 
 <SUMMARY>[A-Z].{1,50}: {
-	  /* Sub-section header. */
+	  // Sub-section header.
 	  endlist(0, 0, listype, listndt, &ilist);
 	
 	  printf("*\n* <B>%*s</B> @n\n", yyleng-(lmore+1), yytext+lmore);
@@ -302,11 +309,11 @@ DASH {WS1}-{WS1}
 
 <SUMMARY>{WS1}"- " |
 <SUMMARY>{WS1}/{NWS}:\[^:] {
-	  /* Unnumbered list item. */
+	  // Unnumbered list item.
 	  lmore -= 2;
 	  indent = yyleng - lmore;
 	  if (yytext[yyleng-2] == '-') {
-	    /* The two-character pattern was matched. */
+	    // The two-character pattern was matched.
 	    indent -= 2;
 	  }
 	  endlist(1, indent, listype, listndt, &ilist);
@@ -341,7 +348,7 @@ DASH {WS1}-{WS1}
 	}
 
 <FNMARK>{NAME} {
-	  strncpy(name, yytext, 32);
+	  strncpy(name, yytext, 31);
 	  for (ifunc = 0; ifunc < nfunc; ifunc++) {
 	    if (strncmp(yytext, func[ifunc], 32) == 0) {
 	      printf("\n/** @fn %s\n*\n", proto[ifunc]);
@@ -394,7 +401,7 @@ DASH {WS1}-{WS1}
 
 <FUNCTION>{I} {
 	  if (!subsection || subsection == NOTES) {
-	    /* Lists in the function prologue or notes section. */
+	    // Lists in the function prologue or notes section.
 	    lmore = yyleng;
 	    yymore();
 	  }
@@ -451,7 +458,7 @@ DASH {WS1}-{WS1}
 	}
 
 <RETURN>{IT}[a-z].{6}"  ".* {
-	  /* Function return type. */
+	  // Function return type.
 	  printf("* @return ");
 	  printe(yytext+20, name);
 	  plist = 0;
@@ -459,14 +466,14 @@ DASH {WS1}-{WS1}
 	}
 
 <RETURN>{IT}[a-z].* {
-	  /* Function return type. */
+	  // Function return type.
 	  printf("* @return\n");
 	  plist = 0;
 	  BEGIN(FLUSH);
 	}
 
 <RETURN>{ID}" "[-1].*:{WS1}.* {
-	  /* Status return value, less than 0 or greater than 9. */
+	  // Status return value, less than 0 or greater than 9.
 	  if (lmore > 2) printf("* @n\n");
 	  printf("%-*s- ", id, "*");
 	  printe(yytext+(id-3), name);
@@ -475,7 +482,7 @@ DASH {WS1}-{WS1}
 	}
 
 <PARAM,RETURN>{ID}"  ".*:{WS1}.* {
-	  /* List of parameter or status return values. */
+	  // List of parameter or status return values.
 	  if (lmore > 2) printf("* @n\n");
 	  printf("%-*s- ", id, "*");
 	  printe(yytext+(id-2), name);
@@ -484,7 +491,7 @@ DASH {WS1}-{WS1}
 	}
 
 <PARAM,RETURN>{ID}"  ".* {
-	  /* List of parameter or status return values. */
+	  // List of parameter or status return values.
 	  if (lmore > 2) printf("* @n\n");
 	  printf("*   ");
 	  printe(yytext, name);
@@ -492,7 +499,7 @@ DASH {WS1}-{WS1}
 	}
 
 <PARAM,RETURN>{ID}.* {
-	  /* List of parameter or status return values. */
+	  // List of parameter or status return values.
 	  if (plist) {
 	    printf("%-*s.\n", id, "*");
 	    plist = 0;
@@ -506,14 +513,14 @@ DASH {WS1}-{WS1}
 
 <NOTES>{WS0}-" " |
 <NOTES>{WS0}[1-9a-z]:" " {
-	  /* List item. */
+	  // List item.
 	  lmore -= 4;
 	  indent = yyleng - lmore;
 	  if (yytext[yyleng-2] == '-') {
-	    /* The two-character pattern was matched. */
+	    // The two-character pattern was matched.
 	    indent -= 2;
 	  } else {
-	    /* The three-character pattern was matched. */
+	    // The three-character pattern was matched.
 	    indent -= 3;
 	  }
 	  endlist(1, indent, listype, listndt, &ilist);
@@ -542,7 +549,7 @@ DASH {WS1}-{WS1}
 	}
 
 <STRUCTMARK>{NAME} {
-	  strncpy(name, yytext, 32);
+	  strncpy(name, yytext, 31);
 	  printf("\n/** @struct %s\n*\n", yytext);
 	}
 
@@ -551,7 +558,7 @@ DASH {WS1}-{WS1}
 	}
 
 <UNIONMARK>{NAME} {
-	  strncpy(name, yytext, 32);
+	  strncpy(name, yytext, 31);
 	  printf("\n/** @union %s\n*\n", yytext);
 	}
 
@@ -568,14 +575,14 @@ DASH {WS1}-{WS1}
 
 <STRUCTURE>{I}{I}{WS0}-" " |
 <STRUCTURE>{I}{I}{WS0}[0-9a-z]:" " {
-	  /* Start of list. */
+	  // Start of list.
 	  lmore -= 2;
 	  indent = yyleng - lmore;
 	  if (yytext[yyleng-2] == '-') {
-	    /* The two-character pattern was matched. */
+	    // The two-character pattern was matched.
 	    indent -= 2;
 	  } else {
-	    /* The three-character pattern was matched. */
+	    // The three-character pattern was matched.
 	    indent -= 3;
 	  }
 	  endlist(1, indent, listype, listndt, &ilist);
@@ -603,16 +610,19 @@ DASH {WS1}-{WS1}
 	  BEGIN(PRINTE);
 	}
 
-<STRUCTVAR>(\*{WS1}|{WS1}\*?) {
-	    printf("%s", yytext);
-	  }
+<STRUCTVAR>\*{WS1}  |
+<STRUCTVAR>{WS1}\*? |
+<STRUCTVAR>"("\*+ {
+	  printf("%s", yytext);
+	}
 
 <STRUCTVAR>{NAME}, {
 	  printf("%s::%s\n*\n*   (See next ...)\n", name, yytext);
 	  BEGIN(FLUSH);
 	}
 
-<STRUCTVAR>{NAME} {
+<STRUCTVAR>{NAME} |
+<STRUCTVAR>{NAME}")(".*")" {
 	  printf("%s::%s\n*\n", name, yytext);
 	  BEGIN(FLUSH);
 	}
@@ -635,7 +645,7 @@ DASH {WS1}-{WS1}
 
 
 <DEFMARK>{NAME} {
-	  strncpy(name, yytext, 32);
+	  strncpy(name, yytext, 31);
 	  printf("\n/** @def %s\n*\n", yytext);
 	}
 
@@ -662,9 +672,9 @@ DASH {WS1}-{WS1}
 	}
 
 <TABLEROW>\n {
-	  if (td) printf("</TD>\n");
+	  if (!td) printf("<TD>");
+	  printf("</TD>\n* </TR>\n");
 	  td = 0;
-	  printf("* </TR>\n");
 	  yyless(0);
 	  BEGIN(FLUSH);
 	}
@@ -673,8 +683,9 @@ DASH {WS1}-{WS1}
 	  proto[nfunc] = malloc((yyleng+2)*sizeof(char));
 	  sprintf(proto[nfunc], "%s", yytext);
 	  func[nfunc] = malloc(32*sizeof(char));
+	  func[nfunc][31] = '\0';
 	  strtok(yytext, " ");
-	  strncpy(func[nfunc], strtok(0x0, " *("), 32);
+	  strncpy(func[nfunc], strtok(0x0, " *("), 31);
 	  nfunc++;
 	  BEGIN(FLUSH);
 	}
@@ -702,7 +713,7 @@ DASH {WS1}-{WS1}
 	}
 
 <FLUSH>.*\n {
-	  /* Throw away the rest of the line and begin the next cycle. */
+	  // Throw away the rest of the line and begin the next cycle.
 	  lmore = 0;
 	  BEGIN(section);
 	}
@@ -721,6 +732,12 @@ DASH {WS1}-{WS1}
 	
 	  } else {
 	    printf("*/\n");
+	
+	    for (ifunc = 0; ifunc < nfunc; ifunc++) {
+	      free(proto[ifunc]);
+	      free(func[ifunc]);
+	    }
+	
 	    return 0;
 	  }
 	}
@@ -770,8 +787,8 @@ void endlist(
   int *ilist)
 
 {
-  /* Plain text at the same level of indentation as an item tag signals */
-  /* end-of-list.                                                       */
+  // Plain text at the same level of indentation as an item tag signals
+  // end-of-list.
   while (*ilist && (indent <  listndt[*ilist] ||
                    (indent == listndt[*ilist] && !isItem))) {
     printf("%-*s</%cL>\n", listndt[*ilist], "*", listype[*ilist]);
@@ -806,23 +823,26 @@ void printe(const char *text, const char *name)
 
 {
   char *cp;
-  int  len;
+  int  i, len;
 
   if ((len = strlen(name))) {
     while ((cp = strstr(text, name))) {
       if (cp > text && (*(cp-1) == '_' ||
           ('a' <= *(cp-1) && *(cp-1) <= 'z') ||
           ('A' <= *(cp-1) && *(cp-1) <= 'Z'))) {
-        /* Not a match. */
-        printf("%.*s", cp-text+len, text);
+        // Not a match.
+        i = cp - text + len;
+        printf("%.*s", i, text);
 
       } else {
         if (*(cp+len) == ':' && *(cp+len+1) == ':') {
           // Allow references to struct members.
-          printf("%.*s", cp-text+len, text);
+          i = cp - text + len;
+          printf("%.*s", i, text);
         } else {
           // Disallow a reference and use bold font.
-          printf("%.*s@b %%%s", cp-text, text, name);
+          i = cp - text;
+          printf("%.*s@b %%%s", i, text, name);
         }
       }
       text = cp + len;
@@ -833,18 +853,18 @@ void printe(const char *text, const char *name)
 }
 
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int main(int argc, char *argv[])
 
 {
-  /* Check inputs. */
+  // Check inputs.
   if (argc != 2) {
     fprintf(stderr, "Usage: doxextr <header file>\n");
     return 1;
   }
 
-  /* Check accessibility of the input file. */
+  // Check accessibility of the input file.
   if (access(argv[1], R_OK) == -1) {
     perror(argv[1]);
     return 1;
@@ -855,8 +875,8 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  /* Set line buffering in case stdout is redirected to a file, otherwise
-   * stdout and stderr messages will be jumbled (stderr is unbuffered). */
+  // Set line buffering in case stdout is redirected to a file, otherwise
+  // stdout and stderr messages will be jumbled (stderr is unbuffered).
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   return yylex();

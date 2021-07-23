@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: spc_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: spc_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -32,7 +29,7 @@
 #include <wcsutil.h>
 #include <spc.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define spcput_  F77_FUNC(spcput,  SPCPUT)
 #define spcptc_  F77_FUNC(spcptc,  SPCPTC)
@@ -45,6 +42,7 @@
 
 #define spcini_  F77_FUNC(spcini,  SPCINI)
 #define spcfree_ F77_FUNC(spcfree, SPCFREE)
+#define spcsize_ F77_FUNC(spcsize, SPCSIZE)
 #define spcprt_  F77_FUNC(spcprt,  SPCPRT)
 #define spcperr_ F77_FUNC(spcperr, SPCPERR)
 #define spcset_  F77_FUNC(spcset,  SPCSET)
@@ -56,12 +54,13 @@
 #define spctrne_ F77_FUNC(spctrne, SPCTRNE)
 #define spcaips_ F77_FUNC(spcaips, SPCAIPS)
 
-/* Deprecated. */
+// Deprecated.
 #define spctyp_  F77_FUNC(spctyp,  SPCTYP)
 #define spcspx_  F77_FUNC(spcspx,  SPCSPX)
 #define spcxps_  F77_FUNC(spcxps,  SPCXPS)
 #define spctrn_  F77_FUNC(spctrn,  SPCTRN)
 
+// Must match the values set in spc.inc.
 #define SPC_FLAG    100
 #define SPC_TYPE    101
 #define SPC_CODE    102
@@ -74,7 +73,7 @@
 #define SPC_ISGRISM 201
 #define SPC_ERR     202
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcput_(int *spc, const int *what, const void *value, const int *m)
 
@@ -84,7 +83,7 @@ int spcput_(int *spc, const int *what, const void *value, const int *m)
   const double *dvalp;
   struct spcprm *spcp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   spcp  = (struct spcprm *)spc;
   cvalp = (const char *)value;
   ivalp = (const int *)value;
@@ -97,12 +96,14 @@ int spcput_(int *spc, const int *what, const void *value, const int *m)
     spcp->flag = *ivalp;
     break;
   case SPC_TYPE:
-    strncpy(spcp->type, cvalp, 4);
-    spcp->type[4] = '\0';
+    // Only four characters need be given.
+    wcsutil_strcvt(4, ' ', 1, cvalp, spcp->type);
+    wcsutil_null_fill(8, spcp->type);
     break;
   case SPC_CODE:
-    strncpy(spcp->code, cvalp, 3);
-    spcp->code[3] = '\0';
+    // Only three characters need be given.
+    wcsutil_strcvt(3, ' ', 1, cvalp, spcp->code);
+    wcsutil_null_fill(4, spcp->code);
     break;
   case SPC_CRVAL:
     spcp->crval = *dvalp;
@@ -138,7 +139,7 @@ int spcpti_(int *spc, const int *what, const int *value, const int *m)
   return spcput_(spc, what, value, m);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcget_(const int *spc, const int *what, void *value)
 
@@ -151,7 +152,7 @@ int spcget_(const int *spc, const int *what, void *value)
   const int *ispcp;
   const struct spcprm *spcp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   spcp  = (const struct spcprm *)spc;
   cvalp = (char *)value;
   ivalp = (int *)value;
@@ -162,10 +163,10 @@ int spcget_(const int *spc, const int *what, void *value)
     *ivalp = spcp->flag;
     break;
   case SPC_TYPE:
-    strncpy(cvalp, spcp->type, 4);
+    wcsutil_strcvt(8, ' ', 0, spcp->type, cvalp);
     break;
   case SPC_CODE:
-    strncpy(cvalp, spcp->code, 3);
+    wcsutil_strcvt(4, ' ', 0, spcp->code, cvalp);
     break;
   case SPC_CRVAL:
     *dvalp = spcp->crval;
@@ -190,7 +191,7 @@ int spcget_(const int *spc, const int *what, void *value)
     *ivalp = spcp->isGrism;
     break;
   case SPC_ERR:
-    /* Copy the contents of the wcserr struct. */
+    // Copy the contents of the wcserr struct.
     if (spcp->err) {
       ispcp = (int *)(spcp->err);
       for (l = 0; l < ERRLEN; l++) {
@@ -224,7 +225,7 @@ int spcgti_(const int *spc, const int *what, int *value)
   return spcget_(spc, what, value);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcini_(int *spc)
 
@@ -232,7 +233,7 @@ int spcini_(int *spc)
   return spcini((struct spcprm *)spc);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcfree_(int *spc)
 
@@ -240,39 +241,46 @@ int spcfree_(int *spc)
   return spcfree((struct spcprm *)spc);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
+
+int spcsize_(const int *spc, int sizes[2])
+
+{
+  return spcsize((const struct spcprm *)spc, sizes);
+}
+
+//----------------------------------------------------------------------------
 
 int spcprt_(const int *spc)
 
 {
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling SPCPRT in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling SPCPRT in the Fortran code.
   fflush(NULL);
 
   return spcprt((const struct spcprm *)spc);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-/* prefix should be null-terminated, or else of length 72 in which case
- * trailing blanks are not significant. */
+// If null-terminated (using the Fortran CHAR(0) intrinsic), prefix may be of
+// length less than but not exceeding 72 and trailing blanks are preserved.
+// Otherwise, it must be of length 72 and trailing blanks are stripped off.
 
 int spcperr_(int *spc, const char prefix[72])
 
 {
-  char prefix_[72];
+  char prefix_[73];
+  wcsutil_strcvt(72, '\0', 1, prefix, prefix_);
 
-  strncpy(prefix_, prefix, 72);
-  wcsutil_null_fill(72, prefix_);
-
-  /* This may or may not force the Fortran I/O buffers to be flushed. */
-  /* If not, try CALL FLUSH(6) before calling SPCPERR in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.
+  // If not, try CALL FLUSH(6) before calling SPCPERR in the Fortran code.
   fflush(NULL);
 
   return wcserr_prt(((struct spcprm *)spc)->err, prefix_);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcset_(int *spc)
 
@@ -280,7 +288,7 @@ int spcset_(int *spc)
   return spcset((struct spcprm *)spc);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcx2s_(
   int *spc,
@@ -295,7 +303,7 @@ int spcx2s_(
   return spcx2s((struct spcprm *)spc, *nx, *sx, *sspec, x, spec, stat);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcs2x_(
   int *spc,
@@ -310,7 +318,7 @@ int spcs2x_(
   return spcs2x((struct spcprm *)spc, *nspec, *sspec, *sx, spec, x, stat);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spctype_(
   const char ctypei[8],
@@ -324,29 +332,22 @@ int spctype_(
   iptr err)
 
 {
-  char ctypei_[9], scode_[4], sname_[22], stype_[5], units_[8];
-  int status;
+  char ctypei_[9];
+  wcsutil_strcvt(8, ' ', 1, ctypei, ctypei_);
 
-  strncpy(ctypei_, ctypei, 8);
-  ctypei_[8] = '\0';
+  char stype_[5], scode_[4], sname_[22], units_[8];
+  int status = spctype(ctypei_, stype_, scode_, sname_, units_, ptype, xtype,
+                       restreq, (struct wcserr **)err);
 
-  status = spctype(ctypei_, stype_, scode_, sname_, units_, ptype, xtype,
-                   restreq, (struct wcserr **)err);
-
-  wcsutil_blank_fill( 5, stype_);
-  wcsutil_blank_fill( 4, scode_);
-  wcsutil_blank_fill(22, sname_);
-  wcsutil_blank_fill( 8, units_);
-
-  strncpy(stype, stype_, 4);
-  strncpy(scode, scode_, 3);
-  strncpy(sname, sname_, 21);
-  strncpy(units, units_, 7);
+  wcsutil_strcvt( 4, ' ', 0, stype_, stype);
+  wcsutil_strcvt( 3, ' ', 0, scode_, scode);
+  wcsutil_strcvt(21, ' ', 0, sname_, sname);
+  wcsutil_strcvt( 7, ' ', 0, units_, units);
 
   return status;
 }
 
-/* : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :  */
+// : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :
 
 int spctyp_(
   const char ctypei[8],
@@ -363,7 +364,7 @@ int spctyp_(
                   0x0);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcspxe_(
   const char ctypeS[8],
@@ -379,14 +380,13 @@ int spcspxe_(
 
 {
   char ctypeS_[9];
-  strncpy(ctypeS_, ctypeS, 8);
-  ctypeS_[8] = '\0';
+  wcsutil_strcvt(8, ' ', 1, ctypeS, ctypeS_);
 
   return spcspxe(ctypeS_, *crvalS, *restfrq, *restwav, ptype, xtype, restreq,
                  crvalX, dXdS, (struct wcserr **)err);
 }
 
-/* : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :  */
+// : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :
 
 int spcspx_(
   const char ctypeS[8],
@@ -404,7 +404,7 @@ int spcspx_(
                   crvalX, dXdS, 0x0);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcxpse_(
   const char ctypeS[8],
@@ -420,14 +420,13 @@ int spcxpse_(
 
 {
   char ctypeS_[9];
-  strncpy(ctypeS_, ctypeS, 8);
-  ctypeS_[8] = '\0';
+  wcsutil_strcvt(8, ' ', 1, ctypeS, ctypeS_);
 
   return spcxpse(ctypeS_, *crvalX, *restfrq, *restwav, ptype, xtype, restreq,
                  crvalS, dSdX, (struct wcserr **)err);
 }
 
-/* : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :  */
+// : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :
 
 int spcxps_(
   const char ctypeS[8],
@@ -445,7 +444,7 @@ int spcxps_(
                   crvalS, dSdX, 0x0);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spctrne_(
   const char ctypeS1[8],
@@ -459,24 +458,19 @@ int spctrne_(
   iptr err)
 
 {
-  int status;
   char ctypeS1_[9], ctypeS2_[9];
+  wcsutil_strcvt(8, ' ', 1, ctypeS1, ctypeS1_);
+  wcsutil_strcvt(8, ' ', 1, ctypeS2, ctypeS2_);
 
-  strncpy(ctypeS1_, ctypeS1, 8);
-  strncpy(ctypeS2_, ctypeS2, 8);
-  ctypeS1_[8] = '\0';
-  ctypeS2_[8] = '\0';
+  int status = spctrne(ctypeS1_, *crvalS1, *cdeltS1, *restfrq, *restwav,
+                       ctypeS2_,  crvalS2,  cdeltS2, (struct wcserr **)err);
 
-  status = spctrne(ctypeS1_, *crvalS1, *cdeltS1, *restfrq, *restwav,
-                   ctypeS2_,  crvalS2,  cdeltS2, (struct wcserr **)err);
-
-  strncpy(ctypeS2, ctypeS2_, 8);
-  wcsutil_blank_fill(8, ctypeS2);
+  wcsutil_strcvt(8, ' ', 0, ctypeS2_, ctypeS2);
 
   return status;
 }
 
-/* : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :  */
+// : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : : :
 
 int spctrn_(
   const char ctypeS1[8],
@@ -493,7 +487,7 @@ int spctrn_(
                   crvalS2, cdeltS2, 0x0);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spcaips_(
   const char ctypeA[8],
@@ -502,19 +496,14 @@ int spcaips_(
   char specsys[8])
 
 {
-  int status;
-  char ctypeA_[9], ctype_[9], specsys_[9];
+  char ctypeA_[9];
+  wcsutil_strcvt(8, ' ', 1, ctypeA, ctypeA_);
 
-  strncpy(ctypeA_, ctypeA, 8);
-  ctypeA_[8] = '\0';
+  char ctype_[9], specsys_[9];
+  int status = spcaips(ctypeA_, *velref, ctype_, specsys_);
 
-  status = spcaips(ctypeA_, *velref, ctype_, specsys_);
-
-  wcsutil_blank_fill(9, ctype_);
-  strncpy(ctype, ctype_, 8);
-
-  wcsutil_blank_fill(9, specsys_);
-  strncpy(specsys, specsys_, 8);
+  wcsutil_strcvt(8, ' ', 0, ctype_,   ctype);
+  wcsutil_strcvt(8, ' ', 0, specsys_, specsys);
 
   return status;
 }

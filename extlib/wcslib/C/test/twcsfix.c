@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,19 +17,20 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcsfix.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: twcsfix.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * twcsfix tests the translation routines for non-standard WCS keyvalues, the
-* wcsfix() suite, and the spectral coordinate translation routine wcssptr().
+* wcsfix() suite.  It also tests the change of celestial coordinate system
+* routine, wcsccs(), and the spectral coordinate translation routine,
+* wcssptr().
 *
 *---------------------------------------------------------------------------*/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <wcs.h>
@@ -38,6 +38,7 @@
 #include <wcsfix.h>
 #include <wcsprintf.h>
 #include <wcsunits.h>
+#include <wcsutil.h>
 
 
 void parser(struct wcsprm *);
@@ -51,54 +52,69 @@ const double CDELT[3] =  {-1.0, 1.0, 19.68717093222};
 
 char CUNIT[3][9] = {"ARCSEC", "ARCSEC", "KM/SEC"};
 
-/* N.B. non-standard. */
+// N.B. non-standard spectral axis.
 char CTYPE[3][9] = {"RA---NCP", "DEC--NCP", "FELO-HEL"};
 
-const double CRVAL[3] = {265.6220947090*3600.0, -28.98849996030*3600.0,
-                         5569.27104};
+// B1950.0 equatorial coordinates of the galactic pole.
+// CUNITia is set to ARCSEC as an additional test.
+const double CRVAL[3] = {192.2500*3600.0, 27.4000*3600.0, 5569.27104};
 const double RESTFRQ = 1.42040575e9;
 const double RESTWAV = 0.0;
 
-/* N.B. non-standard, corresponding to MJD 35884.04861111 */
+// N.B. non-standard date-time format.
 const char DATEOBS[] = "1957/02/15 01:10:00";
+const char DATEBEG[] = "1957/02/15 01:10:00";
+const char DATEAVG[] = "1957/02/15 02:10:00";
+const char DATEEND[] = "1957/02/15 03:10:00";
 
-/* For testing spcfix(). */
+const double BEPOCH  = 1957.124382563;
+const double MJDBEG  = 35884.048611;
+
+const double OBSGEO_L =   148.263510;
+const double OBSGEO_B =   -32.998406;
+const double OBSGEO_H =      411.793;
+
+const double EQUINOX = 1950.0;
+
+// For testing spcfix().
 const int  VELREF = 2;
 const char SPECSYS[] = "BARYCENT";
 
 int main()
 
 {
-  char ctypeS[9];
-  int i, stat[NWCSFIX], status;
-  struct wcsprm wcs;
-  struct wcserr info[NWCSFIX];
+  int stat[NWCSFIX];
 
   wcsprintf("Testing WCSLIB translator for non-standard usage (twcsfix.c)\n"
           "------------------------------------------------------------\n\n");
 
-  wcs.flag = -1;
-  parser(&wcs);
+  struct wcsprm wcs0;
+  wcs0.flag = -1;
+  parser(&wcs0);
 
-  /* Note: to print the unfixed wcsprm struct using wcsprt() the struct
-     would first have to be initialized by wcsset().  However, if the struct
-     contains non-standard keyvalues then wcsset() will either fix them
-     itself or else fail (e.g. for non-standard units).  Thus, in general,
-     wcsprt() cannot be used to print the unmodified struct. */
+  // Note: to print the unfixed wcsprm struct using wcsprt() the struct
+  // would first have to be initialized by wcsset().  However, if the struct
+  // contains non-standard keyvalues then wcsset() will either fix them
+  // itself or else fail (e.g. for non-standard units).  Thus, in general,
+  // wcsprt() cannot be used to print the unmodified struct.
 
-  /* Fix non-standard WCS keyvalues. */
+  // Fix non-standard WCS keyvalues.
+  struct wcserr info[NWCSFIX];
   wcserr_enable(1);
-  status = wcsfixi(7, 0, &wcs, stat, info);
+  int status = wcsfixi(7, 0, &wcs0, stat, info);
   wcsprintf("wcsfix status returns: (");
-  for (i = 0; i < NWCSFIX; i++) {
+  for (int i = 0; i < NWCSFIX; i++) {
     wcsprintf(i ? ", %d" : "%d", stat[i]);
   }
   wcsprintf(")\n");
 
-  for (i = 0; i < NWCSFIX; i++) {
+  for (int i = 0; i < NWCSFIX; i++) {
     if (info[i].status < -1 || 0 < info[i].status) {
       wcsprintf("\n");
       wcserr_prt(info+i, 0x0);
+
+      // Free memory used to store the message.
+      if (info[i].msg) wcsdealloc(info[i].msg);
     }
   }
 
@@ -107,38 +123,87 @@ int main()
     return 1;
   }
 
-  /* Extract information from the FITS header. */
-  if (wcsset(&wcs)) {
+  // Extract information from the FITS header.
+  if (wcsset(&wcs0)) {
     wcsprintf("\n");
-    wcsperr(&wcs, 0x0);
+    wcsperr(&wcs0, 0x0);
+    return 1;
   }
 
   wcsprintf("\n");
-  wcsprt(&wcs);
+  wcsprt(&wcs0);
   wcsprintf("\n------------------------------------"
             "------------------------------------\n");
 
-  /* Should now have a 'VOPT-F2W' axis, translate it to frequency. */
+  // Make a copy of the wcsprm struct.
+  struct wcsprm wcs1;
+  wcs1.flag = -1;
+  if (wcssub(1, &wcs0, 0x0, 0x0, &wcs1)) {
+    wcsperr(&wcs1, 0x0);
+    return 1;
+  }
+
+  // Transform equatorial B1950 to galactic coordinates.  The WCS has been
+  // constructed with the galactic pole coincident with the native pole of
+  // the projection in order to test the resolution of an indeterminacy.
+  if (wcsccs(&wcs1, 123.0, 27.4, 192.25, "GLON", "GLAT", 0x0, 0.0, "G")) {
+    wcsperr(&wcs1, 0x0);
+    return 1;
+  }
+
+  // Should now have a 'VOPT-F2W' axis, translate it to frequency.
+  char ctypeS[9];
   strcpy(ctypeS, "FREQ-???");
-  i = -1;
-  if (wcssptr(&wcs, &i, ctypeS)) {
-    wcsperr(&wcs, 0x0);
+  int i = -1;
+  if (wcssptr(&wcs1, &i, ctypeS)) {
+    wcsperr(&wcs1, 0x0);
     return 1;
   }
 
-  if (wcsset(&wcs)) {
-    wcsperr(&wcs, 0x0);
+  if (wcsset(&wcs1)) {
+    wcsperr(&wcs1, 0x0);
     return 1;
   }
 
-  wcsprt(&wcs);
+  wcsprt(&wcs1);
 
-  wcsfree(&wcs);
+  // Print before-and-afters.
+  printf("\nOriginal and new coordinates of reference point "
+         "(%4.1f, %4.1f, %3.1f), lonpole, and latpole:\n",
+	 CRPIX[0], CRPIX[1], CRPIX[2]);
+  printf("%14.6f, %14.6f, %14.2f, %14.6f, %14.6f\n",
+    wcs0.crval[0], wcs0.crval[1], wcs0.crval[2], wcs0.lonpole, wcs0.latpole);
+  printf("%14.6f, %14.6f, %14.2f, %14.6f, %14.6f\n",
+    wcs1.crval[0], wcs1.crval[1], wcs1.crval[2], wcs1.lonpole, wcs1.latpole);
+
+  // Compute B1950 coordinates of a field point.
+  double pixcrd[3] = {1000.0, 1000.0, 1.0};
+  printf("\nOriginal and new coordinates of field point "
+         "(%5.1f, %5.1f, %3.1f):\n", pixcrd[0], pixcrd[1], pixcrd[2]);
+
+  double imgcrd[3], phi, theta, world[3];
+  if (wcsp2s(&wcs0, 1, 3, pixcrd, imgcrd, &phi, &theta, world, stat)) {
+    wcsperr(&wcs0, 0x0);
+    return 1;
+  }
+
+  printf("%14.6f, %14.6f, %14.2f\n", world[0], world[1], world[2]);
+
+  // Compute galactic coordinates of the same field point.
+  if (wcsp2s(&wcs1, 1, 3, pixcrd, imgcrd, &phi, &theta, world, stat)) {
+    wcsperr(&wcs1, 0x0);
+    return 1;
+  }
+
+  printf("%14.6f, %14.6f, %14.2f\n", world[0], world[1], world[2]);
+
+  wcsfree(&wcs0);
+  wcsfree(&wcs1);
 
   return 0;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 void parser(wcs)
 
@@ -148,18 +213,18 @@ struct wcsprm *wcs;
   int i, j;
   double *pcij;
 
-  /* In practice a parser would read the FITS header until it encountered  */
-  /* the NAXIS keyword which must occur near the start, before any of the  */
-  /* WCS keywords.  It would then use wcsini() to allocate memory for      */
-  /* arrays in the wcsprm struct and set default values.  In this          */
-  /* simulation the header keyvalues are set as global variables.          */
+  // In practice a parser would read the FITS header until it encountered
+  // the NAXIS keyword which must occur near the start, before any of the
+  // WCS keywords.  It would then use wcsini() to allocate memory for
+  // arrays in the wcsprm struct and set default values.  In this
+  // simulation the header keyvalues are set as global variables.
   wcsnpv(2);
   wcsini(1, NAXIS, wcs);
 
 
-  /* Now the parser scans the FITS header, identifying WCS keywords and    */
-  /* loading their values into the appropriate elements of the wcsprm      */
-  /* struct.                                                               */
+  // Now the parser scans the FITS header, identifying WCS keywords and
+  // loading their values into the appropriate elements of the wcsprm
+  // struct.
 
   for (j = 0; j < NAXIS; j++) {
     wcs->crpix[j] = CRPIX[j];
@@ -196,8 +261,20 @@ struct wcsprm *wcs;
   wcs->pv[0].value = -1.0;
   wcs->npv = 1;
 
-  wcs->velref  = VELREF;
-  strcpy(wcs->dateobs, DATEOBS);
+  wcs->velref = VELREF;
+
+  // dateobs and datebeg will be set by datfix().
+  strcpy(wcs->dateavg, DATEAVG);
+  strcpy(wcs->dateend, DATEEND);
+  wcs->bepoch = BEPOCH;
+  wcs->mjdbeg = MJDBEG;
+
+  wcs->obsgeo[3] = OBSGEO_L;
+  wcs->obsgeo[4] = OBSGEO_B;
+  wcs->obsgeo[5] = OBSGEO_H;
+
+  wcs->equinox = EQUINOX;
+
   strcpy(wcs->specsys, SPECSYS);
 
   return;

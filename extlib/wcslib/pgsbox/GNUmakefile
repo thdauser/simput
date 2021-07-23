@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for building PGSBOX 5.19
+# GNU makefile for building PGSBOX 7.7
 #
 # Summary of the main targets
 # ---------------------------
@@ -26,14 +26,15 @@
 #      instead and re-run configure.
 #
 #   2) In compiling the test programs, this makefile assumes that the
-#      WCSLIB 5.19 sources reside in ../C and ../Fortran (as in the
+#      WCSLIB 7.7 sources reside in ../C and ../Fortran (as in the
 #      distribution kit).
 #
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: GNUmakefile,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+# $Id: GNUmakefile,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 #-----------------------------------------------------------------------------
 # Get configure settings.
+SUBDIR := pgsbox
 include ../makedefs
 
 PGSBOXLIB := libpgsbox-$(LIBVER).a
@@ -42,7 +43,8 @@ MODULES   := pgsbox.o \
              pgwcsl.o \
              pgcrfn.o
 
-WCSLIB   := ../C/$(WCSLIB)
+WCSLIB  := ../C/$(WCSLIB)
+LIBLOCK := lib.lock
 
 # For building the sharable library.
 PICLIB := libpgsbox-PIC.a
@@ -64,51 +66,76 @@ vpath %.inc ../Fortran
 $(PGSBOXLIB)(%.o) : %.f
 	-@ echo ''
 	   $(FC) -I../Fortran $(FFLAGS) -c $<
-	   $(AR) r$(ARFLAGS) $(PGSBOXLIB) $%
-	-@ $(RM) $%
+	 @ if [ ! -f $(LIBLOCK) ] ; then \
+	     echo $(AR) r$(ARFLAGS) $(PGSBOXLIB) $% ; \
+	     $(AR) r$(ARFLAGS) $(PGSBOXLIB) $% ; \
+	     $(RM) $% ; \
+	   fi
 
 $(PGSBOXLIB)(%.o) : %.c
 	-@ echo ''
 	   $(CC) $(CPPFLAGS) $(CFLAGS) -c $<
-	   $(AR) r$(ARFLAGS) $(PGSBOXLIB) $%
-	-@ $(RM) $%
+	 @ if [ ! -f $(LIBLOCK) ] ; then \
+	     echo $(AR) r$(ARFLAGS) $(PGSBOXLIB) $% ; \
+	     $(AR) r$(ARFLAGS) $(PGSBOXLIB) $% ; \
+	     $(RM) $% ; \
+	   fi
 
-$(PICLIB)(%.o) : %.f
+$(PICLIB)(%.o) : $(PGSBOXLIB)(%.o)
 	-@ echo ''
-	   $(FC) -I../Fortran $(FFLAGS) $(SHRFLAGS) -c $<
-	   $(AR) r$(ARFLAGS) $(PICLIB) $%
-	-@ $(RM) $%
-
-$(PICLIB)(%.o) : %.c
-	-@ echo ''
-	   $(CC) $(CPPFLAGS) $(CFLAGS) $(SHRFLAGS) -c $<
-	   $(AR) r$(ARFLAGS) $(PICLIB) $%
-	-@ $(RM) $%
+	 @ if [ -f $(%:.o=.f) ] ; then \
+	     echo $(FC) -I../Fortran $(FFLAGS) $(SHRFLAGS) -c $(%:.o=.f) ; \
+	     $(FC) -I../Fortran $(FFLAGS) $(SHRFLAGS) -c $(%:.o=.f) ; \
+	   else \
+	     echo $(CC) $(CPPFLAGS) $(CFLAGS) $(SHRFLAGS) -c $(%:.o=.c) ; \
+	     $(CC) $(CPPFLAGS) $(CFLAGS) $(SHRFLAGS) -c $(%:.o=.c) ; \
+	   fi
+	 @ if [ ! -f $(LIBLOCK) ] ; then \
+	     echo $(AR) r$(ARFLAGS) $(PICLIB) $% ; \
+	     $(AR) r$(ARFLAGS) $(PICLIB) $% ; \
+	     $(RM) $% ; \
+	   fi
 
 %.i : %.c
 	-@ echo ''
 	-@ $(RM) $@
 	   $(CPP) $(CPPFLAGS) $(CFLAGS) $< > $@
 
+# Print out include file dependencies.
 %.d : %.c
 	-@ echo ''
 	-@ $(CPP) $(CPPFLAGS) $(CFLAGS) $< | \
 	   sed -n -e 's|^# 1 "\([^/].*\.h\)".*|\1|p' | \
+	   sed -e 's|.*/||' | \
 	   sort -u
 
 # Static and static pattern rules
 #--------------------------------
 
 .PHONY : build check clean cleaner cleanest distclean install realclean test \
-         tests wcslib
+         tests uninstall wcslib
 
 build : lib
 
-lib : $(PGSBOXLIB) $(SHRLIB)
-
-$(PGSBOXLIB) : $(MODULES:%=$(PGSBOXLIB)(%))
+lib :
 	-@ echo ''
-	   $(RANLIB) $@
+	-@ echo 'Building PGSBOX library...'
+	 @ $(MAKE) --no-print-directory $(PGSBOXLIB)
+
+$(PGSBOXLIB) : $(LIBLOCK) $(MODULES:%=$(PGSBOXLIB)(%))
+	-@ echo ''
+	 @ set *.o ; \
+	     if [ "$$1" != "*.o" ] ; then \
+	       echo $(AR) r$(ARFLAGS) $@ *.o ; \
+	       $(AR) r$(ARFLAGS) $@ *.o ; \
+	       echo $(RANLIB) $@ ; \
+	       $(RANLIB) $@ ; \
+	       $(RM) *.o ; \
+	     fi
+	-@ $(RM) $<
+	 @ if [ "$(SHRLIB)" != "" ] ; then \
+	     $(MAKE) --no-print-directory $(SHRLIB) ; \
+	   fi
 
 $(SHRLIB) : $(PICLIB)
 	-@ echo ''
@@ -120,15 +147,39 @@ $(SHRLIB) : $(PICLIB)
 	     $(SHRLD) -o $@ *.o ../$(WCSSHR) $(LDFLAGS) $(PGPLOTLIB) $(FLIBS) && \
 	     mv $@ ..
 
-$(PICLIB) : $(MODULES:%.o=$(PICLIB)(%.o)) ;
+$(PICLIB) : $(LIBLOCK) $(MODULES:%.o=$(PICLIB)(%.o))
+	-@ echo ''
+	 @ set *.o ; \
+	     if [ "$$1" != "*.o" ] ; then \
+	       echo $(AR) r$(ARFLAGS) $@ *.o ; \
+	       $(AR) r$(ARFLAGS) $@ *.o ; \
+	       $(RM) *.o ; \
+	     fi
+	-@ $(RM) $<
+
+$(LIBLOCK) : FORCE
+	 @ $(RM) *.o
+	 @ touch $@
 
 install : build
 	   $(MAKE) -C ../Fortran install
-	   $(INSTALL) -m 644 $(PGSBOXLIB) $(LIBDIR)
+	   if [ "$(ARFLAGS)" = U ] ; then \
+	     $(RM) -r tmp ; \
+	     mkdir tmp && \
+	       cd tmp && \
+	       trap 'cd .. ; $(RM) -r tmp' 0 1 2 3 15 ; \
+	       $(AR) x ../$(PGSBOXLIB) && \
+	       $(AR) rD $(PGSBOXLIB) *.o && \
+	       $(INSTALL) -m 644 $(PGSBOXLIB) $(LIBDIR) ; \
+	       cd .. ; \
+	       $(RM) -r tmp ; \
+	   else \
+	     $(INSTALL) -m 644 $(PGSBOXLIB) $(LIBDIR) ; \
+	   fi
 	   $(RANLIB) $(LIBDIR)/$(PGSBOXLIB)
-	   $(RM) $(LIBDIR)/libpgsbox.a
+	-  $(RM) $(LIBDIR)/libpgsbox.a
 	   $(LN_S) $(PGSBOXLIB) $(LIBDIR)/libpgsbox.a
-	-  if [ "$(SHRLIB)" != "" ] ; then \
+	   if [ "$(SHRLIB)" != "" ] ; then \
 	     $(INSTALL) -m 755 $(SHRLIB) $(LIBDIR) ; \
 	     if [ -h "$(LIBDIR)/$(SONAME)" ] ; then \
 	       $(RM) $(LIBDIR)/$(SONAME) ; \
@@ -143,8 +194,12 @@ install : build
 	   fi
 	   $(INSTALL) -m 444 *.h $(INCDIR)
 
+uninstall :
+	-  cd $(LIBDIR) && $(RM) $(PGSBOXLIB) $(SHRLN) $(SONAME) $(SHRLIB)
+
 clean :
-	-  $(RM) -r *.o *.i a.out core *.dSYM $(EXTRA_CLEAN)
+	-  $(RM) *.o $(LIBLOCK) *.i a.out core *.dSYM
+	-  $(RM) -r $(EXTRA_CLEAN)
 
 cleaner : clean
 	-  $(RM) pgtest cpgtest
@@ -217,9 +272,9 @@ show ::
 #-------------
 
 $(PGSBOXLIB)(cpgsbox.o) : cpgsbox.h wcsconfig_f77.h
-$(PGSBOXLIB)(pgwcsl.o)  : cel.h lin.h prj.h spc.h sph.h spx.h tab.h wcs.h \
+$(PGSBOXLIB)(pgwcsl.o)  : cel.h lin.h prj.h spc.h sph.h spx.h wcs.h \
                           wcsconfig_f77.h
 
 pgtest.o  : wcs.inc
-cpgtest.o : cel.h cpgsbox.h lin.h prj.h spc.h spx.h tab.h wcs.h wcsfix.h \
-            wcsconfig_f77.h
+cpgtest.o : cel.h cpgsbox.h lin.h prj.h spc.h spx.h wcs.h wcsconfig_f77.h \
+            wcserr.h wcsfix.h

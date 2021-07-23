@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcstab.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: twcstab.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * twcstab tests wcstab() and also provides sample code for using it in
@@ -58,20 +55,20 @@ int main()
   struct wcsprm *wcs;
 
 
-  /* Set line buffering in case stdout is redirected to a file, otherwise
-   * stdout and stderr messages will be jumbled (stderr is unbuffered). */
+  // Set line buffering in case stdout is redirected to a file, otherwise
+  // stdout and stderr messages will be jumbled (stderr is unbuffered).
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   printf("Testing -TAB interpreter (twcstab.c)\n"
          "------------------------------------\n\n");
 
-  /* Create the input FITS test file. */
+  // Create the input FITS test file.
   if (create_input()) {
     fprintf(stderr, "Failed to create FITS test file.");
     return 1;
   }
 
-  /* Open the FITS test file and read the primary header. */
+  // Open the FITS test file and read the primary header.
   fits_open_file(&fptr, "wcstab.fits", READONLY, &status);
   if ((status = fits_hdr2str(fptr, 1, NULL, 0, &header, &nkeyrec,
                              &status))) {
@@ -80,24 +77,24 @@ int main()
   }
 
 
-  /*-----------------------------------------------------------------------*/
-  /* Basic steps required to interpret a FITS WCS header, including -TAB.  */
-  /*-----------------------------------------------------------------------*/
+  //-------------------------------------------------------------------------
+  // Basic steps required to interpret a FITS WCS header, including -TAB.
+  //-------------------------------------------------------------------------
 
-  /* Parse the primary header of the FITS file. */
+  // Parse the primary header of the FITS file.
   if ((status = wcspih(header, nkeyrec, WCSHDR_all, 2, &nreject, &nwcs,
                        &wcs))) {
     fprintf(stderr, "wcspih ERROR %d: %s.\n", status,wcshdr_errmsg[status]);
   }
 
-  /* Read coordinate arrays from the binary table extension. */
+  // Read coordinate arrays from the binary table extension.
   if ((status = fits_read_wcstab(fptr, wcs->nwtb, (wtbarr *)wcs->wtb,
                                  &status))) {
     fits_report_error(stderr, status);
     return 1;
   }
 
-  /* Translate non-standard WCS keyvalues. */
+  // Translate non-standard WCS keyvalues.
   if ((status = wcsfix(7, 0, wcs, stat))) {
     for (i = 0; i < NWCSFIX; i++) {
       if (stat[i] > 0) {
@@ -109,28 +106,28 @@ int main()
     return 1;
   }
 
-  /*-----------------------------------------------------------------------*/
-  /* The wcsprm struct is now ready for use.                               */
-  /*-----------------------------------------------------------------------*/
+  //-------------------------------------------------------------------------
+  // The wcsprm struct is now ready for use.
+  //-------------------------------------------------------------------------
 
-  /* Do something with it. */
+  // Do something with it.
   do_wcs_stuff(fptr, wcs);
 
-  /* Finished with the FITS file. */
+  // Finished with the FITS file.
   fits_close_file(fptr, &status);
-  free(header);
+  fits_free_memory(header, &status);
 
-  /* Clean up. */
+  // Clean up.
   status = wcsvfree(&nwcs, &wcs);
 
   return 0;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-/* The celestial plane is 256 x 128 with the table indexed at every fourth  */
-/* pixel on each axis, but the image is rotated by 5 deg so the table needs */
-/* to be a bit wider than 65 x 33.                                          */
+// The celestial plane is 256 x 128 with the table indexed at every fourth
+// pixel on each axis, but the image is rotated by 5 deg so the table needs
+// to be a bit wider than 65 x 33.
 
 #define K1 70L
 #define K2 40L
@@ -140,7 +137,7 @@ int create_input()
 {
   const double TWOPI = 2.0 * 3.14159265358979323846;
 
-  /* These must match wcstab.keyrec. */
+  // These must match wcstab.keyrec.
   const char infile[] = "test/wcstab.keyrec";
   const long NAXIS1 = 256;
   const long NAXIS2 = 128;
@@ -153,7 +150,7 @@ int create_input()
   const char *tform2[4] = {"8E", "8D", "8E", "8D"};
   const char *tunit2[4] = {"", "m", "", "a"};
 
-  /* The remaining parameters may be chosen at will. */
+  // The remaining parameters may be chosen at will.
   float  refval[] = {150.0f, -30.0f};
   float  span[]   = {5.0f, (5.0f*K2)/K1};
   float  sigma[]  = {0.10f, 0.05f};
@@ -165,14 +162,15 @@ int create_input()
   double tindex[] = {0.0, 1.0, 1.0, 2.0, 2.0, 3.0, 3.0, 4.0};
 
   char   keyrec[84];
-  int    i, status;
+  int    status;
+  size_t iz;
   long   dummy, firstelem, k1, k2, p1, p2, p3;
   float  array[2*K1*K2], *fp, image[256];
   double s, t, x1, x2, z, z1, z2;
   FILE   *stream;
   fitsfile *fptr;
 
-  /* Look for the input header keyrecords. */
+  // Look for the input header keyrecords.
   if ((stream = fopen(infile+5, "r")) == 0x0) {
     if ((stream = fopen(infile, "r")) == 0x0) {
       printf("ERROR opening %s\n", infile);
@@ -180,24 +178,24 @@ int create_input()
     }
   }
 
-  /* Create the FITS output file, deleting any pre-existing file. */
+  // Create the FITS output file, deleting any pre-existing file.
   status = 0;
   fits_create_file(&fptr, "!wcstab.fits", &status);
 
-  /* Convert header keyrecords to FITS. */
+  // Convert header keyrecords to FITS.
   while (fgets(keyrec, 82, stream) != NULL) {
-    /* Ignore meta-comments (copyright information, etc.). */
+    // Ignore meta-comments (copyright information, etc.).
     if (keyrec[0] == '#') continue;
 
-    /* Strip off the newline. */
-    i = strlen(keyrec) - 1;
-    if (keyrec[i] == '\n') keyrec[i] = '\0';
+    // Strip off the newline.
+    iz = strlen(keyrec) - 1;
+    if (keyrec[iz] == '\n') keyrec[iz] = '\0';
 
     fits_write_record(fptr, keyrec, &status);
   }
   fclose(stream);
 
-  /* Create and write some phoney image data. */
+  // Create and write some phoney image data.
   firstelem = 1;
   for (p3 = 0; p3 < NAXIS3; p3++) {
     for (p2 = 0; p2 < NAXIS2; p2++) {
@@ -205,7 +203,7 @@ int create_input()
       s = (p3 + 1) * cos(0.2 * p2);
       t = cos(0.8*p2);
       for (p1 = 0; p1 < NAXIS1; p1++) {
-        /* Do not adjust your set! */
+        // Do not adjust your set!
         *(fp++) = sin(0.1*(p1+p2) + s) * cos(0.4*p1) * t;
       }
 
@@ -215,27 +213,27 @@ int create_input()
   }
 
 
-  /* Add the first binary table extension. */
+  // Add the first binary table extension.
   fits_create_tbl(fptr, BINARY_TBL, 1L, 3L, (char **)ttype1, (char **)tform1,
      (char **)tunit1, NULL, &status);
 
-  /* Write EXTNAME and EXTVER near the top, after TFIELDS. */
+  // Write EXTNAME and EXTVER near the top, after TFIELDS.
   fits_read_key_lng(fptr, "TFIELDS", &dummy, NULL, &status);
   fits_insert_key_str(fptr, "EXTNAME", "WCS-TABLE",
     "WCS Coordinate lookup table", &status);
   fits_insert_key_lng(fptr, "EXTVER", 1L, "Table number 1", &status);
 
-  /* Write the TDIM1 keyrecord after TFORM1. */
+  // Write the TDIM1 keyrecord after TFORM1.
   fits_read_key_str(fptr, "TFORM1", keyrec, NULL, &status);
   sprintf(keyrec, "(2,%ld,%ld)", K1, K2);
   fits_insert_key_str(fptr, "TDIM1", keyrec, "Dimensions of 3-D array",
     &status);
 
-  /* Plate carrée projection with a bit of noise for the sake of realism. */
+  // Plate carrée projection with a bit of noise for the sake of realism.
   fp = array;
   for (k2 = 0; k2 < K2; k2++) {
     for (k1 = 0; k1 < K1; k1++) {
-      /* Box-Muller transformation: uniform -> normal distribution. */
+      // Box-Muller transformation: uniform -> normal distribution.
       x1 = lcprng();
       x2 = lcprng();
       if (x1 == 0.0) x1 = 1.0;
@@ -263,25 +261,25 @@ int create_input()
   fits_write_col_flt(fptr, 3, 1L, 1L, K2, array, &status);
 
 
-  /* Add the second binary table extension. */
+  // Add the second binary table extension.
   if (fits_create_tbl(fptr, BINARY_TBL, 1L, 4L, (char **)ttype2,
      (char **)tform2, (char **)tunit2, NULL, &status)) {
     fits_report_error(stderr, status);
     return 1;
   }
 
-  /* Write EXTNAME and EXTVER near the top, after TFIELDS. */
+  // Write EXTNAME and EXTVER near the top, after TFIELDS.
   fits_read_key_lng(fptr, "TFIELDS", &dummy, NULL, &status);
   fits_insert_key_str(fptr, "EXTNAME", "WCS-TABLE",
     "WCS Coordinate lookup table", &status);
   fits_insert_key_lng(fptr, "EXTVER", 2L, "Table number 2", &status);
 
-  /* Write the TDIM2 keyrecord after TFORM2. */
+  // Write the TDIM2 keyrecord after TFORM2.
   fits_read_key_str(fptr, "TFORM2", keyrec, NULL, &status);
   fits_insert_key_str(fptr, "TDIM2", "(1,8)", "Dimensions of 2-D array",
     &status);
 
-  /* Write the TDIM4 keyrecord after TFORM4. */
+  // Write the TDIM4 keyrecord after TFORM4.
   fits_read_key_str(fptr, "TFORM4", keyrec, NULL, &status);
   fits_insert_key_str(fptr, "TDIM4", "(1,8)", "Dimensions of 2-D array",
     &status);
@@ -302,12 +300,12 @@ int create_input()
   return 0;
 }
 
-/*--------------------------------------------------------------------------*/
-
-/* A simple linear congruential pseudo-random number generator that produces
- * the same results on all systems so that the test output can be compared.
- * It produces a fixed sequence of uniformly distributed numbers in [0,1].
- * Adapted from the example in Numerical Recipes in C. */
+/*----------------------------------------------------------------------------
+* A simple linear congruential pseudo-random number generator that produces
+* the same results on all systems so that the test output can be compared.
+* It produces a fixed sequence of uniformly distributed numbers in [0,1].
+* Adapted from the example in Numerical Recipes in C.
+*---------------------------------------------------------------------------*/
 
 double lcprng()
 {
@@ -317,7 +315,7 @@ double lcprng()
   return (double)(next % 1073741824UL) / 1073741823.0;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int do_wcs_stuff(fitsfile *fptr, struct wcsprm *wcs)
 
@@ -326,17 +324,17 @@ int do_wcs_stuff(fitsfile *fptr, struct wcsprm *wcs)
   double phi[8], pixcrd[8][4], imgcrd[8][4], theta[8], world[8][4],
          x1, x2, x3;
 
-  /* Initialize the wcsprm struct, also taking control of memory allocated by
-   * fits_read_wcstab(). */
+  // Initialize the wcsprm struct, also taking control of memory allocated by
+  // fits_read_wcstab().
   if ((status = wcsset(wcs))) {
     fprintf(stderr, "wcsset ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
   }
 
-  /* Print the struct. */
+  // Print the struct.
   if ((status = wcsprt(wcs))) return status;
 
-  /* Compute coordinates in the corners. */
+  // Compute coordinates in the corners.
   fits_read_key(fptr, TINT, "NAXIS1", &naxis1, NULL, &status);
   fits_read_key(fptr, TINT, "NAXIS2", &naxis2, NULL, &status);
   fits_read_key(fptr, TINT, "NAXIS3", &naxis3, NULL, &status);
@@ -370,7 +368,7 @@ int do_wcs_stuff(fitsfile *fptr, struct wcsprm *wcs)
     fprintf(stderr, "\n\nwcsp2s ERROR %d: %s.\n", status,
             wcs_errmsg[status]);
 
-    /* Invalid pixel coordinates. */
+    // Invalid pixel coordinates.
     if (status == 8) status = 0;
   }
 

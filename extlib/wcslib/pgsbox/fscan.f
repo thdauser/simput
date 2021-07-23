@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
-* Copyright (C) 1997-2018, Mark Calabretta
+* PGSBOX 7.7 - draw curvilinear coordinate axes for PGPLOT.
+* Copyright (C) 1997-2021, Mark Calabretta
 *
 * This file is part of PGSBOX.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning PGSBOX to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: fscan.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: fscan.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 *
 * FSCAN defines an azimuth/frequency coordinate system for PGSBOX.
@@ -86,10 +84,15 @@
       SUBROUTINE FSCAN (OPCODE, NLC, NLI, NLD, NLCPRM, NLIPRM, NLDPRM,
      :   WORLD, PIXEL, CONTRL, CONTXT, IERR)
 *-----------------------------------------------------------------------
-      INTEGER   CONTRL, IERR, NLC, NLD, NLI, NLIPRM(NLI), OPCODE
+      INTEGER   CONTRL, IDUMMY, IERR, NLC, NLD, NLI, NLIPRM(NLI), OPCODE
       DOUBLE PRECISION CONTXT(20), NLDPRM(NLD), PIXEL(2), S, WORLD(2)
-      CHARACTER NLCPRM(NLC)*1
+      CHARACTER CDUMMY, NLCPRM(NLC)*1
 *-----------------------------------------------------------------------
+*     Circumvent "unused dummy argument" compiler warnings.
+      CONTXT(1) = 0D0
+      CDUMMY = NLCPRM(1)
+      IDUMMY = NLIPRM(1)
+
       IERR = 0
 
       IF (OPCODE.GT.0) THEN

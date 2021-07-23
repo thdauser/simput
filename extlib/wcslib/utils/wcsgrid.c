@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,13 +17,12 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcsgrid.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: wcsgrid.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
-*
+* Usage: wcsgrid [-a<alt>] [-d<pgdev>] [-h<hdu>] [<fitsfile>]
+*-----------------------------------------------------------------------------
 * wcsgrid extracts the WCS keywords for an image from the specified FITS file
 * and uses pgsbox() to plot a 2-D coordinate graticule for each representation
 * found.  Refer to the usage notes below.
@@ -62,6 +60,7 @@ char usage[] =
 
 #include <wcshdr.h>
 #include <wcsfix.h>
+#include <wcsutil.h>
 #include <wcs.h>
 #include <getwcstab.h>
 
@@ -69,43 +68,38 @@ char usage[] =
 int main(int argc, char **argv)
 
 {
-  char alt = '\0', *header, idents[3][80], *infile, keyword[32], nlcprm[1],
-       opt[2], pgdev[16];
-  int  c0[] = {-1, -1, -1, -1, -1, -1, -1};
-  int  alts[27], gcode[2], hdunum = 1, hdutype, i, ic, naxes, naxis[2],
-       nkeyrec, nreject, nwcs, stat[NWCSFIX], status;
-  float  blc[2], trc[2];
-  double cache[257][4], grid1[3], grid2[3], nldprm[1];
-  struct wcsprm *wcs;
-  nlfunc_t pgwcsl_;
-  fitsfile *fptr;
+  // Parse options.
+  char alt = '\0', pgdev[16];
+  int  hdunum = 1;
 
-
-  /* Parse options. */
   strcpy(pgdev, "/XWINDOW");
-  for (i = 1; i < argc && argv[i][0] == '-'; i++) {
-    if (!argv[i][1]) break;
 
-    switch (argv[i][1]) {
+  int iopt;
+  for (iopt = 1; iopt < argc && argv[iopt][0] == '-'; iopt++) {
+    if (!argv[iopt][1]) break;
+
+    switch (argv[iopt][1]) {
     case 'a':
-      alt = toupper(argv[i][2]);
+      alt = toupper(argv[iopt][2]);
       break;
 
     case 'd':
-      if (argv[i][2] == '?') {
+      if (argv[iopt][2] == '?') {
         cpgldev();
         return 0;
       }
 
-      if (argv[i][2] == '/') {
-        strncpy(pgdev+1, argv[i]+3, 15);
+      if (argv[iopt][2] == '/') {
+        strncpy(pgdev+1, argv[iopt]+3, 12);
       } else {
-        strncpy(pgdev+1, argv[i]+2, 15);
+        strncpy(pgdev+1, argv[iopt]+2, 12);
       }
+      wcsutil_null_fill(-16, pgdev);
+
       break;
 
     case 'h':
-      hdunum = atoi(argv[i]+2);
+      hdunum = atoi(argv[iopt]+2);
       break;
 
     default:
@@ -114,10 +108,11 @@ int main(int argc, char **argv)
     }
   }
 
-  if (i < argc) {
-    infile = argv[i++];
+  char *infile;
+  if (iopt < argc) {
+    infile = argv[iopt++];
 
-    if (i < argc) {
+    if (iopt < argc) {
       fprintf(stderr, "%s", usage);
       return 1;
     }
@@ -125,15 +120,17 @@ int main(int argc, char **argv)
     infile = "-";
   }
 
-  /* Check accessibility of the input file. */
+  // Check accessibility of the input file.
   if (strcmp(infile, "-") && access(infile, R_OK) == -1) {
     printf("wcsgrid: Cannot access %s.\n", infile);
     return 1;
   }
 
 
-  /* Open the FITS file and move to the required HDU. */
-  status = 0;
+  // Open the FITS file and move to the required HDU.
+  int hdutype;
+  int status = 0;
+  fitsfile *fptr;
   if (fits_open_file(&fptr, infile, READONLY, &status)) goto fitserr;
   if (fits_movabs_hdu(fptr, hdunum, &hdutype, &status)) goto fitserr;
   if (hdutype != IMAGE_HDU) {
@@ -142,7 +139,8 @@ int main(int argc, char **argv)
     return 1;
   }
 
-  /* Check that we have at least two image axes. */
+  // Check that we have at least two image axes.
+  int naxes;
   if (fits_read_key(fptr, TINT, "NAXIS",  &naxes, NULL, &status)) {
     goto fitserr;
   }
@@ -155,13 +153,17 @@ int main(int argc, char **argv)
     printf("HDU number %d contains a %d-D image array.\n", hdunum, naxes);
   }
 
-  /* Read in the FITS header, excluding COMMENT and HISTORY keyrecords. */
+  // Read in the FITS header, excluding COMMENT and HISTORY keyrecords.
+  char *header;
+  int  nkeyrec;
   if (fits_hdr2str(fptr, 1, NULL, 0, &header, &nkeyrec, &status)) {
     goto fitserr;
   }
 
 
-  /* Interpret the WCS keywords. */
+  // Interpret the WCS keywords.
+  int nreject, nwcs;
+  struct wcsprm *wcs;
   if ((status = wcspih(header, nkeyrec, WCSHDR_all, -3, &nreject, &nwcs,
                        &wcs))) {
     fprintf(stderr, "wcspih ERROR %d: %s.\n", status, wcshdr_errmsg[status]);
@@ -169,20 +171,21 @@ int main(int argc, char **argv)
   }
   free(header);
 
-  /* Read -TAB arrays from the binary table extension (if necessary). */
+  // Read -TAB arrays from the binary table extension (if necessary).
   if (fits_read_wcstab(fptr, wcs->nwtb, (wtbarr *)wcs->wtb, &status)) {
     goto fitserr;
   }
 
-  /* Translate non-standard WCS keyvalues. */
+  // Translate non-standard WCS keyvalues.
+  int stat[NWCSFIX];
   if ((status = wcsfix(7, 0, wcs, stat))) {
     status = 0;
-    for (i = 0; i < NWCSFIX; i++) {
+    for (int i = 0; i < NWCSFIX; i++) {
       if (stat[i] > 0) {
          fprintf(stderr, "wcsfix ERROR %d: %s.\n", stat[i],
                  wcsfix_errmsg[stat[i]]);
 
-        /* Ignore problems with CDi_ja and DATE-OBS. */
+        // Ignore problems with CDi_ja and DATE-OBS.
         if (!(i == CDFIX || i == DATFIX)) status = 1;
       }
     }
@@ -190,8 +193,9 @@ int main(int argc, char **argv)
     if (status) return 1;
   }
 
-  /* Sort out alternates. */
+  // Sort out alternates.
   if (alt) {
+    int alts[27];
     wcsidx(nwcs, &wcs, alts);
 
     if (alt == ' ') {
@@ -215,7 +219,9 @@ int main(int argc, char **argv)
     }
   }
 
-  /* Get image dimensions from the header. */
+  // Get image dimensions from the header.
+  char keyword[32];
+  int  naxis[2];
   sprintf(keyword, "NAXIS%d", wcs->lng + 1);
   fits_read_key(fptr, TINT, "NAXIS1", naxis,   NULL, &status);
   sprintf(keyword, "NAXIS%d", wcs->lat + 1);
@@ -230,7 +236,8 @@ int main(int argc, char **argv)
   fits_close_file(fptr, &status);
 
 
-  /* Plot setup. */
+  // Plot setup.
+  float blc[2], trc[2];
   blc[0] = 0.5f;
   blc[1] = 0.5f;
   trc[0] = naxis[0] + 0.5f;
@@ -246,24 +253,17 @@ int main(int argc, char **argv)
   cpgask(1);
   cpgpage();
 
-  /* Compact lettering. */
+  // Compact lettering.
   cpgsch(0.8f);
 
-  /* Draw full grid lines. */
-  gcode[0] = 2;
-  gcode[1] = 2;
-  grid1[0] =    0.0;
-  grid2[0] =    0.0;
-
-  /* These are for the projection boundary. */
-  grid1[1] = -180.0;
-  grid1[2] =  180.0;
-  grid2[1] =  -90.0;
-  grid2[2] =   90.0;
+  // Draw full grid lines and projection boundary.
+  int    gcode[2] = {2, 2};
+  double grid1[3] = {0.0, -180.0, -90.0};
+  double grid2[3] = {0.0,  180.0,  90.0};
 
   cpgsci(1);
 
-  for (i = 0; i < nwcs; i++) {
+  for (int i = 0; i < nwcs; i++) {
     if (alt && (wcs+i)->alt[0] != alt) {
       continue;
     }
@@ -273,10 +273,11 @@ int main(int argc, char **argv)
       continue;
     }
 
-    /* Draw the frame. */
+    // Draw the frame.
     cpgbox("BC", 0.0f, 0, "BC", 0.0f, 0);
 
-    /* Axis labels; use CNAMEia in preference to CTYPEia. */
+    // Axis labels; use CNAMEia in preference to CTYPEia.
+    char idents[3][80];
     if ((wcs+i)->cname[0][0]) {
       strcpy(idents[0], (wcs+i)->cname[0]);
     } else {
@@ -289,33 +290,37 @@ int main(int argc, char **argv)
       strcpy(idents[1], (wcs+i)->ctype[1]);
     }
 
-    /* Title; use WCSNAME. */
+    // Title; use WCSNAME.
     strcpy(idents[2], (wcs+i)->wcsname);
     if (strlen(idents[2])) {
       printf("\n%s\n", idents[2]);
     }
 
-    /* Formatting control for celestial coordinates. */
+    // Formatting control for celestial coordinates.
+    char opt[2];
     if (strncmp((wcs+i)->ctype[0], "RA", 2) == 0) {
-      /* Right ascension in HMS, declination in DMS. */
+      // Right ascension in HMS, declination in DMS.
       opt[0] = 'G';
       opt[1] = 'E';
     } else {
-      /* Other angles in decimal degrees. */
+      // Other angles in decimal degrees.
       opt[0] = 'A';
       opt[1] = 'B';
     }
 
-    /* Draw the celestial grid.  The grid density is set for each world */
-    /* coordinate by specifying LABDEN = 1224. */
-    ic = -1;
+    // Draw the celestial grid.  The grid density is set for each world
+    // coordinate by specifying LABDEN = 1224.
+    char   nlcprm[1];
+    int    c0[] = {-1, -1, -1, -1, -1, -1, -1}, ic = -1;
+    double cache[257][4], nldprm[1];
+    nlfunc_t pgwcsl_;
     cpgsbox(blc, trc, idents, opt, 0, 1224, c0, gcode, 0.0, 0, grid1, 0,
       grid2, 0, pgwcsl_, 1, WCSLEN, 1, nlcprm, (int *)(wcs+i), nldprm, 256,
       &ic, cache, &status);
 
-    /* Delimit the projection boundary. */
+    // Delimit the projection boundary.
     if ((wcs+i)->cel.prj.category != ZENITHAL) {
-      /* Reset to the native coordinate graticule. */
+      // Reset to the native coordinate graticule.
       (wcs+i)->crval[0] = (wcs+i)->cel.prj.phi0;
       (wcs+i)->crval[1] = (wcs+i)->cel.prj.theta0;
       (wcs+i)->lonpole  = 999.0;

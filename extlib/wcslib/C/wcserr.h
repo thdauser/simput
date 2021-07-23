@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,15 +17,13 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   Module author: Michael Droettboom
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcserr.h,v 5.19.1.1 2018/07/26 15:41:40 mcalabre Exp mcalabre $
+  $Id: wcserr.h,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
-* WCSLIB 5.19 - C routines that implement the FITS World Coordinate System
+* WCSLIB 7.7 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to the README file provided with WCSLIB for an
 * overview of the library.
 *
@@ -34,7 +31,7 @@
 * ------------------------------
 * Most of the structs in WCSLIB contain a pointer to a wcserr struct as a
 * member.  Functions in WCSLIB that return an error status code can also
-* allocate and set a detailed error message in this struct which also
+* allocate and set a detailed error message in this struct, which also
 * identifies the function, source file, and line number where the error
 * occurred.
 *
@@ -76,7 +73,7 @@
 *     Name of the source file where the error occurred as given by the
 *     __FILE__ preprocessor macro.
 *
-*   char msg[WCSERR_MSG_LENGTH]
+*   char *msg
 *     Informative error message.
 *
 *
@@ -95,6 +92,29 @@
 *             int       Status return value:
 *                         0: Error messaging is disabled.
 *                         1: Error messaging is enabled.
+*
+*
+* wcserr_size() - Compute the size of a wcserr struct
+* ---------------------------------------------------
+* wcserr_size() computes the full size of a wcserr struct, including allocated
+* memory.
+*
+* Given:
+*   err       const struct wcserr*
+*                       The error object.
+*
+*                       If NULL, the base size of the struct and the allocated
+*                       size are both set to zero.
+*
+* Returned:
+*   sizes     int[2]    The first element is the base size of the struct as
+*                       returned by sizeof(struct wcserr).  The second element
+*                       is the total allocated size of the message buffer, in
+*                       bytes.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
 *
 *
 * wcserr_prt() - Print a wcserr struct
@@ -118,7 +138,7 @@
 *
 * wcserr_clear() - Clear a wcserr struct
 * --------------------------------------
-* wcserr_clear() clears the error (if any) contained in a wcserr struct.
+* wcserr_clear() clears (deletes) a wcserr struct.
 *
 * Given and returned:
 *   err       struct wcserr**
@@ -220,38 +240,38 @@
 extern "C" {
 #endif
 
-#define WCSERR_MSG_LENGTH 160
-
 struct wcserr {
-  int  status;			/* Status code for the error.               */
-  int  line_no;			/* Line number where the error occurred.    */
-  const char *function;		/* Function name.                           */
-  const char *file;		/* Source file name.                        */
-  char msg[WCSERR_MSG_LENGTH];	/* Informative error message.               */
+  int  status;			// Status code for the error.
+  int  line_no;			// Line number where the error occurred.
+  const char *function;		// Function name.
+  const char *file;		// Source file name.
+  char *msg;			// Informative error message.
 };
 
-/* Size of the wcserr struct in int units, used by the Fortran wrappers. */
+// Size of the wcserr struct in int units, used by the Fortran wrappers.
 #define ERRLEN (sizeof(struct wcserr)/sizeof(int))
 
 int wcserr_enable(int enable);
+
+int wcserr_size(const struct wcserr *err, int sizes[2]);
 
 int wcserr_prt(const struct wcserr *err, const char *prefix);
 
 int wcserr_clear(struct wcserr **err);
 
 
-/* INTERNAL USE ONLY -------------------------------------------------------*/
+// INTERNAL USE ONLY -------------------------------------------------------
 
 int wcserr_set(struct wcserr **err, int status, const char *function,
   const char *file, int line_no, const char *format, ...);
 
 int wcserr_copy(const struct wcserr *src, struct wcserr *dst);
 
-/* Convenience macro for invoking wcserr_set(). */
+// Convenience macro for invoking wcserr_set().
 #define WCSERR_SET(status) err, status, function, __FILE__, __LINE__
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* WSCLIB_WCSERR */
+#endif // WSCLIB_WCSERR

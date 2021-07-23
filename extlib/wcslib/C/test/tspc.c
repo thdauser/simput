@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,21 +17,24 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tspc.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tspc.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tspc tests the spectral transformation driver routines for closure.
 *
 *---------------------------------------------------------------------------*/
 
-#include <cpgplot.h>
+// Needed to get nanosleep() from time.h.
+#define _POSIX_C_SOURCE 199309L
+
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
+
+#include <cpgplot.h>
 
 #include <wcstrig.h>
 #include <spc.h>
@@ -45,45 +47,43 @@ const double C = 2.99792458e8;
 
 int closure(const char[9], double, double, int, double, double, double);
 
-/* KPNO MARS spectrograph grism parameters. */
+// KPNO MARS spectrograph grism parameters.
 double mars[7] = {4.5e5, 1.0, 27.0, 1.765, -1.077e6, 3.0, 5.0};
 
 
 int main()
 
 {
-  char text[80];
-  int  naxisj, nFail = 0, status;
-  double cdeltX, crpixj, crvalX, restfrq, restwav, x1, x2;
-
-
   printf(
     "Testing closure of WCSLIB spectral transformation routines (tspc.c)\n"
     "-------------------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of spc status return values:\n");
-  for (status = 1; status <= 4; status++) {
+  for (int status = 1; status <= 4; status++) {
     printf("%4d: %s.\n", status, spc_errmsg[status]);
   }
 
 
-  /* PGPLOT initialization. */
+  // PGPLOT initialization.
+  char text[80];
   strcpy(text, "/xwindow");
   cpgbeg(0, text, 1, 1);
 
-  naxisj = NSPEC;
-  crpixj = naxisj/2 + 1;
+  int    naxisj = NSPEC;
+  double crpixj = naxisj/2 + 1;
 
-  restfrq = 1420.40595e6;
-  restwav = C/restfrq;
-  x1 = 1.0e9;
-  x2 = 2.0e9;
-  cdeltX = (x2 - x1)/(naxisj - 1);
-  crvalX = x1 + (crpixj - 1.0)*cdeltX;
+  double restfrq = 1420.40595e6;
+  double restwav = C/restfrq;
+  double x1 = 1.0e9;
+  double x2 = 2.0e9;
+  double cdeltX = (x2 - x1)/(naxisj - 1);
+  double crvalX = x1 + (crpixj - 1.0)*cdeltX;
   printf("\nLinear frequency axis, span: %.1f to %.1f (GHz), step: %.3f "
          "(kHz)\n---------------------------------------------------------"
          "-----------------\n", x1*1e-9, x2*1e-9, cdeltX*1e-3);
+
+  int nFail = 0;
   nFail += closure("WAVE-F2W",     0.0,     0.0, naxisj, crpixj, cdeltX, crvalX);
   nFail += closure("VOPT-F2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
   nFail += closure("ZOPT-F2W",     0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
@@ -167,7 +167,7 @@ int main()
   nFail += closure("BETA-GRI", 0.0, restwav, naxisj, crpixj, cdeltX, crvalX);
 
 
-  /* Reproduce Fig. 5 of Paper III. */
+  // Reproduce Fig. 5 of Paper III.
   naxisj = 1700;
   crpixj = 719.8;
   crvalX = 7245.2e-10;
@@ -197,7 +197,7 @@ int main()
   return nFail;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int closure (
   const char ctypeS[9],
@@ -209,27 +209,24 @@ int closure (
   double crvalX)
 
 {
-  char ptype, sname[32], title[80], units[8], xtype, ylab[80];
-  int  nFail = 0, restreq, stat1[NSPEC], stat2[NSPEC], status;
-  register int j;
-  float  tmp, x[NSPEC], xmin, xmax, y[NSPEC], ymax, ymin;
-  double cdeltS, clos[NSPEC], crvalS, dSdX, resid, residmax, spec1[NSPEC],
-         spec2[NSPEC];
-  struct spcprm spc;
+  int status;
 
-
-  /* Get keyvalues for the required spectral axis type. */
+  // Get keyvalues for the required spectral axis type.
+  char   ptype, xtype;
+  int    restreq;
+  double crvalS, dSdX;
   if ((status = spcxps(ctypeS, crvalX, restfrq, restwav, &ptype, &xtype,
                        &restreq, &crvalS, &dSdX))) {
     printf("ERROR %d from spcxps() for %s.\n", status, ctypeS);
     return 1;
   }
-  cdeltS = cdeltX * dSdX;
+  double cdeltS = cdeltX * dSdX;
 
+  struct spcprm spc;
   spcini(&spc);
 
   if (ctypeS[5] == 'G') {
-    /* KPNO MARS spectrograph grism parameters. */
+    // KPNO MARS spectrograph grism parameters.
     spc.pv[0] = mars[0];
     spc.pv[1] = mars[1];
     spc.pv[2] = mars[2];
@@ -239,8 +236,9 @@ int closure (
     spc.pv[6] = mars[6];
   }
 
-  /* Construct the axis. */
-  for (j = 0; j < naxisj; j++) {
+  // Construct the axis.
+  double spec1[NSPEC];
+  for (int j = 0; j < naxisj; j++) {
     spec1[j] = (j+1 - crpixj)*cdeltS;
   }
 
@@ -248,7 +246,7 @@ int closure (
     crvalS+spec1[0], crvalS+spec1[naxisj-1], cdeltS);
 
 
-  /* Initialize. */
+  // Initialize.
   spc.flag = 0;
   spc.crval = crvalS;
   spc.restfrq = restfrq;
@@ -257,20 +255,24 @@ int closure (
   spc.type[4] = '\0';
   strcpy(spc.code, ctypeS+5);
 
-  /* Convert the first to the second. */
+  // Convert the first to the second.
+  int    stat1[NSPEC], stat2[NSPEC];
+  double spec2[NSPEC];
   if ((status = spcx2s(&spc, naxisj, 1, 1, spec1, spec2, stat1))) {
     printf("spcx2s ERROR %d: %s.\n", status, spc_errmsg[status]);
   }
 
-  /* Convert the second back to the first. */
+  // Convert the second back to the first.
+  double clos[NSPEC];
   if ((status = spcs2x(&spc, naxisj, 1, 1, spec2, clos, stat2))) {
     printf("spcs2x ERROR %d: %s.\n", status, spc_errmsg[status]);
   }
 
-  residmax = 0.0;
+  double residmax = 0.0;
 
-  /* Test closure. */
-  for (j = 0; j < naxisj; j++) {
+  // Test closure.
+  int nFail = 0;
+  for (int j = 0; j < naxisj; j++) {
     if (stat1[j]) {
       printf("%s: w =%20.12e -> %s = ???, stat = %d\n", ctypeS, spec1[j],
              spc.type, stat1[j]);
@@ -283,7 +285,7 @@ int closure (
       continue;
     }
 
-    resid = fabs((clos[j] - spec1[j])/cdeltS);
+    double resid = fabs((clos[j] - spec1[j])/cdeltS);
     if (resid > residmax) residmax = resid;
 
     if (resid > tol) {
@@ -297,24 +299,25 @@ int closure (
   printf("%s: Maximum closure residual = %.1e pixel.\n", ctypeS, residmax);
 
 
-  /* Draw graph. */
+  // Draw graph.
   cpgbbuf();
   cpgeras();
 
-  xmin = (float)(crvalS + spec1[0]);
-  xmax = (float)(crvalS + spec1[naxisj-1]);
-  ymin = (float)(spec2[0]) - xmin;
-  ymax = ymin;
-  for (j = 0; j < naxisj; j++) {
+  float x[NSPEC], y[NSPEC];
+  float xmin = (float)(crvalS + spec1[0]);
+  float xmax = (float)(crvalS + spec1[naxisj-1]);
+  float ymin = (float)(spec2[0]) - xmin;
+  float ymax = ymin;
+  for (int j = 0; j < naxisj; j++) {
     x[j] = (float)(j+1);
     y[j] = (float)(spec2[j] - (crvalS + spec1[j]));
     if (y[j] > ymax) ymax = y[j];
     if (y[j] < ymin) ymin = y[j];
   }
 
-  j = (int)crpixj + 1;
+  int j = (int)crpixj + 1;
   if (y[j] < 0.0) {
-    tmp  = ymin;
+    float tmp  = ymin;
     ymin = ymax;
     ymax = tmp;
   }
@@ -322,6 +325,7 @@ int closure (
   cpgask(0);
   cpgenv(1.0f, (float)naxisj, ymin, ymax, 0, -1);
 
+  char sname[32], title[80], units[8], ylab[80];
   cpgsci(1);
   cpgbox("ABNTS", 0.0f, 0, "BNTS", 0.0f, 0);
   spctyp(ctypeS, 0x0, 0x0, sname, units, 0x0, 0x0, 0x0);
@@ -340,6 +344,10 @@ int closure (
   cpgsci(7);
   cpgpt1((float)crpixj, 0.0f, 24);
   cpgebuf();
+
+  // Allow 200ms to view the plot on fast machines.
+  struct timespec nano = {(time_t)0, 200000000L};
+  nanosleep(&nano, 0x0);
 
   printf("Type <RETURN> for next page: ");
   (void)getchar();

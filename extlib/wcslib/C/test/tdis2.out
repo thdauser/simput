@@ -48,28 +48,58 @@ Initial contents of wcsprm struct:
      colnum: 0
       colax: 0x<address>
                  0      0      0      0
-    wcsname: UNDEFINED
       cname: 0x<address>
              UNDEFINED
              UNDEFINED
              UNDEFINED
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: UNDEFINED
+    timesys: UNDEFINED
+    trefpos: UNDEFINED
+    trefdir: UNDEFINED
+    plephem: UNDEFINED
+   timeunit: UNDEFINED
+    dateref: UNDEFINED
+     mjdref:      0.000000000     0.000000000
+   timeoffs: UNDEFINED
+    dateobs: UNDEFINED
+    datebeg: UNDEFINED
+    dateavg: UNDEFINED
+    dateend: UNDEFINED
+     mjdobs: UNDEFINED
+     mjdbeg: UNDEFINED
+     mjdavg: UNDEFINED
+     mjdend: UNDEFINED
+     jepoch: UNDEFINED
+     bepoch: UNDEFINED
+     tstart: UNDEFINED
+      tstop: UNDEFINED
+    xposure: UNDEFINED
+    telapse: UNDEFINED
+    timsyer: UNDEFINED
+    timrder: UNDEFINED
+    timedel: UNDEFINED
+   timepixr: UNDEFINED
+     obsgeo:        UNDEFINED       UNDEFINED       UNDEFINED
+                    UNDEFINED       UNDEFINED       UNDEFINED
+   obsorbit: UNDEFINED
     radesys: "ICRS"
     equinox: UNDEFINED
     specsys: UNDEFINED
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo: UNDEFINED     UNDEFINED     UNDEFINED     
-    dateobs: UNDEFINED
-    dateavg: UNDEFINED
-     mjdobs: UNDEFINED
-     mjdavg: UNDEFINED
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x0
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -103,6 +133,9 @@ Initial contents of wcsprm struct:
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x0  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -194,17 +227,15 @@ dispre.*
      maxdis: 0x<address>
                1.3940       1.5010       0.0000       0.0000    
      totdis:   0.0000    
-      axmap: 0x<address>
- axmap[0][]:     0     1    -1    -1
-                 0     1    -1    -1
- axmap[1][]:     0     1    -1    -1
-                 0     1    -1    -1
- axmap[2][]:    -1    -1    -1    -1
-                -1    -1    -1    -1
- axmap[3][]:    -1    -1    -1    -1
-                -1    -1    -1    -1
+     docorr: 0x<address>
+                 1     1     1     1
        Nhat: 0x<address>
                  2     2     0     0
+      axmap: 0x<address>
+ axmap[0][]:     0     1    -1    -1
+ axmap[1][]:     0     1    -1    -1
+ axmap[2][]:    -1    -1    -1    -1
+ axmap[3][]:    -1    -1    -1    -1
      offset: 0x<address>
 offset[0][]:   124.00       132.00       0.0000       0.0000    
 offset[1][]:   124.00       132.00       0.0000       0.0000    
@@ -217,24 +248,24 @@ offset[3][]:   0.0000       0.0000       0.0000       0.0000
  scale[3][]:   1.0000       1.0000       1.0000       1.0000    
       iparm: 0x<address>
  iparm[0]  : 0x<address>
- iparm[0][]:            1            8           24            0           12
-                       12            0            0
+ iparm[0][]:            1            7           24           12           12
+                        0            0
  iparm[1]  : 0x<address>
- iparm[1][]:            1            8           24            0           12
-                       12            0            0
+ iparm[1][]:            1            7           24           12           12
+                        0            0
  iparm[2]  : 0x0
  iparm[3]  : 0x0
       dparm: 0x<address>
  dparm[0]  : 0x<address>
- dparm[0][]:   124.00       1.0000       0.0000       0.0000      -2.3863e-05
+ dparm[0][]:   0.0000       0.0000       0.0000       0.0000      -2.3863e-05
                2.1886e-05   2.9656e-06  -1.4172e-07  -8.5610e-09  -1.6847e-07
-               3.7746e-09   0.0000       124.00       0.99999     -6.4275e-07
+               3.7746e-09   0.0000       0.0000      -1.4897e-05  -6.4275e-07
                0.0000       2.4146e-05  -2.2250e-05  -2.9425e-06   1.4492e-07
                6.7090e-09   1.7195e-07  -3.5820e-09   0.0000    
  dparm[1]  : 0x<address>
- dparm[1][]:   132.00       0.0000       1.0000       0.0000       2.1197e-06
+ dparm[1][]:   0.0000       0.0000       0.0000       0.0000       2.1197e-06
               -2.4386e-05   2.3100e-05  -2.0249e-08  -1.6583e-07  -5.7813e-09
-              -1.6168e-07   0.0000       132.00      -2.6783e-06   0.99998   
+              -1.6168e-07   0.0000       0.0000      -2.6783e-06  -1.6588e-05
                0.0000      -2.1510e-06   2.4753e-05  -2.3424e-05   2.0482e-08
                1.7000e-07   3.8917e-09   1.6510e-07   0.0000    
  dparm[2]  : 0x0
@@ -358,27 +389,57 @@ Extracted contents of wcsprm struct:
      colnum: 0
       colax: 0x<address>
                  0      0      0
-    wcsname: UNDEFINED
       cname: 0x<address>
              UNDEFINED
              UNDEFINED
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: UNDEFINED
+    timesys: UNDEFINED
+    trefpos: UNDEFINED
+    trefdir: UNDEFINED
+    plephem: UNDEFINED
+   timeunit: UNDEFINED
+    dateref: UNDEFINED
+     mjdref:      0.000000000     0.000000000
+   timeoffs: UNDEFINED
+    dateobs: UNDEFINED
+    datebeg: UNDEFINED
+    dateavg: UNDEFINED
+    dateend: UNDEFINED
+     mjdobs: UNDEFINED
+     mjdbeg: UNDEFINED
+     mjdavg: UNDEFINED
+     mjdend: UNDEFINED
+     jepoch: UNDEFINED
+     bepoch: UNDEFINED
+     tstart: UNDEFINED
+      tstop: UNDEFINED
+    xposure: UNDEFINED
+    telapse: UNDEFINED
+    timsyer: UNDEFINED
+    timrder: UNDEFINED
+    timedel: UNDEFINED
+   timepixr: UNDEFINED
+     obsgeo:        UNDEFINED       UNDEFINED       UNDEFINED
+                    UNDEFINED       UNDEFINED       UNDEFINED
+   obsorbit: UNDEFINED
     radesys: "ICRS"
     equinox: UNDEFINED
     specsys: UNDEFINED
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo: UNDEFINED     UNDEFINED     UNDEFINED     
-    dateobs: UNDEFINED
-    dateavg: UNDEFINED
-     mjdobs: UNDEFINED
-     mjdavg: UNDEFINED
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x0
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -412,6 +473,9 @@ Extracted contents of wcsprm struct:
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x0  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -503,15 +567,14 @@ dispre.*
      maxdis: 0x<address>
                0.0000       1.5010       1.3940    
      totdis:   0.0000    
-      axmap: 0x<address>
- axmap[0][]:    -1    -1    -1
-                -1    -1    -1
- axmap[1][]:     2     1    -1
-                -1     1     0
- axmap[2][]:     2     1    -1
-                -1     1     0
+     docorr: 0x<address>
+                 1     1     1
        Nhat: 0x<address>
                  0     2     2
+      axmap: 0x<address>
+ axmap[0][]:    -1    -1    -1
+ axmap[1][]:     2     1    -1
+ axmap[2][]:     2     1    -1
      offset: 0x<address>
 offset[0][]:   0.0000       0.0000       0.0000    
 offset[1][]:   124.00       132.00       0.0000    
@@ -523,23 +586,23 @@ offset[2][]:   124.00       132.00       0.0000
       iparm: 0x<address>
  iparm[0]  : 0x0
  iparm[1]  : 0x<address>
- iparm[1][]:            1            8           24            0           12
-                       12            0            0
+ iparm[1][]:            1            7           24           12           12
+                        0            0
  iparm[2]  : 0x<address>
- iparm[2][]:            1            8           24            0           12
-                       12            0            0
+ iparm[2][]:            1            7           24           12           12
+                        0            0
       dparm: 0x<address>
  dparm[0]  : 0x0
  dparm[1]  : 0x<address>
- dparm[1][]:   132.00       0.0000       1.0000       0.0000       2.1197e-06
+ dparm[1][]:   0.0000       0.0000       0.0000       0.0000       2.1197e-06
               -2.4386e-05   2.3100e-05  -2.0249e-08  -1.6583e-07  -5.7813e-09
-              -1.6168e-07   0.0000       132.00      -2.6783e-06   0.99998   
+              -1.6168e-07   0.0000       0.0000      -2.6783e-06  -1.6588e-05
                0.0000      -2.1510e-06   2.4753e-05  -2.3424e-05   2.0482e-08
                1.7000e-07   3.8917e-09   1.6510e-07   0.0000    
  dparm[2]  : 0x<address>
- dparm[2][]:   124.00       1.0000       0.0000       0.0000      -2.3863e-05
+ dparm[2][]:   0.0000       0.0000       0.0000       0.0000      -2.3863e-05
                2.1886e-05   2.9656e-06  -1.4172e-07  -8.5610e-09  -1.6847e-07
-               3.7746e-09   0.0000       124.00       0.99999     -6.4275e-07
+               3.7746e-09   0.0000       0.0000      -1.4897e-05  -6.4275e-07
                0.0000       2.4146e-05  -2.2250e-05  -2.9425e-06   1.4492e-07
                6.7090e-09   1.7195e-07  -3.5820e-09   0.0000    
     i_naxis: 3

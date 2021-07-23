@@ -109,36 +109,98 @@ CNAME4A = 'Time offset'        / Axis name for labelling purposes
   Accepted (50) as a valid WCS keyrecord.
 PS4_0A  = 'UTC'                / Time measurement system                        
   Accepted (51) as a valid WCS keyrecord.
-DATE-OBS= '1957-02-14T15:00:00'/ UTC date corresponding to MJD-OBS              
+TIMESYS = 'UTC'                / Time scale                                     
   Accepted (52) as a valid WCS keyrecord.
-DATE-AVG= '1957-02-14T16:48:00'/ UTC date corresponding to MJD-AVG              
+TREFPOS = 'TOPOCENTRE'         / Time reference position, with OBSGEO-[XYZLBH]  
   Accepted (53) as a valid WCS keyrecord.
-MJD-OBS =            35883.625 / [d] MJD at start of observation (UTC)          
+TREFDIR = 'RA_NOM,DEC_NOM'     / Time reference direction                       
   Accepted (54) as a valid WCS keyrecord.
-MJD-AVG =            35883.700 / [d] MJD mid-observation time (UTC)             
+PLEPHEM = 'DE405'              / Ephemerides used for pathlength delays         
   Accepted (55) as a valid WCS keyrecord.
-OBSGEO-X=           -4554231.9 / [m] ITRF observatory coordinates               
+TIMEUNIT= 's'                  / Time units                                     
   Accepted (56) as a valid WCS keyrecord.
-OBSGEO-Y=            2816758.3 /                                                
+DATEREF = '1957-02-14T15:00:00'/ Date-time of fiducial time                     
   Accepted (57) as a valid WCS keyrecord.
-OBSGEO-Z=           -3454035.9                                                  
+MJDREF  =            35883.625 / [d] MJD corresponding to DATEREF               
   Accepted (58) as a valid WCS keyrecord.
-PV4_1A  =                                                                    1.0
+MJDREFI =            35883     / [d] MJDREF, integer part                       
   Accepted (59) as a valid WCS keyrecord.
-PV4_2A  =                                                                   2.0/
+MJDREFF =                0.625 / [d] MJDREF, fractional part                    
   Accepted (60) as a valid WCS keyrecord.
-PV4_3A  =                                                                  3.0 /
+JDREF   =          2435884.125 / [d] JD corresponding to DATEREF                
   Accepted (61) as a valid WCS keyrecord.
-PV4_4A  =                                                                 4.0 / 
+JDREFI  =          2435884     / [d] JDREF, integer part                        
   Accepted (62) as a valid WCS keyrecord.
-PS4_1A  =                                                                  'ABC'
+JDREFF  =                0.125 / [d] JDREF, fractional part                     
   Accepted (63) as a valid WCS keyrecord.
-PS4_2A  =                                                                 'DEF'/
+TIMEOFFS=                0.010 / [s] Clock correction                           
   Accepted (64) as a valid WCS keyrecord.
-PS4_3A  =                                                                'GHI' /
+DATE-OBS= '1957-02-14T15:00:00'/ UTC Date-time at start of observation          
   Accepted (65) as a valid WCS keyrecord.
-PS4_4A  =                                                               'JKL' / 
+MJD-OBS =            35883.625 / [d] MJD corresponding to DATE-OBS              
   Accepted (66) as a valid WCS keyrecord.
+JEPOCH  =       1957.125598905 / [a] Julian epoch corresponding to DATE-OBS     
+  Accepted (67) as a valid WCS keyrecord.
+BEPOCH  =       1957.125960663 / [a] Besselian epoch corresponding to DATE-OBS  
+  Accepted (68) as a valid WCS keyrecord.
+DATE-BEG= '1957-02-14T15:00:00'/ Date-time at start of observation (UTC)        
+  Accepted (69) as a valid WCS keyrecord.
+MJD-BEG =            35883.625 / [d] MJD corresponding to DATE-BEG              
+  Accepted (70) as a valid WCS keyrecord.
+TSTART  =                  0.0 / [s] Start time with respect to DATEREF         
+  Accepted (71) as a valid WCS keyrecord.
+DATE-AVG= '1957-02-14T16:48:00'/ UTC Date-time at midpoint of observation       
+  Accepted (72) as a valid WCS keyrecord.
+MJD-AVG =            35883.700 / [d] MJD corresponding to DATE-AVG              
+  Accepted (73) as a valid WCS keyrecord.
+DATE-END= '1957-02-14T18:36:00'/ UTC Date-time at end of observation            
+  Accepted (74) as a valid WCS keyrecord.
+MJD-END =            35883.775 / [d] MJD corresponding to DATE-END              
+  Accepted (75) as a valid WCS keyrecord.
+TSTOP   =              12960.0 / [s] Stop time with respect to DATEREF          
+  Accepted (76) as a valid WCS keyrecord.
+XPOSURE =              12960.0 / [s] Exposure (integration) time                
+  Accepted (77) as a valid WCS keyrecord.
+TELAPSE =              12960.0 / [s] Elapsed time (start to stop)               
+  Accepted (78) as a valid WCS keyrecord.
+TIMSYER =                 5E-5 / [s] Systematic error in time measurements      
+  Accepted (79) as a valid WCS keyrecord.
+TIMRDER =                 1E-9 / [s] Relative error in time measurements        
+  Accepted (80) as a valid WCS keyrecord.
+TIMEDEL =                  1.0 / [s] Time resolution                            
+  Accepted (81) as a valid WCS keyrecord.
+TIMEPIXR=                  0.5 / Reference position of timestamp in binned data 
+  Accepted (82) as a valid WCS keyrecord.
+OBSGEO-X=         -4554231.533 / [m] WGS84 coordinates of Parkes radiotelescope 
+  Accepted (83) as a valid WCS keyrecord.
+OBSGEO-Y=          2816759.109 / [m] WGS84 observatory y-coordinate             
+  Accepted (84) as a valid WCS keyrecord.
+OBSGEO-Z=         -3454036.323 / [m] WGS84 observatory z-coordinate             
+  Accepted (85) as a valid WCS keyrecord.
+OBSGEO-L=           148.263510 / [deg] WGS84, IAU(1976) ellipsoid, longitude    
+  Accepted (86) as a valid WCS keyrecord.
+OBSGEO-B=           -32.998406 / [deg] WGS84, IAU(1976) ellipsoid, latitude     
+  Accepted (87) as a valid WCS keyrecord.
+OBSGEO-H=              411.793 / [m]   WGS84, IAU(1976) ellipsoid, height       
+  Accepted (88) as a valid WCS keyrecord.
+OBSORBIT= 'sputnik-1957.eph'   / Spacecraft orbit ephemeris file                
+  Accepted (89) as a valid WCS keyrecord.
+PV4_1A  =                                                                    1.0
+  Accepted (90) as a valid WCS keyrecord.
+PV4_2A  =                                                                   2.0/
+  Accepted (91) as a valid WCS keyrecord.
+PV4_3A  =                                                                  3.0 /
+  Accepted (92) as a valid WCS keyrecord.
+PV4_4A  =                                                                 4.0 / 
+  Accepted (93) as a valid WCS keyrecord.
+PS4_1A  =                                                                  'ABC'
+  Accepted (94) as a valid WCS keyrecord.
+PS4_2A  =                                                                 'DEF'/
+  Accepted (95) as a valid WCS keyrecord.
+PS4_3A  =                                                                'GHI' /
+  Accepted (96) as a valid WCS keyrecord.
+PS4_4A  =                                                               'JKL' / 
+  Accepted (97) as a valid WCS keyrecord.
 WCSNAMEX= 'eXtraneous'         / Name of this coordinate system                 
   Rejected (1), syntactically valid WCS keyrecord has no effect.
 LONPOLEX=                180.0 / [deg] Native longitude of the NCP              
@@ -291,118 +353,180 @@ PV1_1B  = 'INVALID'            / Not a valid PVi_ma   keyvalue
   Rejected (75), a floating-point value was expected.
 PS1_1B  =                    0 / Not a valid PSi_ma   keyvalue                  
   Rejected (76), a string value was expected.
-EQUINOXB=             '2000.0' / Not a valid EQUINOXa keyvalue                  
-  Rejected (77), a floating-point value was expected.
-EPOCH   = 'B1950.0'            / Not a valid EPOCH    keyvalue                  
-  Rejected (78), the EPOCH keyword is deprecated, use EQUINOXa.
 LONPOLEB= 'INVALID'            / Not a valid LONPOLEa keyvalue                  
-  Rejected (79), a floating-point value was expected.
+  Rejected (77), a floating-point value was expected.
 LATPOLEB= 'INVALID'            / Not a valid LATPOLEa keyvalue                  
-  Rejected (80), a floating-point value was expected.
+  Rejected (78), a floating-point value was expected.
 RESTFRQB= 'INVALID'            / Not a valid RESTFRQa keyvalue                  
-  Rejected (81), a floating-point value was expected.
+  Rejected (79), a floating-point value was expected.
 RESTWAVB= 'INVALID'            / Not a valid RESTWAVa keyvalue                  
-  Rejected (82), a floating-point value was expected.
-RADESYSB=                 ICRS / Not a valid RADESYSa keyvalue                  
-  Rejected (83), a string value was expected.
-SPECSYSB=                  0.0 / Not a valid SPECSYSa keyvalue                  
-  Rejected (84), a string value was expected.
-SSYSOBSB=                  0.0 / Not a valid SSYSOBSa keyvalue                  
-  Rejected (85), a string value was expected.
-SSYSSRCB=                  0.0 / Not a valid SSYSSRCa keyvalue                  
-  Rejected (86), a string value was expected.
-VELANGLB= 'INVALID'            / Not a valid VELANGLa keyvalue                  
-  Rejected (87), a floating-point value was expected.
-VELOSYSB= 'INVALID'            / Not a valid VELOSYSa keyvalue                  
-  Rejected (88), a floating-point value was expected.
+  Rejected (80), a floating-point value was expected.
 WCSNAMEB=                  0.0 / Not a valid WCSNAMEa keyvalue                  
-  Rejected (89), a string value was expected.
-ZSOURCEB= 'INVALID'            / Not a valid ZSOURCEa keyvalue                  
+  Rejected (81), a string value was expected.
+TIMESYS =                    F / Not a valid TIMESYS  keyvalue                  
+  Rejected (82), a string value was expected.
+TREFPOS =                    F / Not a valid TREFPOS  keyvalue                  
+  Rejected (83), a string value was expected.
+TREFDIR =                    F / Not a valid TREFDIR  keyvalue                  
+  Rejected (84), a string value was expected.
+PLEPHEM =                    F / Not a valid PLEPHEM  keyvalue                  
+  Rejected (85), a string value was expected.
+TIMEUNIT=                    F / Not a valid TIMEUNIT keyvalue                  
+  Rejected (86), a string value was expected.
+DATEREF =                    F / Not a valid DATEREF  keyvalue                  
+  Rejected (87), a string value was expected.
+MJDREF  =                    F / Not a valid MJDREF   keyvalue                  
+  Rejected (88), a floating-point value was expected.
+MJDREFI =                    F / Not a valid MJDREFI  keyvalue                  
+  Rejected (89), a floating-point value was expected.
+MJDREFF =                    F / Not a valid MJDREFF  keyvalue                  
   Rejected (90), a floating-point value was expected.
-DATE-AVG=                  0.0 / Not a valid DATE-AVG keyvalue                  
-  Rejected (91), a string value was expected.
-DATE-OBS=                  0.0 / Not a valid DATE-OBS keyvalue                  
-  Rejected (92), a string value was expected.
-MJD-AVG = 'INVALID'            / Not a valid MJD-AVG  keyvalue                  
+JDREF   = 'INVALID'            / Not a valid JDREF    keyvalue                  
+  Rejected (91), a floating-point value was expected.
+JDREFI  = 'INVALID'            / Not a valid JDREFI   keyvalue                  
+  Rejected (92), a floating-point value was expected.
+JDREFF  = 'INVALID'            / Not a valid JDREFF   keyvalue                  
   Rejected (93), a floating-point value was expected.
-MJD-OBS = 'INVALID'            / Not a valid MJD-OBS  keyvalue                  
+TIMEOFFS=                    F / Not a valid TIMEOFFS keyvalue                  
   Rejected (94), a floating-point value was expected.
-OBSGEO-X= 'INVALID'            / Not a valid OBSGEO-X keyvalue                  
-  Rejected (95), a floating-point value was expected.
-OBSGEO-Y= 'INVALID'            / Not a valid OBSGEO-Y keyvalue                  
-  Rejected (96), a floating-point value was expected.
-OBSGEO-Z= 'INVALID'            / Not a valid OBSGEO-Z keyvalue                  
-  Rejected (97), a floating-point value was expected.
-CRPIX3B=                   0.0 / Illegal, "= " not in columns 9-10              
-  Rejected (98), keyword looks very much like CRPIXja but isn't.
-CDELT3B  =                 1.0 / Illegal, "= " not in columns 9-10              
-  Rejected (99), invalid KEYWORD = VALUE syntax.
-CUNIT3B ='deg'                 / Illegal, "= " not in columns 9-10              
-  Rejected (100), invalid KEYWORD = VALUE syntax.
-CTYPE3B   'FREQ'               / Illegal, "= " not in columns 9-10              
-  Rejected (101), invalid KEYWORD = VALUE syntax.
-CRVAL3B =                2 + 2 / Not a valid keyvalue                           
-  Rejected (102), invalid keyvalue.
-CNAME3B = 'IN' 'VALID'         / Not a valid keyvalue                           
-  Rejected (103), invalid keyvalue.
-CRDER3B =             1934-638 / Not a valid keyvalue                           
-  Rejected (104), invalid keyvalue.
-CSYER3B =                1.2.3 / Not a valid keyvalue                           
-  Rejected (105), invalid keyvalue.
-PC1_1B  =            12h34m56s / Not a valid keyvalue                           
-  Rejected (106), invalid keyvalue.
-CD1_1B  =                 0xFF / Not a valid keyvalue                           
-  Rejected (107), invalid keyvalue.
-PV1_1B  =              58 - 21 / Not a valid keyvalue                           
-  Rejected (108), invalid keyvalue.
-PS1_1B  =                "UTC" / Not a valid keyvalue                           
-  Rejected (109), a string value was expected.
-EQUINOXB=                J2000 / Not a valid keyvalue                           
+DATE-OBS=                  0.0 / Not a valid DATE-OBS keyvalue                  
+  Rejected (95), a string value was expected.
+DATE-BEG=                  0.0 / Not a valid DATE-BEG keyvalue                  
+  Rejected (96), a string value was expected.
+DATE-AVG=                  0.0 / Not a valid DATE-AVG keyvalue                  
+  Rejected (97), a string value was expected.
+DATE-END=                  0.0 / Not a valid DATE-END keyvalue                  
+  Rejected (98), a string value was expected.
+MJD-OBS = 'INVALID'            / Not a valid MJD-OBS  keyvalue                  
+  Rejected (99), a floating-point value was expected.
+MJD-BEG = 'INVALID'            / Not a valid MJD-BEG  keyvalue                  
+  Rejected (100), a floating-point value was expected.
+MJD-AVG = 'INVALID'            / Not a valid MJD-AVG  keyvalue                  
+  Rejected (101), a floating-point value was expected.
+MJD-END = 'INVALID'            / Not a valid MJD-END  keyvalue                  
+  Rejected (102), a floating-point value was expected.
+JEPOCH  =                    F / Not a valid JEPOCH   keyvalue                  
+  Rejected (103), a floating-point value was expected.
+BEPOCH  =                    F / Not a valid BEPOCH   keyvalue                  
+  Rejected (104), a floating-point value was expected.
+TSTART  =                    F / Not a valid TSTART   keyvalue                  
+  Rejected (105), a floating-point value was expected.
+TSTOP   =                    F / Not a valid TSTOP    keyvalue                  
+  Rejected (106), a floating-point value was expected.
+XPOSURE =                    F / Not a valid XPOSURE  keyvalue                  
+  Rejected (107), a floating-point value was expected.
+TELAPSE =                    F / Not a valid TELAPSE  keyvalue                  
+  Rejected (108), a floating-point value was expected.
+TIMSYER = 'INVALID'            / Not a valid TIMSYER  keyvalue                  
+  Rejected (109), a floating-point value was expected.
+TIMRDER = 'INVALID'            / Not a valid TIMRDER  keyvalue                  
   Rejected (110), a floating-point value was expected.
-EPOCH   =              B1950.0 / Not a valid keyvalue                           
-  Rejected (111), the EPOCH keyword is deprecated, use EQUINOXa.
-LONPOLEB=            180:00:00 / Not a valid keyvalue                           
+TIMEDEL = 'INVALID'            / Not a valid TIMEDEL  keyvalue                  
+  Rejected (111), a floating-point value was expected.
+TIMEPIXR=                  2.0 / Not a valid TIMEPIXR keyvalue                  
   Rejected (112), invalid keyvalue.
-LATPOLEB=                $9.99 / Not a valid keyvalue                           
+OBSGEO-X= 'INVALID'            / Not a valid OBSGEO-X keyvalue                  
   Rejected (113), a floating-point value was expected.
-RESTFRQB=                      / Not a valid keyvalue                           
+OBSGEO-Y= 'INVALID'            / Not a valid OBSGEO-Y keyvalue                  
   Rejected (114), a floating-point value was expected.
-RESTWAVB=                      / Not a valid keyvalue                           
+OBSGEO-Z= 'INVALID'            / Not a valid OBSGEO-Z keyvalue                  
   Rejected (115), a floating-point value was expected.
+OBSGEO-L= 'INVALID'            / Not a valid OBSGEO-L keyvalue                  
+  Rejected (116), a floating-point value was expected.
+OBSGEO-B= 'INVALID'            / Not a valid OBSGEO-B keyvalue                  
+  Rejected (117), a floating-point value was expected.
+OBSGEO-H= 'INVALID'            / Not a valid OBSGEO-H keyvalue                  
+  Rejected (118), a floating-point value was expected.
+OBSORBIT=                    T / Not a valid OBSORBIT keyvalue                  
+  Rejected (119), a string value was expected.
+RADESYSB=                 ICRS / Not a valid RADESYSa keyvalue                  
+  Rejected (120), a string value was expected.
+EPOCH   = 'B1950.0'            / Not a valid EPOCH    keyvalue                  
+  Rejected (121), the EPOCH keyword is deprecated, use EQUINOXa.
+EQUINOXB=             '2000.0' / Not a valid EQUINOXa keyvalue                  
+  Rejected (122), a floating-point value was expected.
+SPECSYSB=                  0.0 / Not a valid SPECSYSa keyvalue                  
+  Rejected (123), a string value was expected.
+SSYSOBSB=                  0.0 / Not a valid SSYSOBSa keyvalue                  
+  Rejected (124), a string value was expected.
+VELOSYSB= 'INVALID'            / Not a valid VELOSYSa keyvalue                  
+  Rejected (125), a floating-point value was expected.
+ZSOURCEB= 'INVALID'            / Not a valid ZSOURCEa keyvalue                  
+  Rejected (126), a floating-point value was expected.
+SSYSSRCB=                  0.0 / Not a valid SSYSSRCa keyvalue                  
+  Rejected (127), a string value was expected.
+VELANGLB= 'INVALID'            / Not a valid VELANGLa keyvalue                  
+  Rejected (128), a floating-point value was expected.
+CRPIX3B=                   0.0 / Illegal, "= " not in columns 9-10              
+  Rejected (129), keyword looks very much like CRPIXja but isn't.
+CDELT3B  =                 1.0 / Illegal, "= " not in columns 9-10              
+  Rejected (130), invalid KEYWORD = VALUE syntax.
+CUNIT3B ='deg'                 / Illegal, "= " not in columns 9-10              
+  Rejected (131), invalid KEYWORD = VALUE syntax.
+CTYPE3B   'FREQ'               / Illegal, "= " not in columns 9-10              
+  Rejected (132), invalid KEYWORD = VALUE syntax.
+CRVAL3B =                2 + 2 / Not a valid keyvalue                           
+  Rejected (133), invalid keyvalue.
+CNAME3B = 'IN' 'VALID'         / Not a valid keyvalue                           
+  Rejected (134), invalid keyvalue.
+CRDER3B =             1934-638 / Not a valid keyvalue                           
+  Rejected (135), invalid keyvalue.
+CSYER3B =                1.2.3 / Not a valid keyvalue                           
+  Rejected (136), invalid keyvalue.
+PC1_1B  =            12h34m56s / Not a valid keyvalue                           
+  Rejected (137), invalid keyvalue.
+CD1_1B  =                 0xFF / Not a valid keyvalue                           
+  Rejected (138), invalid keyvalue.
+PV1_1B  =              58 - 21 / Not a valid keyvalue                           
+  Rejected (139), invalid keyvalue.
+PS1_1B  =                "UTC" / Not a valid keyvalue                           
+  Rejected (140), a string value was expected.
+EQUINOXB=                J2000 / Not a valid keyvalue                           
+  Rejected (141), a floating-point value was expected.
+EPOCH   =              B1950.0 / Not a valid keyvalue                           
+  Rejected (142), the EPOCH keyword is deprecated, use EQUINOXa.
+LONPOLEB=            180:00:00 / Not a valid keyvalue                           
+  Rejected (143), invalid keyvalue.
+LATPOLEB=                $9.99 / Not a valid keyvalue                           
+  Rejected (144), a floating-point value was expected.
+RESTFRQB=                      / Not a valid keyvalue                           
+  Rejected (145), a floating-point value was expected.
+RESTWAVB=                      / Not a valid keyvalue                           
+  Rejected (146), a floating-point value was expected.
 RADESYSB= ICRS                 / Not a valid keyvalue                           
-  Rejected (116), a string value was expected.
+  Rejected (147), a string value was expected.
 SPECSYSB= 'BARYCENT'             Invalid keycomment                             
-  Rejected (117), invalid keyvalue or malformed keycomment.
+  Rejected (148), invalid keyvalue or malformed keycomment.
 SSYSOBSB= 'TOPOCENT'             1/8 = 0.125                                    
-  Rejected (118), invalid keyvalue.
+  Rejected (149), invalid keyvalue.
 PV3_1B  =                                                                   1.0O
-  Rejected (119), invalid keyvalue.
+  Rejected (150), invalid keyvalue.
 PV3_2B  =                                                                  2 + 2
-  Rejected (120), invalid keyvalue or malformed keycomment.
+  Rejected (151), invalid keyvalue or malformed keycomment.
 PV3_3B  =                                                                 3.0 : 
-  Rejected (121), invalid keyvalue or malformed keycomment.
+  Rejected (152), invalid keyvalue or malformed keycomment.
 PS3_1B  =                                                  'Jean-Pierre O'Toole'
-  Rejected (122), invalid keyvalue.
+  Rejected (153), invalid keyvalue.
 PS3_2B  =                                                                'UVW' :
-  Rejected (123), invalid keyvalue or malformed keycomment.
+  Rejected (154), invalid keyvalue or malformed keycomment.
 PS3_3B  =                                                               'XYZ' : 
-  Rejected (124), invalid keyvalue or malformed keycomment.
+  Rejected (155), invalid keyvalue or malformed keycomment.
 CRPIX4A_= 'PHONEY'             / Lookalike keyword is not CRPIXja               
-  Rejected (125), keyword looks very much like CRPIXja but isn't.
+  Rejected (156), keyword looks very much like CRPIXja but isn't.
 CDELT4_B= 'PHONEY'             / Lookalike keyword is not CDELTia               
-  Rejected (126), keyword looks very much like CDELTia but isn't.
+  Rejected (157), keyword looks very much like CDELTia but isn't.
 CUNIT4-B= 'PHONEY'             / Lookalike keyword is not CUNITia               
-  Rejected (127), keyword looks very much like CUNITia but isn't.
+  Rejected (158), keyword looks very much like CUNITia but isn't.
 CTYPE-4B= 'PHONEY'             / Lookalike keyword is not CTYPEia               
-  Rejected (128), keyword looks very much like CTYPEia but isn't.
+  Rejected (159), keyword looks very much like CTYPEia but isn't.
 CRVAL_4B= 'PHONEY'             / Lookalike keyword is not CRVALia               
-  Rejected (129), keyword looks very much like CRVALia but isn't.
+  Rejected (160), keyword looks very much like CRVALia but isn't.
 CNAME4_ = 'PHONEY'             / Lookalike keyword is not CNAMEia               
-  Rejected (130), keyword looks very much like CNAMEia but isn't.
+  Rejected (161), keyword looks very much like CNAMEia but isn't.
 CRDER4_ = 'PHONEY'             / Lookalike keyword is not CRDERia               
-  Rejected (131), keyword looks very much like CRDERia but isn't.
+  Rejected (162), keyword looks very much like CRDERia but isn't.
 CSYER4_ = 'PHONEY'             / Lookalike keyword is not CSYERia               
-  Rejected (132), keyword looks very much like CSYERia but isn't.
+  Rejected (163), keyword looks very much like CSYERia but isn't.
 PC4X4B  = 'PHONEY'             / Lookalike keyword is not PCi_ja                
   Not a recognized WCS keyword.
 PC4__4B = 'PHONEY'             / Lookalike keyword is not PCi_ja                
@@ -436,21 +560,21 @@ PS4_IB  = 'PHONEY'             / Lookalike keyword is not PSi_ja
 PS4 0B  = 'PHONEY'             / Lookalike keyword is not PSi_ja                
   Not a recognized WCS keyword.
 CRPIXELS=                  0.0 / Furphy, not CRPIXja                            
-  Rejected (133), keyword looks very much like CRPIXja but isn't.
+  Rejected (164), keyword looks very much like CRPIXja but isn't.
 PCATALOG=                  0.0 / Furphy, not PCi_ja                             
   Not a recognized WCS keyword.
 CDELTA  =                  0.0 / Furphy, not CDELTia                            
-  Rejected (134), keyword looks very much like CDELTia but isn't.
+  Rejected (165), keyword looks very much like CDELTia but isn't.
 CDI_JA  =                  0.0 / Furphy, not CDi_ja                             
   Not a recognized WCS keyword.
 CUNITARY=                  0.0 / Furphy, not CUNITia                            
-  Rejected (135), keyword looks very much like CUNITia but isn't.
+  Rejected (166), keyword looks very much like CUNITia but isn't.
 CTYPEXY =                  0.0 / Furphy, not CTYPEia                            
-  Rejected (136), keyword looks very much like CTYPEia but isn't.
+  Rejected (167), keyword looks very much like CTYPEia but isn't.
 CRVALUE =                  0.0 / Furphy, not CRVALia                            
-  Rejected (137), keyword looks very much like CRVALia but isn't.
+  Rejected (168), keyword looks very much like CRVALia but isn't.
 CNAME   =                  0.0 / Furphy, not CNAMEia                            
-  Rejected (138), keyword looks very much like CNAMEia but isn't.
+  Rejected (169), keyword looks very much like CNAMEia but isn't.
 PV1_1AL =                  0.0 / Furphy, not PVi_ma                             
   Not a recognized WCS keyword.
 PSEUDO  =                  0.0 / Furphy, not PSi_ma                             
@@ -460,23 +584,23 @@ EPOCHAL =                  0.0 / Furphy, not EPOCH
 VELREF1 =                  0.0 / Furphy, not VELREF                             
   Not a recognized WCS keyword.
 EPOCHB  =                  0.0 / Invalid alternate code on EPOCH  keyword       
-  Rejected (139), the EPOCH keyword is deprecated, use EQUINOXa.
+  Rejected (170), the EPOCH keyword is deprecated, use EQUINOXa.
 VELREFB =                    0 / Invalid alternate code on VELREF keyword       
-  Rejected (140), the VELREF keyword is deprecated, use SPECSYSa.
+  Rejected (171), the VELREF keyword is deprecated, use SPECSYSa.
 PC001001=                  1.0 / PC00i00j keyword is deprecated, use PCi_ja     
-  Rejected (141), this form of the PCi_ja keyword is deprecated, use PCi_ja.
+  Rejected (172), this form of the PCi_ja keyword is deprecated, use PCi_ja.
 CD001001=                  1.0 / PC00i00j keyword is deprecated, use CDi_ja     
-  Rejected (142), this form of the CDi_ja keyword is deprecated, use CDi_ja.
+  Rejected (173), this form of the CDi_ja keyword is deprecated, use CDi_ja.
 VSOURCEB=                  0.0 / VSOURCEa keyword is deprecated, use ZSOURCEa   
-  Rejected (143), the VSOURCEa keyword is deprecated, use ZSOURCEa.
+  Rejected (174), the VSOURCEa keyword is deprecated, use ZSOURCEa.
 RADECSYS= 'DEPRECATED'         / RADECSYS keyword is deprecated, use RADESYSa   
-  Rejected (144), the RADECSYS keyword is deprecated, use RADESYSa.
+  Rejected (175), the RADECSYS keyword is deprecated, use RADESYSa.
 PROJP1  =                  0.0 / PROJPn   keyword is deprecated, use PVi_ma     
-  Rejected (145), the PROJPn keyword is deprecated, use PVi_ma.
+  Rejected (176), the PROJPn keyword is deprecated, use PVi_ma.
 CROTA1  =                  0.0 / CROTAn   keyword is deprecated, use PCi_ja     
-  Rejected (146), the CROTAn keyword is deprecated, use PCi_ja.
+  Rejected (177), the CROTAn keyword is deprecated, use PCi_ja.
 RESTFREQ=                  0.0 / Use RESTFRQa in preference to RESTFREQ         
-  Rejected (147), the RESTFREQ keyword is deprecated, use RESTFRQa.
+  Rejected (178), the RESTFREQ keyword is deprecated, use RESTFRQa.
 ALTRPIX =                  0.0 / AIPS spectral convention, not recognised       
   Not a recognized WCS keyword.
 ALTRVAL =                  0.0 / AIPS spectral convention, not recognised       
@@ -484,8 +608,8 @@ ALTRVAL =                  0.0 / AIPS spectral convention, not recognised
 END                                                                             
   Not a recognized WCS keyword.
 
-  147 keyrecords were rejected for syntax or other errors,
-   66 were recognized as syntactically valid, and
+  178 keyrecords were rejected for syntax or other errors,
+   97 were recognized as syntactically valid, and
    28 others were not recognized as WCS keyrecords.
 
 The rejected keyrecords do not conform strictly to the FITS WCS standard.
@@ -554,28 +678,58 @@ wcslint test header
      colnum: 0
       colax: 0x<address>
                  0      0      0      0
-    wcsname: "wcslint test header"
       cname: 0x<address>
              "Right ascension (J2000)"
              "Declination (J2000)"
              "Wavelength"
              "Time offset"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED      1.0000e-11  UNDEFINED   
+               UNDEFINED    UNDEFINED   1.0000e-11    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED      1.0000e-12  UNDEFINED   
+               UNDEFINED    UNDEFINED   1.0000e-12    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: "wcslint test header"
+    timesys: "UTC"
+    trefpos: "TOPOCENTRE"
+    trefdir: "RA_NOM,DEC_NOM"
+    plephem: "DE405"
+   timeunit: "s"
+    dateref: "1957-02-14T15:00:00"
+     mjdref:  35883.000000000     0.625000000
+   timeoffs:      0.010000000
+    dateobs: "1957-02-14T15:00:00"
+    datebeg: "1957-02-14T15:00:00"
+    dateavg: "1957-02-14T16:48:00"
+    dateend: "1957-02-14T18:36:00"
+     mjdobs:  35883.625000000
+     mjdbeg:  35883.625000000
+     mjdavg:  35883.700000000
+     mjdend:  35883.775000000
+     jepoch:   1957.125598905
+     bepoch:   1957.125960663
+     tstart:      0.000000000
+      tstop:  12960.000000000
+    xposure:  12960.000000000
+    telapse:  12960.000000000
+    timsyer:      0.000050000
+    timrder:      0.000000001
+    timedel:      1.000000000
+   timepixr:      0.500000000
+     obsgeo:  -4554231.533000  2816759.109000 -3454036.323000
+                   148.263510      -32.998406      411.793000
+   obsorbit: "sputnik-1957.eph"
     radesys: "FK5"
-    equinox: 2000.000000
+    equinox:   2000.000000000
     specsys: "BARYCENT"
     ssysobs: "TOPOCENT"
-    velosys: 1500.000000
+    velosys:   1500.000000000
+    zsource:      0.002500000
     ssyssrc: "LSRK"
-    zsource:  0.002500
-     obsgeo:   -4.5542e+06   2.8168e+06  -3.4540e+06
-    dateobs: "1957-02-14T15:00:00"
-    dateavg: "1957-02-14T16:48:00"
-     mjdobs: 35883.625000
-     mjdavg: 35883.700000
+    velangl: UNDEFINED
+        aux: 0x0
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -609,6 +763,9 @@ wcslint test header
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x0  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 

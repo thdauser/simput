@@ -1,6 +1,7 @@
 Changes made to the extlib files:
 
-- wcslib/configure.ac: L246 changed to SHRLN="libwcs.dylib"
+- extlib/wcslib: when updating the wcslib, LIBVER in extlib/Makefile.am (L60) must
+  also be updated accordingly
 
 - fftw:
   * commented out "AC_DISABLE_SHARED" in configure.ac, L33.

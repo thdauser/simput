@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile definitions for building WCSLIB 5.19
+# GNU makefile definitions for building WCSLIB 7.7
 #
 # makedefs is generated from makedefs.in by configure.  It contains variable
 # definitions and some general-purpose rules for building WCSLIB.
@@ -39,11 +39,11 @@
 #      compiled separately without this option.
 #
 #      The shared library will be installed with version number, e.g. as
-#      libwcs.so.5.19 or libwcs.5.19.dylib with or without the symlink
+#      libwcs.so.7.7 or libwcs.7.7.dylib with or without the symlink
 #      required to make it visible to the linker (controlled by the SHRLN
 #      variable).  On Macs it is deliberately not created because its very
 #      existence precludes static linking with the cctools linker.  You can
-#      still link dynamically by using -lwcs.5.19.
+#      still link dynamically by using -lwcs.7.7.
 #
 #   4) PGPLOT is Tim Pearson's Fortran graphics library with separate C
 #      interface available from astro.caltech.edu.  It is only required by
@@ -74,18 +74,21 @@
 #
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: makedefs.in,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+# $Id: makedefs.in,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 #-----------------------------------------------------------------------------
 # Version.
   LIBVER    := @LIBVER@
   WCSLIBPKG := wcslib-@PACKAGE_VERSION@
+
+# Additional options for GNU make added by configure.
+  MAKEFLAGS += @MAKEFLAGS@
 
 # System architecture.
   ARCH     := @ARCH@
 
 # Flex and options.
   FLEX     := @FLEX@
-  FLFLAGS  :=
+  FLFLAGS  := @FLFLAGS@
 
 # C preprocessor and options.
   CPP      := @CPP@
@@ -165,6 +168,12 @@
 # Libraries required by WCSLIB itself.
   LIBS := @LIBS@
 
+# Default observer coordinates for sundazel.  May be set as environment
+# variables, either generally or in $HOME/.sundazelrc, which is read by
+# configure.
+  OBSLNG := @OBSLNG@
+  OBSLAT := @OBSLAT@
+  OBSTZ  := @OBSTZ@
 
 #-----------------------------------------------------------------------------
 # You shouldn't need to change anything below here.
@@ -174,9 +183,13 @@ SHELL := /bin/sh
 VPATH := ..
 
 # Common targets.
-.PHONY : all build printenv show
+.PHONY : all build FORCE printenv show
 
-all : show build
+all : show
+	-@ echo ''
+	 @ $(MAKE) build
+
+FORCE :
 
 # Print the environment as seen by makefile rules.
 printenv :
@@ -188,6 +201,7 @@ show :: wcsconfig.h
 	-@ uname -a
 	-@ echo ''
 	-@ $(MAKE) --version | head -1
+	-@ echo '  SUBDIR      := $(SUBDIR)'
 	-@ echo '  MAKEFLAGS   := $(MAKEFLAGS)'
 	-@ echo ''
 	-@ echo 'For building and installing $(WCSLIBPKG)...'
@@ -237,6 +251,12 @@ show :: wcsconfig.h
 	-@ echo '  FLIBS       := $(FLIBS)'
 	-@ echo '  LIBS        := $(LIBS)'
 	-@ echo ''
+	-@ echo 'Default observer coordinates for sundazel...'
+	-@ echo '  OBSLNG      := $(OBSLNG)'
+	-@ echo '  OBSLAT      := $(OBSLAT)'
+	-@ echo '  OBSTZ       := $(OBSTZ)'
+	-@ echo ''
 
 # Code development overrides, for use in the code subdirectories.
+FLAVOUR := @FLAVOUR@
 -include ../flavours

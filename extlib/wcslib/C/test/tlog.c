@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tlog.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tlog.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 *   tlog tests the logarithmic coordinate transformation routines for closure.
@@ -53,14 +50,14 @@ int main()
     "Testing closure of WCSLIB logarithmic coordinate routines (tlog.c)\n"
     "------------------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of log status return values:\n");
   for (status = 2; status <= 3; status++) {
     printf("%4d: %s.\n", status, log_errmsg[status]);
   }
 
 
-  /* Construct a logarithmic axis and test closure. */
+  // Construct a logarithmic axis and test closure.
   step = (40.0/NCRD) / 2.0;
   for (j = 0, k = -NCRD; j < NCRD; j++, k += 2) {
     x0[j] = k*step;
@@ -68,19 +65,19 @@ int main()
   printf("\nLogarithmic range: %.1f to %.1f, step: %.4f\n", x0[0], x0[NCRD-1],
     x0[1] - x0[0]);
 
-  /* Convert the first to the second. */
+  // Convert the first to the second.
   if ((status = logx2s(crval, NCRD, 1, 1, x0, logc, stat1))) {
     printf("logx2s ERROR %d: %s.\n", status, log_errmsg[status]);
   }
 
-  /* Convert the second back to the first. */
+  // Convert the second back to the first.
   if ((status = logs2x(crval, NCRD, 1, 1, logc, x1, stat2))) {
     printf("logs2x ERROR %d: %s.\n", status, log_errmsg[status]);
   }
 
   residmax = 0.0;
 
-  /* Test closure. */
+  // Test closure.
   for (j = 0; j < NCRD; j++) {
     if (stat1[j]) {
       printf("logx2s: x =%20.12e -> log = ???, stat = %d\n", x0[j], stat1[j]);

@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcshdr_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: wcshdr_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -30,7 +27,7 @@
 #include <wcshdr.h>
 #include <wcs.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define wcspih_   F77_FUNC(wcspih,   WCSPIH)
 #define wcsbth_   F77_FUNC(wcsbth,   WCSBTH)
@@ -40,7 +37,7 @@
 #define wcsvcopy_ F77_FUNC(wcsvcopy, WCSVCOPY)
 #define wcsvfree_ F77_FUNC(wcsvfree, WCSVFREE)
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcspih_(
   char header[],
@@ -52,15 +49,15 @@ int wcspih_(
   iptr wcsp)
 
 {
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling WCSPIH in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling WCSPIH in the Fortran code.
   fflush(NULL);
 
   return wcspih(header, *nkeys, *relax, *ctrl, nreject, nwcs,
     (struct wcsprm **)wcsp);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcsbth_(
   char header[],
@@ -74,15 +71,15 @@ int wcsbth_(
   iptr wcsp)
 
 {
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling WCSBTH in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling WCSBTH in the Fortran code.
   fflush(NULL);
 
   return wcsbth(header, *nkeys, *relax, *ctrl, *keysel, colsel, nreject,
     nwcs, (struct wcsprm **)wcsp);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcstab_(int *wcs)
 
@@ -90,7 +87,7 @@ int wcstab_(int *wcs)
   return wcstab((struct wcsprm *)wcs);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcsidx_(int *nwcs, iptr wcsp, int alts[27])
 
@@ -98,7 +95,7 @@ int wcsidx_(int *nwcs, iptr wcsp, int alts[27])
   return wcsidx(*nwcs, (struct wcsprm **)wcsp, alts);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcsbdx_(int *nwcs, iptr wcsp, int *type, short alts[1000][28])
 
@@ -106,30 +103,30 @@ int wcsbdx_(int *nwcs, iptr wcsp, int *type, short alts[1000][28])
   return wcsbdx(*nwcs, (struct wcsprm **)wcsp, *type, alts);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcsvcopy_(const iptr wcspp, const int *i, int *wcs)
 
 {
   struct wcsprm *wcsdst, *wcssrc;
 
-  /* Do a shallow copy. */
+  // Do a shallow copy.
   wcssrc = *((struct wcsprm **)wcspp) + *i;
   wcsdst = (struct wcsprm *)wcs;
   *wcsdst = *wcssrc;
 
-  /* Prevent wcsfree(wcsdst) freeing memory that is used by wcssrc.  On  */
-  /* the other hand, beware that wcsfree(wcssrc) will free the "given"   */
-  /* members of wcsdst for which memory was allocated by wcsini().       */
+  // Prevent wcsfree(wcsdst) freeing memory that is used by wcssrc.  On
+  // the other hand, beware that wcsfree(wcssrc) will free the "given"
+  // members of wcsdst for which memory was allocated by wcsini().
 
-  /* Don't take any error messages. */
+  // Don't take any error messages.
   wcsdst->err         = 0x0;
   wcsdst->lin.err     = 0x0;
   wcsdst->cel.err     = 0x0;
   wcsdst->spc.err     = 0x0;
   wcsdst->cel.prj.err = 0x0;
 
-  /* Don't take memory allocated by wcsini()... */
+  // Don't take memory allocated by wcsini()...
   wcsdst->m_flag  = 0;
   wcsdst->m_naxis = 0;
   wcsdst->m_crpix = 0x0;
@@ -149,11 +146,11 @@ int wcsvcopy_(const iptr wcspp, const int *i, int *wcs)
   wcsdst->m_tab   = 0x0;
   wcsdst->m_wtb   = 0x0;
 
-  /* ...or by wcsset(). */
+  // ...or by wcsset().
   wcsdst->types   = 0x0;
   wcsdst->flag    = 0;
 
-  /* Don't take memory allocated by linini()... */
+  // Don't take memory allocated by linini()...
   wcsdst->lin.m_flag   = 0;
   wcsdst->lin.m_naxis  = 0x0;
   wcsdst->lin.m_crpix  = 0x0;
@@ -162,7 +159,7 @@ int wcsvcopy_(const iptr wcspp, const int *i, int *wcs)
   wcsdst->lin.m_dispre = 0x0;
   wcsdst->lin.m_disseq = 0x0;
 
-  /* ...or by linset(). */
+  // ...or by linset().
   wcsdst->lin.piximg   = 0x0;
   wcsdst->lin.imgpix   = 0x0;
   wcsdst->lin.tmpcrd   = 0x0;
@@ -171,7 +168,7 @@ int wcsvcopy_(const iptr wcspp, const int *i, int *wcs)
   return 0;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int wcsvfree_(int *nwcs, iptr wcspp)
 

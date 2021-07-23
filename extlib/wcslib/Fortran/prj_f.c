@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: prj_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: prj_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <stdio.h>
@@ -32,7 +29,7 @@
 #include <wcsutil.h>
 #include <prj.h>
 
-/* Fortran name mangling (see below for the remainder). */
+// Fortran name mangling (see below for the remainder).
 #include <wcsconfig_f77.h>
 #define prjput_  F77_FUNC(prjput,  PRJPUT)
 #define prjptc_  F77_FUNC(prjptc,  PRJPTC)
@@ -45,10 +42,12 @@
 
 #define prjini_  F77_FUNC(prjini,  PRJINI)
 #define prjfree_ F77_FUNC(prjfree, PRJFREE)
+#define prjsize_ F77_FUNC(prjsize, PRJSIZE)
 #define prjprt_  F77_FUNC(prjprt,  PRJPRT)
 #define prjperr_ F77_FUNC(prjperr, PRJPERR)
 #define prjbchk_ F77_FUNC(prjbchk, PRJBCHK)
 
+// Must match the values set in prj.inc.
 #define PRJ_FLAG      100
 #define PRJ_CODE      101
 #define PRJ_R0        102
@@ -71,7 +70,7 @@
 #define PRJ_W         211
 #define PRJ_N         212
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int prjput_(int *prj, const int *what, const void *value, const int *m)
 
@@ -81,7 +80,7 @@ int prjput_(int *prj, const int *what, const void *value, const int *m)
   const double *dvalp;
   struct prjprm *prjp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   prjp  = (struct prjprm *)prj;
   cvalp = (const char *)value;
   ivalp = (const int *)value;
@@ -92,8 +91,9 @@ int prjput_(int *prj, const int *what, const void *value, const int *m)
     prjp->flag = *ivalp;
     break;
   case PRJ_CODE:
-    strncpy(prjp->code, cvalp, 3);
-    prjp->code[3] = '\0';
+    // Only three characters need be given.
+    wcsutil_strcvt(3, ' ', 1, cvalp, prjp->code);
+    wcsutil_null_fill(4, prjp->code);
     prjp->flag = 0;
     break;
   case PRJ_R0:
@@ -137,7 +137,7 @@ int prjpti_(int *prj, const int *what, const int *value, const int *m)
   return prjput_(prj, what, value, m);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int prjget_(const int *prj, const int *what, void *value)
 
@@ -150,7 +150,7 @@ int prjget_(const int *prj, const int *what, void *value)
   const int *iprjp;
   const struct prjprm *prjp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   prjp  = (const struct prjprm *)prj;
   cvalp = (char *)value;
   ivalp = (int *)value;
@@ -161,7 +161,7 @@ int prjget_(const int *prj, const int *what, void *value)
     *ivalp = prjp->flag;
     break;
   case PRJ_CODE:
-    strncpy(cvalp, prjp->code, 3);
+    wcsutil_strcvt(4, ' ', 0, prjp->code, cvalp);
     break;
   case PRJ_R0:
     *dvalp = prjp->r0;
@@ -181,7 +181,7 @@ int prjget_(const int *prj, const int *what, void *value)
     *ivalp = prjp->bounds;
     break;
   case PRJ_NAME:
-    strncpy(cvalp, prjp->name, 40);
+    wcsutil_strcvt(40, ' ', 0, prjp->name, cvalp);
     break;
   case PRJ_CATEGORY:
     *ivalp = prjp->category;
@@ -211,7 +211,7 @@ int prjget_(const int *prj, const int *what, void *value)
     *dvalp = prjp->y0;
     break;
   case PRJ_ERR:
-    /* Copy the contents of the wcserr struct. */
+    // Copy the contents of the wcserr struct.
     if (prjp->err) {
       iprjp = (int *)(prjp->err);
       for (l = 0; l < ERRLEN; l++) {
@@ -253,7 +253,7 @@ int prjgti_(const int *prj, const int *what, int *value)
   return prjget_(prj, what, value);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int prjini_(int *prj)
 
@@ -261,7 +261,7 @@ int prjini_(int *prj)
   return prjini((struct prjprm *)prj);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int prjfree_(int *prj)
 
@@ -269,39 +269,46 @@ int prjfree_(int *prj)
   return prjfree((struct prjprm *)prj);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
+
+int prjsize_(const int *prj, int sizes[2])
+
+{
+  return prjsize((const struct prjprm *)prj, sizes);
+}
+
+//----------------------------------------------------------------------------
 
 int prjprt_(const int *prj)
 
 {
-  /* This may or may not force the Fortran I/O buffers to be flushed.  If
-   * not, try CALL FLUSH(6) before calling PRJPRT in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.  If
+  // not, try CALL FLUSH(6) before calling PRJPRT in the Fortran code.
   fflush(NULL);
 
   return prjprt((const struct prjprm *)prj);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-/* prefix should be null-terminated, or else of length 72 in which case
- * trailing blanks are not significant. */
+// If null-terminated (using the Fortran CHAR(0) intrinsic), prefix may be of
+// length less than but not exceeding 72 and trailing blanks are preserved.
+// Otherwise, it must be of length 72 and trailing blanks are stripped off.
 
 int prjperr_(int *prj, const char prefix[72])
 
 {
-  char prefix_[72];
+  char prefix_[73];
+  wcsutil_strcvt(72, '\0', 1, prefix, prefix_);
 
-  strncpy(prefix_, prefix, 72);
-  wcsutil_null_fill(72, prefix_);
-
-  /* This may or may not force the Fortran I/O buffers to be flushed. */
-  /* If not, try CALL FLUSH(6) before calling PRJPERR in the Fortran code. */
+  // This may or may not force the Fortran I/O buffers to be flushed.
+  // If not, try CALL FLUSH(6) before calling PRJPERR in the Fortran code.
   fflush(NULL);
 
   return wcserr_prt(((struct prjprm *)prj)->err, prefix_);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int prjbchk_(
   const double *tol,
@@ -316,7 +323,7 @@ int prjbchk_(
   return prjbchk(*tol, *nphi, *ntheta, *spt, phi, theta, stat);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 #define PRJSET_FWRAP(pcode, PCODE) \
   int F77_FUNC(pcode##set, PCODE##SET)(int *prj) \

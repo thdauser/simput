@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcshdr.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: twcshdr.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * twcshdr illustrates the steps required to read WCS information (including
@@ -72,28 +69,28 @@ int main(int argc, char *argv[])
   struct wcsprm *wcs, *wcsi;
 
 
-  /* Parse options. */
+  // Parse options.
   for (i = 1; i < argc && argv[i][0] == '-'; i++) {
     if (!argv[i][1]) break;
 
     switch (argv[i][1]) {
     case 'a':
-      /* Select an alternate WCS. */
+      // Select an alternate WCS.
       alt = argv[i]+2;
       break;
 
     case 'h':
-      /* Print header using wcshdo(). */
+      // Print header using wcshdo().
       dohdr = 1;
       break;
 
     case 'p':
-      /* Transform pixel coordinate. */
+      // Transform pixel coordinate.
       dopixel = 1;
       break;
 
     case 'w':
-      /* Transform world coordinate. */
+      // Transform world coordinate.
       doworld = 1;
       break;
 
@@ -108,7 +105,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  /* Open the FITS test file and read the primary header. */
+  // Open the FITS test file and read the primary header.
   fits_open_file(&fptr, argv[i], READONLY, &status);
   if ((status = fits_hdr2str(fptr, 1, NULL, 0, &header, &nkeyrec, &status))) {
     fits_report_error(stderr, status);
@@ -116,24 +113,24 @@ int main(int argc, char *argv[])
   }
 
 
-  /*-----------------------------------------------------------------------*/
-  /* Basic steps required to interpret a FITS WCS header, including -TAB.  */
-  /*-----------------------------------------------------------------------*/
+  //-------------------------------------------------------------------------
+  // Basic steps required to interpret a FITS WCS header, including -TAB.
+  //-------------------------------------------------------------------------
 
-  /* Parse the primary header of the FITS file. */
+  // Parse the primary header of the FITS file.
   if ((status = wcspih(header, nkeyrec, WCSHDR_all, -3, &nreject, &nwcs,
                        &wcs))) {
     fprintf(stderr, "wcspih ERROR %d: %s.\n", status,wcshdr_errmsg[status]);
   }
 
-  /* Read coordinate arrays from the binary table extension. */
+  // Read coordinate arrays from the binary table extension.
   if ((status = fits_read_wcstab(fptr, wcs->nwtb, (wtbarr *)wcs->wtb,
                                  &status))) {
     fits_report_error(stderr, status);
     return 1;
   }
 
-  /* Translate non-standard WCS keyvalues. */
+  // Translate non-standard WCS keyvalues.
   if ((status = wcsfix(7, 0, wcs, stat))) {
     for (i = 0; i < NWCSFIX; i++) {
       if (stat[i] > 0) {
@@ -145,7 +142,7 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  /* Sort out alternates. */
+  // Sort out alternates.
   i = 0;
   if (alt) {
     if ('0' <= *alt && *alt <= '9') {
@@ -188,16 +185,16 @@ int main(int argc, char *argv[])
 
   wcsi = wcs + i;
 
-  /*-----------------------------------------------------------------------*/
-  /* The wcsprm struct is now ready for use.                               */
-  /*-----------------------------------------------------------------------*/
+  //-------------------------------------------------------------------------
+  // The wcsprm struct is now ready for use.
+  //-------------------------------------------------------------------------
 
-  /* Finished with the FITS file. */
+  // Finished with the FITS file.
   fits_close_file(fptr, &status);
-  free(header);
+  fits_free_memory(header, &status);
 
-  /* Initialize the wcsprm struct, also taking control of memory allocated by
-   * fits_read_wcstab(). */
+  // Initialize the wcsprm struct, also taking control of memory allocated by
+  // fits_read_wcstab().
   if ((status = wcsset(wcsi))) {
     fprintf(stderr, "wcsset ERROR %d: %s.\n", status, wcs_errmsg[status]);
     return 1;
@@ -214,7 +211,7 @@ int main(int argc, char *argv[])
       printf("%.80s\n", hptr);
     }
 
-    free(header);
+    wcsdealloc(header);
 
   } else if (dopixel) {
     while (1) {
@@ -235,13 +232,13 @@ int main(int argc, char *argv[])
     }
 
   } else {
-    /* Print the struct. */
+    // Print the struct.
     if ((status = wcsprt(wcsi))) {
       return 1;
     }
   }
 
-  /* Clean up. */
+  // Clean up.
   status = wcsvfree(&nwcs, &wcs);
 
   return 0;

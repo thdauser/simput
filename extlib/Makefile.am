@@ -3,7 +3,7 @@
 SUBDIRS=. ape atFunctions heainit heaio heautils heasp
 
 DIST_SUBDIRS=ape atFunctions heainit heaio heautils heasp fftw
-EXTRA_DIST=cfitsio wcslib 
+EXTRA_DIST=cfitsio wcslib
 
 # We assume that the configure-script is executed by the main configure.ac in SIMPUT
 
@@ -12,7 +12,7 @@ all-local:
 	make all-cfitsio
 	make all-fftw
 
-install-data-local: 
+install-data-local:
 	make install-wcslib
 	make install-cfitsio
 	make install-fftw
@@ -46,7 +46,7 @@ clean-cfitsio:
 
 fftw_dir=fftw
 all-fftw:
-	cd ${fftw_dir} && make 
+	cd ${fftw_dir} && make
 
 install-fftw:
 	cd ${fftw_dir} && make install
@@ -57,7 +57,7 @@ clean-fftw:
 ##### WCS #####
 
 wcslib_dir=wcslib
-LIBVER=5.19.1
+LIBVER=7.7
 
 LIBST_OSX=dylib
 LIBST_LINUX=so
@@ -86,8 +86,8 @@ wcslib_inc_files=cel.h      getwcstab.h  log.h  spc.h  spx.h  wcsconfig_f77.h  w
 		 wcslib.h   wcsprintf.h  wcsunits.h fitshdr.h  lin.h        prj.h  sph.h  tab.h \
 		 wcsconfig.h      wcsfix.h  wcshdr.h  wcsmath.h  wcstrig.h    wcsutil.h
 .PHONY: ${wcslib_inc_files}
-${wcslib_inc_files}: 
-	cd ${includedir} && ln -fs wcslib/$@			
+${wcslib_inc_files}:
+	cd ${includedir} && ln -fs wcslib/$@
 
 $(INSTALL_DIRS):
 	@if [ ! -d $@ ]; then mkdir -p $@; fi

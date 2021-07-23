@@ -53,28 +53,58 @@ Initial contents of wcsprm struct:
      colnum: 0
       colax: 0x<address>
                  0      0      0      0
-    wcsname: UNDEFINED
       cname: 0x<address>
              "Wavelength"
              "Time"
              "Latitude"
              "Longitude"
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: UNDEFINED
+    timesys: UNDEFINED
+    trefpos: UNDEFINED
+    trefdir: UNDEFINED
+    plephem: UNDEFINED
+   timeunit: UNDEFINED
+    dateref: UNDEFINED
+     mjdref:      0.000000000     0.000000000
+   timeoffs: UNDEFINED
+    dateobs: UNDEFINED
+    datebeg: UNDEFINED
+    dateavg: UNDEFINED
+    dateend: UNDEFINED
+     mjdobs: UNDEFINED
+     mjdbeg: UNDEFINED
+     mjdavg: UNDEFINED
+     mjdend: UNDEFINED
+     jepoch: UNDEFINED
+     bepoch: UNDEFINED
+     tstart: UNDEFINED
+      tstop: UNDEFINED
+    xposure: UNDEFINED
+    telapse: UNDEFINED
+    timsyer: UNDEFINED
+    timrder: UNDEFINED
+    timedel: UNDEFINED
+   timepixr: UNDEFINED
+     obsgeo:        UNDEFINED       UNDEFINED       UNDEFINED
+                    UNDEFINED       UNDEFINED       UNDEFINED
+   obsorbit: UNDEFINED
     radesys: UNDEFINED
     equinox: UNDEFINED
     specsys: UNDEFINED
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo: UNDEFINED     UNDEFINED     UNDEFINED     
-    dateobs: UNDEFINED
-    dateavg: UNDEFINED
-     mjdobs: UNDEFINED
-     mjdavg: UNDEFINED
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x0
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -108,6 +138,9 @@ Initial contents of wcsprm struct:
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x0  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 
@@ -255,28 +288,58 @@ Extracted contents of wcsprm struct:
      colnum: 0
       colax: 0x<address>
                  0      0      0      0
-    wcsname: UNDEFINED
       cname: 0x<address>
              "Longitude"
              "Latitude"
              "Time"
              UNDEFINED
       crder: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
       csyer: 0x<address>
-             UNDEFINED     UNDEFINED     UNDEFINED     UNDEFINED   
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      czphs: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+      cperi: 0x<address>
+               UNDEFINED    UNDEFINED    UNDEFINED    UNDEFINED
+    wcsname: UNDEFINED
+    timesys: UNDEFINED
+    trefpos: UNDEFINED
+    trefdir: UNDEFINED
+    plephem: UNDEFINED
+   timeunit: UNDEFINED
+    dateref: UNDEFINED
+     mjdref:      0.000000000     0.000000000
+   timeoffs: UNDEFINED
+    dateobs: UNDEFINED
+    datebeg: UNDEFINED
+    dateavg: UNDEFINED
+    dateend: UNDEFINED
+     mjdobs: UNDEFINED
+     mjdbeg: UNDEFINED
+     mjdavg: UNDEFINED
+     mjdend: UNDEFINED
+     jepoch: UNDEFINED
+     bepoch: UNDEFINED
+     tstart: UNDEFINED
+      tstop: UNDEFINED
+    xposure: UNDEFINED
+    telapse: UNDEFINED
+    timsyer: UNDEFINED
+    timrder: UNDEFINED
+    timedel: UNDEFINED
+   timepixr: UNDEFINED
+     obsgeo:        UNDEFINED       UNDEFINED       UNDEFINED
+                    UNDEFINED       UNDEFINED       UNDEFINED
+   obsorbit: UNDEFINED
     radesys: UNDEFINED
     equinox: UNDEFINED
     specsys: UNDEFINED
     ssysobs: UNDEFINED
     velosys: UNDEFINED
-    ssyssrc: UNDEFINED
     zsource: UNDEFINED
-     obsgeo: UNDEFINED     UNDEFINED     UNDEFINED     
-    dateobs: UNDEFINED
-    dateavg: UNDEFINED
-     mjdobs: UNDEFINED
-     mjdavg: UNDEFINED
+    ssyssrc: UNDEFINED
+    velangl: UNDEFINED
+        aux: 0x0
        ntab: 0
         tab: 0x0
        nwtb: 0
@@ -310,6 +373,9 @@ Extracted contents of wcsprm struct:
     m_cname: 0x<address>  (= cname)
     m_crder: 0x<address>  (= crder)
     m_csyer: 0x<address>  (= csyer)
+    m_czphs: 0x<address>  (= czphs)
+    m_cperi: 0x<address>  (= cperi)
+      m_aux: 0x0  (= aux)
       m_tab: 0x0  (= tab)
       m_wtb: 0x0  (= wtb)
 

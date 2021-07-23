@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tspx.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tspx.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tspx tests the spectral transformation routines for closure.
@@ -60,7 +57,7 @@ int main()
     "Testing closure of WCSLIB spectral transformation routines (tspx.c)\n"
     "-------------------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of spx status return values:\n");
   for (status = 1; status <= 4; status++) {
     printf("%4d: %s.\n", status, spx_errmsg[status]);
@@ -70,7 +67,7 @@ int main()
   restwav = C/restfrq;
 
 
-  /* Exercise specx(). */
+  // Exercise specx().
   printf("\nTesting spectral cross-conversions (specx).\n\n");
   if ((status = specx("VELO", 4.3e5, restfrq, restwav, &spx))) {
     printf("specx ERROR %d: %s.\n", status, spx_errmsg[status]);
@@ -136,7 +133,7 @@ int main()
   printf("\n");
 
 
-  /* Construct a linear velocity spectrum. */
+  // Construct a linear velocity spectrum.
   step = (2.0*C/NSPEC) / 2.0;
   for (j = 0, k = -NSPEC; j < NSPEC; j++, k += 2) {
     velo[j] = (k+1)*step;
@@ -144,10 +141,10 @@ int main()
   printf("\nVelocity range: %.3f to %.3f km/s, step: %.3f km/s\n",
          velo[0]*1e-3, velo[NSPEC-1]*1e-3, (velo[1] - velo[0])*1e-3);
 
-  /* Convert it to frequency. */
+  // Convert it to frequency.
   velofreq(restfrq, NSPEC, 1, 1, velo, freq, stat);
 
-  /* Test closure of all two-way combinations. */
+  // Test closure of all two-way combinations.
   nFail += closure("freq", "afrq", 0.0,     freqafrq, afrqfreq, freq, spc1);
   nFail += closure("afrq", "freq", 0.0,     afrqfreq, freqafrq, spc1, spc2);
 
@@ -198,7 +195,7 @@ int main()
   return nFail;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int closure (
   const char *from,
@@ -215,19 +212,19 @@ int closure (
   register int j;
   double clos[NSPEC], resid, residmax;
 
-  /* Convert the first to the second. */
+  // Convert the first to the second.
   if ((status = fwd(parm, NSPEC, 1, 1, spec1, spec2, stat1))) {
     printf("%s%s ERROR %d: %s.\n", from, to, status, spx_errmsg[status]);
   }
 
-  /* Convert the second back to the first. */
+  // Convert the second back to the first.
   if ((status = rev(parm, NSPEC, 1, 1, spec2, clos, stat2))) {
     printf("%s%s ERROR %d: %s.\n", to, from, status, spx_errmsg[status]);
   }
 
   residmax = 0.0;
 
-  /* Test closure. */
+  // Test closure.
   for (j = 0; j < NSPEC; j++) {
     if (stat1[j]) {
       printf("%c%s%s: %s = %.12e -> %s = ???, stat = %d\n", skip, from, to,

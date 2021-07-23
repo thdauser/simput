@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcstrig.c,v 5.19.1.1 2018/07/26 15:41:40 mcalabre Exp mcalabre $
+  $Id: wcstrig.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <math.h>
@@ -30,9 +27,7 @@
 #include "wcsmath.h"
 #include "wcstrig.h"
 
-double cosd(angle)
-
-double angle;
+double cosd(double angle)
 
 {
   int i;
@@ -54,11 +49,9 @@ double angle;
   return cos(angle*D2R);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-double sind(angle)
-
-double angle;
+double sind(double angle)
 
 {
   int i;
@@ -80,7 +73,7 @@ double angle;
   return sin(angle*D2R);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 void sincosd(double angle, double *s, double *c)
 
@@ -119,11 +112,9 @@ void sincosd(double angle, double *s, double *c)
   return;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-double tand(angle)
-
-double angle;
+double tand(double angle)
 
 {
   double resid;
@@ -140,11 +131,9 @@ double angle;
   return tan(angle*D2R);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-double acosd(v)
-
-double v;
+double acosd(double v)
 
 {
   if (v >= 1.0) {
@@ -158,11 +147,9 @@ double v;
   return acos(v)*R2D;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-double asind(v)
-
-double v;
+double asind(double v)
 
 {
   if (v <= -1.0) {
@@ -176,11 +163,9 @@ double v;
   return asin(v)*R2D;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-double atand(v)
-
-double v;
+double atand(double v)
 
 {
   if (v == -1.0) {
@@ -194,11 +179,9 @@ double v;
   return atan(v)*R2D;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
-double atan2d(y, x)
-
-double x, y;
+double atan2d(double y, double x)
 
 {
   if (y == 0.0) {

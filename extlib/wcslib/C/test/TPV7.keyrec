@@ -1,6 +1,6 @@
 #-----------------------------------------------------------------------------
-# WCSLIB 5.19 - an implementation of the FITS WCS standard.
-# Copyright (C) 1995-2018, Mark Calabretta
+# WCSLIB 7.7 - an implementation of the FITS WCS standard.
+# Copyright (C) 1995-2021, Mark Calabretta
 #
 # This file is part of WCSLIB.
 #
@@ -17,11 +17,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 #
-# Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-#
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: TPV7.keyrec,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+# $Id: TPV7.keyrec,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 #-----------------------------------------------------------------------------
 #
 # FITS header keyrecords used for testing the handling of the "TPV" projection
@@ -42,8 +40,8 @@ NAXIS2  =                 8192 / Length of image axis 2
 
 CRPIX1  =               4096.0 / Pixel coordinate of reference point
 CRPIX2  =               4096.0 / Pixel coordinate of reference point
-CDELT1  =                -0.01 / [deg] x-scale
-CDELT2  =                 0.01 / [deg] y-scale
+CD1_1   =                -0.01 / [deg] x-scale
+CD2_2   =                 0.01 / [deg] y-scale
 CUNIT1  = 'deg'                / Degree units are required
 CUNIT2  = 'deg'                / Degree units are required
 CTYPE1  = 'RA---TPV'           / TAN (gnomonic) projection + distortions
@@ -111,8 +109,8 @@ COMMENT  -----------------------------------------------------------------------
 
 CRPIX1A =               4096.0 / Pixel coordinate of reference point
 CRPIX2A =               4096.0 / Pixel coordinate of reference point
-CDELT1A =                -0.01 / [deg] x-scale
-CDELT2A =                 0.01 / [deg] y-scale
+CD1_1A  =                -0.01 / [deg] x-scale
+CD2_2A  =                 0.01 / [deg] y-scale
 CUNIT1A = 'deg'                / Degree units are required
 CUNIT2A = 'deg'                / Degree units are required
 CTYPE1A = 'RA---TAN'           / TAN (gnomonic) projection
@@ -181,8 +179,8 @@ COMMENT  -----------------------------------------------------------------------
 
 CRPIX1B =               4096.0 / Pixel coordinate of reference point
 CRPIX2B =               4096.0 / Pixel coordinate of reference point
-CDELT1B =                -0.01 / [deg] x-scale
-CDELT2B =                 0.01 / [deg] y-scale
+CD1_1B  =                -0.01 / [deg] x-scale
+CD2_2B  =                 0.01 / [deg] y-scale
 CUNIT1B = 'deg'                / Degree units are required
 CUNIT2B = 'deg'                / Degree units are required
 CTYPE1B = 'RA---TAN'           / TAN (gnomonic) projection
@@ -196,6 +194,7 @@ CQDIS1B = 'TPD'
 DQ1B    = 'NAXES:   2'
 DQ1B    = 'AXIS.1:  1'
 DQ1B    = 'AXIS.2:  2'
+DQ1B    = 'DOCORR:  0'
 DQ1B    = 'TPD.FWD.0:   3.0939038E-01' / TPD coefficient: 1
 DQ1B    = 'TPD.FWD.1:   9.8842111E-01' / TPD coefficient: x
 DQ1B    = 'TPD.FWD.3:  -2.1923537E-03' / TPD coefficient: r
@@ -225,6 +224,7 @@ CQDIS2B = 'TPD'
 DQ2B    = 'NAXES:   2'
 DQ2B    = 'AXIS.1:  2'
 DQ2B    = 'AXIS.2:  1'
+DQ2B    = 'DOCORR:  0'
 DQ2B    = 'TPD.FWD.1:   9.9348652E-01' / TPD coefficient: y
 DQ2B    = 'TPD.FWD.5:  -1.8103805E-06' / TPD coefficient: yx
 DQ2B    = 'TPD.FWD.7:   4.7932276E-11' / TPD coefficient: yyy

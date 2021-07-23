@@ -25,4 +25,6 @@ libhdutils_la_LIBADD=../ape/src/libape.la
 # Define the headers that will be installed in $(includedir):
 include_HEADERS=headas_copykeys.h headas_error.h \
                 headas_utils.h headas_gti.h hdcal.h headas_rand.h headas_lock.h \
-                hd_math_compat.h headas_polyfit.h
+                hd_math_compat.h headas_polyfit.h HDgtcalf_internal.h \
+								HDgtcalf_standalone.h headas_error_cfitsio.h \
+								headas_error_internal.h mt.h

@@ -1,7 +1,6 @@
 /*============================================================================
-
-  PGSBOX 5.19 - draw curvilinear coordinate axes for PGPLOT.
-  Copyright (C) 1997-2018, Mark Calabretta
+  PGSBOX 7.7 - draw curvilinear coordinate axes for PGPLOT.
+  Copyright (C) 1997-2021, Mark Calabretta
 
   This file is part of PGSBOX.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with PGSBOX.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning PGSBOX to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: pgwcsl.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: pgwcsl.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <math.h>
@@ -30,45 +27,44 @@
 #include <wcs.h>
 #include <sph.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define pgwcsl_ F77_FUNC(pgwcsl, PGWCSL)
 
-void pgwcsl_(opcode, nlc, nli, nld, nlcprm, wcs, nldprm, world, pixel, contrl,
-            contxt, ierr)
-
-const int *opcode, *nlc, *nli, *nld;
-const char *nlcprm;
-int *wcs;
-double *nldprm;
-double *world;
-double *pixel;
-int *contrl;
-double contxt[20];
-int *ierr;
+void pgwcsl_(
+  const int *opcode,
+  const int *nlc,
+  const int *nli,
+  const int *nld,
+  const char *nlcprm,
+  int    *wcs,
+  double *nldprm,
+  double *world,
+  double *pixel,
+  int    *contrl,
+  double contxt[20],
+  int    *ierr)
 
 {
-  int i, outside, stat;
-  double dp, imgcrd[9], lat, lng, ph, phi, sdummy, th, theta;
-  static double wrld[9];
-  struct wcsprm *wcsp;
-  struct celprm *wcscel;
-
-  /* Avert nuisance compiler warnings about unused parameters. */
+  // Avert nuisance compiler warnings about unused parameters.
   (void)nlc;
   (void)nld;
   (void)nlcprm;
   (void)nldprm;
 
+  int    stat;
+  double imgcrd[9], phi, theta;
+  static double wrld[9];
+
+  struct wcsprm *wcsp = (struct wcsprm *)wcs;
+  struct celprm *wcscel = &(wcsp->cel);
+
   *ierr = 0;
 
-  wcsp = (struct wcsprm *)wcs;
-  wcscel = &(wcsp->cel);
-
   if (*opcode == 2) {
-    /* Compute pixel coordinates from world coordinates. */
+    // Compute pixel coordinates from world coordinates.
     if (wcsp->lng < 0) {
-      /* Simple linear coordinates. */
+      // Simple linear coordinates.
       if (wcss2p(wcsp, 1, 0, world, &phi, &theta, imgcrd, pixel, &stat)) {
         *ierr = 1;
       }
@@ -76,6 +72,7 @@ int *ierr;
     }
 
     wrld[wcsp->lng] = world[0];
+    int outside;
     if (world[1] > 90.0) {
       wrld[wcsp->lat] = 90.0;
       outside = -2;
@@ -89,16 +86,17 @@ int *ierr;
 
     if (*contrl == 0) {
       if (wcss2p(wcsp, 1, 0, wrld, &phi, &theta, imgcrd, pixel, &stat)) {
-        /* Translate status return values. */
+        // Translate status return values.
         *ierr = stat ? 2 : 1;
         return;
       }
 
       if (fabs(phi-contxt[2]) > 180.0) {
-        /* Hit a discontinuity at phi = +/- 180. */
+        // Hit a discontinuity at phi = +/- 180.
         contxt[4] = pixel[0];
         contxt[5] = pixel[1];
 
+        double ph, dp;
         if (contxt[2] > phi) {
           ph = 179.9999;
           dp = (phi - contxt[2]) + 360.0;
@@ -107,22 +105,26 @@ int *ierr;
           dp = (phi - contxt[2]) - 360.0;
         }
 
-        /* First approximation for theta. */
+        // First approximation for theta.
+        double th;
         if (dp == 0.0) {
           th = contxt[3];
         } else {
           th = contxt[3] + (ph-contxt[2])*(theta-contxt[3])/dp;
         }
 
-        /* Iterate once to refine the value of theta. */
+        // Iterate once to refine the value of theta.
+        double lng, lat;
         sphx2s(wcscel->euler, 1, 1, 1, 1, &ph, &th, &lng, &lat);
         if (wrld[wcsp->lng] == contxt[0]) {
-          /* We are following a meridian of longitude. */
+          // We are following a meridian of longitude.
           lng = wrld[wcsp->lng];
         } else {
-          /* We are following a parallel of latitude. */
+          // We are following a parallel of latitude.
           lat = wrld[wcsp->lat];
         }
+
+        double sdummy;
         sphs2x(wcscel->euler, 1, 1, 1, 1, &lng, &lat, &sdummy, &th);
 
         contxt[0] = wrld[wcsp->lng];
@@ -130,28 +132,28 @@ int *ierr;
         contxt[2] = phi;
         contxt[3] = theta;
 
-        /* Pixel coordinates crossing into the discontinuity. */
+        // Pixel coordinates crossing into the discontinuity.
         sphx2s(wcscel->euler, 1, 1, 1, 1, &ph, &th, wrld+wcsp->lng,
           wrld+wcsp->lat);
         if (wcss2p(wcsp, 1, 0, wrld, &phi, &theta, imgcrd, pixel, &stat)) {
-          /* Translate status return values. */
+          // Translate status return values.
           *ierr = stat ? 2 : 1;
           return;
         }
 
-        /* Pixel coordinates crossing out of the discontinuity. */
+        // Pixel coordinates crossing out of the discontinuity.
         ph *= -1.0;
         sphx2s(wcscel->euler, 1, 1, 1, 1, &ph, &th, wrld+wcsp->lng,
           wrld+wcsp->lat);
         if (wcss2p(wcsp, 1, 0, wrld, &phi, &theta, imgcrd, contxt+6, &stat)) {
-          /* Translate status return values. */
+          // Translate status return values.
           *ierr = stat ? 2 : 1;
           return;
         }
 
         *contrl = 1;
       } else {
-        /* Normal mode, no discontinuity. */
+        // Normal mode, no discontinuity.
         contxt[0] = wrld[wcsp->lng];
         contxt[1] = wrld[wcsp->lat];
         contxt[2] = phi;
@@ -159,12 +161,12 @@ int *ierr;
       }
     } else {
       if (*contrl == 1) {
-        /* Move to the other side of the discontinuity. */
+        // Move to the other side of the discontinuity.
         pixel[0] = contxt[6];
         pixel[1] = contxt[7];
         *contrl = 2;
       } else {
-        /* Complete the traversal. */
+        // Complete the traversal.
         pixel[0] = contxt[4];
         pixel[1] = contxt[5];
         *contrl = 0;
@@ -174,9 +176,9 @@ int *ierr;
     *ierr = outside;
 
   } else if (*opcode == 1) {
-    /* Compute pixel coordinates from world coordinates. */
+    // Compute pixel coordinates from world coordinates.
     if (wcsp->lng < 0) {
-      /* Simple linear coordinates. */
+      // Simple linear coordinates.
       if (wcss2p(wcsp, 1, 0, world, &phi, &theta, imgcrd, pixel, &stat)) {
         *ierr = 1;
       }
@@ -184,6 +186,7 @@ int *ierr;
     }
 
     wrld[wcsp->lng] = world[0];
+    int outside;
     if (world[1] > 90.0) {
       wrld[wcsp->lat] = 90.0;
       outside = -2;
@@ -196,7 +199,7 @@ int *ierr;
     }
 
     if (wcss2p(wcsp, 1, 0, wrld, &phi, &theta, imgcrd, pixel, &stat)) {
-      /* Translate status return values. */
+      // Translate status return values.
       *ierr = stat ? 2 : 1;
       return;
     }
@@ -209,7 +212,7 @@ int *ierr;
     *ierr = outside;
 
   } else if (*opcode == 0) {
-    /* Initialize. */
+    // Initialize.
     if (*nli < (int)WCSLEN) {
       *ierr = 1;
       return;
@@ -219,22 +222,22 @@ int *ierr;
       *ierr = *ierr <= 2 ? 1 : 2;
     }
 
-    for (i = 2; i < 9; i++) {
+    for (int i = 2; i < 9; i++) {
       wrld[i] = 0.0;
     }
 
     *contrl = 0;
 
   } else if (*opcode == -1) {
-    /* Compute world coordinates from pixel coordinates. */
+    // Compute world coordinates from pixel coordinates.
     if (wcsp2s(wcsp, 1, 0, pixel, imgcrd, &phi, &theta, wrld, &stat)) {
-      /* Translate status return values. */
+      // Translate status return values.
       *ierr = stat ? 3 : 1;
       return;
     }
 
     if (wcsp->lng < 0) {
-      /* Simple linear coordinates. */
+      // Simple linear coordinates.
       world[0] = wrld[0];
       world[1] = wrld[1];
     } else {
@@ -242,7 +245,7 @@ int *ierr;
       world[1] = wrld[wcsp->lat];
 
       if (phi < -180.0 || phi > 180.0) {
-        /* Pixel is outside the principle range of native longitude. */
+        // Pixel is outside the principle range of native longitude.
         *ierr = 3;
         return;
       }

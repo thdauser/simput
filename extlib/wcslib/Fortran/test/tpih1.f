@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tpih1.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tpih1.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TPIH1
@@ -41,7 +39,7 @@
       LOGICAL   GOTEND
       INTEGER   ALTS(0:26), CTRL, I, IERR, J, K, NKEYRC, NREJECT, NWCS,
      :          RELAX, WCSP(2)
-      CHARACTER CALTS(0:26)*2, KEYREC*80, HEADER*288001, INFILE*9
+      CHARACTER CALTS(0:26)*2, KEYREC*80, HEADER*28801, INFILE*9
 
 *     On some systems, such as Sun Sparc, the struct MUST be aligned
 *     on a double precision boundary, done here using an equivalence.
@@ -78,7 +76,7 @@
           READ (1, '(A80)', REC=36*J+I, IOSTAT=IERR) KEYREC
           IF (IERR.NE.0) THEN
             WRITE (*, 30) IERR
- 30         FORMAT ('ERROR',I3,' reading header.')
+ 30         FORMAT ('ERROR',I5,' reading header.')
             GO TO 999
           END IF
 
@@ -131,8 +129,9 @@
  110  CONTINUE
 
  120  IERR = WCSIDX (NWCS, WCSP, ALTS)
-      WRITE (*, 130)
- 130  FORMAT (//,'Index of alternate coordinate descriptions found:',/,
+      WRITE (*, 130) NWCS
+ 130  FORMAT (//,'Found',I2,' alternate coordinate descriptions with ',
+     :        'indices:',/,
      :        '   A B C D E F G H I J K L M N O P Q R S T U V W X Y Z')
       DO 140 I = 0, 26
         IF (ALTS(I).LT.0) THEN

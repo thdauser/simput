@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,14 +17,12 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcs.h,v 5.19.1.1 2018/07/26 15:41:40 mcalabre Exp mcalabre $
+  $Id: wcs.h,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
-* WCSLIB 5.19 - C routines that implement the FITS World Coordinate System
+* WCSLIB 7.7 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to the README file provided with WCSLIB for an
 * overview of the library.
 *
@@ -56,18 +53,24 @@
 =
 =   "Representing the 'Butterfly' Projection in FITS -- Projection Code XPH",
 =   Calabretta, M.R., & Lowe, S.R. 2013, PASA, 30, e050 (WCS Paper VI)
+=
+=   "Representations of time coordinates in FITS -
+=    Time and relative dimension in space",
+=   Rots, A.H., Bunclark, P.S., Calabretta, M.R., Allen, S.L.,
+=   Manchester, R.N., & Thompson, W.T. 2015, A&A, 574, A36 (WCS Paper VII)
 *
 * These routines are based on the wcsprm struct which contains all information
 * needed for the computations.  The struct contains some members that must be
 * set by the user, and others that are maintained by these routines, somewhat
 * like a C++ class but with no encapsulation.
 *
-* wcsnpv(), wcsnps(), wcsini(), wcsinit(), wcssub(), and wcsfree() are
-* provided to manage the wcsprm struct and another, wcsprt(), prints its
-* contents.  Refer to the description of the wcsprm struct for an explanation
-* of the anticipated usage of these routines.  wcscopy(), which does a deep
-* copy of one wcsprm struct to another, is defined as a preprocessor macro
-* function that invokes wcssub().
+* wcsnpv(), wcsnps(), wcsini(), wcsinit(), wcssub(), wcsfree(), and wcstrim(),
+* are provided to manage the wcsprm struct, wcssize() computes its total size
+* including allocated memory, and wcsprt() prints its contents.  Refer to the
+* description of the wcsprm struct for an explanation of the anticipated usage
+* of these routines.  wcscopy(), which does a deep copy of one wcsprm struct
+* to another, is defined as a preprocessor macro function that invokes
+* wcssub().
 *
 * wcsperr() prints the error message(s) (if any) stored in a wcsprm struct,
 * and the linprm, celprm, prjprm, spcprm, and tabprm structs that it contains.
@@ -86,8 +89,10 @@
 * pixel coordinate a hybrid routine, wcsmix(), iteratively solves for the
 * unknown elements.
 *
-* wcssptr() translates the spectral axis in a wcsprm struct.  For example, a
-* 'FREQ' axis may be translated into 'ZOPT-F2W' and vice versa.
+* wcsccs() changes the celestial coordinate system of a wcsprm struct, for
+* example, from equatorial to galactic, and wcssptr() translates the spectral
+* axis.  For example, a 'FREQ' axis may be translated into 'ZOPT-F2W' and vice
+* versa.
 *
 * wcslib_version() returns the WCSLIB version number.
 *
@@ -175,7 +180,9 @@
 *
 * Given:
 *   alloc     int       If true, allocate memory unconditionally for the
-*                       crpix, etc. arrays.
+*                       crpix, etc. arrays.  Please note that memory is never
+*                       allocated by wcsinit() for the auxprm, tabprm, nor
+*                       wtbarr structs.
 *
 *                       If false, it is assumed that pointers to these arrays
 *                       have been set by the user except if they are null
@@ -222,6 +229,34 @@
 *
 *                       For returns > 1, a detailed error message is set in
 *                       wcsprm::err if enabled, see wcserr_enable().
+*
+*
+* wcsauxi() - Default constructor for the auxprm struct
+* -----------------------------------------------------
+* wcsauxi() optionally allocates memory for an auxprm struct, attaches it to
+* wcsprm, and sets all members of the struct to default values.
+*
+* Given:
+*   alloc     int       If true, allocate memory unconditionally for the
+*                       auxprm struct.
+*
+*                       If false, it is assumed that wcsprm::aux has already
+*                       been set to point to an auxprm struct, in which case
+*                       the user is responsible for managing that memory.
+*                       However, if wcsprm::aux is a null pointer, memory will
+*                       be allocated regardless.  (In other words, setting
+*                       alloc true saves having to initalize the pointer to
+*                       zero.)
+*
+* Given and returned:
+*   wcs       struct wcsprm*
+*                       Coordinate transformation parameters.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*                         1: Null wcsprm pointer passed.
+*                         2: Memory allocation failed.
 *
 *
 * wcssub() - Subimage extraction routine for the wcsprm struct
@@ -323,38 +358,39 @@
 *                       wcsprm::err if enabled, see wcserr_enable().
 *
 * Notes:
-*   Combinations of subimage axes of particular types may be extracted in the
-*   same order as they occur in the input image by combining preprocessor
-*   codes, for example
+*   1: Combinations of subimage axes of particular types may be extracted in
+*      the same order as they occur in the input image by combining
+*      preprocessor codes, for example
 *
-=     *nsub = 1;
-=     axes[0] = WCSSUB_LONGITUDE | WCSSUB_LATITUDE | WCSSUB_SPECTRAL;
+=        *nsub = 1;
+=        axes[0] = WCSSUB_LONGITUDE | WCSSUB_LATITUDE | WCSSUB_SPECTRAL;
 *
-*   would extract the longitude, latitude, and spectral axes in the same order
-*   as the input image.  If one of each were present, *nsub = 3 would be
-*   returned.
+*      would extract the longitude, latitude, and spectral axes in the same
+*      order as the input image.  If one of each were present, *nsub = 3 would
+*      be returned.
 *
-*   For convenience, WCSSUB_CELESTIAL is defined as the combination
-*   WCSSUB_LONGITUDE | WCSSUB_LATITUDE | WCSSUB_CUBEFACE.
+*      For convenience, WCSSUB_CELESTIAL is defined as the combination
+*      WCSSUB_LONGITUDE | WCSSUB_LATITUDE | WCSSUB_CUBEFACE.
 *
-*   The codes may also be negated to extract all but the types specified, for
-*   example
+*      The codes may also be negated to extract all but the types specified,
+*      for example
 *
-=     *nsub = 4;
-=     axes[0] = WCSSUB_LONGITUDE;
-=     axes[1] = WCSSUB_LATITUDE;
-=     axes[2] = WCSSUB_CUBEFACE;
-=     axes[3] = -(WCSSUB_SPECTRAL | WCSSUB_STOKES);
+=        *nsub = 4;
+=        axes[0] = WCSSUB_LONGITUDE;
+=        axes[1] = WCSSUB_LATITUDE;
+=        axes[2] = WCSSUB_CUBEFACE;
+=        axes[3] = -(WCSSUB_SPECTRAL | WCSSUB_STOKES);
 *
-*   The last of these specifies all axis types other than spectral or Stokes.
-*   Extraction is done in the order specified by axes[] a longitude axis (if
-*   present) would be extracted first (via axes[0]) and not subsequently (via
-*   axes[3]).  Likewise for the latitude and cubeface axes in this example.
+*      The last of these specifies all axis types other than spectral or
+*      Stokes.  Extraction is done in the order specified by axes[] a
+*      longitude axis (if present) would be extracted first (via axes[0]) and
+*      not subsequently (via axes[3]).  Likewise for the latitude and cubeface
+*      axes in this example.
 *
-*   From the foregoing, it is apparent that the value of *nsub returned may be
-*   less than or greater than that given.  However, it will never exceed the
-*   number of axes in the input image (plus the number of newly-created axes
-*   if any were specified on input).
+*      From the foregoing, it is apparent that the value of *nsub returned may
+*      be less than or greater than that given.  However, it will never exceed
+*      the number of axes in the input image (plus the number of newly-created
+*      axes if any were specified on input).
 *
 *
 * wcscompare() - Compare two wcsprm structs for equality
@@ -377,7 +413,7 @@
 *                         WCSCOMPARE_CRPIX: Ignore any differences at all in
 *                           CRPIXja.  The two WCSes cover different regions
 *                           of the same map projection but may not align on
-*                           the same grid map.  Overrides WCSCOMPARE_TILING.
+*                           the same map grid.  Overrides WCSCOMPARE_TILING.
 *
 *   tol       double    Tolerance for comparison of floating-point values.
 *                       For example, for tol == 1e-6, all floating-point
@@ -415,7 +451,7 @@
 * PLEASE NOTE: wcsfree() must not be invoked on a wcsprm struct that was not
 * initialized by wcsinit().
 *
-* Returned:
+* Given and returned:
 *   wcs       struct wcsprm*
 *                       Coordinate transformation parameters.
 *
@@ -423,6 +459,91 @@
 *             int       Status return value:
 *                         0: Success.
 *                         1: Null wcsprm pointer passed.
+*
+*
+* wcstrim() - Free unused arrays in the wcsprm struct
+* ---------------------------------------------------
+* wcstrim() frees memory allocated by wcsinit() for arrays in the wcsprm
+* struct that remains unused after it has been set up by wcsset().
+*
+* The free'd array members are associated with FITS WCS keyrecords that are
+* rarely used and usually just bloat the struct: wcsprm::crota, wcsprm::colax,
+* wcsprm::cname, wcsprm::crder, wcsprm::csyer, wcsprm::czphs, and
+* wcsprm::cperi.  If unused, wcsprm::pv, wcsprm::ps, and wcsprm::cd are also
+* freed.
+*
+* Once these arrays have been freed, a test such as
+=
+=        if (!undefined(wcs->cname[i])) {...}
+=
+* must be protected as follows
+=
+=        if (wcs->cname && !undefined(wcs->cname[i])) {...}
+=
+* In addition, if wcsprm::npv is non-zero but less than wcsprm::npvmax, then
+* the unused space in wcsprm::pv will be recovered (using realloc()).
+* Likewise for wcsprm::ps.
+*
+* Given and returned:
+*   wcs       struct wcsprm*
+*                       Coordinate transformation parameters.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*                         1: Null wcsprm pointer passed.
+*                        14: wcsprm struct is unset.
+*
+*
+* wcssize() - Compute the size of a wcsprm struct
+* -----------------------------------------------
+* wcssize() computes the full size of a wcsprm struct, including allocated
+* memory.
+*
+* Given:
+*   wcs       const struct wcsprm*
+*                       Coordinate transformation parameters.
+*
+*                       If NULL, the base size of the struct and the allocated
+*                       size are both set to zero.
+*
+* Returned:
+*   sizes     int[2]    The first element is the base size of the struct as
+*                       returned by sizeof(struct wcsprm).  The second element
+*                       is the total allocated size, in bytes, assuming that
+*                       the allocation was done by wcsini().  This figure
+*                       includes memory allocated for members of constituent
+*                       structs, such as wcsprm::lin.
+*
+*                       It is not an error for the struct not to have been set
+*                       up via wcsset(), which normally results in additional
+*                       memory allocation. 
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*
+*
+* auxsize() - Compute the size of a auxprm struct
+* -----------------------------------------------
+* auxsize() computes the full size of a auxprm struct, including allocated
+* memory.
+*
+* Given:
+*   aux       const struct auxprm*
+*                       Auxiliary coordinate information.
+*
+*                       If NULL, the base size of the struct and the allocated
+*                       size are both set to zero.
+*
+* Returned:
+*   sizes     int[2]    The first element is the base size of the struct as
+*                       returned by sizeof(struct auxprm).  The second element
+*                       is the total allocated size, in bytes, currently zero.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
 *
 *
 * wcsprt() - Print routine for the wcsprm struct
@@ -526,9 +647,9 @@
 *                       wcsprm::err if enabled, see wcserr_enable().
 *
 * Notes:
-*   wcsset() always enables strict bounds checking in the projection routines
-*   (via a call to prjini()).  Use wcsbchk() to modify bounds-checking after
-*   wcsset() is invoked.
+*   1: wcsset() always enables strict bounds checking in the projection
+*      routines (via a call to prjini()).  Use wcsbchk() to modify
+*      bounds-checking after wcsset() is invoked.
 *
 *
 * wcsp2s() - Pixel-to-world transformation
@@ -745,37 +866,178 @@
 *                       wcsprm::err if enabled, see wcserr_enable().
 *
 * Notes:
-*   Initially the specified solution interval is checked to see if it's a
-*   "crossing" interval.  If it isn't, a search is made for a crossing
-*   solution by iterating on the unknown celestial coordinate starting at the
-*   upper limit of the solution interval and decrementing by the specified
-*   step size.  A crossing is indicated if the trial value of the pixel
-*   coordinate steps through the value specified.  If a crossing interval is
-*   found then the solution is determined by a modified form of "regula falsi"
-*   division of the crossing interval.  If no crossing interval was found
-*   within the specified solution interval then a search is made for a
-*   "non-crossing" solution as may arise from a point of tangency.  The
-*   process is complicated by having to make allowance for the discontinuities
-*   that occur in all map projections.
+*   1: Initially the specified solution interval is checked to see if it's a
+*      "crossing" interval.  If it isn't, a search is made for a crossing
+*      solution by iterating on the unknown celestial coordinate starting at
+*      the upper limit of the solution interval and decrementing by the
+*      specified step size.  A crossing is indicated if the trial value of the
+*      pixel coordinate steps through the value specified.  If a crossing
+*      interval is found then the solution is determined by a modified form of
+*      "regula falsi" division of the crossing interval.  If no crossing
+*      interval was found within the specified solution interval then a search
+*      is made for a "non-crossing" solution as may arise from a point of
+*      tangency.  The process is complicated by having to make allowance for
+*      the discontinuities that occur in all map projections.
 *
-*   Once one solution has been determined others may be found by subsequent
-*   invokations of wcsmix() with suitably restricted solution intervals.
+*      Once one solution has been determined others may be found by subsequent
+*      invokations of wcsmix() with suitably restricted solution intervals.
 *
-*   Note the circumstance that arises when the solution point lies at a native
-*   pole of a projection in which the pole is represented as a finite curve,
-*   for example the zenithals and conics.  In such cases two or more valid
-*   solutions may exist but wcsmix() only ever returns one.
+*      Note the circumstance that arises when the solution point lies at a
+*      native pole of a projection in which the pole is represented as a
+*      finite curve, for example the zenithals and conics.  In such cases two
+*      or more valid solutions may exist but wcsmix() only ever returns one.
 *
-*   Because of its generality wcsmix() is very compute-intensive.  For
-*   compute-limited applications more efficient special-case solvers could be
-*   written for simple projections, for example non-oblique cylindrical
-*   projections.
+*      Because of its generality wcsmix() is very compute-intensive.  For
+*      compute-limited applications more efficient special-case solvers could
+*      be written for simple projections, for example non-oblique cylindrical
+*      projections.
+*
+*
+* wcsccs() - Change celestial coordinate system
+* ---------------------------------------------
+* wcsccs() changes the celestial coordinate system of a wcsprm struct.  For
+* example, from equatorial to galactic coordinates.
+*
+* Parameters that define the spherical coordinate transformation, essentially
+* being three Euler angles, must be provided.  Thereby wcsccs() does not need
+* prior knowledge of specific celestial coordinate systems.  It also has the
+* advantage of making it completely general.
+*
+* Auxiliary members of the wcsprm struct relating to equatorial celestial
+* coordinate systems may also be changed.
+*
+* Only orthodox spherical coordinate systems are supported.  That is, they
+* must be right-handed, with latitude increasing from zero at the equator to
+* +90 degrees at the pole.  This precludes systems such as aziumuth and zenith
+* distance, which, however, could be handled as negative azimuth and
+* elevation.
+*
+* PLEASE NOTE: Information in the wcsprm struct relating to the original
+* coordinate system will be overwritten and therefore lost.  If this is
+* undesirable, invoke wcsccs() on a copy of the struct made with wcssub().
+* The wcsprm struct is reset on return with an explicit call to wcsset().
+*
+* Given and returned:
+*   wcs       struct wcsprm*
+*                       Coordinate transformation parameters.  Particular
+*                       "values to be given" elements of the wcsprm struct
+*                       are modified.
+*
+* Given:
+*   lng2p1,
+*   lat2p1    double    Longitude and latitude in the new celestial coordinate
+*                       system of the pole (i.e. latitude +90) of the original
+*                       system [deg].  See notes 1 and 2 below.
+*
+*   lng1p2    double    Longitude in the original celestial coordinate system
+*                       of the pole (i.e. latitude +90) of the new system
+*                       [deg].  See note 1 below.
+*
+*   clng,clat const char*
+*                       Longitude and latitude identifiers of the new CTYPEia
+*                       celestial axis codes, without trailing dashes.  For
+*                       example, "RA" and "DEC" or "GLON" and "GLAT".  Up to
+*                       four characters are used, longer strings need not be
+*                       null-terminated.
+*
+*   radesys   const char*
+*                       Used when transforming to equatorial coordinates,
+*                       identified by clng == "RA" and clat = "DEC".  May be
+*                       set to the null pointer to preserve the current value.
+*                       Up to 71 characters are used, longer strings need not
+*                       be null-terminated.
+*
+*                       If the new coordinate system is anything other than
+*                       equatorial, then wcsprm::radesys will be cleared.
+*
+*   equinox   double    Used when transforming to equatorial coordinates.  May
+*                       be set to zero to preserve the current value.
+*
+*                       If the new coordinate system is not equatorial, then
+*                       wcsprm::equinox will be marked as undefined.
+*
+*   alt       const char*
+*                       Character code for alternate coordinate descriptions
+*                       (i.e. the 'a' in keyword names such as CTYPEia).  This
+*                       is blank for the primary coordinate description, or
+*                       one of the 26 upper-case letters, A-Z.  May be set to
+*                       the null pointer, or null string if no change is
+*                       required.
+*
+* Function return value:
+*             int       Status return value:
+*                         0: Success.
+*                         1: Null wcsprm pointer passed.
+*                        12: Invalid subimage specification (no celestial
+*                            axes).
+*
+* Notes:
+*   1: Follows the prescription given in WCS Paper II, Sect. 2.7 for changing
+*      celestial coordinates.
+*
+*      The implementation takes account of indeterminacies that arise in that
+*      prescription in the particular cases where one of the poles of the new
+*      system is at the fiducial point, or one of them is at the native pole.
+*
+*   2: If lat2p1 == +90, i.e. where the poles of the two coordinate systems
+*      coincide, then the spherical coordinate transformation becomes a simple
+*      change in origin of longitude given by
+*      lng2 = lng1 + (lng2p1 - lng1p2 - 180), and lat2 = lat1, where
+*      (lng2,lat2) are coordinates in the new system, and (lng1,lat1) are
+*      coordinates in the original system.
+*
+*      Likewise, if lat2p1 == -90, then lng2 = -lng1 + (lng2p1 + lng1p2), and
+*      lat2 = -lat1.
+*
+*   3: For example, if the original coordinate system is B1950 equatorial and
+*      the desired new coordinate system is galactic, then
+*
+*      - (lng2p1,lat2p1) are the galactic coordinates of the B1950 celestial
+*        pole, defined by the IAU to be (123.0,+27.4), and lng1p2 is the B1950
+*        right ascension of the galactic pole, defined as 192.25.  Clearly
+*        these coordinates are fixed for a particular coordinate
+*        transformation.
+*
+*      - (clng,clat) would be 'GLON' and 'GLAT', these being the FITS standard
+*        identifiers for galactic coordinates.
+*
+*      - Since the new coordinate system is not equatorial, wcsprm::radesys
+*        and wcsprm::equinox will be cleared.
+*
+*   4. The coordinates required for some common transformations (obtained from
+*      https://ned.ipac.caltech.edu/coordinate_calculator) are as follows:
+*
+=      (123.0000,+27.4000) galactic coordinates of B1950 celestial pole,
+=      (192.2500,+27.4000) B1950 equatorial coordinates of galactic pole.
+*
+=      (122.9319,+27.1283) galactic coordinates of J2000 celestial pole,
+=      (192.8595,+27.1283) J2000 equatorial coordinates of galactic pole.
+*
+=      (359.6774,+89.7217) B1950 equatorial coordinates of J2000 pole,
+=      (180.3162,+89.7217) J2000 equatorial coordinates of B1950 pole.
+*
+=      (270.0000,+66.5542) B1950 equatorial coordinates of B1950 ecliptic pole,
+=      ( 90.0000,+66.5542) B1950 ecliptic coordinates of B1950 celestial pole.
+*
+=      (270.0000,+66.5607) J2000 equatorial coordinates of J2000 ecliptic pole,
+=      ( 90.0000,+66.5607) J2000 ecliptic coordinates of J2000 celestial pole.
+*
+=      ( 26.7315,+15.6441) supergalactic coordinates of B1950 celestial pole,
+=      (283.1894,+15.6441) B1950 equatorial coordinates of supergalactic pole.
+*
+=      ( 26.4505,+15.7089) supergalactic coordinates of J2000 celestial pole,
+=      (283.7542,+15.7089) J2000 equatorial coordinates of supergalactic pole.
 *
 *
 * wcssptr() - Spectral axis translation
 * -------------------------------------
 * wcssptr() translates the spectral axis in a wcsprm struct.  For example, a
 * 'FREQ' axis may be translated into 'ZOPT-F2W' and vice versa.
+*
+* PLEASE NOTE: Information in the wcsprm struct relating to the original
+* coordinate system will be overwritten and therefore lost.  If this is
+* undesirable, invoke wcssptr() on a copy of the struct made with wcssub().
+* The wcsprm struct is reset on return with an explicit call to wcsset().
 *
 * Given and returned:
 *   wcs       struct wcsprm*
@@ -893,8 +1155,8 @@
 *       - wcsprm::wtb.
 *
 *     This signals the initialization routine, wcsset(), to recompute the
-*     returned members of the celprm struct.  celset() will reset flag to
-*     indicate that this has been done.
+*     returned members of the linprm, celprm, spcprm, and tabprm structs.
+*     wcsset() will reset flag to indicate that this has been done.
 *
 *     PLEASE NOTE: flag should be set to -1 when wcsinit() is called for the
 *     first time for a particular wcsprm struct in order to initialize memory
@@ -1054,62 +1316,70 @@
 *     alternate specifications of the linear transformation matrix, those
 *     associated with the CDi_ja keywords, and ...
 *   double *crota
-*     (Given) ... those associated with the CROTAia keywords.  Although these
+*     (Given) ... those associated with the CROTAi keywords.  Although these
 *     may not formally co-exist with PCi_ja, the approach taken here is simply
 *     to ignore them if given in conjunction with PCi_ja.
 *
 *   int altlin
 *     (Given) altlin is a bit flag that denotes which of the PCi_ja, CDi_ja
-*     and CROTAia keywords are present in the header:
+*     and CROTAi keywords are present in the header:
 *
 *     - Bit 0: PCi_ja is present.
 *
 *     - Bit 1: CDi_ja is present.
 *
-*       Matrix elements in the IRAF convention are
-*       equivalent to the product CDi_ja = CDELTia * PCi_ja, but the
-*       defaults differ from that of the PCi_ja matrix.  If one or more
-*       CDi_ja keywords are present then all unspecified CDi_ja default to
-*       zero.  If no CDi_ja (or CROTAia) keywords are present, then the
-*       header is assumed to be in PCi_ja form whether or not any PCi_ja
-*       keywords are present since this results in an interpretation of
-*       CDELTia consistent with the original FITS specification.
+*       Matrix elements in the IRAF convention are equivalent to the product
+*       CDi_ja = CDELTia * PCi_ja, but the defaults differ from that of the
+*       PCi_ja matrix.  If one or more CDi_ja keywords are present then all
+*       unspecified CDi_ja default to zero.  If no CDi_ja (or CROTAi) keywords
+*       are present, then the header is assumed to be in PCi_ja form whether
+*       or not any PCi_ja keywords are present since this results in an
+*       interpretation of CDELTia consistent with the original FITS
+*       specification.
 *
 *       While CDi_ja may not formally co-exist with PCi_ja, it may co-exist
-*       with CDELTia and CROTAia which are to be ignored.
+*       with CDELTia and CROTAi which are to be ignored.
 *
-*     - Bit 2: CROTAia is present.
+*     - Bit 2: CROTAi is present.
 *
-*       In the AIPS convention, CROTAia may only be
-*       associated with the latitude axis of a celestial axis pair.  It
-*       specifies a rotation in the image plane that is applied AFTER the
-*       CDELTia; any other CROTAia keywords are ignored.
+*       In the AIPS convention, CROTAi may only be associated with the
+*       latitude axis of a celestial axis pair.  It specifies a rotation in
+*       the image plane that is applied AFTER the CDELTia; any other CROTAi
+*       keywords are ignored.
 *
-*       CROTAia may not formally co-exist with PCi_ja.
+*       CROTAi may not formally co-exist with PCi_ja.
 *
-*       CROTAia and CDELTia may formally co-exist with CDi_ja but if so are to
+*       CROTAi and CDELTia may formally co-exist with CDi_ja but if so are to
 *       be ignored.
 *
-*     CDi_ja and CROTAia keywords, if found, are to be stored in the
-*     wcsprm::cd and wcsprm::crota arrays which are dimensioned similarly to
-*     wcsprm::pc and wcsprm::cdelt.  FITS
-*     header parsers should use the following procedure:
+*     - Bit 3: PCi_ja + CDELTia was derived from CDi_ja by wcspcx().
 *
-*     - Whenever a PCi_ja  keyword is encountered: altlin |= 1;
+*       This bit is set by wcspcx() when it derives PCi_ja and CDELTia from
+*       CDi_ja via an orthonormal decomposition.  In particular, it signals
+*       wcsset() not to replace PCi_ja by a copy of CDi_ja with CDELTia set
+*       to unity.
 *
-*     - Whenever a CDi_ja  keyword is encountered: altlin |= 2;
+*     CDi_ja and CROTAi keywords, if found, are to be stored in the wcsprm::cd
+*     and wcsprm::crota arrays which are dimensioned similarly to wcsprm::pc
+*     and wcsprm::cdelt.  FITS header parsers should use the following
+*     procedure:
 *
-*     - Whenever a CROTAia keyword is encountered: altlin |= 4;
+*     - Whenever a PCi_ja keyword is encountered: altlin |= 1;
+*
+*     - Whenever a CDi_ja keyword is encountered: altlin |= 2;
+*
+*     - Whenever a CROTAi keyword is encountered: altlin |= 4;
 *
 *     If none of these bits are set the PCi_ja representation results, i.e.
 *     wcsprm::pc and wcsprm::cdelt will be used as given.
 *
 *     These alternate specifications of the linear transformation matrix are
 *     translated immediately to PCi_ja by wcsset() and are invisible to the
-*     lower-level WCSLIB routines.  In particular, wcsset() resets
-*     wcsprm::cdelt to unity if CDi_ja is present (and no PCi_ja).
+*     lower-level WCSLIB routines.  In particular, unless bit 3 is also set,
+*     wcsset() resets wcsprm::cdelt to unity if CDi_ja is present (and no
+*     PCi_ja).
 *
-*     If CROTAia are present but none is associated with the latitude axis
+*     If CROTAi are present but none is associated with the latitude axis
 *     (and no PCi_ja or CDi_ja), then wcsset() reverts to a unity PCi_ja
 *     matrix.
 *
@@ -1176,20 +1446,241 @@
 *     It is not necessary to reset the wcsprm struct (via wcsset()) when
 *     wcsprm::csyer is changed.
 *
-*   char dateavg[72]
-*     (Given, auxiliary) The date of a representative mid-point of the
-*     observation in ISO format, yyyy-mm-ddThh:mm:ss.
+*   double *czphs
+*     (Given, auxiliary) Address of the first element of an array of double
+*     recording the time at the zero point of a phase axis, CZPHSia.
 *
 *     It is not necessary to reset the wcsprm struct (via wcsset()) when
-*     wcsprm::dateavg is changed.
+*     wcsprm::czphs is changed.
+*
+*   double *cperi
+*     (Given, auxiliary) Address of the first element of an array of double
+*     recording the period of a phase axis, CPERIia.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::cperi is changed.
+*
+*   char wcsname[72]
+*     (Given, auxiliary) The name given to the coordinate representation,
+*     WCSNAMEa.  This variable accomodates the longest allowed string-valued
+*     FITS keyword, being limited to 68 characters, plus the null-terminating
+*     character.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::wcsname is changed.
+*
+*   char timesys[72]
+*     (Given, auxiliary) TIMESYS keyvalue, being the time scale (UTC, TAI,
+*     etc.) in which all other time-related auxiliary header values are
+*     recorded.  Also defines the time scale for an image axis with CTYPEia
+*     set to 'TIME'.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::timesys is changed.
+*
+*   char trefpos[72]
+*     (Given, auxiliary) TREFPOS keyvalue, being the location in space where
+*     the recorded time is valid.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::trefpos is changed.
+*
+*   char trefdir[72]
+*     (Given, auxiliary) TREFDIR keyvalue, being the reference direction used
+*     in calculating a pathlength delay.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::trefdir is changed.
+*
+*   char plephem[72]
+*     (Given, auxiliary) PLEPHEM keyvalue, being the Solar System ephemeris
+*     used for calculating a pathlength delay.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::plephem is changed.
+*
+*   char timeunit[72]
+*     (Given, auxiliary) TIMEUNIT keyvalue, being the time units in which
+*     the following header values are expressed: TSTART, TSTOP, TIMEOFFS,
+*     TIMSYER, TIMRDER, TIMEDEL.  It also provides the default value for
+*     CUNITia for time axes.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::timeunit is changed.
+*
+*   char dateref[72]
+*     (Given, auxiliary) DATEREF keyvalue, being the date of a reference epoch
+*     relative to which other time measurements refer.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::dateref is changed.
+*
+*   double mjdref[2]
+*     (Given, auxiliary) MJDREF keyvalue, equivalent to DATEREF expressed as
+*     a Modified Julian Date (MJD = JD - 2400000.5).  The value is given as
+*     the sum of the two-element vector, allowing increased precision.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::mjdref is changed.
+*
+*   double timeoffs
+*     (Given, auxiliary) TIMEOFFS keyvalue, being a time offset, which may be
+*     used, for example, to provide a uniform clock correction for times
+*     referenced to DATEREF.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::timeoffs is changed.
 *
 *   char dateobs[72]
-*     (Given, auxiliary) The date of the start of the observation unless
-*     otherwise explained in the comment field of the DATE-OBS keyword, in
+*     (Given, auxiliary) DATE-OBS keyvalue, being the date at the start of the
+*     observation unless otherwise explained in the DATE-OBS keycomment, in
 *     ISO format, yyyy-mm-ddThh:mm:ss.
 *
 *     It is not necessary to reset the wcsprm struct (via wcsset()) when
 *     wcsprm::dateobs is changed.
+*
+*   char datebeg[72]
+*     (Given, auxiliary) DATE-BEG keyvalue, being the date at the start of the
+*     observation in ISO format, yyyy-mm-ddThh:mm:ss.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::datebeg is changed.
+*
+*   char dateavg[72]
+*     (Given, auxiliary) DATE-AVG keyvalue, being the date at a representative
+*     mid-point of the observation in ISO format, yyyy-mm-ddThh:mm:ss.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::dateavg is changed.
+*
+*   char dateend[72]
+*     (Given, auxiliary) DATE-END keyvalue, baing the date at the end of the
+*     observation in ISO format, yyyy-mm-ddThh:mm:ss.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::dateend is changed.
+*
+*   double mjdobs
+*     (Given, auxiliary) MJD-OBS keyvalue, equivalent to DATE-OBS expressed
+*     as a Modified Julian Date (MJD = JD - 2400000.5).
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::mjdobs is changed.
+*
+*   double mjdbeg
+*     (Given, auxiliary) MJD-BEG keyvalue, equivalent to DATE-BEG expressed
+*     as a Modified Julian Date (MJD = JD - 2400000.5).
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::mjdbeg is changed.
+*
+*   double mjdavg
+*     (Given, auxiliary) MJD-AVG keyvalue, equivalent to DATE-AVG expressed
+*     as a Modified Julian Date (MJD = JD - 2400000.5).
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::mjdavg is changed.
+*
+*   double mjdend
+*     (Given, auxiliary) MJD-END keyvalue, equivalent to DATE-END expressed
+*     as a Modified Julian Date (MJD = JD - 2400000.5).
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::mjdend is changed.
+*
+*   double jepoch
+*     (Given, auxiliary) JEPOCH keyvalue, equivalent to DATE-OBS expressed
+*     as a Julian epoch.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::jepoch is changed.
+*
+*   double bepoch
+*     (Given, auxiliary) BEPOCH keyvalue, equivalent to DATE-OBS expressed
+*     as a Besselian epoch
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::bepoch is changed.
+*
+*   double tstart
+*     (Given, auxiliary) TSTART keyvalue, equivalent to DATE-BEG expressed
+*     as a time in units of TIMEUNIT relative to DATEREF+TIMEOFFS.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::tstart is changed.
+*
+*   double tstop
+*     (Given, auxiliary) TSTOP keyvalue, equivalent to DATE-END expressed
+*     as a time in units of TIMEUNIT relative to DATEREF+TIMEOFFS.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::tstop is changed.
+*
+*   double xposure
+*     (Given, auxiliary) XPOSURE keyvalue, being the effective exposure time
+*     in units of TIMEUNIT.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::xposure is changed.
+*
+*   double telapse
+*     (Given, auxiliary) TELAPSE keyvalue, equivalent to the elapsed time
+*     between DATE-BEG and DATE-END, in units of TIMEUNIT.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::telapse is changed.
+*
+*   double timsyer
+*     (Given, auxiliary) TIMSYER keyvalue, being the absolute error of the
+*     time values, in units of TIMEUNIT.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::timsyer is changed.
+*
+*   double timrder
+*     (Given, auxiliary) TIMRDER keyvalue, being the accuracy of time stamps
+*     relative to each other, in units of TIMEUNIT.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::timrder is changed.
+*
+*   double timedel
+*     (Given, auxiliary) TIMEDEL keyvalue, being the resolution of the time
+*     stamps.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::timedel is changed.
+*
+*   double timepixr
+*     (Given, auxiliary) TIMEPIXR keyvalue, being the relative position of the
+*     time stamps in binned time intervals, a value between 0.0 and 1.0.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::timepixr is changed.
+*
+*   double obsgeo[6]
+*     (Given, auxiliary) Location of the observer in a standard terrestrial
+*     reference frame.  The first three give ITRS Cartesian coordinates
+*     OBSGEO-X [m],   OBSGEO-Y [m],   OBSGEO-Z [m], and the second three give
+*     OBSGEO-L [deg], OBSGEO-B [deg], OBSGEO-H [m], which are related through
+*     a standard transformation.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::obsgeo is changed.
+*
+*   char obsorbit[72]
+*     (Given, auxiliary) OBSORBIT keyvalue, being the URI, URL, or name of an
+*     orbit ephemeris file giving spacecraft coordinates relating to TREFPOS.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::obsorbit is changed.
+*
+*   char radesys[72]
+*     (Given, auxiliary) The equatorial or ecliptic coordinate system type,
+*     RADESYSa.
+*
+*     It is not necessary to reset the wcsprm struct (via wcsset()) when
+*     wcsprm::radesys is changed.
 *
 *   double equinox
 *     (Given, auxiliary) The equinox associated with dynamical equatorial or
@@ -1198,34 +1689,6 @@
 *
 *     It is not necessary to reset the wcsprm struct (via wcsset()) when
 *     wcsprm::equinox is changed.
-*
-*   double mjdavg
-*     (Given, auxiliary) Modified Julian Date (MJD = JD - 2400000.5), MJD-AVG,
-*     corresponding to DATE-AVG.
-*
-*     It is not necessary to reset the wcsprm struct (via wcsset()) when
-*     wcsprm::mjdavg is changed.
-*
-*   double mjdobs
-*     (Given, auxiliary) Modified Julian Date (MJD = JD - 2400000.5), MJD-OBS,
-*     corresponding to DATE-OBS.
-*
-*     It is not necessary to reset the wcsprm struct (via wcsset()) when
-*     wcsprm::mjdobs is changed.
-*
-*   double obsgeo[3]
-*     (Given, auxiliary) Location of the observer in a standard terrestrial
-*     reference frame, OBSGEO-X, OBSGEO-Y, OBSGEO-Z [m].
-*
-*     It is not necessary to reset the wcsprm struct (via wcsset()) when
-*     wcsprm::obsgeo is changed.
-*
-*   char radesys[72]
-*     (Given, auxiliary) The equatorial or ecliptic coordinate system type,
-*     RADESYSa.
-*
-*     It is not necessary to reset the wcsprm struct (via wcsset()) when
-*     wcsprm::radesys is changed.
 *
 *   char specsys[72]
 *     (Given, auxiliary) Spectral reference frame (standard of rest),
@@ -1270,14 +1733,14 @@
 *     It is not necessary to reset the wcsprm struct (via wcsset()) when
 *     wcsprm::velangl is changed.
 *
-*   char wcsname[72]
-*     (Given, auxiliary) The name given to the coordinate representation,
-*     WCSNAMEa.  This variable accomodates the longest allowed string-valued
-*     FITS keyword, being limited to 68 characters, plus the null-terminating
-*     character.
-*
-*     It is not necessary to reset the wcsprm struct (via wcsset()) when
-*     wcsprm::wcsname is changed.
+*   struct auxprm *aux
+*     (Given, auxiliary) This struct holds auxiliary coordinate system
+*     information of a specialist nature.  While these parameters may be
+*     widely recognized within particular fields of astronomy, they differ
+*     from the above auxiliary parameters in not being defined by any of the
+*     FITS WCS standards.  Collecting them together in a separate struct that
+*     is allocated only when required helps to control bloat in the size of
+*     the wcsprm struct.
 *
 *   int ntab
 *     (Given) See wcsprm::tab.
@@ -1365,9 +1828,6 @@
 *     CTYPEia in "4-3" form with unrecognized algorithm code will have its
 *     type set to -1 and generate an error.
 *
-*   void *padding
-*     (An unused variable inserted for alignment purposes only.)
-*
 *   struct linprm lin
 *     (Returned) Linear transformation parameters (usage is described in the
 *     prologue to lin.h).
@@ -1384,8 +1844,6 @@
 *     (Returned) If enabled, when an error status is returned, this struct
 *     contains detailed information about the error, see wcserr_enable().
 *
-*   void *m_padding
-*     (For internal use only.)
 *   int m_flag
 *     (For internal use only.)
 *   int m_naxis
@@ -1417,6 +1875,10 @@
 *   double *m_crder
 *     (For internal use only.)
 *   double *m_csyer
+*     (For internal use only.)
+*   double *m_czphs
+*     (For internal use only.)
+*   double *m_cperi
 *     (For internal use only.)
 *   struct tabprm *m_tab
 *     (For internal use only.)
@@ -1459,55 +1921,33 @@
 *     (Given) Parameter value.
 *
 *
-* wtbarr struct - Extraction of coordinate lookup tables from BINTABLE
-* --------------------------------------------------------------------
-* Function wcstab(), which is invoked automatically by wcspih(), sets up an
-* array of wtbarr structs to assist in extracting coordinate lookup tables
-* from a binary table extension (BINTABLE) and copying them into the tabprm
-* structs stored in wcsprm.  Refer to the usage notes for wcspih() and
-* wcstab() in wcshdr.h, and also the prologue to tab.h.
+* auxprm struct - Additional auxiliary parameters
+* -----------------------------------------------
+* The auxprm struct holds auxiliary coordinate system information of a
+* specialist nature.  It is anticipated that this struct will expand in future
+* to accomodate additional parameters.
 *
-* For C++ usage, because of a name space conflict with the wtbarr typedef
-* defined in CFITSIO header fitsio.h, the wtbarr struct is renamed to wtbarr_s
-* by preprocessor macro substitution with scope limited to wcs.h itself.
+* All members of this struct are to be set by the user.
 *
-*   int i
-*     (Given) Image axis number.
+*   double rsun_ref
+*     (Given, auxiliary) Reference radius of the Sun used in coordinate
+*     calculations (m).
 *
-*   int m
-*     (Given) wcstab array axis number for index vectors.
+*   double dsun_obs
+*     (Given, auxiliary) Distance between the centre of the Sun and the
+*     observer (m).
 *
-*   int kind
-*     (Given) Character identifying the wcstab array type:
-*       - c: coordinate array,
-*       - i: index vector.
+*   double crln_obs
+*     (Given, auxiliary) Carrington heliographic longitude of the observer
+*     (deg).
 *
-*   char extnam[72]
-*     (Given) EXTNAME identifying the binary table extension.
+*   double hgln_obs
+*     (Given, auxiliary) Stonyhurst heliographic longitude of the observer
+*     (deg).
 *
-*   int extver
-*     (Given) EXTVER identifying the binary table extension.
-*
-*   int extlev
-*     (Given) EXTLEV identifying the binary table extension.
-*
-*   char ttype[72]
-*     (Given) TTYPEn identifying the column of the binary table that contains
-*     the wcstab array.
-*
-*   long row
-*     (Given) Table row number.
-*
-*   int ndim
-*     (Given) Expected dimensionality of the wcstab array.
-*
-*   int *dimlen
-*     (Given) Address of the first element of an array of int of length ndim
-*     into which the wcstab array axis lengths are to be written.
-*
-*   double **arrayp
-*     (Given) Pointer to an array of double which is to be allocated by the
-*     user and into which the wcstab array is to be written.
+*   double hglt_obs
+*     (Given, auxiliary) Heliographic latitude (Carrington or Stonyhurst) of
+*     the observer (deg).
 *
 *
 * Global variable: const char *wcs_errmsg[] - Status return messages
@@ -1525,6 +1965,7 @@
 
 #ifdef __cplusplus
 extern "C" {
+#define wtbarr wtbarr_s		// See prologue of wtbarr.h.
 #endif
 
 #define WCSSUB_LONGITUDE 0x1001
@@ -1543,163 +1984,178 @@ extern "C" {
 extern const char *wcs_errmsg[];
 
 enum wcs_errmsg_enum {
-  WCSERR_SUCCESS         =  0,	/* Success. */
-  WCSERR_NULL_POINTER    =  1,	/* Null wcsprm pointer passed. */
-  WCSERR_MEMORY          =  2,	/* Memory allocation failed. */
-  WCSERR_SINGULAR_MTX    =  3,	/* Linear transformation matrix is
-				   singular. */
-  WCSERR_BAD_CTYPE       =  4,	/* Inconsistent or unrecognized coordinate
-				   axis type. */
-  WCSERR_BAD_PARAM       =  5,	/* Invalid parameter value. */
-  WCSERR_BAD_COORD_TRANS =  6,	/* Unrecognized coordinate transformation
-				   parameter. */
-  WCSERR_ILL_COORD_TRANS =  7,	/* Ill-conditioned coordinate transformation
-				   parameter. */
-  WCSERR_BAD_PIX         =  8,	/* One or more of the pixel coordinates were
-				   invalid. */
-  WCSERR_BAD_WORLD       =  9,	/* One or more of the world coordinates were
-				   invalid. */
-  WCSERR_BAD_WORLD_COORD = 10,	/* Invalid world coordinate. */
-  WCSERR_NO_SOLUTION     = 11,	/* No solution found in the specified
-				   interval. */
-  WCSERR_BAD_SUBIMAGE    = 12,	/* Invalid subimage specification. */
-  WCSERR_NON_SEPARABLE   = 13 	/* Non-separable subimage coordinate
-				   system. */
+  WCSERR_SUCCESS         =  0,	// Success.
+  WCSERR_NULL_POINTER    =  1,	// Null wcsprm pointer passed.
+  WCSERR_MEMORY          =  2,	// Memory allocation failed.
+  WCSERR_SINGULAR_MTX    =  3,	// Linear transformation matrix is singular.
+  WCSERR_BAD_CTYPE       =  4,	// Inconsistent or unrecognized coordinate
+				// axis type.
+  WCSERR_BAD_PARAM       =  5,	// Invalid parameter value.
+  WCSERR_BAD_COORD_TRANS =  6,	// Unrecognized coordinate transformation
+				// parameter.
+  WCSERR_ILL_COORD_TRANS =  7,	// Ill-conditioned coordinate transformation
+				// parameter.
+  WCSERR_BAD_PIX         =  8,	// One or more of the pixel coordinates were
+				// invalid.
+  WCSERR_BAD_WORLD       =  9,	// One or more of the world coordinates were
+				// invalid.
+  WCSERR_BAD_WORLD_COORD = 10,	// Invalid world coordinate.
+  WCSERR_NO_SOLUTION     = 11,	// No solution found in the specified
+				// interval.
+  WCSERR_BAD_SUBIMAGE    = 12,	// Invalid subimage specification.
+  WCSERR_NON_SEPARABLE   = 13,	// Non-separable subimage coordinate system.
+  WCSERR_UNSET           = 14 	// wcsprm struct is unset.
 };
 
 
-/* Struct used for storing PVi_ma keywords. */
+// Struct used for storing PVi_ma keywords.
 struct pvcard {
-  int i;			/* Axis number, as in PVi_ma (1-relative).  */
-  int m;			/* Parameter number, ditto  (0-relative).   */
-  double value;			/* Parameter value.                         */
+  int i;			// Axis number, as in PVi_ma (1-relative).
+  int m;			// Parameter number, ditto  (0-relative).
+  double value;			// Parameter value.
 };
 
-/* Size of the pvcard struct in int units, used by the Fortran wrappers. */
+// Size of the pvcard struct in int units, used by the Fortran wrappers.
 #define PVLEN (sizeof(struct pvcard)/sizeof(int))
 
-/* Struct used for storing PSi_ma keywords. */
+// Struct used for storing PSi_ma keywords.
 struct pscard {
-  int i;			/* Axis number, as in PSi_ma (1-relative).  */
-  int m;			/* Parameter number, ditto  (0-relative).   */
-  char value[72];		/* Parameter value.                         */
+  int i;			// Axis number, as in PSi_ma (1-relative).
+  int m;			// Parameter number, ditto  (0-relative).
+  char value[72];		// Parameter value.
 };
 
-/* Size of the pscard struct in int units, used by the Fortran wrappers. */
+// Size of the pscard struct in int units, used by the Fortran wrappers.
 #define PSLEN (sizeof(struct pscard)/sizeof(int))
 
-				/* For extracting wcstab arrays.  Matches   */
-				/* the wtbarr typedef defined in CFITSIO    */
-				/* header fitsio.h.                         */
-#ifdef __cplusplus
-#define wtbarr wtbarr_s		/* See prologue above.                      */
-#endif
-struct wtbarr {
-  int  i;			/* Image axis number.                       */
-  int  m;			/* Array axis number for index vectors.     */
-  int  kind;			/* wcstab array type.                       */
-  char extnam[72];		/* EXTNAME of binary table extension.       */
-  int  extver;			/* EXTVER  of binary table extension.       */
-  int  extlev;			/* EXTLEV  of binary table extension.       */
-  char ttype[72];		/* TTYPEn of column containing the array.   */
-  long row;			/* Table row number.                        */
-  int  ndim;			/* Expected wcstab array dimensionality.    */
-  int  *dimlen;			/* Where to write the array axis lengths.   */
-  double **arrayp;		/* Where to write the address of the array  */
-				/* allocated to store the wcstab array.     */
+// Struct used to hold additional auxiliary parameters.
+struct auxprm {
+  double rsun_ref;              // Solar radius.
+  double dsun_obs;              // Distance from Sun centre to observer.
+  double crln_obs;              // Carrington heliographic lng of observer.
+  double hgln_obs;              // Stonyhurst heliographic lng of observer.
+  double hglt_obs;              // Heliographic latitude of observer.
 };
+
+// Size of the auxprm struct in int units, used by the Fortran wrappers.
+#define AUXLEN (sizeof(struct auxprm)/sizeof(int))
 
 
 struct wcsprm {
-  /* Initialization flag (see the prologue above).                          */
-  /*------------------------------------------------------------------------*/
-  int    flag;			/* Set to zero to force initialization.     */
+  // Initialization flag (see the prologue above).
+  //--------------------------------------------------------------------------
+  int    flag;			// Set to zero to force initialization.
 
-  /* FITS header keyvalues to be provided (see the prologue above).         */
-  /*------------------------------------------------------------------------*/
-  int    naxis;			/* Number of axes (pixel and coordinate).   */
-  double *crpix;		/* CRPIXja keyvalues for each pixel axis.   */
-  double *pc;			/* PCi_ja  linear transformation matrix.    */
-  double *cdelt;		/* CDELTia keyvalues for each coord axis.   */
-  double *crval;		/* CRVALia keyvalues for each coord axis.   */
+  // FITS header keyvalues to be provided (see the prologue above).
+  //--------------------------------------------------------------------------
+  int    naxis;			// Number of axes (pixel and coordinate).
+  double *crpix;		// CRPIXja keyvalues for each pixel axis.
+  double *pc;			// PCi_ja  linear transformation matrix.
+  double *cdelt;		// CDELTia keyvalues for each coord axis.
+  double *crval;		// CRVALia keyvalues for each coord axis.
 
-  char   (*cunit)[72];		/* CUNITia keyvalues for each coord axis.   */
-  char   (*ctype)[72];		/* CTYPEia keyvalues for each coord axis.   */
+  char   (*cunit)[72];		// CUNITia keyvalues for each coord axis.
+  char   (*ctype)[72];		// CTYPEia keyvalues for each coord axis.
 
-  double lonpole;		/* LONPOLEa keyvalue.                       */
-  double latpole;		/* LATPOLEa keyvalue.                       */
+  double lonpole;		// LONPOLEa keyvalue.
+  double latpole;		// LATPOLEa keyvalue.
 
-  double restfrq;		/* RESTFRQa keyvalue.                       */
-  double restwav;		/* RESTWAVa keyvalue.                       */
+  double restfrq;		// RESTFRQa keyvalue.
+  double restwav;		// RESTWAVa keyvalue.
 
-  int    npv;			/* Number of PVi_ma keywords, and the       */
-  int    npvmax;		/* number for which space was allocated.    */
-  struct pvcard *pv;		/* PVi_ma keywords for each i and m.        */
+  int    npv;			// Number of PVi_ma keywords, and the
+  int    npvmax;		// number for which space was allocated.
+  struct pvcard *pv;		// PVi_ma keywords for each i and m.
 
-  int    nps;			/* Number of PSi_ma keywords, and the       */
-  int    npsmax;		/* number for which space was allocated.    */
-  struct pscard *ps;		/* PSi_ma keywords for each i and m.        */
+  int    nps;			// Number of PSi_ma keywords, and the
+  int    npsmax;		// number for which space was allocated.
+  struct pscard *ps;		// PSi_ma keywords for each i and m.
 
-  /* Alternative header keyvalues (see the prologue above).                 */
-  /*------------------------------------------------------------------------*/
-  double *cd;			/* CDi_ja linear transformation matrix.     */
-  double *crota;		/* CROTAia keyvalues for each coord axis.   */
-  int    altlin;		/* Alternative representations              */
-				/*   Bit 0: PCi_ja  is present,             */
-				/*   Bit 1: CDi_ja  is present,             */
-				/*   Bit 2: CROTAia is present.             */
-  int    velref;		/* AIPS velocity code, VELREF.              */
+  // Alternative header keyvalues (see the prologue above).
+  //--------------------------------------------------------------------------
+  double *cd;			// CDi_ja linear transformation matrix.
+  double *crota;		// CROTAi keyvalues for each coord axis.
+  int    altlin;		// Alternative representations
+				//   Bit 0: PCi_ja is present,
+				//   Bit 1: CDi_ja is present,
+				//   Bit 2: CROTAi is present.
+  int    velref;		// AIPS velocity code, VELREF.
 
-  /* Auxiliary coordinate system information, not used by WCSLIB.           */
+  // Auxiliary coordinate system information of a general nature.  Not
+  // used by WCSLIB.  Refer to the prologue comments above for a brief
+  // explanation of these values.
   char   alt[4];
   int    colnum;
   int    *colax;
-
+				// Auxiliary coordinate axis information.
   char   (*cname)[72];
   double *crder;
   double *csyer;
-  char   dateavg[72];
-  char   dateobs[72];
-  double equinox;
-  double mjdavg;
-  double mjdobs;
-  double obsgeo[3];
+  double *czphs;
+  double *cperi;
+
+  char   wcsname[72];
+				// Time reference system and measurement.
+  char   timesys[72], trefpos[72], trefdir[72], plephem[72];
+  char   timeunit[72];
+  char   dateref[72];
+  double mjdref[2];
+  double timeoffs;
+				// Data timestamps and durations.
+  char   dateobs[72], datebeg[72], dateavg[72], dateend[72];
+  double mjdobs, mjdbeg, mjdavg, mjdend;
+  double jepoch, bepoch;
+  double tstart, tstop;
+  double xposure, telapse;
+				// Timing accuracy.
+  double timsyer, timrder;
+  double timedel, timepixr;
+				// Spatial & celestial reference frame.
+  double obsgeo[6];
+  char   obsorbit[72];
   char   radesys[72];
+  double equinox;
   char   specsys[72];
   char   ssysobs[72];
   double velosys;
   double zsource;
   char   ssyssrc[72];
   double velangl;
-  char   wcsname[72];
 
-  /* Coordinate lookup tables (see the prologue above).                     */
-  /*------------------------------------------------------------------------*/
-  int    ntab;			/* Number of separate tables.               */
-  int    nwtb;			/* Number of wtbarr structs.                */
-  struct tabprm *tab;		/* Tabular transformation parameters.       */
-  struct wtbarr *wtb;		/* Array of wtbarr structs.                 */
+  // Additional auxiliary coordinate system information of a specialist
+  // nature.  Not used by WCSLIB.  Refer to the prologue comments above.
+  struct auxprm *aux;
 
-  /* Information derived from the FITS header keyvalues by wcsset().        */
-  /*------------------------------------------------------------------------*/
-  char   lngtyp[8], lattyp[8];	/* Celestial axis types, e.g. RA, DEC.      */
-  int    lng, lat, spec;	/* Longitude, latitude and spectral axis    */
-				/* indices (0-relative).                    */
-  int    cubeface;		/* True if there is a CUBEFACE axis.        */
-  int    *types;		/* Coordinate type codes for each axis.     */
-  void   *padding;		/* (Dummy inserted for alignment purposes.) */
+  // Coordinate lookup tables (see the prologue above).
+  //--------------------------------------------------------------------------
+  int    ntab;			// Number of separate tables.
+  int    nwtb;			// Number of wtbarr structs.
+  struct tabprm *tab;		// Tabular transformation parameters.
+  struct wtbarr *wtb;		// Array of wtbarr structs.
 
-  struct linprm lin;		/* Linear    transformation parameters.     */
-  struct celprm cel;		/* Celestial transformation parameters.     */
-  struct spcprm spc;		/* Spectral  transformation parameters.     */
+  //--------------------------------------------------------------------------
+  // Information derived from the FITS header keyvalues by wcsset().
+  //--------------------------------------------------------------------------
+  char   lngtyp[8], lattyp[8];	// Celestial axis types, e.g. RA, DEC.
+  int    lng, lat, spec;	// Longitude, latitude and spectral axis
+				// indices (0-relative).
+  int    cubeface;		// True if there is a CUBEFACE axis.
+  int    *types;		// Coordinate type codes for each axis.
 
-  /* Error handling, if enabled.                                            */
-  /*------------------------------------------------------------------------*/
+  struct linprm lin;		//    Linear transformation parameters.
+  struct celprm cel;		// Celestial transformation parameters.
+  struct spcprm spc;		//  Spectral transformation parameters.
+
+  //--------------------------------------------------------------------------
+  //             THE REMAINDER OF THE WCSPRM STRUCT IS PRIVATE.
+  //--------------------------------------------------------------------------
+
+  // Error handling, if enabled.
+  //--------------------------------------------------------------------------
   struct wcserr *err;
 
-  /* Private - the remainder are for memory management.                     */
-  /*------------------------------------------------------------------------*/
-  void   *m_padding;
+  // Memory management.
+  //--------------------------------------------------------------------------
   int    m_flag, m_naxis;
   double *m_crpix, *m_pc, *m_cdelt, *m_crval;
   char  (*m_cunit)[72], (*m_ctype)[72];
@@ -1708,12 +2164,13 @@ struct wcsprm {
   double *m_cd, *m_crota;
   int    *m_colax;
   char  (*m_cname)[72];
-  double *m_crder, *m_csyer;
+  double *m_crder, *m_csyer, *m_czphs, *m_cperi;
+  struct auxprm *m_aux;
   struct tabprm *m_tab;
   struct wtbarr *m_wtb;
 };
 
-/* Size of the wcsprm struct in int units, used by the Fortran wrappers. */
+// Size of the wcsprm struct in int units, used by the Fortran wrappers.
 #define WCSLEN (sizeof(struct wcsprm)/sizeof(int))
 
 
@@ -1726,6 +2183,8 @@ int wcsini(int alloc, int naxis, struct wcsprm *wcs);
 int wcsinit(int alloc, int naxis, struct wcsprm *wcs, int npvmax, int npsmax,
             int ndpmax);
 
+int wcsauxi(int alloc, struct wcsprm *wcs);
+
 int wcssub(int alloc, const struct wcsprm *wcssrc, int *nsub, int axes[],
            struct wcsprm *wcsdst);
 
@@ -1733,6 +2192,12 @@ int wcscompare(int cmp, double tol, const struct wcsprm *wcs1,
                const struct wcsprm *wcs2, int *equal);
 
 int wcsfree(struct wcsprm *wcs);
+
+int wcstrim(struct wcsprm *wcs);
+
+int wcssize(const struct wcsprm *wcs, int sizes[2]);
+
+int auxsize(const struct auxprm *aux, int sizes[2]);
 
 int wcsprt(const struct wcsprm *wcs);
 
@@ -1750,19 +2215,23 @@ int wcss2p(struct wcsprm *wcs, int ncoord, int nelem, const double world[],
            double phi[], double theta[], double imgcrd[], double pixcrd[],
            int stat[]);
 
-int wcsmix(struct wcsprm *wcs, int mixpix, int mixcel, const double vspan[],
+int wcsmix(struct wcsprm *wcs, int mixpix, int mixcel, const double vspan[2],
            double vstep, int viter, double world[], double phi[],
            double theta[], double imgcrd[], double pixcrd[]);
+
+int wcsccs(struct wcsprm *wcs, double lng2p1, double lat2p1, double lng1p2,
+           const char *clng, const char *clat, const char *radesys,
+           double equinox, const char *alt);
 
 int wcssptr(struct wcsprm *wcs, int *i, char ctype[9]);
 
 const char* wcslib_version(int vers[3]);
 
-/* Defined mainly for backwards compatibility, use wcssub() instead. */
+// Defined mainly for backwards compatibility, use wcssub() instead.
 #define wcscopy(alloc, wcssrc, wcsdst) wcssub(alloc, wcssrc, 0x0, 0x0, wcsdst)
 
 
-/* Deprecated. */
+// Deprecated.
 #define wcsini_errmsg wcs_errmsg
 #define wcssub_errmsg wcs_errmsg
 #define wcscopy_errmsg wcs_errmsg
@@ -1778,4 +2247,4 @@ const char* wcslib_version(int vers[3]);
 }
 #endif
 
-#endif /* WCSLIB_WCS */
+#endif // WCSLIB_WCS

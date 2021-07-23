@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: twcsmix.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: twcsmix.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * twcsmix tests wcsmix() for closure on the 1 degree celestial graticule for
@@ -46,14 +43,14 @@ void id(struct wcsprm *, int *, double, double, double, double);
 void grdplt(struct wcsprm *, double, double, double, double);
 void parser(struct wcsprm *);
 
-/* Set to 1 to skip wcsmix(), primarily for debugging purposes. */
+// Set to 1 to skip wcsmix(), primarily for debugging purposes.
 const int skip_wcsmix = 0;
 
-/* Reporting tolerance for mixex(). */
+// Reporting tolerance for mixex().
 const double tol = 1.0e-9;
 
 
-/* In real life these would be encoded as FITS header keyrecords. */
+// In real life these would be encoded as FITS header keyrecords.
 const int NAXIS = 4;
 const double CRPIX[4] =  {  513.0,  0.0,  0.0,  0.0};
 const double PC[4][4] = {{    1.1,  0.0,  0.0,  0.0},
@@ -62,10 +59,10 @@ const double PC[4][4] = {{    1.1,  0.0,  0.0,  0.0},
                          {    0.0,  0.2,  0.0,  1.0}};
 const double CDELT[4] =  {-9.635265432e-6, 1.0, 1.0, -1.0};
 
-				/* The "xxx" is reset in main(). */
+				// The "xxx" is reset in main().
 char CTYPE[4][9] = {"WAVE-F2W", "XLAT-xxx", "TIME    ", "XLON-xxx"};
 
-				/* Will be reset in mixex(). */
+				// Will be reset in mixex().
 double CRVAL[4] = {0.214982042, -30.0, -2e3, 150.0};
 double LONPOLE  = 150.0;
 double LATPOLE  = 999.0;
@@ -73,7 +70,7 @@ double RESTFRQ  =   1.42040575e9;
 double RESTWAV  =   0.0;
 
 int NPV;
-struct pvcard PV[10];		/* Projection parameters are set in main(). */
+struct pvcard PV[10];		// Projection parameters are set in main().
 
 int main()
 
@@ -85,18 +82,18 @@ int main()
   printf("Testing WCSLIB wcsmix() routine (twcsmix.c)\n"
          "-------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of wcs status return values:\n");
   for (status = 1; status <= 13; status++) {
     printf("%4d: %s.\n", status, wcs_errmsg[status]);
   }
 
 
-  /* PGPLOT initialization. */
+  // PGPLOT initialization.
   strcpy(text, "/xwindow");
   cpgbeg(0, text, 1, 1);
 
-  /* Define pen colours. */
+  // Define pen colours.
   cpgscr(0, 0.00f, 0.00f, 0.00f);
   cpgscr(1, 1.00f, 1.00f, 0.00f);
   cpgscr(2, 1.00f, 1.00f, 1.00f);
@@ -109,126 +106,126 @@ int main()
   cpgscr(9, 1.00f, 0.75f, 0.00f);
 
 
-  /*----------------------------------------------------------*/
-  /* Set the PVi_m keyvalues for the longitude axis so that   */
-  /* the fiducial native coordinates are at the native pole,  */
-  /* i.e. (phi0,theta0) = (0,90), but without any fiducial    */
-  /* offset.  We do this as a test, and also so that all      */
-  /* projections will be exercised with the same obliquity    */
-  /* parameters.                                              */
-  /*----------------------------------------------------------*/
-  PV[0].i = 4;			/* Longitude is on axis 4.     */
-  PV[0].m = 1;			/* Parameter number 1.         */
-  PV[0].value =  0.0;		/* Fiducial native longitude.  */
+  //------------------------------------------------------------
+  // Set the PVi_m keyvalues for the longitude axis so that
+  // the fiducial native coordinates are at the native pole,
+  // i.e. (phi0,theta0) = (0,90), but without any fiducial
+  // offset.  We do this as a test, and also so that all
+  // projections will be exercised with the same obliquity
+  // parameters.
+  //------------------------------------------------------------
+  PV[0].i = 4;			// Longitude is on axis 4.
+  PV[0].m = 1;			// Parameter number 1.
+  PV[0].value =  0.0;		// Fiducial native longitude.
 
-  PV[1].i = 4;			/* Longitude is on axis 4.     */
-  PV[1].m = 2;			/* Parameter number 2.         */
-  PV[1].value = 90.0;		/* Fiducial native latitude.   */
+  PV[1].i = 4;			// Longitude is on axis 4.
+  PV[1].m = 2;			// Parameter number 2.
+  PV[1].value = 90.0;		// Fiducial native latitude.
 
-  /* Set the PVi_m keyvalues for the latitude axis.           */
-  PV[2].i = 2;			/* Latitude is on axis 2.      */
-  PV[2].m = 1;			/* Parameter number 1.         */
-  PV[2].value = 0.0;		/* PVi_1 (set below).          */
+  // Set the PVi_m keyvalues for the latitude axis.
+  PV[2].i = 2;			// Latitude is on axis 2.
+  PV[2].m = 1;			// Parameter number 1.
+  PV[2].value = 0.0;		// PVi_1 (set below).
 
-  PV[3].i = 2;			/* Latitude is on axis 2.      */
-  PV[3].m = 2;			/* Parameter number 2.         */
-  PV[3].value = 0.0;		/* PVi_2 (set below).          */
+  PV[3].i = 2;			// Latitude is on axis 2.
+  PV[3].m = 2;			// Parameter number 2.
+  PV[3].value = 0.0;		// PVi_2 (set below).
 
-  /* ARC: zenithal/azimuthal equidistant. */
-  strncpy(&CTYPE[1][5], "ARC", 3);
-  strncpy(&CTYPE[3][5], "ARC", 3);
+  // ARC: zenithal/azimuthal equidistant.
+  memcpy(&CTYPE[1][5], "ARC", 3);
+  memcpy(&CTYPE[3][5], "ARC", 3);
   NPV = 2;
   mixex(-190.0, 190.0, -190.0, 190.0);
 
-  /* ZEA: zenithal/azimuthal equal area. */
-  strncpy(&CTYPE[1][5], "ZEA", 3);
-  strncpy(&CTYPE[3][5], "ZEA", 3);
+  // ZEA: zenithal/azimuthal equal area.
+  memcpy(&CTYPE[1][5], "ZEA", 3);
+  memcpy(&CTYPE[3][5], "ZEA", 3);
   NPV = 2;
   mixex(-120.0, 120.0, -120.0, 120.0);
 
-  /* CYP: cylindrical perspective. */
-  strncpy(&CTYPE[1][5], "CYP", 3);
-  strncpy(&CTYPE[3][5], "CYP", 3);
+  // CYP: cylindrical perspective.
+  memcpy(&CTYPE[1][5], "CYP", 3);
+  memcpy(&CTYPE[3][5], "CYP", 3);
   NPV = 4;
   PV[2].value = 3.0;
   PV[3].value = 0.8;
   mixex(-170.0, 170.0, -170.0, 170.0);
 
-  /* CEA: cylindrical equal area. */
-  strncpy(&CTYPE[1][5], "CEA", 3);
-  strncpy(&CTYPE[3][5], "CEA", 3);
+  // CEA: cylindrical equal area.
+  memcpy(&CTYPE[1][5], "CEA", 3);
+  memcpy(&CTYPE[3][5], "CEA", 3);
   NPV = 3;
   PV[2].value = 0.75;
   mixex(-200.0, 200.0, -200.0, 200.0);
 
-  /* CAR: plate carree. */
-  strncpy(&CTYPE[1][5], "CAR", 3);
-  strncpy(&CTYPE[3][5], "CAR", 3);
+  // CAR: plate carree.
+  memcpy(&CTYPE[1][5], "CAR", 3);
+  memcpy(&CTYPE[3][5], "CAR", 3);
   NPV = 2;
   mixex(-210.0, 210.0, -210.0, 210.0);
 
-  /* SFL: Sanson-Flamsteed. */
-  strncpy(&CTYPE[1][5], "SFL", 3);
-  strncpy(&CTYPE[3][5], "SFL", 3);
+  // SFL: Sanson-Flamsteed.
+  memcpy(&CTYPE[1][5], "SFL", 3);
+  memcpy(&CTYPE[3][5], "SFL", 3);
   NPV = 2;
   mixex(-190.0, 190.0, -190.0, 190.0);
 
-  /* PAR: parabolic. */
-  strncpy(&CTYPE[1][5], "PAR", 3);
-  strncpy(&CTYPE[3][5], "PAR", 3);
+  // PAR: parabolic.
+  memcpy(&CTYPE[1][5], "PAR", 3);
+  memcpy(&CTYPE[3][5], "PAR", 3);
   NPV = 2;
   mixex(-190.0, 190.0, -190.0, 190.0);
 
-  /* MOL: Mollweide's projection. */
-  strncpy(&CTYPE[1][5], "MOL", 3);
-  strncpy(&CTYPE[3][5], "MOL", 3);
+  // MOL: Mollweide's projection.
+  memcpy(&CTYPE[1][5], "MOL", 3);
+  memcpy(&CTYPE[3][5], "MOL", 3);
   NPV = 2;
   mixex(-170.0, 170.0, -170.0, 170.0);
 
-  /* AIT: Hammer-Aitoff. */
-  strncpy(&CTYPE[1][5], "AIT", 3);
-  strncpy(&CTYPE[3][5], "AIT", 3);
+  // AIT: Hammer-Aitoff.
+  memcpy(&CTYPE[1][5], "AIT", 3);
+  memcpy(&CTYPE[3][5], "AIT", 3);
   NPV = 2;
   mixex(-170.0, 170.0, -170.0, 170.0);
 
-  /* COE: conic equal area. */
-  strncpy(&CTYPE[1][5], "COE", 3);
-  strncpy(&CTYPE[3][5], "COE", 3);
+  // COE: conic equal area.
+  memcpy(&CTYPE[1][5], "COE", 3);
+  memcpy(&CTYPE[3][5], "COE", 3);
   NPV = 4;
   PV[2].value = 60.0;
   PV[3].value = 15.0;
   mixex(-140.0, 140.0, -120.0, 160.0);
 
-  /* COD: conic equidistant. */
-  strncpy(&CTYPE[1][5], "COD", 3);
-  strncpy(&CTYPE[3][5], "COD", 3);
+  // COD: conic equidistant.
+  memcpy(&CTYPE[1][5], "COD", 3);
+  memcpy(&CTYPE[3][5], "COD", 3);
   NPV = 4;
   PV[2].value = 60.0;
   PV[3].value = 15.0;
   mixex(-200.0, 200.0, -180.0, 220.0);
 
-  /* BON: Bonne's projection. */
-  strncpy(&CTYPE[1][5], "BON", 3);
-  strncpy(&CTYPE[3][5], "BON", 3);
+  // BON: Bonne's projection.
+  memcpy(&CTYPE[1][5], "BON", 3);
+  memcpy(&CTYPE[3][5], "BON", 3);
   NPV = 3;
   PV[2].value = 30.0;
   mixex(-160.0, 160.0, -160.0, 160.0);
 
-  /* PCO: polyconic. */
-  strncpy(&CTYPE[1][5], "PCO", 3);
-  strncpy(&CTYPE[3][5], "PCO", 3);
+  // PCO: polyconic.
+  memcpy(&CTYPE[1][5], "PCO", 3);
+  memcpy(&CTYPE[3][5], "PCO", 3);
   NPV = 2;
   mixex(-190.0, 190.0, -190.0, 190.0);
 
-  /* TSC: tangential spherical cube. */
-  strncpy(&CTYPE[1][5], "TSC", 3);
-  strncpy(&CTYPE[3][5], "TSC", 3);
+  // TSC: tangential spherical cube.
+  memcpy(&CTYPE[1][5], "TSC", 3);
+  memcpy(&CTYPE[3][5], "TSC", 3);
   NPV = 2;
   mixex(-340.0, 80.0, -210.0, 210.0);
 
-  /* QSC: quadrilateralized spherical cube. */
-  strncpy(&CTYPE[1][5], "QSC", 3);
-  strncpy(&CTYPE[3][5], "QSC", 3);
+  // QSC: quadrilateralized spherical cube.
+  memcpy(&CTYPE[1][5], "QSC", 3);
+  memcpy(&CTYPE[3][5], "QSC", 3);
   NPV = 2;
   mixex(-340.0, 80.0, -210.0, 210.0);
 
@@ -257,19 +254,19 @@ double imax, imin, jmax, jmin;
   struct prjprm *wcsprj = &(wcs.cel.prj);
 
 
-  /* This routine simulates the actions of a FITS header parser. */
+  // This routine simulates the actions of a FITS header parser.
   wcs.flag = -1;
   parser(&wcs);
 
 
-  /* Draw the coordinate graticule. */
+  // Draw the coordinate graticule.
   grdplt(&wcs, imin, imax, jmin, jmax);
   if (skip_wcsmix) return;
 
 
   printf("Testing %s; reporting tolerance %5.1g deg.\n", wcsprj->code, tol);
 
-  /* Cache frequently used values. */
+  // Cache frequently used values.
   wcslng = wcs.lng;
   wcslat = wcs.lat;
   worldlng = world + wcslng;
@@ -415,7 +412,7 @@ double imax, imin, jmax, jmin;
   return;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 void id(wcs, doid, lng1, lat1, pixlng, pixlat)
 
@@ -430,7 +427,7 @@ double lng1, lat1, pixlng, pixlat;
   struct prjprm *wcsprj = &(wcscel->prj);
 
   if (*doid) {
-    /* Compute native coordinates. */
+    // Compute native coordinates.
     sphs2x(wcscel->euler, 1, 1, 1, 1, &lng1, &lat1, &phi, &theta);
 
     printf("\n%3s:  lng1  =%20.15f   lat1  =%20.15f\n", wcsprj->code, lng1,
@@ -449,7 +446,7 @@ double lng1, lat1, pixlng, pixlat;
   return;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 void grdplt(wcs, imin, imax, jmin, jmax)
 
@@ -471,7 +468,7 @@ double imax, imin, jmax, jmin;
   struct prjprm *ntvprj = &(native.cel.prj);
 
 
-  /* Initialize non-celestial world coordinates. */
+  // Initialize non-celestial world coordinates.
   freq = 1.42040595e9 - 180.0 * 62500.0;
   for (j = 0; j < 361; j++) {
     world[j][0] = 0.0;
@@ -484,18 +481,18 @@ double imax, imin, jmax, jmin;
   }
 
 
-  /* Define PGPLOT viewport. */
+  // Define PGPLOT viewport.
   fimax = (float)imax;
   fimin = (float)imin;
   fjmax = (float)jmax;
   fjmin = (float)jmin;
   cpgenv(fimin, fimax, fjmin, fjmax, 1, -2);
 
-  /* Draw face boundaries of the quad-cube projections. */
+  // Draw face boundaries of the quad-cube projections.
   if (wcsprj->category == QUADCUBE) {
     cpgsci(8);
 
-    /* Draw the map boundary. */
+    // Draw the map boundary.
     for (j = 0; j < 9; j++) {
       img[j][0] = 0.0;
       img[j][1] = 0.0;
@@ -539,7 +536,7 @@ double imax, imin, jmax, jmin;
   }
 
 
-  /* Draw the native coordinate graticule faintly in the background. */
+  // Draw the native coordinate graticule faintly in the background.
   native.flag = -1;
   (void)wcscopy(1, wcs, &native);
   native.crval[wcs->lng] =  0.0;
@@ -549,7 +546,7 @@ double imax, imin, jmax, jmin;
 
   cpgsci(8);
 
-  /* Draw native meridians of longitude. */
+  // Draw native meridians of longitude.
   for (ilng = -180; ilng <= 180; ilng += 15) {
     lng = (double)ilng;
     if (ilng == -180) lng = -179.99;
@@ -593,7 +590,7 @@ double imax, imin, jmax, jmin;
     cpgline(k, ir, jr);
   }
 
-  /* Draw native parallels of latitude. */
+  // Draw native parallels of latitude.
   for (ilat = -90; ilat <= 90; ilat += 15) {
     lat = (double)ilat;
 
@@ -642,10 +639,10 @@ double imax, imin, jmax, jmin;
   wcsfree(&native);
 
 
-  /* Draw a colour-coded celestial coordinate graticule. */
+  // Draw a colour-coded celestial coordinate graticule.
   ci = 1;
 
-  /* Draw celestial meridians of longitude. */
+  // Draw celestial meridians of longitude.
   for (ilng = -180; ilng <= 180; ilng += 15) {
     lng = (double)ilng;
 
@@ -673,7 +670,7 @@ double imax, imin, jmax, jmin;
     pixlng = pix[0] + wcs->lng;
     pixlat = pix[0] + wcs->lat;
     for (ilat = -90; ilat <= 90; ilat++) {
-      /* Test for discontinuities. */
+      // Test for discontinuities.
       if (k > 0) {
         if (fabs(*pixlng - ir[k-1]) > step ||
             fabs(*pixlat - jr[k-1]) > step) {
@@ -693,7 +690,7 @@ double imax, imin, jmax, jmin;
     cpgline(k, ir, jr);
   }
 
-  /* Draw celestial parallels of latitude. */
+  // Draw celestial parallels of latitude.
   ci = 1;
   for (ilat = -90; ilat <= 90; ilat += 15) {
     lat = (double)ilat;
@@ -722,7 +719,7 @@ double imax, imin, jmax, jmin;
     pixlng = pix[0] + wcs->lng;
     pixlat = pix[0] + wcs->lat;
     for (ilng = -180; ilng <= 180; ilng++) {
-      /* Test for discontinuities. */
+      // Test for discontinuities.
       if (k > 0) {
         if (fabs(*pixlng - ir[k-1]) > step ||
             fabs(*pixlat - jr[k-1]) > step) {
@@ -743,7 +740,7 @@ double imax, imin, jmax, jmin;
   }
 
 
-  /* Write a descriptive title. */
+  // Write a descriptive title.
   cpgsci(1);
   sprintf(text, "%s projection - 15 degree graticule", wcsprj->code);
   printf("\n\n%s\n", text);
@@ -768,7 +765,7 @@ double imax, imin, jmax, jmin;
   return;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 void parser(wcs)
 
@@ -778,17 +775,17 @@ struct wcsprm *wcs;
   int i, j, status;
   double *pcij;
 
-  /* In practice a parser would read the FITS header until it encountered  */
-  /* the NAXIS keyword which must occur near the start, before any of the  */
-  /* WCS keywords.  It would then use wcsini() to allocate memory for      */
-  /* arrays in the wcsprm struct and set default values.  In this          */
-  /* simulation the header keyvalues are set as global variables.          */
+  // In practice a parser would read the FITS header until it encountered
+  // the NAXIS keyword which must occur near the start, before any of the
+  // WCS keywords.  It would then use wcsini() to allocate memory for
+  // arrays in the wcsprm struct and set default values.  In this
+  // simulation the header keyvalues are set as global variables.
   wcsini(1, NAXIS, wcs);
 
 
-  /* Now the parser scans the FITS header, identifying WCS keywords and    */
-  /* loading their values into the appropriate elements of the wcsprm      */
-  /* struct.                                                               */
+  // Now the parser scans the FITS header, identifying WCS keywords and
+  // loading their values into the appropriate elements of the wcsprm
+  // struct.
 
   for (j = 0; j < NAXIS; j++) {
     wcs->crpix[j] = CRPIX[j];
@@ -824,7 +821,7 @@ struct wcsprm *wcs;
     wcs->pv[i] = PV[i];
   }
 
-  /* Extract information from the FITS header. */
+  // Extract information from the FITS header.
   if ((status = wcsset(wcs))) {
     printf("wcsset ERROR%3d\n", status);
   }

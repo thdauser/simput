@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tbth1.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tbth1.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tbth1 tests wcsbth(), the WCS FITS parser for binary table headers, and
@@ -67,14 +64,14 @@ int main()
 #endif
 
 
-  /* Set line buffering in case stdout is redirected to a file, otherwise
-   * stdout and stderr messages will be jumbled (stderr is unbuffered). */
+  // Set line buffering in case stdout is redirected to a file, otherwise
+  // stdout and stderr messages will be jumbled (stderr is unbuffered).
   setvbuf(stdout, NULL, _IOLBF, 0);
 
   printf("Testing WCSLIB parser for FITS binary table headers (tbth1.c)\n"
          "-------------------------------------------------------------\n\n");
 
-  /* Read in the FITS header, excluding COMMENT and HISTORY keyrecords. */
+  // Read in the FITS header, excluding COMMENT and HISTORY keyrecords.
 #if defined HAVE_CFITSIO && defined DO_CFITSIO
   status = 0;
   if (fits_open_file(&fptr, infile, READONLY, &status)) {
@@ -107,12 +104,12 @@ int main()
       if (strncmp(keyrec, "COMMENT ", 8) == 0) continue;
       if (strncmp(keyrec, "HISTORY ", 8) == 0) continue;
 
-      strncpy(header+k, keyrec, 80);
+      memcpy(header+k, keyrec, 80);
       k += 80;
       nkeyrec++;
 
       if (strncmp(keyrec, "END     ", 8) == 0) {
-        /* An END keyrecord was read, but read the rest of the block. */
+        // An END keyrecord was read, but read the rest of the block.
         gotend = 1;
       }
     }
@@ -125,9 +122,9 @@ int main()
   fprintf(stderr, "Found %d non-comment header keyrecords.\n\n", nkeyrec);
 
 
-  /* Parse the header, allowing all recognized non-standard WCS keywords and
-   * usage.  WCS keyrecords that are used are culled from the header, illegal
-   * ones are reported. */
+  // Parse the header, allowing all recognized non-standard WCS keywords and
+  // usage.  WCS keyrecords that are used are culled from the header, illegal
+  // ones are reported.
   relax = WCSHDR_all;
   ctrl  = -2;
   keysel = 0;
@@ -142,7 +139,7 @@ int main()
   if (!nreject) fprintf(stderr, "(none)\n");
 
 
-  /* List the remaining keyrecords. */
+  // List the remaining keyrecords.
   printf("\n\nNon-WCS header keyrecords ignored by wcsbth():\n");
   hptr = header;
   while (*hptr) {
@@ -150,11 +147,11 @@ int main()
     hptr += 80;
   }
 #if defined HAVE_CFITSIO && defined DO_CFITSIO
-  free(header);
+  fits_free_memory(header, &status);
 #endif
 
 
-  /* Summarize what was found. */
+  // Summarize what was found.
   printf("\n\nExtracted %d coordinate description%s:\n", nwcs,
     (nwcs == 1) ? "" : "s");
 
@@ -251,12 +248,12 @@ int main()
   }
 
 
-  /* Fix non-standard usage and print each of the wcsprm structs. */
+  // Fix non-standard usage and print each of the wcsprm structs.
   for (iwcs = 0; iwcs < nwcs; iwcs++) {
     printf("\n------------------------------------"
            "------------------------------------\n");
 
-    /* Fix non-standard WCS keyvalues. */
+    // Fix non-standard WCS keyvalues.
     if ((status = wcsfix(7, 0, wcs+iwcs, stat))) {
       printf("wcsfix ERROR, status returns: (");
       for (ifix = 0; ifix < NWCSFIX; ifix++) {
@@ -278,7 +275,7 @@ int main()
   status = wcsvfree(&nwcs, &wcs);
 
 
-  /* Do it again to check that wcsbth() can handle multiple invokations. */
+  // Do it again to check that wcsbth() can handle multiple invokations.
   printf("\nInvoking wcsbth() a second time on the same header...\n");
   ctrl = 0;
   if ((status = wcsbth(header, nkeyrec, relax, 0, keysel, colsel, &nreject,

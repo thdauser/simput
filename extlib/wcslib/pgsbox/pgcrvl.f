@@ -1,5 +1,5 @@
 *=======================================================================
-*                              PGSBOX 5.19
+*                              PGSBOX 7.7
 *-----------------------------------------------------------------------
 *
 * ATTENTION!
@@ -21,7 +21,7 @@
 *
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: pgcrvl.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: pgcrvl.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
       SUBROUTINE PGCRVL (AXEN, IDENTS, OPT, LABCTL, LABDEN, CI, GCODE,
      :   TIKLEN, NG1, GRID1, NG2, GRID2, DOEQ, NLFUNC, NLC, NLI, NLD,

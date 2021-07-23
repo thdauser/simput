@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: twcs.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: twcs.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TWCS
@@ -122,7 +120,7 @@
 
 
 *     This routine simulates the actions of a FITS header parser.
-      STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, -1, 0, 0)
       CALL PARSER (WCS)
 
       WRITE (*, 30) TOL
@@ -130,9 +128,9 @@
 
 
 *     Get indices.
-      STATUS = WCSGET (WCS, WCS_LNG,  LNGIDX)
-      STATUS = WCSGET (WCS, WCS_LAT,  LATIDX)
-      STATUS = WCSGET (WCS, WCS_SPEC, SPCIDX)
+      STATUS = WCSGTI (WCS, WCS_LNG,  LNGIDX)
+      STATUS = WCSGTI (WCS, WCS_LAT,  LATIDX)
+      STATUS = WCSGTI (WCS, WCS_SPEC, SPCIDX)
 
 *     Initialize non-celestial world coordinates.
       TIME = 1D0
@@ -228,7 +226,7 @@
       STATUS = WCSERR_ENABLE(1)
 
 *     Test 1.
-      STATUS = WCSPUT (WCS, WCS_PV, UNDEFINED, PVI(3), PVM(3))
+      STATUS = WCSPTD (WCS, WCS_PV, UNDEFINED, PVI(3), PVM(3))
       STATUS = WCSSET (WCS)
       NFAIL2 = CHECK_ERROR (WCS, STATUS, WCSERR_BAD_PARAM,
      :                      'Invalid parameter value')
@@ -289,25 +287,25 @@
       STATUS = WCSINI (NAXIS, WCS)
 
       DO 20 I = 1, NAXIS
-         STATUS = WCSPUT (WCS, WCS_CRPIX, CRPIX(I), I, 0)
+         STATUS = WCSPTD (WCS, WCS_CRPIX, CRPIX(I), I, 0)
 
          DO 10 J = 1, NAXIS
-            STATUS = WCSPUT (WCS, WCS_PC, PC(I,J), I, J)
+            STATUS = WCSPTD (WCS, WCS_PC, PC(I,J), I, J)
  10      CONTINUE
 
-         STATUS = WCSPUT (WCS, WCS_CDELT, CDELT(I), I, 0)
-         STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE(I), I, 0)
-         STATUS = WCSPUT (WCS, WCS_CRVAL, CRVAL(I), I, 0)
+         STATUS = WCSPTD (WCS, WCS_CDELT, CDELT(I), I, 0)
+         STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE(I), I, 0)
+         STATUS = WCSPTD (WCS, WCS_CRVAL, CRVAL(I), I, 0)
  20   CONTINUE
 
-      STATUS = WCSPUT (WCS, WCS_LONPOLE, LONPOLE, 0, 0)
-      STATUS = WCSPUT (WCS, WCS_LATPOLE, LATPOLE, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_LONPOLE, LONPOLE, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_LATPOLE, LATPOLE, 0, 0)
 
-      STATUS = WCSPUT (WCS, WCS_RESTFRQ, RESTFRQ, 0, 0)
-      STATUS = WCSPUT (WCS, WCS_RESTWAV, RESTWAV, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_RESTFRQ, RESTFRQ, 0, 0)
+      STATUS = WCSPTD (WCS, WCS_RESTWAV, RESTWAV, 0, 0)
 
       DO 30 K = 1, NPV
-         STATUS = WCSPUT (WCS, WCS_PV, PV(K), PVI(K), PVM(K))
+         STATUS = WCSPTD (WCS, WCS_PV, PV(K), PVI(K), PVM(K))
  30   CONTINUE
 
 *     Extract information from the FITS header.
@@ -341,38 +339,38 @@
       NFAIL = 0
 
 *     Test 2.
-      STATUS = WCSPUT (WCS, WCS_FLAG, -1, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, -1, 0, 0)
       STATUS = WCSINI (-32, WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_MEMORY,
      :          'naxis must not be negative (got -32)')
 
 *     Test 3.
-      STATUS = WCSPUT (WCS, WCS_FLAG, 0, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, 0, 0, 0)
       STATUS = WCSINI (2, WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_SUCCESS, ' ')
 
 *     Test 4; CTYPE strings handled with CHARACTER*72 variable.
       CTYPE = 'CUBEFACE'
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, CTYPE, 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE, 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, CTYPE, 2, 0)
       STATUS = WCSSET (WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_BAD_CTYPE,
      :          'Multiple CUBEFACE axes (in CTYPE1 and CTYPE2)')
 
 *     Test 5; CTYPE strings handled C-style, i.e. with trailing '\0'.
-      STATUS = WCSPUT (WCS, WCS_FLAG, 0, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, 0, 0, 0)
       STATUS = WCSINI (2, WCS)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'RA---FOO'//NULL, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'DEC--BAR'//NULL, 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, 'RA---FOO'//NULL, 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, 'DEC--BAR'//NULL, 2, 0)
       STATUS = WCSSET (WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_BAD_CTYPE,
      :          'Unrecognized projection code (FOO in CTYPE1)')
 
 *     Test 6.
-      STATUS = WCSPUT (WCS, WCS_FLAG, 0, 0, 0)
+      STATUS = WCSPTI (WCS, WCS_FLAG, 0, 0, 0)
       STATUS = WCSINI (2, WCS)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'RA---TAN'//NULL, 1, 0)
-      STATUS = WCSPUT (WCS, WCS_CTYPE, 'FREQ-LOG'//NULL, 2, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, 'RA---TAN'//NULL, 1, 0)
+      STATUS = WCSPTC (WCS, WCS_CTYPE, 'FREQ-LOG'//NULL, 2, 0)
       STATUS = WCSSET (WCS)
       NFAIL = NFAIL + CHECK_ERROR (WCS, STATUS, WCSERR_BAD_CTYPE,
      :          'Unmatched celestial axes')
@@ -403,7 +401,7 @@
       COMMON /ERRTST/ ETEST
 *-----------------------------------------------------------------------
       IF (STATUS.NE.0) THEN
-        ISTAT = WCSGET (WCS, WCS_ERR, WCSERR)
+        ISTAT = WCSGTI (WCS, WCS_ERR, WCSERR(1))
         ISTAT = WCSERR_GET (WCSERR, WCSERR_MSG, ERRMSG)
       ELSE
         ERRMSG = ' '

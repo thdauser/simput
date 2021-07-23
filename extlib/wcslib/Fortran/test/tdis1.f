@@ -1,7 +1,7 @@
 *=======================================================================
 *
-* WCSLIB 5.19 - an implementation of the FITS WCS standard.
-* Copyright (C) 1995-2018, Mark Calabretta
+* WCSLIB 7.7 - an implementation of the FITS WCS standard.
+* Copyright (C) 1995-2021, Mark Calabretta
 *
 * This file is part of WCSLIB.
 *
@@ -18,11 +18,9 @@
 * You should have received a copy of the GNU Lesser General Public
 * License along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 *
-* Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-*
 * Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 * http://www.atnf.csiro.au/people/Mark.Calabretta
-* $Id: tdis1.f,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+* $Id: tdis1.f,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=======================================================================
 
       PROGRAM TDIS1
@@ -49,7 +47,7 @@
      :          NWCS, P1, P2, STATUS, WCSP(2)
       DOUBLE PRECISION ABSMAX, CRPIX(AXMAX), DP1, DP2, IMG(2,NMAX), PX,
      :          PX0(2,NMAX), PX1(2,NMAX), RELMAX, RESID
-      CHARACTER KEYREC*80, HEADER*288000, INFILE*9
+      CHARACTER KEYREC*80, HEADER*28801, INFILE*9
 
 *     On some systems, such as Sun Sparc, the structs MUST be aligned
 *     on a double precision boundary, done here using an equivalence.
@@ -58,14 +56,15 @@
       INCLUDE 'wcshdr.inc'
       INCLUDE 'wcs.inc'
       INCLUDE 'lin.inc'
-      INTEGER   WCS(WCSLEN), LIN(LINLEN)
+      INTEGER   WCS(WCSLEN), LIN(LINLEN), ILIN
+      EQUIVALENCE (LIN, ILIN)
       DOUBLE PRECISION DUMMY1, DUMMY2
       EQUIVALENCE (WCS, DUMMY1)
       EQUIVALENCE (LIN, DUMMY2)
 
       DATA INFILE /'TPV7.fits'/
 *-----------------------------------------------------------------------
-      STATUS = WCSERR_ENABLE(1)
+      STATUS = WCSERR_ENABLE (1)
 
       WRITE (*, 10)
  10   FORMAT (
@@ -123,7 +122,7 @@
 
 
 *     Parse the header.
-      CALL FLUSH(6)
+      CALL FLUSH (6)
       STATUS = WCSPIH (HEADER, NKEYRC, WCSHDR_none, 2, NREJECT, NWCS,
      :                 WCSP)
       IF (STATUS.NE.0) GO TO 999
@@ -133,16 +132,16 @@
       IF (STATUS.NE.0) GO TO 999
 
 *     Translate the TPV "projection" into a sequent distortion.
-      STATUS = WCSSET(WCS)
+      STATUS = WCSSET (WCS)
       IF (STATUS.NE.0) THEN
-        STATUS = WCSPERR(WCS, CHAR(0))
+        STATUS = WCSPERR (WCS, CHAR(0))
         GO TO 999
       END IF
 
-*     Henceforth, we will work with linprm.
-      STATUS = WCSGET (WCS, WCS_LIN, LIN)
+*     Henceforth, we will work with linprm.  Make a shallow copy.
+      STATUS = WCSGTI (WCS, WCS_LIN, ILIN)
       IF (STATUS.NE.0) THEN
-        STATUS = WCSPERR(WCS, CHAR(0))
+        STATUS = WCSPERR (WCS, CHAR(0))
         GO TO 999
       END IF
 
@@ -262,5 +261,9 @@
 
 *     Free the memory allocated by WCSPIH.
  999  STATUS = WCSVFREE (NWCS, WCSP)
+
+*     Free memory, allocated via the call to WCSSET, in the copy we made.
+*     Also frees allocated memory in the shallow copy we made of linprm.
+      STATUS = WCSFREE (WCS)
 
       END

@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,11 +17,9 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: tcel1.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: tcel1.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * tcel1 tests the spherical projection driver routines supplied with WCSLIB by
@@ -53,7 +50,7 @@ int main()
   "Testing WCSLIB celestial coordinate transformation routines (tcel1.c)\n"
   "---------------------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of cel status return values:\n");
   for (status = 1; status <= 6; status++) {
     printf("%4d: %s.\n", status, cel_errmsg[status]);
@@ -62,28 +59,28 @@ int main()
   printf("\n");
 
 
-  /* Initialize. */
+  // Initialize.
   celini(&native);
 
-  /* Reference angles for the native graticule (in fact, the defaults). */
+  // Reference angles for the native graticule (in fact, the defaults).
   native.ref[0] = 0.0;
   native.ref[1] = 0.0;
 
-  /* Set up Bonne's projection with conformal latitude at +35. */
+  // Set up Bonne's projection with conformal latitude at +35.
   strcpy(native.prj.code, "BON");
   native.prj.pv[1] = 35.0;
 
 
-  /* Celestial graticule. */
+  // Celestial graticule.
   celini(&celestial);
   celestial.prj = native.prj;
 
 
-  /* PGPLOT initialization. */
+  // PGPLOT initialization.
   strcpy(text, "/xwindow");
   cpgbeg(0, text, 1, 1);
 
-  /* Define pen colours. */
+  // Define pen colours.
   cpgscr(0, 0.0f, 0.0f, 0.0f);
   cpgscr(1, 1.0f, 1.0f, 0.0f);
   cpgscr(2, 1.0f, 1.0f, 1.0f);
@@ -94,43 +91,42 @@ int main()
   cpgscr(7, 0.8f, 0.5f, 0.5f);
   cpgscr(8, 0.3f, 0.5f, 0.3f);
 
-  /* Define PGPLOT viewport. */
+  // Define PGPLOT viewport.
   cpgenv(-180.0f, 180.0f, -90.0f, 140.0f, 1, -2);
 
-  /* Loop over CRVAL2, LONPOLE, and LATPOLE with CRVAL1 incrementing by */
-  /* 15 degrees each time (it has an uninteresting effect).             */
+  // Loop over CRVAL2, LONPOLE, and LATPOLE with CRVAL1 incrementing by
+  // 15 degrees each time (it has an uninteresting effect).
   crval1 = -180;
   for (crval2 = -90; crval2 <=  90; crval2 += 30) {
     for (lonpole = -180; lonpole <= 180; lonpole += 30) {
       for (latpole = -1; latpole <= 1; latpole += 2) {
-        /* For the celestial graticule, set the celestial coordinates of
-         * the reference point of the projection (which for Bonne's
-         * projection is at the intersection of the native equator and
-         * prime meridian), the native longitude of the celestial pole,
-         * and extra information needed to determine the celestial
-         * latitude of the native pole.  These correspond to FITS keywords
-         * CRVAL1, CRVAL2, LONPOLE, and LATPOLE.
-         */
+        // For the celestial graticule, set the celestial coordinates of the
+        // reference point of the projection (which for Bonne's projection is
+        // at the intersection of the native equator and prime meridian), the
+	// native longitude of the celestial pole, and extra information
+	// needed to determine the celestial latitude of the native pole.
+	// These correspond to FITS keywords CRVAL1, CRVAL2, LONPOLE, and
+	// LATPOLE.
         celestial.ref[0] = (double)crval1;
         celestial.ref[1] = (double)crval2;
         celestial.ref[2] = (double)lonpole;
         celestial.ref[3] = (double)latpole;
 
-        /* Skip invalid values of LONPOLE. */
+        // Skip invalid values of LONPOLE.
         if (celset(&celestial)) {
           continue;
         }
 
-        /* Skip redundant values of LATPOLE. */
+        // Skip redundant values of LATPOLE.
         if (latpole == 1 && fabs(celestial.ref[3]) < 0.1) {
           continue;
         }
 
-        /* Buffer PGPLOT output. */
+        // Buffer PGPLOT output.
         cpgbbuf();
         cpgeras();
 
-        /* Write a descriptive title. */
+        // Write a descriptive title.
         sprintf(text, "Bonne's projection (BON) - 15 degree graticule");
         printf("\n%s\n", text);
         cpgtext(-180.0f, -100.0f, text);
@@ -146,10 +142,10 @@ int main()
         cpgtext(-180.0f, -120.0f, text);
 
 
-        /* Draw the native graticule faintly in the background. */
+        // Draw the native graticule faintly in the background.
         cpgsci(8);
 
-        /* Draw native meridians of longitude. */
+        // Draw native meridians of longitude.
         for (j = 0, ilat = -90; ilat <= 90; ilat++, j++) {
           lat[j] = (double)ilat;
         }
@@ -159,7 +155,7 @@ int main()
           if (ilng == -180) lng[0] = -179.99;
           if (ilng ==  180) lng[0] =  179.99;
 
-          /* Dash the longitude of the celestial pole. */
+          // Dash the longitude of the celestial pole.
           if ((ilng-lonpole)%360 == 0) {
             cpgsls(2);
             cpgslw(5);
@@ -185,7 +181,7 @@ int main()
           cpgslw(1);
         }
 
-        /* Draw native parallels of latitude. */
+        // Draw native parallels of latitude.
         lng[0]   = -179.99;
         lng[360] =  179.99;
         for (j = 1, ilng = -179; ilng < 180; ilng++, j++) {
@@ -214,10 +210,10 @@ int main()
         }
 
 
-        /* Draw a colour-coded celestial coordinate graticule. */
+        // Draw a colour-coded celestial coordinate graticule.
         ci = 1;
 
-        /* Draw celestial meridians of longitude. */
+        // Draw celestial meridians of longitude.
         for (j = 0, ilat = -90; ilat <= 90; ilat++, j++) {
           lat[j] = (double)ilat;
         }
@@ -228,7 +224,7 @@ int main()
           if (++ci > 7) ci = 2;
           cpgsci(ilng?ci:1);
 
-          /* Dash the reference longitude. */
+          // Dash the reference longitude.
           if ((ilng-crval1)%360 == 0) {
             cpgsls(2);
             cpgslw(5);
@@ -244,7 +240,7 @@ int main()
               continue;
             }
 
-            /* Test for discontinuities. */
+            // Test for discontinuities.
             if (j > 0) {
               if (fabs(x[j]-x[j-1]) > 4.0 || fabs(y[j]-y[j-1]) > 4.0) {
                 if (k > 1) cpgline(k, xr, yr);
@@ -262,7 +258,7 @@ int main()
           cpgslw(1);
         }
 
-        /* Draw celestial parallels of latitude. */
+        // Draw celestial parallels of latitude.
         for (j = 0, ilng = -180; ilng <= 180; ilng++, j++) {
           lng[j] = (double)ilng;
         }
@@ -274,7 +270,7 @@ int main()
           if (++ci > 7) ci = 2;
           cpgsci(ilat?ci:1);
 
-          /* Dash the reference latitude. */
+          // Dash the reference latitude.
           if (ilat == crval2) {
             cpgsls(2);
             cpgslw(5);
@@ -290,7 +286,7 @@ int main()
               continue;
             }
 
-            /* Test for discontinuities. */
+            // Test for discontinuities.
             if (j > 0) {
               if (fabs(x[j]-x[j-1]) > 4.0 || fabs(y[j]-y[j-1]) > 4.0) {
                 if (k > 1) cpgline(k, xr, yr);
@@ -308,15 +304,15 @@ int main()
           cpgslw(1);
         }
 
-        /* Flush PGPLOT buffer. */
+        // Flush PGPLOT buffer.
         cpgebuf();
         printf(" Type <RETURN> for next page: ");
         getc(stdin);
 
-        /* Cycle through celestial longitudes. */
+        // Cycle through celestial longitudes.
         if ((crval1 += 15) > 180) crval1 = -180;
 
-        /* Skip boring celestial latitudes. */
+        // Skip boring celestial latitudes.
         if (crval2 == 0) break;
       }
 

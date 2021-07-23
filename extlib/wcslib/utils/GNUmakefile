@@ -1,5 +1,5 @@
 #-----------------------------------------------------------------------------
-# GNU makefile for WCSLIB 5.19 utilities: fitshdr, HPXcvt, wcsgrid and wcsware.
+# GNU makefile for WCSLIB 7.7 utilities: fitshdr, HPXcvt, wcsgrid and wcsware.
 #
 # Summary of the main targets
 # ---------------------------
@@ -12,17 +12,18 @@
 #   1: If you need to make changes then preferably modify ../makedefs.in
 #      instead and re-run configure.
 #
-#   2: In compiling these utilities, this makefile assumes that the WCSLIB 5.19
+#   2: In compiling these utilities, this makefile assumes that the WCSLIB 7.7
 #      sources reside in ../{pgsbox,C} (as in the distribution kit).
 #
 # Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
 # http://www.atnf.csiro.au/people/Mark.Calabretta
-# $Id: GNUmakefile,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+# $Id: GNUmakefile,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 #-----------------------------------------------------------------------------
 # Get configure settings.
+SUBDIR := utils
 include ../makedefs
 
-UTILS := fitshdr
+UTILS := tofits fitshdr sundazel
 
 ifneq "$(CFITSIOINC)" ""
 ifneq "$(CFITSIOLIB)" ""
@@ -47,6 +48,8 @@ endif
 
 CPPFLAGS += -I.. -I../C
 
+OBSFLAGS := -DOBSLNG=$(OBSLNG) -DOBSLAT=$(OBSLAT) -DOBSTZ=$(OBSTZ)
+
 vpath %.h  ..:../C:../pgsbox
 vpath %.in ..
 
@@ -54,13 +57,24 @@ vpath %.in ..
 # Static and static pattern rules
 #--------------------------------
 
-.PHONY : build clean cleaner cleanest distclean install man realclean
+.PHONY : build clean cleaner cleanest distclean install man realclean \
+         uninstall
 
 build : $(UTILS)
+
+tofits : tofits.c
+	-@ echo ''
+	   $(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 fitshdr : fitshdr.c
 	-@ echo ''
 	   $(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@.o $<
+	   $(LD) -o $@ $@.o $(LDFLAGS) $(LIBS)
+	-@ $(RM) $@.o
+
+sundazel : sundazel.c
+	-@ echo ''
+	   $(CC) $(CPPFLAGS) $(OBSFLAGS) $(CFLAGS) -c -o $@.o $<
 	   $(LD) -o $@ $@.o $(LDFLAGS) $(LIBS)
 	-@ $(RM) $@.o
 
@@ -116,6 +130,10 @@ install : build
 	   fi
 	   $(INSTALL) -m 644 $(MAN) $(MANDIR)/man1
 
+uninstall :
+	-  cd $(BINDIR) && $(RM) $(UTILS)
+	-  cd $(MANDIR) && $(RM) $(MAN)
+
 GNUmakefile : ../makedefs ;
 
 ../makedefs ../wcsconfig.h ../wcsconfig_utils.h : makedefs.in wcsconfig.h.in \
@@ -125,9 +143,17 @@ GNUmakefile : ../makedefs ;
 
 man : $(MAN)
 
+tofits.1 : tofits
+	help2man --no-discard-stderr --version-string=$(LIBVER) \
+	  -n "Turn a list of keyrecords to a valid FITS file" -N ./$< > $@
+
 fitshdr.1 : fitshdr
 	help2man --no-discard-stderr --version-string=$(LIBVER) \
 	  -n "List headers from a FITS file" -N ./$< > $@
+
+sundazel.1 : sundazel
+	help2man --no-discard-stderr --version-string=$(LIBVER) \
+	  -n "Compute the time of Solar passage" -N ./$< > $@
 
 wcsware.1 : wcsware
 	help2man --no-discard-stderr --version-string=$(LIBVER) \

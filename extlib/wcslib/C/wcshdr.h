@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,14 +17,12 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: wcshdr.h,v 5.19.1.1 2018/07/26 15:41:40 mcalabre Exp mcalabre $
+  $Id: wcshdr.h,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
-* WCSLIB 5.19 - C routines that implement the FITS World Coordinate System
+* WCSLIB 7.7 - C routines that implement the FITS World Coordinate System
 * (WCS) standard.  Refer to the README file provided with WCSLIB for an
 * overview of the library.
 *
@@ -48,6 +45,11 @@
 =   "Representations of distortions in FITS world coordinate systems",
 =   Calabretta, M.R. et al. (WCS Paper IV, draft dated 2004/04/22),
 =   available from http://www.atnf.csiro.au/people/Mark.Calabretta
+=
+=   "Representations of time coordinates in FITS -
+=    Time and relative dimension in space",
+=   Rots, A.H., Bunclark, P.S., Calabretta, M.R., Allen, S.L.,
+=   Manchester, R.N., & Thompson, W.T. 2015, A&A, 574, A36 (WCS Paper VII)
 *
 * These routines provide the high-level interface between the FITS file and
 * the WCS coordinate transformation routines.
@@ -67,7 +69,7 @@
 *        extension, e.g. using CFITSIO routine fits_read_wcstab() - refer to
 *        the prologue of getwcstab.h.  wcsset() will automatically take
 *        control of this allocated memory, in particular causing it to be
-*        free'd by wcsfree().
+*        freed by wcsfree().
 *
 *   - 4: Translate non-standard WCS usage using wcsfix(), see wcsfix.h.
 *
@@ -108,9 +110,11 @@
 * ----------------------------------------------------
 * wcspih() is a high-level FITS WCS routine that parses an image header,
 * either that of a primary HDU or of an image extension.  All WCS keywords
-* defined in Papers I, II, and III are recognized, and also those used by the
-* AIPS convention and certain other keywords that existed in early drafts of
-* the WCS papers as explained in wcsbth() note 5.
+* defined in Papers I, II, III, IV, and VII are recognized, and also those
+* used by the AIPS convention and certain other keywords that existed in early
+* drafts of the WCS papers as explained in wcsbth() note 5.  wcspih() also
+* handles keywords associated with non-standard distortion functions described
+* in the prologue of dis.h.
 *
 * Given a character array containing a FITS image header, wcspih() identifies
 * and reads all WCS keywords for the primary coordinate representation and up
@@ -121,7 +125,8 @@
 *
 * Use wcsbth() in preference to wcspih() for FITS headers of unknown type;
 * wcsbth() can parse image headers as well as binary table and pixel list
-* headers.
+* headers, although it cannot handle keywords relating to distortion
+* functions, which may only exist in a primary image header.
 *
 * Given and returned:
 *   header    char[]    Character array containing the (entire) FITS image
@@ -177,8 +182,10 @@
 *                              reason that it was rejected.
 *                          -3: As above, and also report the number of
 *                              coordinate representations (nwcs) found.
-*                         -11: Same as -1 but preserving the basic keywords
-*                              '{DATE,MJD}-{OBS,AVG}' and 'OBSGEO-{X,Y,Z}'.
+*                         -11: Same as -1 but preserving global WCS-related
+*                              keywords such as '{DATE,MJD}-{OBS,BEG,AVG,END}'
+*                              and the other basic time-related keywords, and
+*                              'OBSGEO-{X,Y,Z,L,B,H}'.
 *                       If any keyrecords are removed from header[] it will
 *                       be null-terminated (NUL not being a legal FITS header
 *                       character), otherwise it will contain its original
@@ -217,7 +224,7 @@
 *                         4: Fatal error returned by Flex parser.
 *
 * Notes:
-*   Refer to wcsbth() notes 1, 2, 3, 5, 7, and 8.
+*   1: Refer to wcsbth() notes 1, 2, 3, 5, 7, and 8.
 *
 *
 * wcsbth() - FITS WCS parser routine for binary table and image headers
@@ -235,9 +242,9 @@
 * headers (it ignores NAXIS and does not rely on the presence of the TFIELDS
 * keyword).
 *
-* All WCS keywords defined in Papers I, II, and III are recognized, and also
-* those used by the AIPS convention and certain other keywords that existed in
-* early drafts of the WCS papers as explained in note 5 below.
+* All WCS keywords defined in Papers I, II, III, and VII are recognized, and
+* also those used by the AIPS convention and certain other keywords that
+* existed in early drafts of the WCS papers as explained in note 5 below.
 *
 * wcsbth() sets the colnum or colax[] members of the wcsprm structs that it
 * returns with the column number of an image array or the column numbers
@@ -309,8 +316,10 @@
 *                              rejected.
 *                          -3: As above, and also report the number of
 *                              coordinate representations (nwcs) found.
-*                         -11: Same as -1 but preserving the basic keywords
-*                              '{DATE,MJD}-{OBS,AVG}' and 'OBSGEO-{X,Y,Z}'.
+*                         -11: Same as -1 but preserving global WCS-related
+*                              keywords such as '{DATE,MJD}-{OBS,BEG,AVG,END}'
+*                              and the other basic time-related keywords, and
+*                              'OBSGEO-{X,Y,Z,L,B,H}'.
 *                       If any keyrecords are removed from header[] it will
 *                       be null-terminated (NUL not being a legal FITS header
 *                       character), otherwise it will contain its original
@@ -419,8 +428,8 @@
 *   4: WCS Paper I mistakenly defined the pixel list form of WCSNAMEa as
 *      TWCSna instead of WCSNna; the 'T' is meant to substitute for the axis
 *      number in the binary table form of the keyword - note that keywords
-*      defined in WCS Papers II and III that are not parameterized by axis
-*      number have identical forms for binary tables and pixel lists.
+*      defined in WCS Papers II, III, and VII that are not parameterized by
+*      axis number have identical forms for binary tables and pixel lists.
 *      Consequently wcsbth() always treats WCSNna and TWCSna as equivalent.
 *
 *   5: wcspih() and wcsbth() interpret the "relax" argument as a vector of
@@ -471,7 +480,6 @@
 *      - WCSHDR_CROTAia: Accept CROTAia (wcspih()),
 *                               iCROTna (wcsbth()),
 *                               TCROTna (wcsbth()).
-*      - WCSHDR_EPOCHa:  Accept EPOCHa.
 *      - WCSHDR_VELREFa: Accept VELREFa.
 *              wcspih() always recognizes the AIPS-convention keywords,
 *              CROTAn, EPOCH, and VELREF for the primary representation
@@ -502,11 +510,22 @@
 *              zeroes must not be used" on PVi_ma and PSi_ma.  However, by an
 *              oversight, it is silent on PCi_ja and CDi_ja.
 *
+*      - WCSHDR_DOBSn (wcsbth() only): Allow DOBSn, the column-specific
+*              analogue of DATE-OBS.  By an oversight this was never formally
+*              defined in the standard.
+*
+*      - WCSHDR_OBSGLBHn (wcsbth() only): Allow OBSGLn, OBSGBn, and OBSGHn,
+*              the column-specific analogues of OBSGEO-L, OBSGEO-B, and
+*              OBSGEO-H.  By an oversight these were never formally defined in
+*              the standard.
+*
 *      - WCSHDR_RADECSYS: Accept RADECSYS.  This appeared in early drafts of
 *              WCS Paper I+II and was subsequently replaced by RADESYSa.
 *
 *              wcsbth() accepts RADECSYS only if WCSHDR_AUXIMG is also
 *              enabled.
+*
+*      - WCSHDR_EPOCHa:  Accept EPOCHa.
 *
 *      - WCSHDR_VSOURCE: Accept VSOURCEa or VSOUna (wcsbth()).  This appeared
 *              in early drafts of WCS Paper III and was subsequently dropped
@@ -515,9 +534,12 @@
 *              wcsbth() accepts VSOURCEa only if WCSHDR_AUXIMG is also
 *              enabled.
 *
-*      - WCSHDR_DOBSn (wcsbth() only): Allow DOBSn, the column-specific
-*              analogue of DATE-OBS.  By an oversight this was never formally
-*              defined in the standard.
+*      - WCSHDR_DATEREF: Accept DATE-REF, MJD-REF, MJD-REFI, MJD-REFF, JDREF,
+*              JD-REFI, and JD-REFF as synonyms for the standard keywords,
+*              DATEREF, MJDREF, MJDREFI, MJDREFF, JDREF, JDREFI, and JDREFF.
+*              The latter buck the pattern set by the other date keywords
+*              ({DATE,MJD}-{OBS,BEG,AVG,END}), thereby increasing the
+*              potential for confusion and error.
 *
 *      - WCSHDR_LONGKEY (wcsbth() only): Accept long forms of the alternate
 *              binary table and pixel list WCS keywords, i.e. with "a" non-
@@ -555,14 +577,17 @@
 #                iCNAMna  TCNAMna  :   ---   iCNAna    ---   TCNAna  CNAMEia
 #                iCRDEna  TCRDEna  :   ---   iCRDna    ---   TCRDna  CRDERia
 #                iCSYEna  TCSYEna  :   ---   iCSYna    ---   TCSYna  CSYERia
+#                iCZPHna  TCZPHna  :   ---   iCZPna    ---   TCZPna  CZPHSia
+#                iCPERna  TCPERna  :   ---   iCPRna    ---   TCPRna  CPERIia
 *
-*              Note that CNAMEia, CRDERia, CSYERia, and their variants are
-*              not used by WCSLIB but are stored in the wcsprm struct as
-*              auxiliary information.
+*              Note that CNAMEia, CRDERia, CSYERia, CZPHSia, CPERIia, and
+*              their variants are not used by WCSLIB but are stored in the
+*              wcsprm struct as auxiliary information.
 *
-*      - WCSHDR_CNAMn (wcsbth() only): Accept iCNAMn, iCRDEn, iCSYEn, TCNAMn,
-*              TCRDEn, and TCSYEn, i.e. with "a" blank.  While non-standard,
-*              these are the obvious analogues of iCTYPn, TCTYPn, etc.
+*      - WCSHDR_CNAMn (wcsbth() only): Accept iCNAMn, iCRDEn, iCSYEn, iCZPHn,
+*              iCPERn, TCNAMn, TCRDEn, TCSYEn, TCZPHn, and TCPERn, i.e. with
+*              "a" blank.  While non-standard, these are the obvious analogues
+*              of iCTYPn, TCTYPn, etc.
 *
 *      - WCSHDR_AUXIMG (wcsbth() only): Allow the image-header form of an
 *              auxiliary WCS keyword with representation-wide scope to
@@ -575,62 +600,121 @@
 *
 *              Specifically the keywords are:
 *
-#                LATPOLEa  for LATPna
 #                LONPOLEa  for LONPna
-#                RESTFREQ  for RFRQna
-#                RESTFRQa  for RFRQna
-#                RESTWAVa  for RWAVna
+#                LATPOLEa  for LATPna
+#                VELREF        -       ... (No column-specific form.)
+#                VELREFa       -       ... Only if WCSHDR_VELREFa is set.
 *
 *              whose keyvalues are actually used by WCSLIB, and also keywords
-*              that provide auxiliary information that is simply stored in
-*              the wcsprm struct:
+*              providing auxiliary information that is simply stored in the
+*              wcsprm struct:
 *
+#                WCSNAMEa  for WCSNna  ... Or TWCSna (see below).
+#
+#                DATE-OBS  for DOBSn
+#                MJD-OBS   for MJDOBn
+#
+#                RADESYSa  for RADEna
+#                RADECSYS  for RADEna  ... Only if WCSHDR_RADECSYS is set.
 #                EPOCH         -       ... (No column-specific form.)
 #                EPOCHa        -       ... Only if WCSHDR_EPOCHa is set.
 #                EQUINOXa  for EQUIna
-#                RADESYSa  for RADEna
-#                RADECSYS  for RADEna  ... Only if WCSHDR_RADECSYS is set.
-#                SPECSYSa  for SPECna
-#                SSYSOBSa  for SOBSna
-#                SSYSSRCa  for SSRCna
-#                VELOSYSa  for VSYSna
-#                VELANGLa  for VANGna
-#                VELREF        -       ... (No column-specific form.)
-#                VELREFa       -       ... Only if WCSHDR_VELREFa is set.
-#                VSOURCEa  for VSOUna  ... Only if WCSHDR_VSOURCE is set.
-#                WCSNAMEa  for WCSNna  ... Or TWCSna (see below).
-#                ZSOURCEa  for ZSOUna
-*
-#                DATE-AVG  for DAVGn
-#                DATE-OBS  for DOBSn
-#                MJD-AVG   for MJDAn
-#                MJD-OBS   for MJDOBn
-#                OBSGEO-X  for OBSGXn
-#                OBSGEO-Y  for OBSGYn
-#                OBSGEO-Z  for OBSGZn
 *
 *              where the image-header keywords on the left provide default
 *              values for the column specific keywords on the right.
 *
-*              Keywords in the last group, such as MJD-OBS, apply to all
-*              alternate representations, so MJD-OBS would provide a default
-*              value for all images in the header.
+*              Note that, according to Sect. 8.1 of WCS Paper III, and
+*              Sect. 5.2 of WCS Paper VII, the following are always inherited:
+*
+#                RESTFREQ  for RFRQna
+#                RESTFRQa  for RFRQna
+#                RESTWAVa  for RWAVna
+*
+*              being those actually used by WCSLIB, together with the
+*              following auxiliary keywords, many of which do not have binary
+*              table equivalents and therefore can only be inherited:
+*
+#                TIMESYS       -
+#                TREFPOS   for TRPOSn
+#                TREFDIR   for TRDIRn
+#                PLEPHEM       -
+#                TIMEUNIT      -
+#                DATEREF       -
+#                MJDREF        -
+#                MJDREFI       -
+#                MJDREFF       -
+#                JDREF         -
+#                JDREFI        -
+#                JDREFF        -
+#                TIMEOFFS      -
+#
+#                DATE-BEG      -
+#                DATE-AVG  for DAVGn
+#                DATE-END      -
+#                MJD-BEG       -
+#                MJD-AVG   for MJDAn
+#                MJD-END       -
+#                JEPOCH        -
+#                BEPOCH        -
+#                TSTART        -
+#                TSTOP         -
+#                XPOSURE       -
+#                TELAPSE       -
+#
+#                TIMSYER       -
+#                TIMRDER       -
+#                TIMEDEL       -
+#                TIMEPIXR      -
+#
+#                OBSGEO-X  for OBSGXn
+#                OBSGEO-Y  for OBSGYn
+#                OBSGEO-Z  for OBSGZn
+#                OBSGEO-L  for OBSGLn
+#                OBSGEO-B  for OBSGBn
+#                OBSGEO-H  for OBSGHn
+#                OBSORBIT      -
+#
+#                SPECSYSa  for SPECna
+#                SSYSOBSa  for SOBSna
+#                VELOSYSa  for VSYSna
+#                VSOURCEa  for VSOUna  ... Only if WCSHDR_VSOURCE is set.
+#                ZSOURCEa  for ZSOUna
+#                SSYSSRCa  for SSRCna
+#                VELANGLa  for VANGna
+*
+*              Global image-header keywords, such as MJD-OBS, apply to all
+*              alternate representations, and would therefore provide a
+*              default value for all images in the header.
 *
 *              This auxiliary inheritance mechanism applies to binary table
 *              image arrays and pixel lists alike.  Most of these keywords
 *              have no default value, the exceptions being LONPOLEa and
 *              LATPOLEa, and also RADESYSa and EQUINOXa which provide
-*              defaults for each other.  Thus the only potential difficulty
-*              in using WCSHDR_AUXIMG is that of erroneously inheriting one
-*              of these four keywords.
+*              defaults for each other.  Thus one potential difficulty in
+*              using WCSHDR_AUXIMG is that of erroneously inheriting one of
+*              these four keywords.
+*
+*              Also, beware of potential inconsistencies that may arise where,
+*              for example, DATE-OBS is inherited, but MJD-OBS is overridden
+*              by MJDOBn and specifies a different time.  Pairs in this
+*              category are:
+*
+=                    DATE-OBS/DOBSn       versus       MJD-OBS/MJDOBn
+=                    DATE-AVG/DAVGn       versus       MJD-AVG/MJDAn
+=                    RESTFRQa/RFRQna      versus      RESTWAVa/RWAVna
+=                OBSGEO-[XYZ]/OBSG[XYZ]n  versus  OBSGEO-[LBH]/OBSG[LBH]n
+*
+*              The wcsfixi() routines datfix() and obsfix() are provided to
+*              check the consistency of these and other such pairs of
+*              keywords.
 *
 *              Unlike WCSHDR_ALLIMG, the existence of one (or all) of these
 *              auxiliary WCS image header keywords will not by itself cause a
 *              wcsprm struct to be created for alternate representation "a".
 *              This is because they do not provide sufficient information to
 *              create a non-trivial coordinate representation when used in
-*              conjunction with the default values of those keywords, such as
-*              CTYPEia, that are parameterized by axis number.
+*              conjunction with the default values of those keywords that are
+*              parameterized by axis number, such as CTYPEia.
 *
 *      - WCSHDR_ALLIMG (wcsbth() only): Allow the image-header form of *all*
 *              image header WCS keywords to provide a default value for all
@@ -648,7 +732,7 @@
 #                WCSAXESa  for WCAXna
 *
 *              which defines the coordinate dimensionality, and the following
-*              keywords which are parameterized by axis number:
+*              keywords that are parameterized by axis number:
 *
 #                CRPIXja   for jCRPna
 #                PCi_ja    for ijPCna
@@ -661,10 +745,12 @@
 #                CRVALia   for iCRVna
 #                PVi_ma    for iVn_ma
 #                PSi_ma    for iSn_ma
-*
+#
 #                CNAMEia   for iCNAna
 #                CRDERia   for iCRDna
 #                CSYERia   for iCSYna
+#                CZPHSia   for iCZPna
+#                CPERIia   for iCPRna
 *
 *              where the image-header keywords on the left provide default
 *              values for the column specific keywords on the right.
@@ -672,7 +758,7 @@
 *              This full inheritance mechanism only applies to binary table
 *              image arrays, not pixel lists, because in the latter case
 *              there is no well-defined association between coordinate axis
-*              number and column number.
+*              number and column number (see note 9 below).
 *
 *              Note that CNAMEia, CRDERia, CSYERia, and their variants are
 *              not used by WCSLIB but are stored in the wcsprm struct as
@@ -748,28 +834,61 @@
 *   9: The FITS WCS standard for pixel lists assumes that a pixel list
 *      defines one and only one image, i.e. that each row of the binary table
 *      refers to just one event, e.g. the detection of a single photon or
-*      neutrino.
+*      neutrino, for which the device "pixel" coordinates are stored in
+*      separate scalar columns of the table.
 *
-*      In the absence of a formal mechanism for identifying the columns
-*      containing pixel coordinates (as opposed to pixel values or ancillary
-*      data recorded at the time the photon or neutrino was detected),
-*      Paper I discusses how the WCS keywords themselves may be used to
-*      identify them.
+*      In the absence of a standard for pixel lists - or even an informal
+*      description! - let alone a formal mechanism for identifying the columns
+*      containing pixel coordinates (as opposed to pixel values or metadata
+*      recorded at the time the photon or neutrino was detected), WCS Paper I
+*      discusses how the WCS keywords themselves may be used to identify them.
 *
 *      In practice, however, pixel lists have been used to store multiple
-*      images.  Besides not specifying how to identify columns, the pixel
-*      list convention is also silent on the method to be used to associate
-*      table columns with image axes.
+*      images.  Besides not specifying how to identify columns, the pixel list
+*      convention is also silent on the method to be used to associate table
+*      columns with image axes.
 *
-*      wcsbth() simply collects all WCS keywords for a particular coordinate
-*      representation (i.e. the "a" value in TCTYna) into one wcsprm struct.
-*      However, these alternates need not be associated with the same table
-*      columns and this allows a pixel list to contain up to 27 separate
-*      images.  As usual, if one of these representations happened to contain
-*      more than two celestial axes, for example, then an error would result
-*      when wcsset() is invoked on it.  In this case the "colsel" argument
-*      could be used to restrict the columns used to construct the
-*      representation so that it only contained one pair of celestial axes.
+*      An additional shortcoming is the absence of a formal method for
+*      associating global binary-table WCS keywords, such as WCSNna or MJDOBn,
+*      with a pixel list image, whether one or several.
+*
+*      In light of these uncertainties, wcsbth() simply collects all WCS
+*      keywords for a particular pixel list coordinate representation (i.e.
+*      the "a" value in TCTYna) into one wcsprm struct.  However, these
+*      alternates need not be associated with the same table columns and this
+*      allows a pixel list to contain up to 27 separate images.  As usual, if
+*      one of these representations happened to contain more than two
+*      celestial axes, for example, then an error would result when wcsset()
+*      is invoked on it.  In this case the "colsel" argument could be used to
+*      restrict the columns used to construct the representation so that it
+*      only contained one pair of celestial axes.
+*
+*      Global, binary-table WCS keywords are considered to apply to the pixel
+*      list image with matching alternate (e.g. the "a" value in LONPna or
+*      EQUIna), regardless of the table columns the image occupies.  In other
+*      words, the column number is ignored (the "n" value in LONPna or
+*      EQUIna).  This also applies for global, binary-table WCS keywords that
+*      have no alternates, such as MJDOBn and OBSGXn, which match all images
+*      in a pixel list.  Take heed that this may lead to counterintuitive
+*      behaviour, especially where such a keyword references a column that
+*      does not store pixel coordinates, and moreso where the pixel list
+*      stores only a single image.  In fact, as the column number, n, is
+*      ignored for such keywords, it would make no difference even if they
+*      referenced non-existent columns.  Moreover, there is no requirement for
+*      consistency in the column numbers used for such keywords, even for
+*      OBSGXn, OBSGYn, and OBSGZn which are meant to define the elements of a
+*      coordinate vector.  Although it would surely be perverse to construct a
+*      pixel list like this, such a situation may still arise in practice
+*      where columns are deleted from a binary table.
+*
+*      The situation with global, binary-table WCS keywords becomes
+*      potentially even more confusing when image arrays and pixel list images
+*      coexist in one binary table.  In that case, a keyword such as MJDOBn
+*      may legitimately appear multiple times with n referencing different
+*      image arrays.  Which then is the one that applies to the pixel list
+*      images?  In this implementation, it is the last instance that appears
+*      in the header, whether or not it is also associated with an image
+*      array.
 *
 *
 * wcstab() - Tabular construction routine
@@ -787,14 +906,14 @@
 * axis and allocates memory in the wcsprm struct for the required number of
 * tabprm structs.  It sets as much of the tabprm struct as can be gleaned from
 * the image header, and also sets up an array of wtbarr structs (described in
-* the prologue of wcs.h) to assist in extracting the required arrays from the
-* BINTABLE extension(s).
+* the prologue of wtbarr.h) to assist in extracting the required arrays from
+* the BINTABLE extension(s).
 *
 * It is then up to the user to allocate memory for, and copy arrays from the
 * BINTABLE extension(s) into the tabprm structs.  A CFITSIO routine,
 * fits_read_wcstab(), has been provided for this purpose, see getwcstab.h.
 * wcsset() will automatically take control of this allocated memory, in
-* particular causing it to be free'd by wcsfree(); the user must not attempt
+* particular causing it to be freed by wcsfree(); the user must not attempt
 * to free it after wcsset() has been called.
 *
 * Note that wcspih() and wcsbth() automatically invoke wcstab() on each of the
@@ -806,7 +925,7 @@
 *
 *                       wcstab() sets ntab, tab, nwtb and wtb, allocating
 *                       memory for the tab and wtb arrays.  This allocated
-*                       memory will be free'd automatically by wcsfree().
+*                       memory will be freed automatically by wcsfree().
 *
 * Function return value:
 *             int       Status return value:
@@ -932,25 +1051,30 @@
 *     does not contain syntactically-required keywords such as SIMPLE, NAXIS,
 *     BITPIX, or END.
 *
-*   - Deprecated (e.g. CROTAn) or non-standard usage will be translated to
-*     standard (this is partially dependent on whether wcsfix() was applied).
+*   - Elements of the PCi_ja matrix will be written if and only if they differ
+*     from the unit matrix.  Thus, if the matrix is unity then no elements
+*     will be written.
+*
+*   - The redundant keywords MJDREF, JDREF, JDREFI, JDREFF, all of which
+*     duplicate MJDREFI + MJDREFF, are never written.  OBSGEO-[LBH] are not
+*     written if OBSGEO-[XYZ] are defined.
+*
+*   - Deprecated (e.g. CROTAn, RESTFREQ, VELREF, RADECSYS, EPOCH, VSOURCEa) or
+*     non-standard usage will be translated to standard (this is partially
+*     dependent on whether wcsfix() was applied).
+*
+*   - Additional keywords such as WCSAXESa, CUNITia, LONPOLEa and LATPOLEa may
+*     appear.
 *
 *   - Quantities will be converted to the units used internally, basically SI
 *     with the addition of degrees.
 *
 *   - Floating-point quantities may be given to a different decimal precision.
 *
-*   - Elements of the PCi_ja matrix will be written if and only if they differ
-*     from the unit matrix.  Thus, if the matrix is unity then no elements
-*     will be written.
-*
-*   - Additional keywords such as WCSAXESa, CUNITia, LONPOLEa and LATPOLEa may
-*     appear.
-*
 *   - The original keycomments will be lost, although wcshdo() tries hard to
 *     write meaningful comments.
 *
-*   - Keyword order may be changed.
+*   - Keyword order will almost certainly be changed.
 *
 * Keywords can be translated between the image array, binary table, and pixel
 * lists forms by manipulating the colnum or colax[] members of the wcsprm
@@ -1026,7 +1150,8 @@
 *   header    char**    Pointer to an array of char holding the header.
 *                       Storage for the array is allocated by wcshdo() in
 *                       blocks of 2880 bytes (32 x 80-character keyrecords)
-*                       and must be free'd by the user to avoid memory leaks.
+*                       and must be freed by the user to avoid memory leaks.
+*                       See wcsdealloc().
 *
 *                       Each keyrecord is 80 characters long and is *NOT*
 *                       null-terminated, so the first keyrecord starts at
@@ -1049,91 +1174,96 @@
 *                       wcsprm::err if enabled, see wcserr_enable().
 *
 * Notes:
-*   wcshdo() interprets the "relax" argument as a vector of flag bits to
-*   provide fine-grained control over what non-standard WCS keywords to write.
-*   The flag bits are subject to change in future and should be set by using
-*   the preprocessor macros (see below) for the purpose.
+*   1: wcshdo() interprets the "relax" argument as a vector of flag bits to
+*      provide fine-grained control over what non-standard WCS keywords to
+*      write.  The flag bits are subject to change in future and should be set
+*      by using the preprocessor macros (see below) for the purpose.
 *
-*   - WCSHDO_none: Don't use any extensions.
+*      - WCSHDO_none: Don't use any extensions.
 *
-*   - WCSHDO_all: Write all recognized extensions, equivalent to setting each
-*           flag bit.
+*      - WCSHDO_all: Write all recognized extensions, equivalent to setting
+*              each flag bit.
 *
-*   - WCSHDO_safe: Write all extensions that are considered to be safe and
-*           recommended.
+*      - WCSHDO_safe: Write all extensions that are considered to be safe and
+*              recommended.
 *
-*   - WCSHDO_DOBSn: Write DOBSn, the column-specific analogue of DATE-OBS for
-*           use in binary tables and pixel lists.  WCS Paper III introduced
-*           DATE-AVG and DAVGn but by an oversight DOBSn (the obvious analogy)
-*           was never formally defined by the standard.  The alternative to
-*           using DOBSn is to write DATE-OBS which applies to the whole table.
-*           This usage is considered to be safe and is recommended.
+*      - WCSHDO_DOBSn: Write DOBSn, the column-specific analogue of DATE-OBS
+*              for use in binary tables and pixel lists.  WCS Paper III
+*              introduced DATE-AVG and DAVGn but by an oversight DOBSn (the
+*              obvious analogy) was never formally defined by the standard.
+*              The alternative to using DOBSn is to write DATE-OBS which
+*              applies to the whole table.  This usage is considered to be
+*              safe and is recommended.
 *
-*   - WCSHDO_TPCn_ka: WCS Paper I defined
+*      - WCSHDO_TPCn_ka: WCS Paper I defined
 *
-*           - TPn_ka and TCn_ka for pixel lists
+*              - TPn_ka and TCn_ka for pixel lists
 *
-*           but WCS Paper II uses TPCn_ka in one example and subsequently the
-*           errata for the WCS papers legitimized the use of
+*              but WCS Paper II uses TPCn_ka in one example and subsequently
+*              the errata for the WCS papers legitimized the use of
 *
-*           - TPCn_ka and TCDn_ka for pixel lists
+*              - TPCn_ka and TCDn_ka for pixel lists
 *
-*           provided that the keyword does not exceed eight characters.  This
-*           usage is considered to be safe and is recommended because of the
-*           non-mnemonic terseness of the shorter forms.
+*              provided that the keyword does not exceed eight characters.
+*              This usage is considered to be safe and is recommended because
+*              of the non-mnemonic terseness of the shorter forms.
 *
-*   - WCSHDO_PVn_ma: WCS Paper I defined
+*      - WCSHDO_PVn_ma: WCS Paper I defined
 *
-*           - iVn_ma and iSn_ma for bintables and
-*           - TVn_ma and TSn_ma for pixel lists
+*              - iVn_ma and iSn_ma for bintables and
+*              - TVn_ma and TSn_ma for pixel lists
 *
-*           but WCS Paper II uses iPVn_ma and TPVn_ma in the examples and
-*           subsequently the errata for the WCS papers legitimized the use of
+*              but WCS Paper II uses iPVn_ma and TPVn_ma in the examples and
+*              subsequently the errata for the WCS papers legitimized the use
+*              of
 *
-*           - iPVn_ma and iPSn_ma for bintables and
-*           - TPVn_ma and TPSn_ma for pixel lists
+*              - iPVn_ma and iPSn_ma for bintables and
+*              - TPVn_ma and TPSn_ma for pixel lists
 *
-*           provided that the keyword does not exceed eight characters.  This
-*           usage is considered to be safe and is recommended because of the
-*           non-mnemonic terseness of the shorter forms.
+*              provided that the keyword does not exceed eight characters.
+*              This usage is considered to be safe and is recommended because
+*              of the non-mnemonic terseness of the shorter forms.
 *
-*   - WCSHDO_CRPXna: For historical reasons WCS Paper I defined
+*      - WCSHDO_CRPXna: For historical reasons WCS Paper I defined
 *
-*           - jCRPXn, iCDLTn, iCUNIn, iCTYPn, and iCRVLn for bintables and
-*           - TCRPXn, TCDLTn, TCUNIn, TCTYPn, and TCRVLn for pixel lists
+*              - jCRPXn, iCDLTn, iCUNIn, iCTYPn, and iCRVLn for bintables and
+*              - TCRPXn, TCDLTn, TCUNIn, TCTYPn, and TCRVLn for pixel lists
 *
-*           for use without an alternate version specifier.  However, because
-*           of the eight-character keyword constraint, in order to accommodate
-*           column numbers greater than 99 WCS Paper I also defined
+*              for use without an alternate version specifier.  However,
+*              because of the eight-character keyword constraint, in order to
+*              accommodate column numbers greater than 99 WCS Paper I also
+*              defined
 *
-*           - jCRPna, iCDEna, iCUNna, iCTYna and iCRVna for bintables and
-*           - TCRPna, TCDEna, TCUNna, TCTYna and TCRVna for pixel lists
+*              - jCRPna, iCDEna, iCUNna, iCTYna and iCRVna for bintables and
+*              - TCRPna, TCDEna, TCUNna, TCTYna and TCRVna for pixel lists
 *
-*           for use with an alternate version specifier (the "a").  Like the
-*           PC, CD, PV, and PS keywords there is an obvious tendency to
-*           confuse these two forms for column numbers up to 99.  It is very
-*           unlikely that any parser would reject keywords in the first set
-*           with a non-blank alternate version specifier so this usage is
-*           considered to be safe and is recommended.
+*              for use with an alternate version specifier (the "a").  Like
+*              the PC, CD, PV, and PS keywords there is an obvious tendency to
+*              confuse these two forms for column numbers up to 99.  It is
+*              very unlikely that any parser would reject keywords in the
+*              first set with a non-blank alternate version specifier so this
+*              usage is considered to be safe and is recommended.
 *
-*   - WCSHDO_CNAMna: WCS Papers I and III defined
+*      - WCSHDO_CNAMna: WCS Papers I and III defined
 *
-*           - iCNAna,  iCRDna,  and iCSYna  for bintables and
-*           - TCNAna,  TCRDna,  and TCSYna  for pixel lists
+*              - iCNAna,  iCRDna,  and iCSYna  for bintables and
+*              - TCNAna,  TCRDna,  and TCSYna  for pixel lists
 *
-*           By analogy with the above, the long forms would be
+*              By analogy with the above, the long forms would be
 *
-*           - iCNAMna, iCRDEna, and iCSYEna for bintables and
-*           - TCNAMna, TCRDEna, and TCSYEna for pixel lists
+*              - iCNAMna, iCRDEna, and iCSYEna for bintables and
+*              - TCNAMna, TCRDEna, and TCSYEna for pixel lists
 *
-*           Note that these keywords provide auxiliary information only, none
-*           of them are needed to compute world coordinates.  This usage is
-*           potentially unsafe and is not recommended at this time.
+*              Note that these keywords provide auxiliary information only,
+*              none of them are needed to compute world coordinates.  This
+*              usage is potentially unsafe and is not recommended at this
+*              time.
 *
-*   - WCSHDO_WCSNna: In light of wcsbth() note 4, write WCSNna instead of
-*           TWCSna for pixel lists.  While wcsbth() treats WCSNna and TWCSna
-*           as equivalent, other parsers may not.  Consequently, this usage
-*           is potentially unsafe and is not recommended at this time.
+*      - WCSHDO_WCSNna: In light of wcsbth() note 4, write WCSNna instead of
+*              TWCSna for pixel lists.  While wcsbth() treats WCSNna and
+*              TWCSna as equivalent, other parsers may not.  Consequently,
+*              this usage is potentially unsafe and is not recommended at this
+*              time.
 *
 *
 * Global variable: const char *wcshdr_errmsg[] - Status return messages
@@ -1158,22 +1288,24 @@ extern "C" {
 #define WCSHDR_strict   0x20000000
 
 #define WCSHDR_CROTAia  0x00000001
-#define WCSHDR_EPOCHa   0x00000002
-#define WCSHDR_VELREFa  0x00000004
-#define WCSHDR_CD00i00j 0x00000008
-#define WCSHDR_PC00i00j 0x00000010
-#define WCSHDR_PROJPn   0x00000020
-#define WCSHDR_CD0i_0ja 0x00000040
-#define WCSHDR_PC0i_0ja 0x00000080
-#define WCSHDR_PV0i_0ma 0x00000100
-#define WCSHDR_PS0i_0ma 0x00000200
-#define WCSHDR_RADECSYS 0x00000400
-#define WCSHDR_VSOURCE  0x00000800
-#define WCSHDR_DOBSn    0x00001000
-#define WCSHDR_LONGKEY  0x00002000
-#define WCSHDR_CNAMn    0x00004000
-#define WCSHDR_AUXIMG   0x00008000
-#define WCSHDR_ALLIMG   0x00010000
+#define WCSHDR_VELREFa  0x00000002
+#define WCSHDR_CD00i00j 0x00000004
+#define WCSHDR_PC00i00j 0x00000008
+#define WCSHDR_PROJPn   0x00000010
+#define WCSHDR_CD0i_0ja 0x00000020
+#define WCSHDR_PC0i_0ja 0x00000040
+#define WCSHDR_PV0i_0ma 0x00000080
+#define WCSHDR_PS0i_0ma 0x00000100
+#define WCSHDR_DOBSn    0x00000200
+#define WCSHDR_OBSGLBHn 0x00000400
+#define WCSHDR_RADECSYS 0x00000800
+#define WCSHDR_EPOCHa   0x00001000
+#define WCSHDR_VSOURCE  0x00002000
+#define WCSHDR_DATEREF  0x00004000
+#define WCSHDR_LONGKEY  0x00008000
+#define WCSHDR_CNAMn    0x00010000
+#define WCSHDR_AUXIMG   0x00020000
+#define WCSHDR_ALLIMG   0x00040000
 
 #define WCSHDR_IMGHEAD  0x00100000
 #define WCSHDR_BIMGARR  0x00200000
@@ -1200,13 +1332,13 @@ extern "C" {
 extern const char *wcshdr_errmsg[];
 
 enum wcshdr_errmsg_enum {
-  WCSHDRERR_SUCCESS            = 0,	/* Success. */
-  WCSHDRERR_NULL_POINTER       = 1,	/* Null wcsprm pointer passed. */
-  WCSHDRERR_MEMORY             = 2,	/* Memory allocation failed. */
-  WCSHDRERR_BAD_COLUMN         = 3,	/* Invalid column selection. */
-  WCSHDRERR_PARSER             = 4,	/* Fatal error returned by Flex
-					   parser. */
-  WCSHDRERR_BAD_TABULAR_PARAMS = 5 	/* Invalid tabular parameters. */
+  WCSHDRERR_SUCCESS            = 0,	// Success.
+  WCSHDRERR_NULL_POINTER       = 1,	// Null wcsprm pointer passed.
+  WCSHDRERR_MEMORY             = 2,	// Memory allocation failed.
+  WCSHDRERR_BAD_COLUMN         = 3,	// Invalid column selection.
+  WCSHDRERR_PARSER             = 4,	// Fatal error returned by Flex
+					// parser.
+  WCSHDRERR_BAD_TABULAR_PARAMS = 5 	// Invalid tabular parameters.
 };
 
 int wcspih(char *header, int nkeyrec, int relax, int ctrl, int *nreject,
@@ -1223,11 +1355,11 @@ int wcsbdx(int nwcs, struct wcsprm **wcs, int type, short alts[1000][28]);
 
 int wcsvfree(int *nwcs, struct wcsprm **wcs);
 
-int wcshdo(int relax, struct wcsprm *wcs, int *nkeyrec, char **header);
+int wcshdo(int ctrl, struct wcsprm *wcs, int *nkeyrec, char **header);
 
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* WCSLIB_WCSHDR */
+#endif // WCSLIB_WCSHDR

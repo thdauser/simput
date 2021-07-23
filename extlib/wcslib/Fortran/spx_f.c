@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,26 +17,26 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: spx_f.c,v 5.19.1.1 2018/07/26 15:41:42 mcalabre Exp mcalabre $
+  $Id: spx_f.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <string.h>
 
 #include <wcserr.h>
+#include <wcsutil.h>
 #include <spx.h>
 
-/* Fortran name mangling. */
+// Fortran name mangling.
 #include <wcsconfig_f77.h>
 #define spxget_ F77_FUNC(spxget, SPXGET)
 #define specx_  F77_FUNC(specx,  SPECX)
 
+// Must match the value set in spx.inc.
 #define SPX_ERR     200
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int spxget_(const int *spx, const int *what, void *value)
 
@@ -47,13 +46,13 @@ int spxget_(const int *spx, const int *what, void *value)
   const int *ispxp;
   const struct spxprm *spxp;
 
-  /* Cast pointers. */
+  // Cast pointers.
   spxp  = (const struct spxprm *)spx;
   ivalp = (int *)value;
 
   switch (*what) {
   case SPX_ERR:
-    /* Copy the contents of the wcserr struct. */
+    // Copy the contents of the wcserr struct.
     if (spxp->err) {
       ispxp = (int *)(spxp->err);
       for (l = 0; l < ERRLEN; l++) {
@@ -77,23 +76,23 @@ int spxgti_(const int *spx, const int *what, int *value)
   return spxget_(spx, what, value);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int specx_(
-  const char *type,
+  const char   type[4],
   const double *spec,
   const double *restfrq,
   const double *restwav,
   double *specs)
 
 {
-  char stype[5];
-  strncpy(stype, type, 4);
-  stype[4] = '\0';
-  return specx(stype, *spec, *restfrq, *restwav, (struct spxprm *)specs);
+  char type_[5];
+  wcsutil_strcvt(4, '\0', 1, type, type_);
+
+  return specx(type_, *spec, *restfrq, *restwav, (struct spxprm *)specs);
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 #define SPX_FWRAP(scode, SCODE) \
   int F77_FUNC(scode, SCODE)( \

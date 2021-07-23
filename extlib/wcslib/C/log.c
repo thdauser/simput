@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,18 +17,16 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: log.c,v 5.19.1.1 2018/07/26 15:41:40 mcalabre Exp mcalabre $
+  $Id: log.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *===========================================================================*/
 
 #include <math.h>
 
 #include "log.h"
 
-/* Map status return value to message. */
+// Map status return value to message.
 const char *log_errmsg[] = {
   "Success",
   "",
@@ -38,7 +35,7 @@ const char *log_errmsg[] = {
   "One or more of the world coordinates were invalid"};
 
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int logx2s(
   double crval,
@@ -71,7 +68,7 @@ int logx2s(
   return 0;
 }
 
-/*--------------------------------------------------------------------------*/
+//----------------------------------------------------------------------------
 
 int logs2x(
   double crval,

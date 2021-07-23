@@ -1,7 +1,6 @@
 /*============================================================================
-
-  WCSLIB 5.19 - an implementation of the FITS WCS standard.
-  Copyright (C) 1995-2018, Mark Calabretta
+  WCSLIB 7.7 - an implementation of the FITS WCS standard.
+  Copyright (C) 1995-2021, Mark Calabretta
 
   This file is part of WCSLIB.
 
@@ -18,17 +17,15 @@
   You should have received a copy of the GNU Lesser General Public License
   along with WCSLIB.  If not, see http://www.gnu.org/licenses.
 
-  Direct correspondence concerning WCSLIB to mark@calabretta.id.au
-
   Author: Mark Calabretta, Australia Telescope National Facility, CSIRO.
   http://www.atnf.csiro.au/people/Mark.Calabretta
-  $Id: ttab2.c,v 5.19.1.1 2018/07/26 15:41:41 mcalabre Exp mcalabre $
+  $Id: ttab2.c,v 7.7 2021/07/12 06:36:49 mcalabre Exp $
 *=============================================================================
 *
 * ttab2 tests the -TAB routines using PGPLOT for graphical display.  It
 * demonstrates the nature of linear interpolation in 2 dimensions by
-* contouring the interior a single 2 x 2 interpolation element as the values
-* in each corner change.
+* contouring the interior of a single 2 x 2 interpolation element as the
+* values in each corner change.
 *
 *---------------------------------------------------------------------------*/
 
@@ -44,13 +41,13 @@
 #define K1 2
 #define K2 2
 
-/* Number of subdivisions on each side of the interpolation element. */
+// Number of subdivisions on each side of the interpolation element.
 #define NP 128
 
 int main()
 
 {
-  /* Set up a 2 x 2 lookup table. */
+  // Set up a 2 x 2 lookup table.
   const int M = 2;
   const int K[] = {K1, K2};
   const int map[] = {0, 1};
@@ -67,7 +64,7 @@ int main()
   printf("Testing WCSLIB coordinate lookup table routines (ttab2.c)\n"
          "---------------------------------------------------------\n");
 
-  /* List status return messages. */
+  // List status return messages.
   printf("\nList of tab status return values:\n");
   for (status = 1; status <= 5; status++) {
     printf("%4d: %s.\n", status, tab_errmsg[status]);
@@ -76,13 +73,13 @@ int main()
   printf("\n");
 
 
-  /* PGPLOT initialization. */
+  // PGPLOT initialization.
   strcpy(text, "/xwindow");
   cpgbeg(0, text, 1, 1);
   cpgvstd();
   cpgsch(0.7f);
 
-  /* The viewport is slightly oversized. */
+  // The viewport is slightly oversized.
   cpgwnad(-0.65f, 1.65f, -0.65f, 1.65f);
 
   for (l = 0; l <= 30; l++) {
@@ -97,7 +94,7 @@ int main()
   ltm[5] =  scl;
 
 
-  /* Set up the lookup table. */
+  // Set up the lookup table.
   tab.flag = -1;
   if ((status = tabini(1, M, K, &tab))) {
     printf("tabini ERROR %d: %s.\n", status, tab_errmsg[status]);
@@ -115,7 +112,7 @@ int main()
     }
   }
 
-  /* Subdivide the interpolation element. */
+  // Subdivide the interpolation element.
   for (i = 0; i < NP; i++) {
     for (j = 0; j < NP; j++) {
       x[i][j][0] = j*(K1-1.0)*scl - 0.5 - crval[0];
@@ -123,37 +120,37 @@ int main()
     }
   }
 
-  /* The first coordinate element is static. */
+  // The first coordinate element is static.
   tab.coord[0] = 0.0;
   tab.coord[2] = 0.0;
   tab.coord[4] = 0.0;
   tab.coord[6] = 0.0;
 
-  /* (k1,k2) = (0,0). */
+  // (k1,k2) = (0,0).
   tab.coord[1] = 0.0;
 
-  /* The second coordinate element varies in three of the corners. */
+  // The second coordinate element varies in three of the corners.
   for (l3 = 0; l3 <= 100; l3 += 20) {
-    /* (k1,k2) = (1,1). */
+    // (k1,k2) = (1,1).
     tab.coord[7] = 0.01 * l3;
 
     for (l2 = 0; l2 <= 100; l2 += 20) {
-      /* (k1,k2) = (0,1). */
+      // (k1,k2) = (0,1).
       tab.coord[5] = 0.01 * l2;
 
       cpgpage();
       for (l1 = 0; l1 <= 100; l1 += 2) {
-        /* (k1,k2) = (1,0). */
+        // (k1,k2) = (1,0).
         tab.coord[3] = 0.01 * l1;
 
-        /* Compute coordinates within the interpolation element. */
+        // Compute coordinates within the interpolation element.
         tab.flag = 0;
         if ((status = tabx2s(&tab, NP*NP, 2, (double *)x, (double *)world,
                              stat))) {
           printf("tabx2s ERROR %d: %s.\n", status, tab_errmsg[status]);
         }
 
-        /* Start a new plot. */
+        // Start a new plot.
         cpgbbuf();
         cpgeras();
         cpgsci(1);
@@ -162,7 +159,7 @@ int main()
         cpgmtxt("T", 0.7f, 0.5f, 0.5f, "-TAB coordinates:  "
           "linear interpolation / extrapolation in 2-D");
 
-        /* Draw the boundary of the interpolation element in red. */
+        // Draw the boundary of the interpolation element in red.
         cpgsci(2);
         cpgmove(-0.5f,  0.0f);
         cpgdraw( 1.5f,  0.0f);
@@ -176,7 +173,7 @@ int main()
         cpgmove( 0.0f,  1.5f);
         cpgdraw( 0.0f, -0.5f);
 
-        /* Label the value of the coordinate element in each corner. */
+        // Label the value of the coordinate element in each corner.
         sprintf(text, "%.1f", tab.coord[1]);
         cpgtext(-0.09f, -0.05f, text);
         sprintf(text, "%.2f", tab.coord[3]);
@@ -187,7 +184,7 @@ int main()
         cpgtext( 1.02f,  1.02f, text);
 
         cpgsci(1);
-        /* Contour labelling: bottom. */
+        // Contour labelling: bottom.
         v0 = world[0][0][1];
         v1 = world[0][NP-1][1];
         if (v0 != v1) {
@@ -201,7 +198,7 @@ int main()
           }
         }
 
-        /* Contour labelling: left. */
+        // Contour labelling: left.
         v0 = world[0][0][1];
         v1 = world[NP-1][0][1];
         if (v0 != v1) {
@@ -215,7 +212,7 @@ int main()
           }
         }
 
-        /* Contour labelling: right. */
+        // Contour labelling: right.
         v0 = world[0][NP-1][1];
         v1 = world[NP-1][NP-1][1];
         if (v0 != v1) {
@@ -229,7 +226,7 @@ int main()
           }
         }
 
-        /* Contour labelling: top. */
+        // Contour labelling: top.
         v0 = world[NP-1][0][1];
         v1 = world[NP-1][NP-1][1];
         if (v0 != v1) {
@@ -243,7 +240,7 @@ int main()
           }
         }
 
-        /* Draw contours for the second coordinate element. */
+        // Draw contours for the second coordinate element.
         for (i = 0; i < NP; i++) {
           for (j = 0; j < NP; j++) {
             array[i][j] = world[i][j][1];
