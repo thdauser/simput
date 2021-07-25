@@ -21,8 +21,9 @@
 #include <simputconfig.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 
-int main() 
+int main()
 {
   printf("SIMPUT version %s\n",PACKAGE_VERSION);
   printf("Compiled %s, %s\n",__DATE__,__TIME__);

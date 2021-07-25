@@ -29,6 +29,7 @@
 #include "common.h"
 #include "arf.h"
 #include "rmf.h"
+#include "parinput.h"
 
 #define TOOLSUB simputspec_main
 #include "headas_main.c"
