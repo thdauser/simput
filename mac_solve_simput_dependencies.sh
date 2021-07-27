@@ -13,9 +13,6 @@ for tool in bin/simputfile bin/simputimg bin/simputlc bin/simputmerge bin/simput
     lib/libhdinit.dylib lib/libhdio.dylib lib/liblabnh.dylib lib/libposstring.dylib \
     lib/libatFunctions.dylib
 do
-    for lib in libcfitsio.2.dylib libwcs.5.19.1.dylib libwcs.4.25.1.dylib 
-    do 
-	install_name_tool -change $lib $install_prefix/lib/$lib $install_prefix/$tool
-    done
+    install_name_tool -change @rpath/libcfitsio.9.dylib $install_prefix/lib/libcfitsio.9.dylib $install_prefix/$tool
+    install_name_tool -change libwcs.7.dylib $install_prefix/lib/libwcs.7.dylib $install_prefix/$tool
 done
-
