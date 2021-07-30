@@ -1,0 +1,8 @@
+*.log
+*/.log
+*~
+*/*.err
+*.idea
+*/*.idea
+__pycache__
+*/__pycache__

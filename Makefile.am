@@ -3,7 +3,7 @@ dist_bin_SCRIPTS+=simput-install.csh
 
 # The sub-directories are built before the current directory.
 # In order to change this, include "." in the list of SUBDIRS.
-SUBDIRS=extlib libsimput tools sample 
+SUBDIRS=extlib libsimput tools sample
 
 dist_noinst_DATA=INSTALL.txt mac_solve_simput_dependencies.sh
 EXTRA_DIST=test
@@ -69,7 +69,8 @@ simputdistcheck: dist
 
 .PHONY: test
 test:
-	cd test && ./test_simput.csh
+	cd test/exec/ && make test
+	cd test/e2e/ && ./run_e2e_test.sh
 
 crit_mac_version=10
 install-exec-hook:

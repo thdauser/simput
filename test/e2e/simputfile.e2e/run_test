@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Runs a basic simputfile command and compares the output with
+# reference data.
+
+indir="data/input"
+refdir="data/refdata"
+
+simput="webexample_test.fits"
+
+# Run the simputfile tool
+simputfile \
+  Simput=$simput \
+  RA=40.2 Dec=12.8 \
+  XSPECFile=$indir/example_spectrum.xcm \
+  LCFile=$indir/example_lightcurve.dat \
+  MJDREF=50800.0 \
+  Emin=0.5 Emax=10.0 \
+  srcFlux=2.3e-12 \
+  clobber=yes
+
+# Compare output with reference data
+fdiff $simput $refdir/ref_$simput
+
+# The number of differences is stored in the numdiffs parameter of fdiff
+n_diff=$(pget fdiff numdiffs)
+if (($n_diff > 0)); then
+  exit 1
+fi
+
+exit 0
