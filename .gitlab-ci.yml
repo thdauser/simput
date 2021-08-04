@@ -32,6 +32,7 @@ build:
 test:
   stage: test
   script:
+    - . $SIMPUT/simput-install.sh
     - . $HEADAS/headas-init.sh
     - make test
   only:
