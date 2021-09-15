@@ -30,8 +30,5 @@ ApePar * ape_par_group_get_par(ApeListIterator position);
 #endif
 
 /*
- * $Log: ape_par_group.h,v $
- * Revision 1.1.1.1  2006/04/05 13:45:19  peachey
- * Initial import of All-purpose Parameter Environment (APE).
- *
+ * $Log$
 */

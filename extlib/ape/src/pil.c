@@ -235,36 +235,10 @@ int PILGetQueryMode(void) {
 }
 
 int PILOverrideQueryMode(int new_mode) {
-  int status = PIL_OK;
-  int prompt_style = eDefaultPrompt;
-  int ape_query_override = eNoPrompt;
-
-  if (eOK == status) {
-    /* Get the current default prompt style. */
-    ape_par_get_default_prompt_style(&prompt_style);
-  }
-
-  if (eOK == status) {
-    /* Map PIL override query mode to ape's version. */
-    switch (new_mode) {
-      case PIL_QUERY_DEFAULT:
-        prompt_style &= ~ape_query_override;
-        break;
-      case PIL_QUERY_OVERRIDE:
-        prompt_style |= ape_query_override;
-        break;
-      default:
-        status = eInvalidArgument;
-        break;
-    }
-  }
-
-  if (eOK == status) {
-    /* Change ape's default prompt style. */
-    status = ape_par_set_default_prompt_style(prompt_style);
-  }
-
-  return convert_ape_status_to_pil(status);
+  /* 2015-08-13 JP The original implementation of this code was moved
+     to the new API call ape_util_override_query_mode. See notes where
+     that function is implemented for more information. */
+  return convert_ape_status_to_pil(ape_util_override_query_mode(new_mode));
 }
 
 static int (*s_out_func)(char *) = 0;
@@ -558,7 +532,7 @@ int PILGetRealVector(const char * parameter, int length, double * output) {
 #endif
 
 /*
- * $Log: pil.c,v $
+ * $Log$
  * Revision 1.19  2012/03/21 19:47:55  peachey
  * Consider eParameterDuplicated to be a PIL_UNSPECIFIED_ERROR, since it
  * can happen in two cases: a parameter duplicated on the command line or

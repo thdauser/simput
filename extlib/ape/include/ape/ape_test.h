@@ -107,6 +107,10 @@ void ape_test_cmp_string_array(const char * hint, char ** result, const char ** 
 /** \brief Report failure of a test. Sets global status flag. */
 void ape_test_failed(const char * fmt, ...);
 
+/** \brief Get status of unit test.
+*/
+int ape_test_get_status(void);
+
 /** \brief Set status of unit test.
     \param status The status of the test. If global status is already set, nothing happens.
 */
@@ -119,7 +123,7 @@ void ape_test_set_status(int status);
 #endif
 
 /*
- * $Log: ape_test.h,v $
+ * $Log$
  * Revision 1.11  2010/06/02 19:22:09  peachey
  * Add initial (partial) implementation of ape_session module.
  *

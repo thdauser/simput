@@ -291,7 +291,7 @@ int ape_par_get_name(const ApePar * ape_par, char ** name) {
 
   return status;
 }
- 
+
 int ape_par_get_bool(const ApePar * par, char * result) {
   int status = eOK;
   if (0 != result) {
@@ -774,7 +774,7 @@ int ape_par_get_eff_mode(const ApePar * par, const char * auto_string, char * mo
   }
 
   if (eOK == status && eDefaultPrompt == prompt_style) {
-    status = ape_par_get_default_prompt_style(&prompt_style);
+    status = ape_util_get_default_prompt_style(&prompt_style);
   }
 
   if (eOK == status) {
@@ -1061,22 +1061,14 @@ int ape_par_set_comment(ApePar * par, const char * comment) {
   return status;
 }
 
-static int s_default_prompt_style = eDefaultPrompt;
-
+/* Note this is deprecated but kept for backward compatibility. Use ape_util_get_default_prompt_style instead. */
 int ape_par_get_default_prompt_style(int * prompt_style) {
-  int status = eOK;
-  if (0 != prompt_style) {
-    *prompt_style = s_default_prompt_style;
-  } else {
-    status = eNullPointer;
-  }
-  return status;
+  return ape_util_get_default_prompt_style(prompt_style);
 }
 
+/* Note this is deprecated but kept for backward compatibility. Use ape_util_set_default_prompt_style instead. */
 int ape_par_set_default_prompt_style(int prompt_style) {
-  int status = eOK;
-  s_default_prompt_style = prompt_style;
-  return status;
+  return ape_util_set_default_prompt_style(prompt_style);
 }
 
 int ape_par_get_prompt_style(const ApePar * par, int * prompt_style) {
@@ -1294,6 +1286,12 @@ static void describe_status(char ** field, int * field_status, int status) {
       else
         ape_msg_error("Ape: invalid parameter name \"%s\" in parameter file.\n", name);
       break;
+    case eInvalidModeParType:
+      ape_msg_error("Parameter %s: invalid type \"%s\"; must be type \"s\".\n", name, type);
+      break;
+    case eInvalidModeParValue:
+      ape_msg_error("Parameter %s: bad value \"%s\"; must be a valid mix of \"h\", \"l\", and \"q\".\n", name, value);
+      break;
     case eFileNotAccessible:
       if ('\0' != type[1])
         ape_msg_error("Parameter %s: file \"%s\" is not accessible in mode %s.\n", name, value, type + 1);
@@ -1305,14 +1303,14 @@ static void describe_status(char ** field, int * field_status, int status) {
           been converted to a different status based on context, e.g. eInvalidRange. Thus
           this message SHOULD NOT ever be displayed. If this message is displayed, it is necessary
           to check the logic of ape_par_check. */
-       ape_msg_debug("Parameter %s: value \"%s\" is interpreted as infinite/NaN.\n", name, value);  
+       ape_msg_debug("Parameter %s: value \"%s\" is interpreted as infinite/NaN.\n", name, value);
       break;
     case eUndefinedValue:
        /* Note that by the time ape_par_check calls this function, this status should have
           been converted to a different status based on context, e.g. eInvalidRange. Thus
           this message SHOULD NOT ever be displayed. If this message is displayed, it is necessary
           to check the logic of ape_par_check. */
-       ape_msg_debug("Parameter %s: value \"%s\" is interpreted as undefined.\n", name, value);  
+       ape_msg_debug("Parameter %s: value \"%s\" is interpreted as undefined.\n", name, value);
       break;
     default:
       ape_msg_error("Parameter %s: unexpected Ape error code %d.\n", name, status);
@@ -1330,6 +1328,7 @@ int ape_par_prompt(ApePar * par) {
   char * max = 0;
   int range_status = eOK;
   int prompt_style = eDefaultPrompt;
+  int default_prompt_style = eDefaultPrompt;
   char reprompt = 0;
 
   /* Check arguments. */
@@ -1338,8 +1337,11 @@ int ape_par_prompt(ApePar * par) {
   /* Get the prompt style for the parameter. */
   if (eOK == status) status = ape_par_get_prompt_style(par, &prompt_style);
 
+  /* Get the default prompt style for the parameter. */
+  if (eOK == status) status = ape_util_get_default_prompt_style(&default_prompt_style);
+
   /* Suppress prompt if prompt style or default prompt style is "no prompt". */
-  if (eOK == status && 0 != (eNoPrompt & (s_default_prompt_style | par->prompt_style))) return status;
+  if (eOK == status && 0 != (eNoPrompt & (default_prompt_style | par->prompt_style))) return status;
 
   if (eOK == status) {
     /* Get the string containing the minimum value for the parameter. */
@@ -1428,7 +1430,7 @@ int ape_par_prompt(ApePar * par) {
         if (eOK == status) {
           status = custom_get_text(prompt, name, &new_value);
         }
-        free(name);
+        free(name); name = 0;
       } else {
         status = ape_util_get_text(prompt, &new_value);
       }
@@ -1981,6 +1983,36 @@ int ape_par_check(const ApePar * par, char check_value) {
   if (eOK == status && eEndOfField != num_fields && 0 == blank_line) {
     par_error_msg(par, &first_error);
     ape_msg_debug("  o Parameter has %u field%s, not %u as expected.\n", num_fields, num_fields != 1 ? "s" : "", eEndOfField);
+  }
+
+  /* Check for validity of the "mode" parameter. */
+  if (eOK == status && 0 == ape_util_strcmp(field[eName], "mode", 1)) {
+    int mode_status = eOK;
+    char mode_string[APE_PAR_MODE_CODE_LEN] = "";
+    /* Type of mode parameter must be string. */
+    if (0 != ape_util_strcmp(field[eType], "s", 1)) {
+      field_status[eType] = eInvalidModeParType;
+      par_error_msg(par, &first_error);
+      ape_msg_debug("  o Type is \"%s\", not \"s\" as required for the \"mode\" parameter.\n", field[eType]);
+    }
+    if (0 != check_value) {
+      if (eOK != (mode_status = string2mode(field[eValue], mode_string))) {
+        /* The value of the "mode" parameter did not parse cleanly to an acceptable mode. */
+        field_status[eValue] = eInvalidModeParValue;
+        par_error_msg(par, &first_error);
+        ape_msg_debug("  o Value = \"%s\" is invalid for \"mode\" parameter.\n", field[eValue]);
+      } else {
+        if (0 != strchr(mode_string, 'a')) {
+          /* Value of "mode" parameter must be a valid mode. The case where the mode is itself invalid
+             (e.g., "foo") was handled above already, so here we check if it is valid as a mode, but
+             includes "a". The "mode" parameter is the one parameter that may not be "a", since it
+             specifies the behavior when another parameters' mode is "a". */
+          field_status[eValue] = eInvalidModeParValue;
+          par_error_msg(par, &first_error);
+          ape_msg_debug("  o Value = \"%s\" may not include \"a\" (automatic).\n", mode_string);
+        }
+      }
+    }
   }
 
   /* Determine final status to report, which should be the status of the most serious error encountered. In
@@ -2995,6 +3027,8 @@ void ape_par_test(void) {
 
       /* Disable prompts and prompt again, expected value is again 2, with no error despite the fact that
          stdin is at EOF. */
+      /* 2015-08-13 JP Note that ape_par_get_default_prompt_style was superseded by ape_util_get_default_prompt_style,
+         but use ape_par_get_default_prompt_style in test code since it is more easily done here. */
       status = ape_par_get_default_prompt_style(&orig_prompt_style);
       if (eOK == status) {
         status = ape_par_set_default_prompt_style(eNoPrompt);
@@ -3021,6 +3055,8 @@ void ape_par_test(void) {
       }
       /* Enable prompts and prompt again, which should generate an error because there is no more input. */
       if (eOK == status) {
+        /* 2015-08-13 JP Note that ape_par_get_default_prompt_style was superseded by ape_util_get_default_prompt_style,
+           but use ape_par_get_default_prompt_style in test code since it is more easily done here. */
         status = ape_par_set_default_prompt_style(eDefaultPrompt);
       }
       if (eOK == status) status = ape_par_set_field(par, eValue, "1");
@@ -3045,6 +3081,8 @@ void ape_par_test(void) {
         ape_test_failed("ape_par_set_default_prompt_style(eNoPrompt) returned status %d, not eOK as expected.\n", status);
       }
       /* Restore previous status quo. */
+      /* 2015-08-13 JP Note that ape_par_get_default_prompt_style was superseded by ape_util_get_default_prompt_style,
+         but use ape_par_get_default_prompt_style in test code since it is more easily done here. */
       ape_par_set_default_prompt_style(orig_prompt_style);
     } else {
       ape_test_failed("Setup for ape_par_query test failed with status %d.\n", status);
@@ -3182,6 +3220,9 @@ void ape_par_test(void) {
   test_par_check("parname,  r,  h,  INF, 1.|INF, , Prompt", eInvalidRange, 1);
   test_par_check("parname,  r,  h,  1., 1.|INF, , Prompt", eInvalidRange, 1);
   test_par_check("parname,  r,  h,  5., 1.|INF, , Prompt", eInvalidRange, 1);
+  test_par_check("mode   ,  r,  h,  1., , , Mode", eInvalidModeParType, 1);
+  test_par_check("mode   ,  s,  h,  qhl, , , Mode", eInvalidModeParValue, 1);
+  test_par_check("mode   ,  s,  h,  a, , , Mode", eInvalidModeParValue, 1);
 
   /* Tests of ape_par_get_eff_mode. */
   { const char * par_string[] = {
@@ -3516,6 +3557,8 @@ void ape_par_test(void) {
       ape_test_failed("ape_par_register_get_text failed to return \'Hello World\'\n");
     if (eInputFailure != status)
       ape_test_failed("ape_par_register_get_text failed unexpectedly with status %d\n",status);
+    /* Revert to normal behavior for the benefit of downstream tests. */
+    ape_par_register_get_text(0);
   }
 }
 
@@ -4172,7 +4215,17 @@ static const char * find_unquoted(const char * s, const char * delim) {
 #endif
 
 /*
- * $Log: ape_par.c,v $
+ * $Log$
+ * Revision 1.108  2015/08/26 17:26:39  peachey
+ * Add checks for validity of mode parameter. Must have type "s" and
+ * must have a valid mode for a value ("h", "hl", "q", "ql").
+ *
+ * Revision 1.107  2015/08/14 15:25:41  peachey
+ * Refactoring so that if HEADASNOQUERY is set, all prompts are suppressed
+ * throughout all ape code. This is to make it easier for scripts to take
+ * advantage of the HEADASNOQUERY mode. The immediate need is for Astro-H
+ * scripting to work properly.
+ *
  * Revision 1.106  2014/05/23 22:15:03  peachey
  * Improve and simplify the comparison of long values still further.
  * Pick large integers such that they give the same underflow/overflow errors on 32 and

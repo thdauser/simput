@@ -27,13 +27,17 @@ extern "C" {
 #endif
 
 #ifdef WIN32
+/*
 static const char s_dir_separator[] = { '/', '\\' };
+*/
 #define QC ";"
 #define QS "|"
 #define QD "\\"
 #define QD2 "/"
 #else
+/*
 static const char s_dir_separator[] = { '/' };
+*/
 #define QC ":"
 #define QS ";"
 #define QD "/"
@@ -643,11 +647,7 @@ void ape_trad_test(void) {
 #endif
 
 /*
- * $Log: ape_trad.c,v $
- * Revision 1.52  2013/04/15 16:40:03  irby
- * Add ape_trad_get_mode/ape_trad_set_mode (incl. cfortran wrappers so we
- * can invoke from e.g. xselect).
- *
+ * $Log$
  * Revision 1.51  2012/03/21 19:46:55  peachey
  * Check for eFileNotFound rather than eFileReadError in test code.
  *

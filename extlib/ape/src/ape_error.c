@@ -17,8 +17,5 @@ int ape_error_test() {
 #endif
 
 /*
- * $Log: ape_error.c,v $
- * Revision 1.1.1.1  2006/04/05 13:45:19  peachey
- * Initial import of All-purpose Parameter Environment (APE).
- *
+ * $Log$
 */

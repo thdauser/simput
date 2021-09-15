@@ -11,6 +11,18 @@
 extern "C" {
 #endif
 
+/* The following defines were taken from their PIL namesakes. Should
+   those ever change, these need to change as well. */
+#define APE_UTIL_QUERY_DEFAULT       (1)
+#define APE_UTIL_QUERY_OVERRIDE      (0)
+
+typedef enum UtilPromptModeEnum {
+  eDefaultPrompt = 0,
+  eNoPrompt = 1,
+  eQueryHidden = 2,
+  eMultiQuery = 4 /* Issue a new prompt every time ape_par_query is called, even if parameter was supplied on cmd line. */
+} ParPromptModeEnum;
+
 /** \brief Register a function to be called when exit is called. (for internal use).
     \param func The function to call.
 */
@@ -54,6 +66,12 @@ void ape_util_free_string_array(char ** string_array);
     \param def_value The default value assigned if variable is not defined.
 */
 int ape_util_getenv(const char * name, char ** value, const char * def_value);
+
+/** \brief Set the named environment variable.
+    \param name The name of the environment variable to set.
+    \param value String containing the value of the variable.
+*/
+int ape_util_setenv(const char * name, const char * value);
 
 /** \brief Interpret environment variables to set up Ape internal data structures.
 */
@@ -178,6 +196,26 @@ int ape_util_get_text(const char * prompt, char ** text);
 */
 int ape_util_set_prompt_stream(FILE * stream);
 
+/** \brief Get global default prompt style, which takes effect only if the parameter's style is eDefaultPrompt.
+    Thus individual parameters may override the default value. An exception to this is eNoPrompt, which
+    will suppress prompts for all parameters regardless.
+    \param prompt_style Current default prompt style.
+*/
+int ape_util_get_default_prompt_style(int * prompt_style);
+
+/** \brief Set global default prompt style, which takes effect only if the parameter's style is eDefaultPrompt.
+    Thus individual parameters may override the default value. An exception to this is eNoPrompt, which
+    will suppress prompts for all parameters regardless.
+    \param prompt_style Default prompt style desired, a bitwise "or" of options present in enum ParPromptModeEnum.
+*/
+int ape_util_set_default_prompt_style(int prompt_style);
+
+/** \brief Set query mode.
+    \param new_mode The new mode to set. If it is APE_UTIL_QUERY_OVERRIDE, no prompts will occur. If it is
+    APE_UTIL_QUERY_DEFAULT, the usual prompts will occur.
+*/
+int ape_util_override_query_mode(int new_mode);
+
 #ifdef __cplusplus
 }
 #endif
@@ -185,7 +223,7 @@ int ape_util_set_prompt_stream(FILE * stream);
 #endif
 
 /*
- * $Log: ape_util.h,v $
+ * $Log$
  * Revision 1.22  2011/02/01 18:01:46  jpeachey
  * Add support and tests for functions to convert string values into int
  * and short types, and to convert a parameter value into short type.

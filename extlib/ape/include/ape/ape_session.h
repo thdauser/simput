@@ -238,10 +238,7 @@ int ape_session_find_par(ApeSession * session, const char * par_name, ApePar ** 
 #endif
 
 /*
- * $Log: ape_session.h,v $
- * Revision 1.6  2013/04/15 16:37:59  irby
- * Add ape_session_get_mode/ape_session_set_mode.
- *
+ * $Log$
  * Revision 1.5  2010/11/12 20:49:15  irby
  * Add ape_session_set_short() (wraps to ape_session_set_int).
  *

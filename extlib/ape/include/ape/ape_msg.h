@@ -11,6 +11,9 @@
 extern "C" {
 #endif
 
+typedef void (*ApeMsgFuncPtrType)(const char *);
+typedef void (*ApeMsgChatPtrType)(int, const char *);
+
 /** \brief Display a debugging message. Only has effect if debugging mode enabled.
     \param fmt Format for output, see documentation for printf for details.
     \param ... Additional (variable) arguments giving the items to display.
@@ -45,25 +48,57 @@ void ape_msg_info(unsigned int chatter, const char * fmt, ...);
 */
 void ape_msg_out(const char * fmt, ...);
 
+/** \brief Return the current ape error stream. */
+FILE * ape_msg_get_err_stream(void);
+
 /** \brief Redirect output destined for stderr to the given stream.
     \param new_stream Stream to use for output.
 */
 void ape_msg_set_err_stream(FILE * new_stream);
 
+/** \brief Get the function which handles output from ape_msg_error.
+*/
+ApeMsgFuncPtrType ape_msg_get_err_handler(void);
+
 /** \brief Set the function which handles output from ape_msg_error.
     \param func The new handler function.
 */
-void ape_msg_set_err_handler(void (*func)(const char *));
+void ape_msg_set_err_handler(ApeMsgFuncPtrType func);
+
+/** \brief Get the function which handles output from ape_msg_warn.
+*/
+ApeMsgChatPtrType ape_msg_get_warn_handler(void);
+
+/** \brief Set the function which handles output from ape_msg_warn.
+    \param func The new handler function.
+*/
+void ape_msg_set_warn_handler(ApeMsgChatPtrType func);
+
+/** \brief Return the current ape output stream. */
+FILE * ape_msg_get_out_stream(void);
 
 /** \brief Redirect output destined for stdout to the given stream.
     \param new_stream Stream to use for output.
 */
 void ape_msg_set_out_stream(FILE * new_stream);
 
+/** \brief Get the function which handles output from ape_msg_out.
+*/
+ApeMsgFuncPtrType ape_msg_get_out_handler(void);
+
 /** \brief Set the function which handles output from ape_msg_out.
     \param func The new handler function.
 */
-void ape_msg_set_out_handler(void (*func)(const char *));
+void ape_msg_set_out_handler(ApeMsgFuncPtrType func);
+
+/** \brief Get the function which handles output from ape_msg_info.
+*/
+ApeMsgChatPtrType ape_msg_get_info_handler(void);
+
+/** \brief Set the function which handles output from ape_msg_info.
+    \param func The new handler function.
+*/
+void ape_msg_set_info_handler(ApeMsgChatPtrType func);
 
 /** \brief Display a (suppressible) warning message.
     \param chatter Importance level for the message, the lower the more important.
@@ -79,7 +114,7 @@ void ape_msg_warn(unsigned int chatter, const char * fmt, ...);
 #endif
 
 /*
- * $Log: ape_msg.h,v $
+ * $Log$
  * Revision 1.7  2013/09/06 19:14:49  peachey
  * Add ape_msg_set_err_handler function, parallel to ape_msg_set_out_handler.
  * The new function allows the client code to supply a custom error handling

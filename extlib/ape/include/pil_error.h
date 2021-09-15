@@ -76,9 +76,5 @@ const char * PIL_err_handler(int r);
 #endif
 
 /*
- * $Log: pil_error.h,v $
- * Revision 1.3  2006/06/06 17:46:59  peachey
- * Add some error codes to cover essential ape errors which have no
- * counterpart in pil error code space.
- *
+ * $Log$
  */

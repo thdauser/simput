@@ -69,10 +69,7 @@ const char * PIL_err_handler(int r) {
 }
 
 /*
- * $Log: pil_error.c,v $
- * Revision 1.4  2006/06/17 03:05:54  peachey
- * Correct spelling in error message.
- *
+ * $Log$
  * Revision 1.3  2006/06/06 17:47:32  peachey
  * Add some error codes to cover essential ape errors which have no
  * counterpart in pil error code space.

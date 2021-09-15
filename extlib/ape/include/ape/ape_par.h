@@ -5,6 +5,8 @@
 #ifndef ape_ape_par_h
 #define ape_ape_par_h
 
+#include "ape/ape_util.h"
+
 #include <stdio.h>
 
 #ifdef __cplusplus
@@ -27,13 +29,6 @@ typedef enum ParFieldId {
   ePrompt,
   eEndOfField
 } ParFieldId;
-
-typedef enum ParPromptModeEnum {
-  eDefaultPrompt = 0,
-  eNoPrompt = 1,
-  eQueryHidden = 2,
-  eMultiQuery = 4 /* Issue a new prompt every time ape_par_query is called, even if parameter was supplied on cmd line. */
-} ParPromptModeEnum;
 
 /* Enumerated codes governing the case of string parameters values when read. */
 typedef enum ParStringCaseEnum {
@@ -219,17 +214,19 @@ int ape_par_set_value_string(ApePar * par, const char * value);
 */
 int ape_par_set_comment(ApePar * par, const char * comment);
 
-/** \brief Get global default prompt style, which takes effect only if the parameter's style is eDefaultPrompt.
+/** \brief This is deprecated but kept for backward compatibility. Use ape_util_get_default_prompt_style instead.
+    Get global default prompt style, which takes effect only if the parameter's style is eDefaultPrompt.
     Thus individual parameters may override the default value. An exception to this is eNoPrompt, which
     will suppress prompts for all parameters regardless.
-    \param prompt_style Current default prompt style.
+    \param prompt_style Current default prompt style (output variable). Styles are enumerated in ape_util.h.
 */
 int ape_par_get_default_prompt_style(int * prompt_style);
 
-/** \brief Set global default prompt style, which takes effect only if the parameter's style is eDefaultPrompt.
+/** \brief This is deprecated but kept for backward compatibility. Use ape_util_set_default_prompt_style instead.
+    Set global default prompt style, which takes effect only if the parameter's style is eDefaultPrompt.
     Thus individual parameters may override the default value. An exception to this is eNoPrompt, which
     will suppress prompts for all parameters regardless.
-    \param prompt_style Default prompt style desired, a bitwise "or" of options present in enum ParPromptModeEnum.
+    \param prompt_style Default prompt style desired, a bitwise "or" of style options enumerated in ape_util.h.
 */
 int ape_par_set_default_prompt_style(int prompt_style);
 
@@ -241,7 +238,7 @@ int ape_par_get_prompt_style(const ApePar * par, int * prompt_style);
 
 /** \brief Set prompt style of this parameter to control when and if prompts are displayed.
     \param par Pointer to the parameter object.
-    \param prompt_style Prompt style desired, a bitwise "or" of options present in enum ParPromptModeEnum.
+    \param prompt_style Default prompt style desired, a bitwise "or" of style options enumerated in ape_util.h.
 */
 int ape_par_set_prompt_style(ApePar * par, int prompt_style);
 
@@ -293,7 +290,7 @@ int ape_par_register_get_text(ApeParGetTextFunc client_get_text);
 #endif
 
 /*
- * $Log: ape_par.h,v $
+ * $Log$
  * Revision 1.31  2013/04/15 16:41:07  irby
  * Add ape_par_set_mode and test cases.
  *

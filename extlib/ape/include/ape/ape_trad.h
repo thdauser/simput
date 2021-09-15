@@ -225,11 +225,7 @@ int ape_trad_find_par(const char * par_name, ApePar ** par);
 #endif
 
 /*
- * $Log: ape_trad.h,v $
- * Revision 1.20  2013/04/15 16:40:05  irby
- * Add ape_trad_get_mode/ape_trad_set_mode (incl. cfortran wrappers so we
- * can invoke from e.g. xselect).
- *
+ * $Log$
  * Revision 1.19  2010/11/12 20:47:44  irby
  * Add ape_trad_set_short() and cfortran macros for ape_trad_set_double,
  * ape_trad_set_long, and ape_trad_set_short.  Also, add string & filename

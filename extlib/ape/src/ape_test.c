@@ -98,7 +98,7 @@ int ape_test(int argc, char ** argv) {
 
   /* Issue final status message. */
   if (eOK == s_status) {
-    ape_msg_info(0, "APE Unit Test Passed!\n");
+    ape_msg_info(0, "APE Unit Test PASSED!\n");
   } else {
     ape_msg_error("APE Unit Test FAILED!\n");
   }
@@ -212,6 +212,10 @@ void ape_test_cmp_ulong(const char * hint, unsigned long result, unsigned long e
     ape_test_failed("%s%sstatus was %d, not %d, as expected.\n", hint, join, status, expected_status);
 }
 
+int ape_test_get_status(void) {
+  return s_status;
+}
+
 void ape_test_set_status(int status) {
   /* Set the given status provided an error has not already been flagged. */
   if (eOK == s_status) s_status = status;
@@ -222,7 +226,7 @@ void ape_test_set_status(int status) {
 #endif
 
 /*
- * $Log: ape_test.c,v $
+ * $Log$
  * Revision 1.17  2014/05/27 14:02:34  peachey
  * Redirect prompts to a null file (/dev/null) to make output more
  * consistent across platforms. Regenerated (Unix) reference output accordingly.

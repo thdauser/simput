@@ -401,8 +401,32 @@ int ape_util_getenv(const char * name, char ** value, const char * def_value) {
   return status;
 }
 
+int ape_util_setenv(const char * name, const char * value) {
+  int status = eOK;
+  /* Check arguments. */
+  if (0 == name) {
+    status = eNullPointer;
+    ape_msg_debug("ape_util_setenv was called with name == 0.\n");
+  } else if (0 == *name) {
+    status = eInvalidArgument;
+    ape_msg_debug("ape_util_setenv was called with name == \"\".\n");
+  }
+  if (0 == value) {
+    status = eNullPointer;
+    ape_msg_debug("ape_util_setenv was called with value == 0.\n");
+  }
+  if (eOK == status) {
+    status = setenv(name, value, 1);
+    if (eOK != status) {
+      ape_msg_debug("ape_util_setenv: setenv returned errno == %d.\n", errno);
+    }
+  }
+  return status;
+}
+
 int ape_util_interpret_env(void) {
   char * value = 0;
+  /* Handle ape's debug mode. */
   int status = ape_util_getenv("APEDEBUG", &value, 0);
   if (eOK == status) {
     char debug_mode = ape_msg_get_debug_mode();
@@ -410,6 +434,16 @@ int ape_util_interpret_env(void) {
       ape_msg_debug_enable(1);
       ape_msg_debug("APEDEBUG environment variable set: Ape debugging mode enabled.\n");
     }
+  } else if (eVarNotSet == status) {
+    /* That is OK, this is just an optional environment variable. */
+    status = eOK;
+  }
+  free(value); value = 0;
+
+  /* Handle disabling of prompts. */
+  status = ape_util_getenv("HEADASNOQUERY", &value, 0);
+  if (eOK == status) {
+    status = ape_util_override_query_mode(APE_UTIL_QUERY_OVERRIDE);
   } else if (eVarNotSet == status) {
     /* That is OK, this is just an optional environment variable. */
     status = eOK;
@@ -787,6 +821,7 @@ int ape_util_strcmp(const char * s1, const char * s2, char case_insensitive) {
       /* For case-sensitive comparison, just use native strcmp. */
       status = strcmp(s1, s2);
     }
+    if (status < 0) status = -1; else if (status > 0) status = 1;
   }
   return status;
 }
@@ -1093,6 +1128,64 @@ int ape_util_set_prompt_stream(FILE * stream) {
   return status;
 }
 
+static int s_default_prompt_style = eDefaultPrompt;
+
+int ape_util_get_default_prompt_style(int * prompt_style) {
+  int status = eOK;
+  if (0 != prompt_style) {
+    *prompt_style = s_default_prompt_style;
+  } else {
+    status = eNullPointer;
+  }
+  return status;
+}
+
+int ape_util_set_default_prompt_style(int prompt_style) {
+  int status = eOK;
+  s_default_prompt_style = prompt_style;
+  return status;
+}
+
+/* +++ 2015-08-13 JP The guts of this function were originally in the PIL
+   +++ compatibility function PILOverrideQueryMode.
+   +++ Moved it into the API call ape_util_override_query_mode so that
+   +++ this could be done cleanly with native ape-only calls.
+   +++ TODO: move also the test code from the PIL compatibility codebase.
+   +++ For now, depending on tests for PILOverrideQueryMode to test
+   +++ this function. */
+int ape_util_override_query_mode(int new_mode) {
+  int status = eOK;
+  int prompt_style = eDefaultPrompt;
+  int ape_query_override = eNoPrompt;
+
+  if (eOK == status) {
+    /* Get the current default prompt style. */
+    ape_util_get_default_prompt_style(&prompt_style);
+  }
+
+  if (eOK == status) {
+    /* Map PIL override query mode to ape's version. */
+    switch (new_mode) {
+      case APE_UTIL_QUERY_DEFAULT:
+        prompt_style &= ~ape_query_override;
+        break;
+      case APE_UTIL_QUERY_OVERRIDE:
+        prompt_style |= ape_query_override;
+        break;
+      default:
+        status = eInvalidArgument;
+        break;
+    }
+  }
+
+  if (eOK == status) {
+    /* Change ape's default prompt style. */
+    status = ape_util_set_default_prompt_style(prompt_style);
+  }
+
+  return status;
+}
+
 static void check_s2b(const char * input, int expected_output, int expected_status, int output, int status) {
   if (expected_status != status)
     ape_test_failed("ape_util_s2b(\"%s\", &bool_result) returned status %d, not %d as expected.\n",
@@ -1217,14 +1310,14 @@ static void test_conversion(void) {
   if (expected_status != status)
     ape_test_failed("ci_strcmp(\"%s\", \"%s\") returned %d, not %d as expected.\n", input, input2, status, expected_status);
 
-  expected_status = -1 * ' ';
+  expected_status = -1;
   input = "fobble";
   input2 = "fobble ";
   status = ci_strcmp(input, input2);
   if (expected_status != status)
     ape_test_failed("ci_strcmp(\"%s\", \"%s\") returned %d, not %d as expected.\n", input, input2, status, expected_status);
 
-  expected_status = ' ';
+  expected_status = 1;
   input = "fobble ";
   input2 = "fobble";
   status = ci_strcmp(input, input2);
@@ -1965,7 +2058,7 @@ static void test_conversion(void) {
 
     /* Case insensitive test should return same as native strcmp. */
     status = ape_util_strcmp(string1, string2, 0);
-    expected_status = strcmp(string1, string2);
+    expected_status = 1;
     if (expected_status != status)
       ape_test_failed("ape_util_strcmp(string1, string2, 0) returned %d, not %d as expected.\n", status, expected_status);
 
@@ -1986,11 +2079,11 @@ static void test_conversion(void) {
     if (0 <= status) ape_test_failed("ape_util_cmp_string_array(0, array2, 0) returned %d, not > 0 as expected.\n", status);
 
     status = ape_util_cmp_string_array(array1, array2, 0);
-    expected_status = strcmp(array1[1], array2[1]);
+    expected_status = -1;
     if (expected_status != status)
       ape_test_failed("ape_util_cmp_string_array(array1, array2, 0) returned %d, not %d as expected.\n", status, expected_status);
 
-    expected_status = 'c' - 'e';
+    expected_status = -1;
     status = ape_util_cmp_string_array(array1, array2, 1);
     if (expected_status != status)
       ape_test_failed("ape_util_cmp_string_array(array1, array2, 1) returned %d, not %d as expected.\n", status, expected_status);
@@ -2317,7 +2410,13 @@ void ape_util_test(void) {
 #endif
 
 /*
- * $Log: ape_util.c,v $
+ * $Log$
+ * Revision 1.57  2015/08/14 15:25:41  peachey
+ * Refactoring so that if HEADASNOQUERY is set, all prompts are suppressed
+ * throughout all ape code. This is to make it easier for scripts to take
+ * advantage of the HEADASNOQUERY mode. The immediate need is for Astro-H
+ * scripting to work properly.
+ *
  * Revision 1.56  2011/02/01 18:01:47  jpeachey
  * Add support and tests for functions to convert string values into int
  * and short types, and to convert a parameter value into short type.

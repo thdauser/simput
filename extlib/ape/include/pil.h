@@ -187,10 +187,7 @@ int PILFlushParameters(void);
 #endif
 
 /*
- * $Log: pil.h,v $
- * Revision 1.8  2009/12/04 19:15:26  peachey
- * Add PILGetLong function.
- *
+ * $Log$
  * Revision 1.7  2006/06/06 17:47:12  peachey
  * Add cvs log info.
  *

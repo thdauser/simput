@@ -249,6 +249,12 @@ int ape_session_init(ApeSession ** session, int argc, char ** argv) {
   }
 
   if (eOK == status) {
+    /* Check for valid parameter file format, but do not check the parameter values,
+       which may be invalid now but may be corrected later. */
+    status = ape_io_check_file_format(new_session->current, 0);
+  }
+
+  if (eOK == status) {
     *session = new_session;
   } else {
     ape_session_destroy(new_session);
@@ -1145,7 +1151,7 @@ void ape_session_test(void) {
 #endif
 
 /*
- * $Log: ape_session.c,v $
+ * $Log$
  * Revision 1.12  2013/04/15 16:38:00  irby
  * Add ape_session_get_mode/ape_session_set_mode.
  *

@@ -139,11 +139,7 @@ int ape_io_check_file_format(ApeParFile * par_file, char check_value);
 #endif
 
 /*
- * $Log: ape_io.h,v $
- * Revision 1.20  2006/05/23 16:26:56  peachey
- * Add read-only flag to par file structure. Add force_write arguement to
- * ape_io_write for overriding read-only status.
- *
+ * $Log$
  * Revision 1.19  2006/05/19 17:29:32  peachey
  * Update TODO which was done.
  *

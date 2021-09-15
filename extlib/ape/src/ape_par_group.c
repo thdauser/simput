@@ -76,10 +76,7 @@ void ape_par_group_test(void) {
 #endif
 
 /*
- * $Log: ape_par_group.c,v $
- * Revision 1.2  2006/04/10 21:11:41  peachey
- * Fix a small memory leak.
- *
+ * $Log$
  * Revision 1.1.1.1  2006/04/05 13:45:19  peachey
  * Initial import of All-purpose Parameter Environment (APE).
  *

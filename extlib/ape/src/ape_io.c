@@ -1277,13 +1277,9 @@ static int classify_arg(char ** par_name, int end_par, int arg_index, char * arg
   int status = eOK;
   int match = 0;
   char * arg_save = 0;
-  char * arg_orig = 0;
 
   /* Skip leading white space in argument. */
   while (0 != isspace(*arg_p)) ++arg_p;
-
-  /* Save original argument for use (if needed) in error message later. */
-  arg_orig = arg_p;
 
   /* Initially classify as unknown, with parameter index one-past-last par, and value is the first significant character. */
   *type = UNKNOWN;
@@ -3397,7 +3393,7 @@ void ape_io_test(void) {
       "p1, s, h, , , , parameter 1",
       "p2, s, h, , , , parameter 2",
       "p3, s, h, , , , parameter 3",
-      "mode, b, h, no, , , mode of automatic parameters",
+      "mode, s, h, h, , , mode of automatic parameters",
       "mode, s, h, ql, , , mode of automatic parameters",
       0
     };
@@ -3501,7 +3497,10 @@ void ape_io_test(void) {
 #endif
 
 /*
- * $Log: ape_io.c,v $
+ * $Log$
+ * Revision 1.88  2014/09/05 18:34:37  peachey
+ * Remove unused local variable arg_orig.
+ *
  * Revision 1.87  2014/05/23 12:59:58  peachey
  * Sorted out rats' nest of changes to unit tests that accumulated since
  * 2009. This involved small tweaks to code that creates test files from

@@ -1048,6 +1048,22 @@ void ape_binary_test(void) {
           status, expected_status);
     }
 
+    /* Test success case for getting a prompted parameter with prompts disablec. */
+    { char * argv[] = { "pquery2", "ape_test.par", "sa", 0 };
+      int argc = sizeof(argv) / sizeof(argv[0]) - 1;
+      int status = eOK;
+      int expected_status = eOK;
+      status = ape_util_setenv("HEADASNOQUERY", "1");
+      if (eOK != status) {
+        ape_test_failed("ape_binary_test was unable to set up to test HEADASNOQUERY mode. (Status was %d.)\n", status);
+      } else {
+        status = ape_binary_run(argc, argv, &binary);
+        if (expected_status != status)
+          ape_test_failed("ape_binary_run(\"pquery2 ape_test.par sa\") returned %d, not %d as expected.\n",
+            status, expected_status);
+      }
+    }
+
     /* Confirm that pquery2 rewrites parameter file with modified learned parameters, but unmodified hidden parameters. */
     { char * argv[] = { "pquery2", "ape_test.par", "sql", "sql=pquery2-learned", "sh=pquery2-should-not-learn", 0 };
       int argc = sizeof(argv) / sizeof(argv[0]) - 1;
@@ -1260,7 +1276,7 @@ void ape_binary_test(void) {
 #endif
 
 /*
- * $Log: ape_binary.c,v $
+ * $Log$
  * Revision 1.32  2012/04/16 18:51:28  irby
  * Extend support for building a pquery binary: add new ape_binary_pquery()
  * which wraps to previously-existing ape_binary_pquery2() but toggles the

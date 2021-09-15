@@ -523,15 +523,7 @@ void ape_list_test(void) {
 #endif
 
 /*
- * $Log: ape_list.c,v $
- * Revision 1.3  2007/05/15 20:52:48  peachey
- * Additional speed optimizations:
- * o Reduce number of calls to ape_list_end by calling it once and storing
- *   the returned iterator for use in loop logic when it is safe to do so.
- * o Make ape_list_destroy more efficient by iterating through the list
- *   back to front once and freeing the elements instead of repeatedly
- *   calling ape_list_remove_entry.
- *
+ * $Log$
  * Revision 1.2  2006/06/23 19:00:03  peachey
  * Correct a bug in which sizeof(void*) was used instead of sizeof(array[0]).
  *

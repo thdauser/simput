@@ -66,7 +66,9 @@ typedef enum ape_error_enum {
   eFileNotAccessible,
   eNoModePar,
   /* 45 */
-  eAmbiguousParName
+  eAmbiguousParName,
+  eInvalidModeParType,
+  eInvalidModeParValue
 } ape_error_enum;
 
 #ifdef __cplusplus
@@ -76,7 +78,7 @@ typedef enum ape_error_enum {
 #endif
 
 /*
- * $Log: ape_error.h,v $
+ * $Log$
  * Revision 1.28  2011/02/18 19:37:19  irby
  * Add new error code eAmbiguousParName and notes explaining the
  * difference between eInvalidName and eInvalidParName.
