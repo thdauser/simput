@@ -6,7 +6,12 @@ Changes made to the extlib files:
 - fftw:
   * commented out "AC_DISABLE_SHARED" in configure.ac, L33.
   * fftw/doc directory not compiled for Simput, commented out corresponding lines
-    in Makefile.am L34-42 and deleted corresponding AC_CONFIG_FILES entries in 
+    in Makefile.am L34-42 and deleted corresponding AC_CONFIG_FILES entries in
     fftw/configure.ac, L805-806 (creating the documentation also modifies many
     of the input files there which leads to problems with git and also
     'make distcheck').
+
+- ape:
+  * src/ape_io.c (L1432-1439): Added message about deprecated Mission,
+    Instrument, and Mode parameters if they are still used when executing a
+    Sixte tool (this XML selection feature was removed with Sixte commit e5e30e89).

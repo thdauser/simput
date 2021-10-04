@@ -428,7 +428,7 @@ static int par_synch(ApeList * master_cont, ApeListIterator * master_itor, ApeLi
     status = ape_par_check(other, 0);
     if (eOK != status) {
       ApePar * new_other = 0;
-      status = ape_par_clone(master, &new_other); 
+      status = ape_par_clone(master, &new_other);
       if (eOK == status) {
         ape_list_set(*par_itor, new_other);
         ape_par_destroy(other);
@@ -757,7 +757,7 @@ static int par_revert(ApeList * master_cont, ApeListIterator * master_itor, ApeL
     }
   }
   return status;
-  
+
 }
 
 int ape_io_revert_unlearned(ApeParFile * current, ApeParFile * previous) {
@@ -1159,7 +1159,7 @@ static char * create_tmp_file_name(const char * file_name) {
     gethostname(host_name, FILENAME_MAX);
 #endif
 
-#endif 
+#endif
     /* Allocate space for base name + host name + process id + 2 dashes + terminating 0. */
     tmp_file_name = (char *) calloc(strlen(file_name) + strlen(host_name) + strlen(pid) + 3, sizeof(char));
     if (0 != tmp_file_name)
@@ -1429,6 +1429,14 @@ static int check_par_assignment(int argc, char ** argv, unsigned char * type) {
         /* Copy the parameter name for reporting purposes. */
         int local_status = ape_util_copy_range(begin_name, end_name, &name);
         if (eOK == local_status) {
+          // Sixte modification: Add message about deprecated Mission, Instrument,
+          // and Mode parameters if they are still used when executing a Sixte tool.
+          if (strcmp(name, "Mission") == 0 ||
+              strcmp(name, "Instrument") == 0 ||
+              strcmp(name, "Mode") == 0) {
+            fprintf(stderr, " *** SIXTE error: Mission, Instrument, and Mode parameters are deprecated. Use XMLFile instead.\n");
+          }
+          // (end of Sixte modification)
           ape_msg_error("Invalid parameter name in command line assignment: \"%s\"\n", name);
         } else {
           ape_msg_error("Invalid parameter name in command line argument: \"%s\"\n", begin_name);
@@ -1450,7 +1458,7 @@ int ape_io_apply_command_line(ApeParFile * par_file, int argc, char ** argv) {
   char ** name = 0;
   char ** mode = 0;
   int idx = 0;
-  
+
   /* Check arguments. */
   if (0 == par_file || 0 == par_file->par_cont) {
     status = eNullPointer;
@@ -2522,7 +2530,7 @@ static void test_revert_unlearned(const char * msg, const char ** current_string
   int status = eOK;
   ApeParFile * current = 0;
   ApeParFile * previous = 0;
-  
+
   status = create_test_file("", current_string, &current);
   if (eOK == status) {
     status = create_test_file("", previous_string, &previous);
