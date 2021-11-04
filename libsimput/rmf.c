@@ -198,22 +198,19 @@ void loadArfRmfFromRsp(char* const filename,
 
 // Calls the HEASoft FTOOL ftchkrmf in the following way:
 // ftchkrmf infile=infile outfile=outfile clobber=yes
-static void call_ftchkrmf(char* const infile, char* const outfile,
-                          int* const status) {
+static FILE* call_ftchkrmf(char* const infile, char* const outfile,
+                           int* const status) {
   // Check for previous error
   CHECK_STATUS_VOID(*status);
 
   // Piece together the ftchkrmf call
   char cmd[SIMPUT_MAXSTR];
-  snprintf(cmd, sizeof(cmd), "ftchkrmf infile=%s outfile=%s clobber=yes"
-           " >/dev/null 2>&1", infile, outfile);
+  snprintf(cmd, sizeof(cmd), "ftchkrmf infile=%s outfile=%s", infile, outfile);
 
   // Call ftchkrmf
-  int ret = system(cmd);
-  if (ret == -1) {
-    SIMPUT_ERROR("Failed to run ftchkrmf.");
-    *status = EXIT_FAILURE;
-  }
+  FILE* fp = popen(cmd, "r");
+
+  return fp;
 }
 
 
@@ -230,17 +227,13 @@ void print_ftchkrmf_warning(char* const filename, int* warning_printed) {
 }
 
 
-// Checks the output of ftchkrmf (on filename) for errors.
-static void check_ftchkrmf_output(char* const filename, char* const outfile,
+// Checks the output of ftchkrmf for errors.
+static void check_ftchkrmf_output(char* const filename, FILE* fp,
                                   int* const status) {
   // Check for previous program errors
   CHECK_STATUS_VOID(*status);
 
-  // Open outfile
-  FILE* fp = fopen(outfile, "r");
-  CHECK_NULL_VOID(fp, *status, "Failed to read ftchkrmf output");
-
-  // Check outfile line by line (should be empty or only contain optional hints
+  // Check output line by line (should be empty or only contain optional hints
   // if RMF is valid)
   size_t len1 = SIMPUT_MAXSTR;
   char* err_str1 = malloc(len1 * sizeof(*err_str1));
@@ -257,10 +250,11 @@ static void check_ftchkrmf_output(char* const filename, char* const outfile,
       continue;
     }
 
-    // Ignore warning if it is only about missing HDUVERS1 keyword (obsolete since 1998)
     if (strstr(err_str1, "mandatory keywords") != NULL) {
       // Read next line (i.e., the keyword name)
       read = getline(&err_str2, &len2, fp);
+
+      // Ignore warning if it is only about missing HDUVERS1 keyword (obsolete since 1998)
       if (strncmp(err_str2, " HDUVERS1 \n", 12) == 0) {
         continue;
       }
@@ -291,7 +285,6 @@ static void check_ftchkrmf_output(char* const filename, char* const outfile,
   if (warning_printed) {
     headas_chat(3, "\n=== End of RMF validity check report ===\n\n");
   }
-  fclose(fp);
   free(err_str1);
   free(err_str2);
 }
@@ -308,23 +301,19 @@ void checkRMFValidity(char* const filename, int* const status) {
     return;
   }
 
-  // Generate unique temporary name for the ftchkrmf output file.
-  char outfile[] = "rmf.log_XXXXXX";
-  int fd = mkstemp(outfile);
-  if (fd == -1) {
-    SIMPUT_ERROR("Failed to generate temporary filename.");
-    *status = EXIT_FAILURE;
-    return;
-  }
-
-  // Call ftchkrmf to check validity of RMF
-  call_ftchkrmf(filename, outfile, status);
+  // Call ftchkrmf to check validity of RMF. Use "NONE" for outfile
+  // such that no output file is generated.
+  FILE* fp = call_ftchkrmf(filename, "NONE", status);
+  CHECK_NULL_VOID(fp, *status, "Failed to run ftchkrmf");
 
   // Check ftchkrmf output for errors
-  check_ftchkrmf_output(filename, outfile, status);
+  check_ftchkrmf_output(filename, fp, status);
 
-  // Delete outfile from filesystem
-  unlink(outfile);
+  // Close the stream
+  if(pclose(fp))  {
+    SIMPUT_ERROR("ftchkrmf exited with error");
+    *status = EXIT_FAILURE;
+  }
 }
 
 
