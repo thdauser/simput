@@ -1,4 +1,13 @@
-version [2.4.10]
+version [2.5.0]
+  - Update testing framework
+  - Fix bug with simputmerge only working on files in
+    the current working directory
+  - Update external libraries
+  - Fix Mac installation issues
+  - Fix RMF validity check writing temporary files, which caused
+    issues in some batch processing
+
+sssssss [2.4.10]
   - fixes a bug in RMF handling
 
 version [2.4.9]
