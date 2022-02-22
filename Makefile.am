@@ -69,8 +69,8 @@ simputdistcheck: dist
 
 .PHONY: test
 test:
-	cd test/exec/ && make test
-	cd test/e2e/ && ./run_e2e_test.sh
+	cd tests/exec/ && make test
+	cd tests/e2e/ && ./run_e2e_test.sh
 
 crit_mac_version_major=10
 crit_mac_version_minor=10
