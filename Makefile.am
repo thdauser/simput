@@ -6,7 +6,7 @@ dist_bin_SCRIPTS+=simput-install.csh
 SUBDIRS=extlib libsimput tools sample
 
 dist_noinst_DATA=INSTALL.txt mac_solve_simput_dependencies.sh
-EXTRA_DIST=test
+EXTRA_DIST=tests
 
 # Define the headers that will be installed in $(includedir):
 include_HEADERS=simputconfig.h

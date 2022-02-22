@@ -4,6 +4,7 @@ scripts := $(wildcard *.sh)
  .PHONY: $(scripts)	
 
 
+.PHONY: test
 test:
 	@echo " "
 	@echo " *************************** "
