@@ -21,9 +21,6 @@ build:
     - ./configure --prefix=$SIMPUT
     - make
     - make install
-  only:
-    - master
-    - tags
   artifacts:
     expire_in: 30 min
     paths:
@@ -35,8 +32,6 @@ test:
     - . $SIMPUT/simput-install.sh
     - . $HEADAS/headas-init.sh
     - make test
-  only:
-    - master
 
 provide:
   stage: deploy
