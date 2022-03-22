@@ -969,6 +969,12 @@ int simputmultispec_getpar(struct Parameters* const par) {
     strncat(par->TmpSpecFile, ".sl", 3);
   }
 
+  if ((strlen(par->ISISFile) == 0) && (strlen(par->XSPECFile) == 0) ) {
+    SIMPUT_ERROR("Need to give either an ISIS or XSPEC parameter file");
+    status=EXIT_FAILURE;
+  }
+  CHECK_STATUS_VOID(status);
+
   query_simput_parameter_float("RA", &par->RA, &status );
   query_simput_parameter_float("Dec", &par->Dec, &status );
 
