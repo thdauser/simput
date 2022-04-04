@@ -4048,6 +4048,7 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 		// An ISIS parameter file with an explizit spectral
 		// model is given.
 		if(strlen(ISISPrep)>0){
+			fprintf(cmdfile, "append_to_isis_load_path(\".\");\n");
 			fprintf(cmdfile, "require(\"%s\");\n", ISISPrep);
 		}
 		fprintf(cmdfile, "load_par(\"%s\");\n", ISISFile);
