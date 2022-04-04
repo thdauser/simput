@@ -89,6 +89,12 @@ int simputspec_main()
       status=EXIT_FAILURE;
       break;
     }
+    if (par.Elow>par.Eup) {
+      SIMPUT_ERROR("parameter 'Eup' must be higher than 'Elow'");
+      status=EXIT_FAILURE;
+      break;
+    }
+
 
     // Check the input type for the spectrum.
     // Check the specification of an ISIS parameter file, an

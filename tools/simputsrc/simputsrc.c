@@ -49,6 +49,14 @@ int simputsrc_main()
     status=simputsrc_getpar(&par);
     CHECK_STATUS_BREAK(status);
 
+    // Check if the specified energy ranges are reasonable.
+    if (par.Emin>par.Emax) {
+      SIMPUT_ERROR("parameter 'Emax' must be higher than 'Emin'");
+      status=EXIT_FAILURE;
+      break;
+    }
+
+
     // ---- END of Initialization ----
 
 
