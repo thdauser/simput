@@ -4118,6 +4118,8 @@ void write_xspecSpec_file(char *fname, char *XSPECFile, char *XSPECPrep, char *X
 		fprintf(cmdfile, "dummyrsp %f %f %d lin\n", Elow, Eup, nbins);
 	}
 	fprintf(cmdfile, "setplot device /null\n");
+        // output energy grid must be keV
+	fprintf(cmdfile, "setplot energy keV /null\n");
 
 	fprintf(cmdfile, "setplot command wdata %s\n", fname);
 	fprintf(cmdfile, "plot model\n");
