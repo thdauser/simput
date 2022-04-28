@@ -6,7 +6,7 @@ AC_INIT([simput], [m4_esyscmd([build-aux/git-version-gen .tarball-version])], [s
 
 # Store auxiliary files in the sub-directory 'build-aux'.
 AC_CONFIG_AUX_DIR([build-aux])
-AC_CONFIG_MACRO_DIR(build-aux/m4) 
+AC_CONFIG_MACRO_DIR(build-aux/m4)
 
 AM_INIT_AUTOMAKE([foreign -Wall])
 AC_CONFIG_SRCDIR([libsimput/fileaccess.c])
@@ -55,6 +55,28 @@ AC_SEARCH_LIBS(sin, m, [], [AC_MSG_ERROR([library math not found!])], [])
 # ncurses and readline (required by ape library).
 AC_SEARCH_LIBS(beep, ncurses, [], [AC_MSG_ERROR([library ncurses not found!])], [])
 AC_SEARCH_LIBS(readline, readline, [], [AC_MSG_ERROR([library readline not found!])], [])
+
+####################################
+# GSL Libraries:
+AC_ARG_WITH(gsl,
+	[AC_HELP_STRING([--with-gsl=<GSL path>],
+	[Deprecated (use --with-gsl-prefix instead)])],
+	[AC_MSG_ERROR([Option --with-gsl deprecated. Use --with-gsl-prefix instead.])],
+	[]
+)
+
+
+AX_PATH_GSL(1.16,[],[AC_MSG_ERROR(could not find required version of GSL >= 1.16)])
+
+# Correct library linking information and compiler flags are stored in GSL_LIBS
+# and GSL_CFLAGS after successful execution of AX_PATH_GSL.
+LDFLAGS="$LDFLAGS $GSL_LIBS"
+CPPFLAGS="$CPPFLAGS $GSL_CFLAGS"
+
+AC_SEARCH_LIBS([cblas_sdot], [gslcblas], [], \
+			 [AC_MSG_ERROR([No gslcblas library found!])], [])
+AC_SEARCH_LIBS([gsl_sf_erf_Q], [gsl], [], \
+			 [AC_MSG_ERROR([No gsl library found!])], [])
 
 dir="`pwd`"
 LDFLAGS="$LDFLAGS -g -W -Wall -L$dir/extlib/cfitsio -L$dir/extlib/wcslib/C -L$dir/extlib/fftw "
