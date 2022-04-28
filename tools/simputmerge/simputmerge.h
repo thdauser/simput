@@ -27,15 +27,17 @@
 
 #include "simput.h"
 #include "common.h"
+#include "simput_tree.h"
 
 #define TOOLSUB simputmerge_main
 #include "headas_main.c"
 
 
 struct Parameters {
-  char Infile1[SIMPUT_MAXSTR];
-  char Infile2[SIMPUT_MAXSTR];
-  char Outfile[SIMPUT_MAXSTR];
+  char* Infile1;
+  char* Infile2;
+  char* Infiles;
+  char* Outfile;
   char FetchExtensions;
 
   char clobber;
@@ -61,6 +63,9 @@ typedef struct{
 }simput_data;
 
 int simputmerge_getpar(struct Parameters* const par);
+void merge_simput_files(int num_cat, SimputCtlg** incat, SimputCtlg* outcat,char* outfile, char FetchExtensions,
+												long* src_id, int* status);
+
 
 
 #endif /* SIMPUTMERGE_H */

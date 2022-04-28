@@ -21,130 +21,110 @@
 */
 
 #include "simputmerge.h"
-#include "simput_tree.h"
+#include "parinput.h"
 
 // TODO: - add PSD to possible extensions?
+// TODO: - Replcament for global counters (Do not use)
+int GLOBAL_SPEC_COUNTER = 0;
+int GLOBAL_IMG_COUNTER = 0;
+int GLOBAL_LC_COUNTER = 0;
+int GLOBAL_COUNTER = 0;
 
-int GLOBAL_SPEC_COUNTER=0;
-int GLOBAL_IMG_COUNTER=0;
-int GLOBAL_LC_COUNTER=0;
-int GLOBAL_COUNTER=0;
+static char** get_infile_names(int* num_cat, struct Parameters par, int* status){
 
-static void get_infile_names(char ** infilenames, int num_cat, struct Parameters par, int *status){
-	// Open the input catalogs. TODO: Need general routine
-	infilenames[0]= (char*)malloc((strlen(par.Infile1)+1)*sizeof(char));
-	CHECK_NULL_VOID(infilenames[0], *status, "memory allocation failed");
-	infilenames[1]= (char*)malloc((strlen(par.Infile2)+1)*sizeof(char));
-	CHECK_NULL_VOID(infilenames[1], *status, "memory allocation failed");
+  // separates comma separated file list into individual filenames
+	int infiles_capacity = 100; // inital capacity to include a maximum of 100 infilenames
+  char** infilenames = malloc(infiles_capacity*sizeof(char*));
+	CHECK_NULL_RET(infilenames, *status, "memory allocation for infilenames failed", NULL);
+	int num_infiles_read = 0; // number of infiles read
+  char* p = strtok(par.Infiles, ",");
 
-	if(num_cat != 2){
-		*status=EXIT_FAILURE;
-		printf(" num_cat!=2 : not implemented yet \n");
-	}
+  while (p != NULL)
+  {
+		if(num_infiles_read == infiles_capacity-1){
+			infiles_capacity += 100;
+			infilenames = realloc(infilenames, infiles_capacity*sizeof(char*));
+			CHECK_NULL_RET(infilenames, *status, "memory reallocation for infilenames failed", NULL);
+		}
+		infilenames[num_infiles_read] = malloc((strlen(p)+1)*sizeof(char));
+		CHECK_NULL_RET(infilenames[num_infiles_read], *status, "memory allocation failed", NULL);
+		strcpy(infilenames[num_infiles_read], p);
+    p = strtok(NULL, ",");
+		num_infiles_read++;
+  }
 
-	strcpy(infilenames[0], par.Infile1);
-	strcpy(infilenames[1], par.Infile2);
-	return ;
+	*num_cat = num_infiles_read;
+	return infilenames;
 }
-static void show_progress(SimputCtlg* outcat, SimputCtlg** incat){
-	// Output of progress.
-	// TODO: need this for arbitrary number num_cat
-	if (0==outcat->nentries % 1000) {
-		headas_chat(1, "\r%ld/%ld (%.1lf%%) entries",
-				outcat->nentries, incat[0]->nentries+incat[1]->nentries,
-				outcat->nentries*100./(incat[0]->nentries+incat[1]->nentries));
-		fflush(NULL);
-	}
+
+static void show_progress(SimputCtlg* outcat, int num_incat) {
+	// Running from 0 to 100
+	headas_chat(3, "\r%.0lf%%", outcat->nentries*100./num_incat);
+	fflush(NULL);
+
 	return;
 }
+
 static char* get_unused_ref(int type){
 
 	char ref[SIMPUT_MAXSTR];
 
 	switch (type) {
 	case SIMPUT_SPEC_TYPE:
-		sprintf(ref,"[SPECTRUM,1][NAME=='spec_%010i']",GLOBAL_SPEC_COUNTER);
+		sprintf(ref, "[SPECTRUM,1][NAME=='spec_%010i']", GLOBAL_SPEC_COUNTER);
 		break;
 	case SIMPUT_IMG_TYPE:
-		sprintf(ref,"[IMG_%010i,1]",GLOBAL_IMG_COUNTER);
+		sprintf(ref, "[IMG_%010i,1]", GLOBAL_IMG_COUNTER);
 		break;
 	case (SIMPUT_LC_TYPE):
-		sprintf(ref,"[TIM_%010i,1]",GLOBAL_LC_COUNTER);
+		sprintf(ref, "[TIM_%010i,1]", GLOBAL_LC_COUNTER);
 		break;
 	case (SIMPUT_PSD_TYPE):
-		sprintf(ref,"[TIM_%010i,1]",GLOBAL_LC_COUNTER);
+		sprintf(ref, "[TIM_%010i,1]", GLOBAL_LC_COUNTER);
 		break;
 	}
 
 	return strdup(ref);
 }
 
-/**
-static int compare_unique_ident(uniqueSimputident *id1, uniqueSimputident *id2){
-	if (id1->io_pos != id2->io_pos){
-		return -1;
-	}
-
-	if (strcmp(id1->filename,id2->filename) != 0){
-		return -1;
-	} else {
-		return 0;
-	}
-} **/
-
-
-int comp_elem(void* d1,void* d2){
+int comp_elem(void* d1, void* d2){
 	tdata *cd1 = (tdata*)d1;
 	tdata *cd2 = (tdata*)d2;
-	return strcmp(cd1->orig_ref,cd2->orig_ref);
+	return strcmp(cd1->orig_ref, cd2->orig_ref);
 }
 
-void free_elem(void *d){
-	tdata *cd = (tdata*)d;
+void free_elem(void* d){
+	tdata* cd = (tdata*)d;
 	free(cd->orig_ref);
 	free(cd->ref);
 	free(cd);
 	return;
 }
 
-/**
-static simput_data* find_src_in_buffer(char *ref, simput_data** buf, int *status){
-
-
-	for (int ii=0; ii< GLOBAL_COUNTER; ii++){
-		if (strcmp(buf[ii]->orig_ref,ref) == 0){
-			return buf[ii];
-		}
-	}
-	CHECK_STATUS_RET(*status,NULL);
-	// if we do not find the src in the buffer, we return NULL
-	return NULL;
-}
-**/
-static void append_src_to_buffer(simput_data* src,simput_data*** buf,int *status){
+static void append_src_to_buffer(simput_data* src, simput_data*** buf, int* status){
 	GLOBAL_COUNTER++;
-	*buf = (simput_data**) realloc(*buf,GLOBAL_COUNTER * sizeof(simput_data*));
+	*buf = (simput_data**)realloc(*buf, GLOBAL_COUNTER * sizeof(simput_data*));
 	CHECK_NULL_VOID(*buf, *status, "memory (re)allocation failed")
 
 	(*buf)[GLOBAL_COUNTER-1] = src;
 	return;
 }
 
-static tdata* get_empty_elem(char* ref,int *status){
+static tdata* get_empty_elem(char* ref, int* status){
 	tdata *src = NULL;
-	src = (tdata*) malloc (sizeof(tdata));
-	CHECK_NULL_RET(src,*status,"memory allocation failed",NULL);
+	src = (tdata*)malloc(sizeof(tdata));
+	CHECK_NULL_RET(src, *status, "memory allocation failed", NULL);
 	src->orig_ref = strdup(ref);
 	return src;
 }
 
-static char* add_single_data_to_buffer(char* filename, char *ref,
-		tree* mtree, simput_data*** buf,int type, int *status){
+static char* add_single_data_to_buffer(char* filename, char* ref,
+		tree* mtree, simput_data*** buf, int type, int* status){
 
 	char new_ref[SIMPUT_MAXSTR];
 
 	// first make sure we have the absolute path:
-	if ('['==ref[0]) {
+	if ('[' == ref[0]) {
 		strcpy(new_ref, filename);
 		strcat(new_ref, ref);
 	} else {
@@ -154,55 +134,55 @@ static char* add_single_data_to_buffer(char* filename, char *ref,
 	// this information is not used currently, as the function is not working yet
 	// uniqueSimputident *ident = get_simput_ident(new_ref,type,status);
 
-	tdata *new_elem = get_empty_elem(new_ref,status);
+	tdata* new_elem = get_empty_elem(new_ref, status);
 
-	node *ptr=NULL;
+	node* ptr = NULL;
 	ptr = find_elmt(mtree, new_elem);
 
-	if(	 ptr == NULL){
+	if(ptr == NULL){
 		// load source
 
-		simput_data* src = (simput_data*) malloc (sizeof(simput_data));
+		simput_data* src = (simput_data*)malloc(sizeof(simput_data));
 		switch (type) {
 
 		case SIMPUT_SPEC_TYPE:
 			GLOBAL_SPEC_COUNTER++;
-			src->data = (SimputMIdpSpec*) malloc(sizeof(SimputMIdpSpec));
-			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
-			SimputMIdpSpec* buf = loadSimputMIdpSpec(new_ref,status);
-			buf->name = realloc(buf->name,sizeof(char)*100);
-			CHECK_NULL_RET(buf->name,*status,"memory allocation failed",NULL);
+			src->data = (SimputMIdpSpec*)malloc(sizeof(SimputMIdpSpec));
+			CHECK_NULL_RET(src->data, *status, "memory allocation failed", NULL);
+			SimputMIdpSpec* buf = loadSimputMIdpSpec(new_ref, status);
+			buf->name = realloc(buf->name, sizeof(char)*100);
+			CHECK_NULL_RET(buf->name, *status, "memory allocation failed", NULL);
 
-			sprintf(buf->name,"spec_%010i",GLOBAL_SPEC_COUNTER);
-			CHECK_STATUS_RET(*status,NULL);
+			sprintf(buf->name, "spec_%010i", GLOBAL_SPEC_COUNTER);
+			CHECK_STATUS_RET(*status, NULL);
 			src->data = buf;
 			break;
 
 		case SIMPUT_IMG_TYPE:
 			GLOBAL_IMG_COUNTER++;
-			src->data = (SimputImg*) malloc(sizeof(SimputImg));
-			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
+			src->data = (SimputImg*)malloc(sizeof(SimputImg));
+			CHECK_NULL_RET(src->data, *status, "memory allocation failed", NULL);
 			src->data = loadSimputImg(new_ref, status);
-			CHECK_STATUS_RET(*status,NULL);
+			CHECK_STATUS_RET(*status, NULL);
 			break;
 
 		case SIMPUT_LC_TYPE:
 			GLOBAL_LC_COUNTER++;
-			src->data = (SimputLC*) malloc(sizeof(SimputLC));
-			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
+			src->data = (SimputLC*)malloc(sizeof(SimputLC));
+			CHECK_NULL_RET(src->data, *status, "memory allocation failed", NULL);
 			src->data = loadSimputLC(new_ref, status);
-			CHECK_STATUS_RET(*status,NULL);
+			CHECK_STATUS_RET(*status, NULL);
 			break;
 
 		case SIMPUT_PSD_TYPE:
 			GLOBAL_LC_COUNTER++;   // use the same counter??? (extension is named the same!
-			src->data = (SimputPSD*) malloc(sizeof(SimputPSD));
-			CHECK_NULL_RET(src->data,*status,"memory allocation failed",NULL);
+			src->data = (SimputPSD*)malloc(sizeof(SimputPSD));
+			CHECK_NULL_RET(src->data, *status, "memory allocation failed", NULL);
 			src->data = loadSimputPSD(new_ref, status);
-			CHECK_STATUS_RET(*status,NULL);
+			CHECK_STATUS_RET(*status, NULL);
 			break;
 		}
-		src->type=type;
+		src->type = type;
 		// src->ident = ident;
 
 		// need to find an unused reference for this data
@@ -210,9 +190,9 @@ static char* add_single_data_to_buffer(char* filename, char *ref,
 		src->ref = strdup(new_elem->ref);
 
 		ptr = add_elmt(mtree, new_elem);
-		CHECK_NULL_RET(ptr,*status,"failed to add element",NULL);
+		CHECK_NULL_RET(ptr, *status, "failed to add element", NULL);
 
-		append_src_to_buffer(src,buf,status);
+		append_src_to_buffer(src, buf, status);
 
 	} else {
 		//free(new_elem);
@@ -222,8 +202,8 @@ static char* add_single_data_to_buffer(char* filename, char *ref,
 	return ((tdata*)new_elem)->ref;
 }
 
-static int is_fileref_given(char *str){
-	if ((strcmp(str,"") == 0) || (strcmp(str,"NULL") == 0) ){
+static int is_fileref_given(char* str){
+	if ((strcmp(str, "") == 0) || (strcmp(str, "NULL") == 0) ){
 		return 0;
 	} else {
 		return 1;
@@ -231,10 +211,10 @@ static int is_fileref_given(char *str){
 }
 
 simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree,
-		simput_data*** data_buffer, int *status){
+		simput_data*** data_buffer, int* status){
 
-	simput_refs* refs=(simput_refs*)malloc(sizeof(simput_refs));
-	CHECK_NULL_RET(refs, *status,"memory allocation for SimputSrc failed", NULL);
+	simput_refs* refs = (simput_refs*)malloc(sizeof(simput_refs));
+	CHECK_NULL_RET(refs, *status, "memory allocation for SimputSrc failed", NULL);
 
         // get the full filename (with path)
 	char fname[SIMPUT_MAXSTR];
@@ -245,18 +225,16 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 
 	// SPECTRUM
 	if (is_fileref_given(insrc->spectrum) == 1){
-		refs->spectrum = add_single_data_to_buffer(fname,insrc->spectrum,
-				mtree,data_buffer,SIMPUT_SPEC_TYPE,status);
-		CHECK_STATUS_RET(*status,NULL);
+		refs->spectrum = add_single_data_to_buffer(fname, insrc->spectrum, mtree, data_buffer, SIMPUT_SPEC_TYPE, status);
+		CHECK_STATUS_RET(*status, NULL);
 	} else {
 		refs->spectrum = strdup(insrc->spectrum);
 	}
 
 	// IMAGE
 	if (is_fileref_given(insrc->image) == 1){
-		refs->image = add_single_data_to_buffer(fname,insrc->image,
-				mtree,data_buffer,SIMPUT_IMG_TYPE,status);
-		CHECK_STATUS_RET(*status,NULL);
+		refs->image = add_single_data_to_buffer(fname, insrc->image, mtree, data_buffer, SIMPUT_IMG_TYPE, status);
+		CHECK_STATUS_RET(*status, NULL);
 	} else {
 		refs->image = strdup(insrc->image);
 	}
@@ -264,14 +242,14 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 	// LIGHTCURVE or PSD
 	if (is_fileref_given(insrc->timing) == 1){
 
-		fitsfile* fptr=NULL;
+		fitsfile* fptr = NULL;
 
 		char new_ref[SIMPUT_MAXSTR];
 		strcpy(new_ref, fname);
 		strcat(new_ref, insrc->timing);
 
-		fits_open_table(&fptr,new_ref, READONLY, status);
-	    if (EXIT_SUCCESS!=*status) {
+		fits_open_table(&fptr, new_ref, READONLY, status);
+	    if (EXIT_SUCCESS != *status) {
 	      char msg[SIMPUT_MAXSTR];
 	      sprintf(msg, "could not open FITS table in file '%s'", insrc->timing);
 	      SIMPUT_ERROR(msg);
@@ -281,16 +259,14 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 	    int ncol;
 	    fits_get_colnum(fptr, CASEINSEN, "FLUX", &ncol, &opt_status);
 
-	    if (NULL!=fptr) fits_close_file(fptr, status);
+	    if (NULL != fptr) fits_close_file(fptr, status);
 
-		if (opt_status==EXIT_SUCCESS) {
-			refs->timing = add_single_data_to_buffer(fname,insrc->timing,
-					mtree,data_buffer,SIMPUT_LC_TYPE,status);
+		if (opt_status == EXIT_SUCCESS) {
+			refs->timing = add_single_data_to_buffer(fname, insrc->timing, mtree, data_buffer, SIMPUT_LC_TYPE, status);
 		} else { // assume oif not LC it's PSD
-			refs->timing = add_single_data_to_buffer(fname,insrc->timing,
-					mtree,data_buffer,SIMPUT_PSD_TYPE,status);
+			refs->timing = add_single_data_to_buffer(fname, insrc->timing, mtree, data_buffer, SIMPUT_PSD_TYPE, status);
 		}
-		CHECK_STATUS_RET(*status,NULL);
+		CHECK_STATUS_RET(*status, NULL);
 	} else {
 		refs->timing = strdup(insrc->timing);
 	}
@@ -298,72 +274,72 @@ simput_refs* add_data_to_buffer(SimputSrc* insrc, SimputCtlg* incat, tree* mtree
 	return refs;
 }
 
-static char* extract_extname_link(char *str,int *status){
+static char* extract_extname_link(char* str, int* status){
 
-	char *pch;
-	pch = strchr(str,']');
+	char* pch;
+	pch = strchr(str, ']');
 
-	CHECK_NULL_RET(pch,*status,"getting extension substring failed",NULL);
+	CHECK_NULL_RET(pch, *status, "getting extension substring failed", NULL);
 
 	int n = pch-str+1;
 	char* substr;
 
-	substr= (char*)malloc((n+1)*sizeof(char));
-	CHECK_NULL_RET(substr, *status, "memory allocation failed",NULL);
+	substr = (char*)malloc((n+1)*sizeof(char));
+	CHECK_NULL_RET(substr, *status, "memory allocation failed", NULL);
 
-	strncpy(substr,str,n);
+	strncpy(substr, str, n);
 	substr[n] = '\0';
 
 	return substr;
 }
-static char* extract_extname(char *str_init,int *status){
+static char* extract_extname(char *str_init, int* status){
 
-	char *str;
-	str = extract_extname_link(str_init,status);
+	char* str;
+	str = extract_extname_link(str_init, status);
 
-	char *pch1,*pch2;
-	pch2 = strchr(str,',');
-	pch1 = strchr(str,'[');
+	char*pch1,*pch2;
+	pch2 = strchr(str, ',');
+	pch1 = strchr(str, '[');
 
-	CHECK_NULL_RET(pch1,*status,"getting extension substring failed",NULL);
-	CHECK_NULL_RET(pch2,*status,"getting extension substring failed",NULL);
+	CHECK_NULL_RET(pch1, *status, "getting extension substring failed", NULL);
+	CHECK_NULL_RET(pch2, *status, "getting extension substring failed", NULL);
 
 	int n = pch2-pch1-1;
 	char* substr;
 
 	substr= (char*)malloc((n+1)*sizeof(char));
-	CHECK_NULL_RET(substr, *status, "memory allocation failed",NULL);
+	CHECK_NULL_RET(substr, *status, "memory allocation failed", NULL);
 
-	strncpy(substr,pch1+1,n);
+	strncpy(substr, pch1+1, n);
 	substr[n] = '\0';
 
 	return substr;
 }
 
-static void write_single_merge_data(simput_data* buf, char* filename, int *status){
+static void write_single_merge_data(simput_data* buf, char* filename, int* status){
 
 	int extver = 1;
 
 	switch (buf->type){
 	case SIMPUT_SPEC_TYPE:
 		saveSimputMIdpSpec(buf->data, filename,
-					extract_extname(buf->ref,status),
+					extract_extname(buf->ref, status),
 					extver, status);
 		break;
 	case SIMPUT_IMG_TYPE:
 		saveSimputImg(buf->data, filename,
-					extract_extname(buf->ref,status),
+					extract_extname(buf->ref, status),
 					extver, status);
 		break;
 	case SIMPUT_LC_TYPE:
 		saveSimputLC(buf->data, filename,
-				extract_extname(buf->ref,status),
+				extract_extname(buf->ref, status),
 				extver, status);
 		break;
 
 	case SIMPUT_PSD_TYPE:
 		saveSimputPSD(buf->data, filename,
-				extract_extname(buf->ref,status),
+				extract_extname(buf->ref, status),
 				extver, status);
 		break;
 
@@ -371,17 +347,17 @@ static void write_single_merge_data(simput_data* buf, char* filename, int *statu
 
 }
 
-static void write_merge_data(simput_data** buf, char *filename, int *status){
+static void write_merge_data(simput_data** buf, char* filename, int* status){
 
-	for (int ii=0; ii<GLOBAL_COUNTER;ii++){
-		write_single_merge_data(buf[ii],filename,status);
+	for (int ii = 0; ii < GLOBAL_COUNTER; ii++){
+		write_single_merge_data(buf[ii], filename, status);
 	}
 
 }
 
 static void freeSimputData(simput_data** dat){
 	if (dat != NULL){
-		for (int ii=0; ii<GLOBAL_COUNTER; ii++){
+		for (int ii = 0; ii < GLOBAL_COUNTER; ii++){
 			if (dat[ii] != NULL){
 				switch (dat[ii]->type) {
 				case SIMPUT_SPEC_TYPE:
@@ -406,6 +382,82 @@ static void freeSimputData(simput_data** dat){
 
 }
 
+void merge_simput_files(int incat_buffer_length, SimputCtlg** incat_buffer, SimputCtlg* outcat, char* outfile, char FetchExtensions,
+												long* src_id, int* status){
+
+		simput_data** data_buffer = NULL;
+		tree* mtree = get_tree(&comp_elem, &free_elem);
+		do{
+			// Loop over all source catalogs.
+			for (int ii = 0; ii < incat_buffer_length; ii++) {
+				for (long jj = 0; jj < incat_buffer[ii]->nentries; jj++) {
+
+					SimputSrc* insrc = getSimputSrc(incat_buffer[ii], jj+1, status);
+					CHECK_STATUS_BREAK(*status);
+
+					// Check whether the extensions should remain in their current
+					// place or if they should by copied to the new output file.
+					if (0==FetchExtensions) {
+						printf("Not implemented yet!\n");
+						break;
+					}
+
+					simput_refs* refs=NULL;
+					refs = add_data_to_buffer(insrc, incat_buffer[ii], mtree, &data_buffer, status);
+					CHECK_NULL_BREAK(refs, *status, "adding data to buffer failed");
+
+					// Copy the entry from the input to the output catalog.
+					SimputSrc* outsrc=newSimputSrcV(*src_id,
+							insrc->src_name,
+							insrc->ra,
+							insrc->dec,
+							insrc->imgrota,
+							insrc->imgscal,
+							insrc->e_min,
+							insrc->e_max,
+							insrc->eflux,
+							refs->spectrum, refs->image, refs->timing,
+							status);
+					CHECK_STATUS_BREAK(*status);
+
+					appendSimputSrc(outcat, outsrc, status);
+					CHECK_STATUS_BREAK(*status);
+
+					// needs to be a unique identifier
+					(*src_id)++;
+				}
+				CHECK_STATUS_BREAK(*status);
+				// END of loop over all entries in the source catalog.
+			}
+			CHECK_STATUS_BREAK(*status);
+			// END of loop over both source catalogs.
+
+			// Copy the used extensions to the new output file.
+			if (0 != FetchExtensions) {
+				write_merge_data(data_buffer, outfile, status); //CHECK
+			}
+		}while(0);
+
+		// Reset data buffer
+		freeSimputData(data_buffer);
+
+		//free mtree
+		free_tree(mtree);
+
+		// Reset global counter
+		GLOBAL_COUNTER = 0;
+}
+
+void freeSimputFilenames(char* infile1, char* infile2, char* infiles, char** infilenames, int num_incat, char* outfile){
+
+	freeSimputFile(&infile1);
+	freeSimputFile(&infile2);
+	freeSimputFile(&infiles);
+	for (int ii = 0; ii < num_incat; ii++) {
+		freeSimputFile(&infilenames[ii]);
+	}
+	freeSimputFile(&outfile);
+}
 
 int simputmerge_main()
 {
@@ -413,117 +465,76 @@ int simputmerge_main()
 	struct Parameters par;
 
 	// Filenames of the input catalogs.
-	const int num_cat = 2; // TODO: only hard coded for now
-	char* infilenames[num_cat];
+	int num_incat = 0; // Total number of input catalogs (updated after user enters infile names)
+	char** infilenames = NULL;
 
+  // Number of input catalogs loaded and merged into output
+	// Hard coded to 1 for now. Possible point for future optimization
+	const int incat_buffer_length = 1;
 
 	// SIMPUT source catalogs.
 	SimputCtlg* outcat  = NULL;
-	SimputCtlg* incat[num_cat];
+	SimputCtlg* incat_buffer[incat_buffer_length];
 
 	// Array of already used IDs.
-	long src_id=1;
+	long src_id = 1;
 
 	// Error status.
-	int status=EXIT_SUCCESS;
+	int status = EXIT_SUCCESS;
 
 	// Register HEATOOL
 	set_toolname("simputmerge");
 	set_toolversion("0.03");
-
-	simput_data** data_buffer=NULL;
-	tree* mtree=get_tree(&comp_elem, &free_elem);
 
 	do { // Beginning of ERROR HANDLING Loop.
 
 		// ---- Initialization ----
 
 		// Read the parameters using PIL.
-		status=simputmerge_getpar(&par);
+		status = simputmerge_getpar(&par);
 		CHECK_STATUS_BREAK(status);
 
-		get_infile_names(infilenames, num_cat, par, &status);
+		infilenames = get_infile_names(&num_incat, par, &status);
 
 		// Get an empty output catalog. (TODO: Do proper checK??)
 		remove(par.Outfile);
-		outcat=openSimputCtlg(par.Outfile, READWRITE, 0, 0, 0, 0, &status);
+		outcat = openSimputCtlg(par.Outfile, READWRITE, 0, 0, 0, 0, &status);
 		CHECK_STATUS_BREAK(status);
 
-		// Loop over both source catalogs.
-		for (int ii=0; ii<num_cat; ii++) {
-			// Loop over all entries in the source catalog.
+		headas_chat(3, "\nmerging simput files ...\n");
 
-			incat[ii]=openSimputCtlg(infilenames[ii], READONLY, 0, 0, 0, 0, &status);
-			CHECK_STATUS_BREAK(status);
-		}
-
-
-		// Loop over both source catalogs.
-		for (int ii=0; ii<num_cat; ii++) {
-			long jj;
-			for (jj=0; jj<incat[ii]->nentries; jj++) {
-
-				SimputSrc* insrc=getSimputSrc(incat[ii], jj+1, &status);
-				CHECK_STATUS_BREAK(status);
-
-				// Check whether the extensions should remain in their current
-				// place or if they should by copied to the new output file.
-				if (0==par.FetchExtensions) {
-					printf("Not implemented yet!\n");
-					break;
+		// Loop over all source catalogs. Always load and merge up
+		// to #incat_buffer_length catalogs at once.
+		for (int ii = 0; ii < num_incat; ii += incat_buffer_length) {
+			int n_incat_loaded = 0;
+			for (int jj = 0; jj < incat_buffer_length; jj++){
+				// Check if catalog exists (the last batch might contain less than
+				// incat_buffer_length entries).
+				if (ii + jj < num_incat) {
+					incat_buffer[jj] = openSimputCtlg(infilenames[ii + jj], READONLY, 0, 0, 0, 0, &status);
+					CHECK_STATUS_BREAK(status);
+					n_incat_loaded++;
 				}
-
-				simput_refs *refs=NULL;
-				refs = add_data_to_buffer(insrc,incat[ii], mtree, &data_buffer, &status);
-				CHECK_NULL_BREAK(refs,status,"adding data to buffer failed");
-
-				// Copy the entry from the input to the output catalog.
-				SimputSrc* outsrc=newSimputSrcV(src_id,
-						insrc->src_name,
-						insrc->ra,
-						insrc->dec,
-						insrc->imgrota,
-						insrc->imgscal,
-						insrc->e_min,
-						insrc->e_max,
-						insrc->eflux,
-						refs->spectrum, refs->image, refs->timing,
-						&status);
-				CHECK_STATUS_BREAK(status);
-
-				appendSimputSrc(outcat, outsrc, &status);
-				CHECK_STATUS_BREAK(status);
-
-				// needs to be a unique identifier
-				src_id++;
-
-				show_progress(outcat,incat);
 			}
-			CHECK_STATUS_BREAK(status);
-			// END of loop over all entries in the source catalog.
-		}
-		CHECK_STATUS_BREAK(status);
-		headas_chat(1, "\n");
-		// END of loop over both source catalogs.
 
-		// Copy the used extensions to the new output file.
-		if (0!=par.FetchExtensions) {
-			write_merge_data(data_buffer,par.Outfile,&status);
+			merge_simput_files(n_incat_loaded, incat_buffer, outcat, par.Outfile, par.FetchExtensions, &src_id, &status);
+			show_progress(outcat, num_incat);
+
+			for (int jj = 0; jj < n_incat_loaded; jj++){
+				freeSimputCtlg(&incat_buffer[jj], &status);
+			}
 		}
-		// END of copy extensions to the new output file.
 
 	} while(0); // END of ERROR HANDLING Loop.
 
 	// --- Clean up ---
-	headas_chat(3, "\ncleaning up ...\n");
+	headas_chat(3, "\n\ncleaning up ...\n");
 
-	freeSimputData(data_buffer);
-
-	for(int ii=0;ii<num_cat;ii++){
-		freeSimputCtlg(&incat[ii], &status);
+	for(int ii = 0; ii < incat_buffer_length; ii++){
+		freeSimputCtlg(&incat_buffer[ii], &status);
 	}
 	freeSimputCtlg(&outcat, &status);
-
+	freeSimputFilenames(par.Infile1, par.Infile2, par.Infiles, infilenames, num_incat, par.Outfile);
 
 	if (EXIT_SUCCESS==status) {
 		headas_chat(3, "finished successfully!\n\n");
@@ -533,49 +544,36 @@ int simputmerge_main()
 	}
 }
 
-
 int simputmerge_getpar(struct Parameters* const par)
 {
-	// String input buffer.
-	char* sbuffer=NULL;
 
 	// Error status.
 	int status=EXIT_SUCCESS;
 
 	// Read all parameters via the ape_trad_ routines.
+	query_simput_parameter_file_name("Infile1", &(par->Infile1), &status);
+	query_simput_parameter_file_name("Infile2", &(par->Infile2), &status);
 
-	status=ape_trad_query_file_name("Infile1", &sbuffer);
-	if (EXIT_SUCCESS!=status) {
-		SIMPUT_ERROR("failed reading the name of the input file 1");
-		return(status);
-	}
-	strcpy(par->Infile1, sbuffer);
-	free(sbuffer);
+	if (par->Infile1 && par->Infile2) {
+		// combine the two infiles names into a comma separated file name
+		size_t combined_size = strlen(par->Infile1) + strlen(par->Infile2) + 2; //+2 for comma and terminating NULL
+		par->Infiles = malloc(combined_size*sizeof(char));
+		CHECK_NULL_RET(par->Infiles, status, "memory allocation failed", EXIT_FAILURE);
+		snprintf(par->Infiles, combined_size, "%s,%s", par->Infile1, par->Infile2);
+	} else {
+		query_simput_parameter_file_name("Infiles", &(par->Infiles), &status);
+		}
 
-	status=ape_trad_query_file_name("Infile2", &sbuffer);
-	if (EXIT_SUCCESS!=status) {
-		SIMPUT_ERROR("failed reading the name of the input file 2");
-		return(status);
-	}
-	strcpy(par->Infile2, sbuffer);
-	free(sbuffer);
+  query_simput_parameter_file_name("Outfile", &(par->Outfile), &status);
 
-	status=ape_trad_query_file_name("Outfile", &sbuffer);
-	if (EXIT_SUCCESS!=status) {
-		SIMPUT_ERROR("failed reading the name of the output file");
-		return(status);
-	}
-	strcpy(par->Outfile, sbuffer);
-	free(sbuffer);
-
-	status=ape_trad_query_bool("FetchExtensions", &par->FetchExtensions);
-	if (EXIT_SUCCESS!=status) {
+	status = ape_trad_query_bool("FetchExtensions", &par->FetchExtensions);
+	if (EXIT_SUCCESS != status) {
 		SIMPUT_ERROR("failed reading the FetchExtensions parameter");
 		return(status);
 	}
 
-	status=ape_trad_query_bool("clobber", &par->clobber);
-	if (EXIT_SUCCESS!=status) {
+	status = ape_trad_query_bool("clobber", &par->clobber);
+	if (EXIT_SUCCESS != status) {
 		SIMPUT_ERROR("failed reading the clobber parameter");
 		return(status);
 	}

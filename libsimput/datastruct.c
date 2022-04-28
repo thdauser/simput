@@ -288,6 +288,13 @@ void freeSimputCtlg(SimputCtlg** const cat,
   }
 }
 
+void freeSimputFile(char** filename)
+{
+  if (NULL!=*filename){
+    free(*filename);
+  }
+}
+
 
 long getSimputCtlgNSources(const SimputCtlg* const cat)
 {

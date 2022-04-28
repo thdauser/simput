@@ -1,5 +1,6 @@
-Infile1,fre,lq,"input1.fits",,,"input SIMPUT file number 1"
-Infile2,fre,lq,"input2.fits",,,"input SIMPUT file number 2"
+Infiles,f,lq,"input.fits",,,"comma separated list of input SIMPUT files"
+Infile1,f,h,"none",,,"deprecated (input SIMPUT file number 1)"
+Infile2,f,h,"none",,,"deprecated (input SIMPUT file number 2)"
 Outfile,f,lq,"output.fits",,,"output SIMPUT file"
 FetchExtensions,b,lq,yes,,,"store all extensions in the output file"
 chatter,i,lh,3,,,"verbosity"

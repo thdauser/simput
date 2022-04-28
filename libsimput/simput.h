@@ -452,6 +452,8 @@ SimputCtlg* newSimputCtlg(int* const status);
     allocated memory, and finally sets the pointer to NULL. */
 void freeSimputCtlg(SimputCtlg** const ctlg, int* const status);
 
+void freeSimputFile(char** filename);
+
 /** Open a FITS file with a SIMPUT source catalog. The access mode can
     be either READONLY to open an existing catalog or READWRITE for
     both existing or non-existing files. The maximum length of strings
