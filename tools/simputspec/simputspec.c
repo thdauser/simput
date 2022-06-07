@@ -21,6 +21,9 @@
 */
 
 #include "simputspec.h"
+#include "gsl/gsl_math.h"
+#include "gsl/gsl_spline.h"
+#include "math.h"
 
 
 int simputspec_main()
@@ -28,35 +31,35 @@ int simputspec_main()
   // Program parameters.
   struct Parameters par;
 
-  fitsfile* fptr=NULL;
+  fitsfile* fptr = NULL;
 
   // Temporary files for ISIS and Xspec interaction.
-  FILE* cmdfile=NULL;
-  char cmdfilename[L_tmpnam]="";
+  FILE* cmdfile = NULL;
+  char cmdfilename[L_tmpnam] = "";
 
   // XSPEC .qdp file containing the spectrum.
-  FILE* xspecfile=NULL;
+  FILE* xspecfile = NULL;
 
   // ASCII file containing the spectrum.
-  FILE* asciifile=NULL;
+  FILE* asciifile = NULL;
 
   // Instrument response.
-  struct ARF* arf=NULL;
-  struct RMF* rmf=NULL;
+  struct ARF* arf = NULL;
+  struct RMF* rmf = NULL;
 
   // Flag, whether the spectrum should be constructed from
   // different components.
-  int use_components=0;
+  int use_components = 0;
 
   // Output SimputMIdpSpec.
-  SimputMIdpSpec* simputspec=NULL;
-  SimputMIdpSpec* simputspecbuffer=NULL;
+  SimputMIdpSpec* simputspec = NULL;
+  SimputMIdpSpec* simputspecbuffer = NULL;
 
   // SIMPUT catalog the spectrum should be attached to.
-  SimputCtlg* cat=NULL;
+  SimputCtlg* cat = NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS;
+  int status = EXIT_SUCCESS;
 
 
   // Register HEATOOL
@@ -73,28 +76,22 @@ int simputspec_main()
     CHECK_STATUS_BREAK(status);
 
     // Check if the specified energy ranges are reasonable.
-    if (par.Elow>par.Emin) {
+    if (par.Elow > par.Emin) {
       SIMPUT_ERROR("parameter 'Emin' must be higher than 'Elow'");
-      status=EXIT_FAILURE;
+      status = EXIT_FAILURE;
       break;
     }
-    if (par.Eup<par.Emax) {
+    if (par.Eup < par.Emax) {
       SIMPUT_ERROR("parameter 'Emax' may not exceed 'Eup'");
-      status=EXIT_FAILURE;
+      status = EXIT_FAILURE;
       break;
     }
-    if (par.Estep>par.Eup-par.Elow) {
+    if (par.Estep > par.Eup - par.Elow) {
       SIMPUT_ERROR("parameter 'Estep' may not exceed difference "
 		   "between 'Eup' and 'Elow'");
-      status=EXIT_FAILURE;
+      status = EXIT_FAILURE;
       break;
     }
-    if (par.Elow>par.Eup) {
-      SIMPUT_ERROR("parameter 'Eup' must be higher than 'Elow'");
-      status=EXIT_FAILURE;
-      break;
-    }
-
 
     // Check the input type for the spectrum.
     // Check the specification of an ISIS parameter file, an
@@ -102,28 +99,28 @@ int simputspec_main()
     // Only one of these 3 option may be used. In case multiple of
     // them exist, throw an error message and abort.
 
-    if ((0==strcmp(par.ISISFile, "none"))||
-	(0==strcmp(par.ISISFile, "NONE"))) {
+    if ((0 == strcmp(par.ISISFile, "none"))||
+	(0 == strcmp(par.ISISFile, "NONE"))) {
       strcpy(par.ISISFile, "");
     }
-    if ((0==strcmp(par.ISISPrep, "none"))||
-	(0==strcmp(par.ISISPrep, "NONE"))) {
+    if ((0 == strcmp(par.ISISPrep, "none"))||
+	(0 == strcmp(par.ISISPrep, "NONE"))) {
       strcpy(par.ISISPrep, "");
     }
-    if ((0==strcmp(par.XSPECFile, "none"))||
-	(0==strcmp(par.XSPECFile, "NONE"))) {
+    if ((0 == strcmp(par.XSPECFile, "none"))||
+	(0 == strcmp(par.XSPECFile, "NONE"))) {
       strcpy(par.XSPECFile, "");
     }
-    if ((0==strcmp(par.XSPECPrep, "none"))||
-        (0==strcmp(par.XSPECPrep, "NONE"))) {
+    if ((0 == strcmp(par.XSPECPrep, "none"))||
+        (0 == strcmp(par.XSPECPrep, "NONE"))) {
       strcpy(par.XSPECPrep, "");
     }
-    if ((0==strcmp(par.PHAFile, "none"))||
-	(0==strcmp(par.PHAFile, "NONE"))) {
+    if ((0 == strcmp(par.PHAFile, "none"))||
+	(0 == strcmp(par.PHAFile, "NONE"))) {
       strcpy(par.PHAFile, "");
     }
-    if ((0==strcmp(par.ASCIIFile, "none"))||
-	(0==strcmp(par.ASCIIFile, "NONE"))) {
+    if ((0 == strcmp(par.ASCIIFile, "none"))||
+	(0 == strcmp(par.ASCIIFile, "NONE"))) {
       strcpy(par.ASCIIFile, "");
     }
 
@@ -233,13 +230,15 @@ int simputspec_main()
         if('\n'==c) {
           nlines--;
         }
-
+        printf("%ld\n",nlines );
         // Allocate memory.
-        simputspec->nentries=nlines;
-        simputspec->energy=(float*)malloc(nlines*sizeof(float));
+        simputspec->nentries=par.nbins;
+        simputspec->energy=(float*)malloc(par.nbins*sizeof(float));
         CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
-        simputspec->fluxdensity=(float*)malloc(nlines*sizeof(float));
-        CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
+        simputspec->fluxdensity=(float*)malloc(par.nbins*sizeof(float));
+        CHECK_NULL_BREAK(simputspec->fluxdensity, status, "memory allocation failed");
+        double* x_vals = (double*)malloc(nlines*sizeof(double));
+        double* y_vals = (double*)malloc(nlines*sizeof(double));
 
         // Reset the file pointer, read the data, and store them in
         // the SimputMIdpSpec data structure.
@@ -247,22 +246,53 @@ int simputspec_main()
         // Read the actual data.
         long ii;
         for (ii=0; ii<nlines; ii++) {
-  	char linebuffer[SIMPUT_MAXSTR];
-  	if(fgets(linebuffer, SIMPUT_MAXSTR, asciifile)!=NULL){
-  	  if(sscanf(linebuffer, "%f %f",
-  		 &(simputspec->energy[ii]),
-  		 &(simputspec->fluxdensity[ii]))!=2) {
-  	  SIMPUT_ERROR("failed reading data from ASCII file");
-  	  status=EXIT_FAILURE;
-  	  break;
-  	  }
-  	}
+  	       char linebuffer[SIMPUT_MAXSTR];
+  	       if(fgets(linebuffer, SIMPUT_MAXSTR, asciifile)!=NULL){
+  	           if(sscanf(linebuffer, "%lf %lf", &x_vals[ii], &y_vals[ii])!=2) {
+  	              SIMPUT_ERROR("failed reading data from ASCII file");
+  	              status=EXIT_FAILURE;
+  	              break;
+  	           }
+  	       }
+           //printf("%g %g\n", x_vals[ii], y_vals[ii]);
         }
         CHECK_STATUS_BREAK(status);
 
         // Close the file.
         fclose(asciifile);
         asciifile=NULL;
+        gsl_interp_accel *acc = gsl_interp_accel_alloc();
+        //gsl_interp *linear = gsl_interp_alloc(gsl_interp_linear, nlines);
+        //gsl_interp_init(linear, x_vals, y_vals, nlines);
+        gsl_spline *spline_linear = gsl_spline_alloc(gsl_interp_linear, nlines);
+        gsl_spline_init(spline_linear, x_vals, y_vals, nlines);
+        if(par.logegrid){
+          for (ii = 0; ii <= par.nbins; ii++)
+          {
+            double steps = exp((log(x_vals[nlines-1]) - log(x_vals[0])) / par.nbins);
+            double xi = x_vals[0] * pow(steps,ii);
+            double yi_linear = gsl_spline_eval(spline_linear, xi, acc);
+            //double yi_linear = gsl_interp_linear(xi, x_vals, y_vals);
+            simputspec->energy[ii] = (float)xi;
+            simputspec->fluxdensity[ii] = (float)yi_linear;
+            printf("%g %g\n", xi, yi_linear);
+          }
+        } else{
+          for (ii = 0; ii <= par.nbins; ii++)
+          {
+            double xi = (1 - (float)(ii) / par.nbins) * x_vals[0] + ((float)(ii)  / par.nbins) * x_vals[nlines-1];
+            double yi_linear = gsl_spline_eval(spline_linear, xi, acc);
+            //double yi_linear = gsl_interp_linear(xi, x_vals, y_vals);
+            simputspec->energy[ii] = (float)xi;
+            simputspec->fluxdensity[ii] = (float)yi_linear;
+            printf("%g %g\n", xi, yi_linear);
+          }
+
+        }
+        gsl_spline_free(spline_linear);
+        gsl_interp_accel_free(acc);
+        free(x_vals);
+        free(y_vals);
 
     } else {
       // The spectrum has to be obtained from a PHA file.
