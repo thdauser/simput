@@ -72,7 +72,7 @@ int simputspec_main()
     // ---- Initialization ----
 
     // Read the parameters using PIL.
-    status=simputspec_getpar(&par);
+    status = simputspec_getpar(&par);
     CHECK_STATUS_BREAK(status);
 
     // Check if the specified energy ranges are reasonable.
@@ -124,32 +124,32 @@ int simputspec_main()
       strcpy(par.ASCIIFile, "");
     }
 
-    int noptions=0;
-    if ((par.plFlux>0.) || (par.bbFlux>0.) ||
-        (par.flFlux>0.) || (par.rflFlux>0.)) {
-      use_components=1;
+    int noptions = 0;
+    if ((par.plFlux > 0.) || (par.bbFlux > 0.) ||
+        (par.flFlux > 0.) || (par.rflFlux > 0.)) {
+      use_components = 1;
       noptions++;
     }
-    if (strlen(par.ISISFile)>0) {
+    if (strlen(par.ISISFile) > 0) {
       noptions++;
     }
-    if (strlen(par.XSPECFile)>0) {
+    if (strlen(par.XSPECFile) > 0) {
       noptions++;
     }
-    if (strlen(par.PHAFile)>0) {
+    if (strlen(par.PHAFile) > 0) {
       noptions++;
     }
-    if (strlen(par.ASCIIFile)>0) {
+    if (strlen(par.ASCIIFile) > 0) {
       noptions++;
     }
-    if (0==noptions) {
+    if (0 == noptions) {
       SIMPUT_ERROR("no spectral model specified");
-      status=EXIT_FAILURE;
+      status = EXIT_FAILURE;
       break;
     }
-    if (noptions>1) {
+    if (noptions > 1) {
       SIMPUT_ERROR("specification of multiple spectral models");
-      status=EXIT_FAILURE;
+      status = EXIT_FAILURE;
       break;
     }
     // END of checking the input type for the spectrum.
@@ -159,7 +159,7 @@ int simputspec_main()
     	SIMPUT_WARNING(" ** deprecated use of the Estep parameter ** \n    use Nbins instead to define the energy grid.");
     	par.nbins = (par.Eup - par.Elow) / par.Estep;
     	par.logegrid = 0;
-    	printf(" -> given Estep=%.4e converted to nbins=%i on a linear grid \n",par.Estep,par.nbins);
+    	printf(" -> given Estep=%.4e converted to nbins=%i on a linear grid \n", par.Estep, par.nbins);
     }
 
 
@@ -172,7 +172,7 @@ int simputspec_main()
 
     // If individual components or an ISIS .par file are given,
     // we have to run ISIS in order to produce a spectrum.
-    if ((strlen(par.ISISFile)>0) || (use_components>0)) {
+    if ((strlen(par.ISISFile) > 0) || (use_components > 0)) {
 
     	write_isisSpec_fits_file(par.TmpSpecFile, par.ISISFile, par.ISISPrep,
     			par.ISISPostCmd, par.Elow, par.Eup, par.nbins, par.logegrid,
@@ -184,7 +184,7 @@ int simputspec_main()
 
     // If an Xspec .xcm file is given, we have to run Xspec in order
     // to produce the spectrum.
-    if (strlen(par.XSPECFile)>0) {
+    if (strlen(par.XSPECFile) > 0) {
 
     	write_xspecSpec_file(par.TmpSpecFile, par.XSPECFile, par.XSPECPrep, par.XSPECPostCmd,
     			par.Elow, par.Eup, par.nbins, par.logegrid, &status);
@@ -193,49 +193,49 @@ int simputspec_main()
 
     // Read the spectrum from the temporary file and store
     // it in the SIMPUT file.
-    simputspec=newSimputMIdpSpec(&status);
+    simputspec = newSimputMIdpSpec(&status);
     CHECK_STATUS_BREAK(status);
 
-    if ((strlen(par.ISISFile)>0) || (use_components>0)) {
+    if ((strlen(par.ISISFile) > 0) || (use_components > 0)) {
 
     	read_isisSpec_fits_file(par.TmpSpecFile, simputspec,
     			par.ISISFile, par.Emin, par.Emax,
 				par.plFlux, par.bbFlux, par.flFlux, par.rflFlux,
 				&status);
 
-    } else if (strlen(par.XSPECFile)>0) {
+    } else if (strlen(par.XSPECFile) > 0) {
       // The spectrum is contained in a .qdp file produced by XSPEC/PLT,
       // and has to be loaded from there.
 
     	read_xspecSpec_file(par.TmpSpecFile, simputspec, &status);
 
-    } else if (strlen(par.ASCIIFile)>0) {
+    } else if (strlen(par.ASCIIFile) > 0) {
         // The spectrum is contained in a ascii file,
         // and has to be loaded from there.
 
         // Open the file.
-        asciifile=fopen(par.ASCIIFile, "r");
+        asciifile = fopen(par.ASCIIFile, "r");
         CHECK_NULL_BREAK(asciifile, status, "could not open ascii file");
 
         // Determine the number of rows.
-        long nlines=0;
-        char c=0;
+        long nlines = 0;
+        char c = 0;
         while(!feof(asciifile)) {
-          c=fgetc(asciifile);
-          if ('\n'==c) {
+          c = fgetc(asciifile);
+          if ('\n' == c) {
             nlines++;
           }
         }
         // Check if the last line has been empty.
-        if('\n'==c) {
+        if('\n' == c) {
           nlines--;
         }
-        printf("%ld\n",nlines );
+        printf("%ld\n", nlines);
         // Allocate memory.
-        simputspec->nentries=par.nbins;
-        simputspec->energy=(float*)malloc(par.nbins*sizeof(float));
+        simputspec->nentries = par.nbins;
+        simputspec->energy = (float*)malloc(par.nbins*sizeof(float));
         CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
-        simputspec->fluxdensity=(float*)malloc(par.nbins*sizeof(float));
+        simputspec->fluxdensity = (float*)malloc(par.nbins*sizeof(float));
         CHECK_NULL_BREAK(simputspec->fluxdensity, status, "memory allocation failed");
         double* x_vals = (double*)malloc(nlines*sizeof(double));
         double* y_vals = (double*)malloc(nlines*sizeof(double));
@@ -245,25 +245,22 @@ int simputspec_main()
         rewind(asciifile);
         // Read the actual data.
         long ii;
-        for (ii=0; ii<nlines; ii++) {
+        for (ii = 0; ii < nlines; ii++) {
   	       char linebuffer[SIMPUT_MAXSTR];
-  	       if(fgets(linebuffer, SIMPUT_MAXSTR, asciifile)!=NULL){
-  	           if(sscanf(linebuffer, "%lf %lf", &x_vals[ii], &y_vals[ii])!=2) {
+  	       if(fgets(linebuffer, SIMPUT_MAXSTR, asciifile) != NULL){
+  	           if(sscanf(linebuffer, "%lf %lf", &x_vals[ii], &y_vals[ii]) != 2) {
   	              SIMPUT_ERROR("failed reading data from ASCII file");
-  	              status=EXIT_FAILURE;
+  	              status = EXIT_FAILURE;
   	              break;
   	           }
   	       }
-           //printf("%g %g\n", x_vals[ii], y_vals[ii]);
         }
         CHECK_STATUS_BREAK(status);
 
         // Close the file.
         fclose(asciifile);
-        asciifile=NULL;
+        asciifile = NULL;
         gsl_interp_accel *acc = gsl_interp_accel_alloc();
-        //gsl_interp *linear = gsl_interp_alloc(gsl_interp_linear, nlines);
-        //gsl_interp_init(linear, x_vals, y_vals, nlines);
         gsl_spline *spline_linear = gsl_spline_alloc(gsl_interp_linear, nlines);
         gsl_spline_init(spline_linear, x_vals, y_vals, nlines);
         if(par.logegrid){
@@ -272,7 +269,6 @@ int simputspec_main()
             double steps = exp((log(x_vals[nlines-1]) - log(x_vals[0])) / par.nbins);
             double xi = x_vals[0] * pow(steps,ii);
             double yi_linear = gsl_spline_eval(spline_linear, xi, acc);
-            //double yi_linear = gsl_interp_linear(xi, x_vals, y_vals);
             simputspec->energy[ii] = (float)xi;
             simputspec->fluxdensity[ii] = (float)yi_linear;
             printf("%g %g\n", xi, yi_linear);
@@ -282,7 +278,6 @@ int simputspec_main()
           {
             double xi = (1 - (float)(ii) / par.nbins) * x_vals[0] + ((float)(ii)  / par.nbins) * x_vals[nlines-1];
             double yi_linear = gsl_spline_eval(spline_linear, xi, acc);
-            //double yi_linear = gsl_interp_linear(xi, x_vals, y_vals);
             simputspec->energy[ii] = (float)xi;
             simputspec->fluxdensity[ii] = (float)yi_linear;
             printf("%g %g\n", xi, yi_linear);
@@ -305,61 +300,61 @@ int simputspec_main()
       CHECK_STATUS_BREAK(status);
 
       // Allocate memory.
-      simputspec->nentries=nrows;
-      simputspec->energy=(float*)malloc(nrows*sizeof(float));
+      simputspec->nentries = nrows;
+      simputspec->energy = (float*)malloc(nrows*sizeof(float));
       CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
-      simputspec->fluxdensity=(float*)malloc(nrows*sizeof(float));
+      simputspec->fluxdensity = (float*)malloc(nrows*sizeof(float));
       CHECK_NULL_BREAK(simputspec->fluxdensity, status, "memory allocation failed");
 
       // Need to distinguish whether the file contains counts or rate.
       char comment[SIMPUT_MAXSTR];
       char hduclas3[SIMPUT_MAXSTR];
       fits_read_key(fptr, TSTRING, "HDUCLAS3", hduclas3, comment, &status);
-      if (EXIT_SUCCESS!=status) {
+      if (EXIT_SUCCESS != status) {
 	SIMPUT_ERROR("could not find keyword 'HDUCLAS3' in PHA file");
 	break;
       }
 
-      if ((0==strcmp(hduclas3, "COUNT"))||(0==strcmp(hduclas3, "count"))) {
+      if ((0 == strcmp(hduclas3, "COUNT")) || (0 == strcmp(hduclas3, "count"))) {
 	float exposure;
 	fits_read_key(fptr, TFLOAT, "EXPOSURE", &exposure, comment, &status);
-	if (EXIT_SUCCESS!=status) {
+	if (EXIT_SUCCESS != status) {
 	  SIMPUT_ERROR("could not find keyword 'EXPOSURE' in PHA file");
 	  break;
 	}
 
 	int ccount;
 	fits_get_colnum(fptr, CASEINSEN, "COUNTS", &ccount, &status);
-	if (EXIT_SUCCESS!=status) {
+	if (EXIT_SUCCESS != status) {
 	  SIMPUT_ERROR("could not find column 'COUNTS' in PHA file");
 	  break;
 	}
 
-	int anynull=0;
+	int anynull = 0;
 	fits_read_col(fptr, TFLOAT, ccount, 1, 1, nrows, 0,
 		      simputspec->fluxdensity, &anynull, &status);
 
 	// Divide by exposure time.
 	long ii;
-	for (ii=0; ii<nrows; ii++) {
-	  simputspec->fluxdensity[ii]*=1./exposure;
+	for (ii = 0; ii < nrows; ii++) {
+	  simputspec->fluxdensity[ii] *= 1./exposure;
 	}
 
-      } else if ((0==strcmp(hduclas3, "RATE"))||(0==strcmp(hduclas3, "rate"))) {
+      } else if ((0 == strcmp(hduclas3, "RATE")) || (0 == strcmp(hduclas3, "rate"))) {
 	int crate;
 	fits_get_colnum(fptr, CASEINSEN, "RATE", &crate, &status);
-	if (EXIT_SUCCESS!=status) {
+	if (EXIT_SUCCESS != status) {
 	  SIMPUT_ERROR("could not find column 'RATE' in PHA file");
 	  break;
 	}
 
-	int anynull=0;
+	int anynull = 0;
 	fits_read_col(fptr, TFLOAT, crate, 1, 1, nrows, 0,
 		      simputspec->fluxdensity, &anynull, &status);
 
       } else {
 	SIMPUT_ERROR("invalid value for keyword 'HDUCLAS3'");
-	status=EXIT_FAILURE;
+	status = EXIT_FAILURE;
 	break;
       }
 
@@ -367,62 +362,62 @@ int simputspec_main()
       // Load the ARF and the RMF.
       char ancrfile[SIMPUT_MAXSTR];
       fits_read_key(fptr, TSTRING, "ANCRFILE", ancrfile, comment, &status);
-      if (EXIT_SUCCESS!=status) {
+      if (EXIT_SUCCESS != status) {
 	SIMPUT_ERROR("could not find keyword 'ANCRFILE' in event file");
 	break;
       }
       char respfile[SIMPUT_MAXSTR];
       fits_read_key(fptr, TSTRING, "RESPFILE", respfile, comment, &status);
-      if (EXIT_SUCCESS!=status) {
+      if (EXIT_SUCCESS != status) {
 	SIMPUT_ERROR("could not find keyword 'RESPFILE' in event file");
 	break;
       }
-      arf=loadARF(ancrfile, &status);
+      arf = loadARF(ancrfile, &status);
       CHECK_STATUS_BREAK(status);
-      rmf=loadNormalizedRMF(respfile, &status);
+      rmf = loadNormalizedRMF(respfile, &status);
       CHECK_STATUS_BREAK(status);
       loadEbounds(rmf, respfile, &status);
       CHECK_STATUS_BREAK(status);
 
       // Check that RMF and ARF have the same number of channels.
-      if (rmf->NumberEnergyBins!=arf->NumberEnergyBins) {
+      if (rmf->NumberEnergyBins != arf->NumberEnergyBins) {
 	SIMPUT_ERROR("ARF and RMF must contain the same number of energy bins");
-	status=EXIT_FAILURE;
+	status = EXIT_FAILURE;
 	break;
       }
 
       // Deconvolve the data according to the method presented by Nowak (2005).
       long ii;
-      for (ii=0; ii<simputspec->nentries; ii++) {
+      for (ii = 0; ii < simputspec->nentries; ii++) {
 	// Store the energy.
 	float lo, hi;
 	getEBOUNDSEnergyLoHi(ii, rmf, &lo, &hi, &status);
 	CHECK_STATUS_BREAK(status);
-	simputspec->energy[ii]=0.5*(lo+hi);
+	simputspec->energy[ii] = 0.5*(lo+hi);
 
 	// Calculate the integral \int R(h,E)A(E)dE.
-	float area=0.;
+	float area = 0.;
 	long kk;
-	for (kk=0; kk<arf->NumberEnergyBins; kk++) {
-	  area+=ReturnRMFElement(rmf, ii, kk)*arf->EffArea[kk];
+	for (kk = 0; kk < arf->NumberEnergyBins; kk++) {
+	  area += ReturnRMFElement(rmf, ii, kk)*arf->EffArea[kk];
 	}
 
 	// Divide by the area and the width of the energy bin.
-	simputspec->fluxdensity[ii]*=1./area/(hi-lo);
+	simputspec->fluxdensity[ii] *= 1./area/(hi-lo);
       }
       CHECK_STATUS_BREAK(status);
 
     }
 
     long jj;
-    for (jj=0; jj<simputspec->nentries; jj++) {
+    for (jj = 0; jj < simputspec->nentries; jj++) {
       // Check if the flux has a physically reasonable value.
-      if ((simputspec->fluxdensity[jj]<0.)||(simputspec->fluxdensity[jj]>1.e12)) {
+      if ((simputspec->fluxdensity[jj] < 0.) || (simputspec->fluxdensity[jj] > 1.e12)) {
 	char msg[SIMPUT_MAXSTR];
 	sprintf(msg, "flux (%e photons/cm**2/keV) out of limits",
 		simputspec->fluxdensity[jj]);
         SIMPUT_ERROR(msg);
-        status=EXIT_FAILURE;
+        status = EXIT_FAILURE;
 	break;
       }
     }
@@ -432,28 +427,28 @@ int simputspec_main()
 
 
     // Open the SimputCtlg.
-    cat=openSimputCtlg(par.Simput, READWRITE, 32, 32, 32, 32, &status);
+    cat = openSimputCtlg(par.Simput, READWRITE, 32, 32, 32, 32, &status);
     CHECK_STATUS_BREAK(status);
 
     // Set the spectrum reference in the source catalog.
-    if (strlen(par.Extname)==0) {
+    if (strlen(par.Extname) == 0) {
       SIMPUT_ERROR("no EXTNAME specified");
-      status=EXIT_FAILURE;
+      status = EXIT_FAILURE;
       break;
     }
-    if (strlen(par.Extname)>24) {
+    if (strlen(par.Extname) > 24) {
       SIMPUT_ERROR("EXTNAME too long");
-      status=EXIT_FAILURE;
+      status = EXIT_FAILURE;
       break;
     }
-    if ((par.Extver<=0) || (par.Extver>9999)) {
+    if ((par.Extver <= 0) || (par.Extver > 9999)) {
       char msg[SIMPUT_MAXSTR];
       sprintf(msg, "value for EXTVER outside of allowed limit (%d)", par.Extver);
       SIMPUT_ERROR(msg);
-      status=EXIT_FAILURE;
+      status = EXIT_FAILURE;
       break;
     }
-    char* specref=(char*)malloc(32*sizeof(char));
+    char* specref = (char*)malloc(32*sizeof(char));
     CHECK_NULL_BREAK(specref, status, "memory allocation failed");
     sprintf(specref, "[%s,%d]", par.Extname, par.Extver);
     fits_write_col(cat->fptr, TSTRING, cat->cspectrum, 1, 1, 1,
@@ -462,15 +457,15 @@ int simputspec_main()
 
     // Check if the source flux in the catalog is set. If not (value=0.0),
     // set the flux according to the spectrum.
-    int anynul=0;
-    float srcflux=0.0;
+    int anynul = 0;
+    float srcflux = 0.0;
     fits_read_col(cat->fptr, TFLOAT, cat->cflux, 1, 1, 1,
 		  &srcflux, &srcflux, &anynul, &status);
     CHECK_STATUS_BREAK(status);
 
-    if (0.0==srcflux) {
+    if (0.0 == srcflux) {
       // Determine the reference band.
-      float srce_min=0.0, srce_max=0.0;
+      float srce_min = 0.0, srce_max = 0.0;
       fits_read_col(cat->fptr, TFLOAT, cat->ce_min, 1, 1, 1,
 		    &srce_min, &srce_min, &anynul, &status);
       fits_read_col(cat->fptr, TFLOAT, cat->ce_max, 1, 1, 1,
@@ -478,7 +473,7 @@ int simputspec_main()
       CHECK_STATUS_BREAK(status);
 
       // Determine the flux in the reference band.
-      srcflux=getSimputMIdpSpecBandFlux(simputspec, srce_min, srce_max);
+      srcflux = getSimputMIdpSpecBandFlux(simputspec, srce_min, srce_max);
 
       // Store the flux in the source catalog.
       fits_write_col(cat->fptr, TFLOAT, cat->cflux, 1, 1, 1,
@@ -491,19 +486,19 @@ int simputspec_main()
   } while(0); // END of error handling loop.
 
   // Close open files.
-  if (NULL!=xspecfile) {
+  if (NULL != xspecfile) {
     fclose(xspecfile);
-    xspecfile=NULL;
+    xspecfile = NULL;
   }
 
   // Close the temporary files.
-  if (NULL!=cmdfile) {
+  if (NULL != cmdfile) {
     fclose(cmdfile);
-    cmdfile=NULL;
+    cmdfile = NULL;
   }
-  if (NULL!=fptr) {
+  if (NULL != fptr) {
     fits_close_file(fptr, &status);
-    fptr=NULL;
+    fptr = NULL;
   }
   // Remove the temporary files.
   if (strlen(cmdfilename)>0) {
@@ -511,18 +506,18 @@ int simputspec_main()
   }
   if (use_components>0) {
     int ii;
-    for (ii=0; ii<4; ii++) {
+    for (ii = 0; ii < 4; ii++) {
       char filename[SIMPUT_MAXSTR];
       sprintf(filename, "%s.spec%d", par.TmpSpecFile, ii);
       remove(filename);
     }
   }
-  if (strlen(par.ISISFile)>0) {
+  if (strlen(par.ISISFile) > 0) {
     char filename[SIMPUT_MAXSTR];
     sprintf(filename, "%s.spec0", par.TmpSpecFile);
     remove(filename);
   }
-  if (strlen(par.XSPECFile)>0) {
+  if (strlen(par.XSPECFile) > 0) {
     remove(par.TmpSpecFile);
   }
 
@@ -533,7 +528,7 @@ int simputspec_main()
   freeRMF(rmf);
   freeARF(arf);
 
-  if (EXIT_SUCCESS==status) {
+  if (EXIT_SUCCESS == status) {
     headas_chat(3, "finished successfully!\n\n");
     return(EXIT_SUCCESS);
   } else {
@@ -545,119 +540,119 @@ int simputspec_main()
 int simputspec_getpar(struct Parameters* const par)
 {
   // String input buffer.
-  char* sbuffer=NULL;
+  char* sbuffer = NULL;
 
   // Error status.
-  int status=EXIT_SUCCESS;
+  int status = EXIT_SUCCESS;
 
-  status=ape_trad_query_file_name("Simput", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_file_name("Simput", &sbuffer);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the name of the SIMPUT catalog failed");
     return(status);
   }
   strcpy(par->Simput, sbuffer);
   free(sbuffer);
 
-  status=ape_trad_query_string("Extname", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_string("Extname", &sbuffer);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the EXTNAME of the generated HDU failed");
     return(status);
   }
   strcpy(par->Extname, sbuffer);
   free(sbuffer);
 
-  status=ape_trad_query_int("Extver", &par->Extver);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_int("Extver", &par->Extver);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the EXTVER of the generated HDU failed");
     return(status);
   }
 
-  status=ape_trad_query_float("Elow", &par->Elow);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("Elow", &par->Elow);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the Elow parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("Eup", &par->Eup);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("Eup", &par->Eup);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the Eup parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("Estep", &par->Estep);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("Estep", &par->Estep);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the Estep parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("plPhoIndex", &par->plPhoIndex);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("plPhoIndex", &par->plPhoIndex);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the plPhoIndex parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("plFlux", &par->plFlux);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("plFlux", &par->plFlux);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the plFlux parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("bbkT", &par->bbkT);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("bbkT", &par->bbkT);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the bbkT parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("bbFlux", &par->bbFlux);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("bbFlux", &par->bbFlux);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the bbFlux parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("flSigma", &par->flSigma);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("flSigma", &par->flSigma);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the flSigma parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("flFlux", &par->flFlux);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("flFlux", &par->flFlux);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the flFlux parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("rflSpin", &par->rflSpin);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("rflSpin", &par->rflSpin);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the rflSpin parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("rflFlux", &par->rflFlux);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("rflFlux", &par->rflFlux);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the rflFlux parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("NH", &par->NH);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("NH", &par->NH);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the N_H parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("Emin", &par->Emin);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("Emin", &par->Emin);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the Emin parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_float("Emax", &par->Emax);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_float("Emax", &par->Emax);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the Emax parameter failed");
     return(status);
   }
 
-  status=ape_trad_query_string("ISISFile", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_string("ISISFile", &sbuffer);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the name of the ISIS spectral parameter file failed");
     return(status);
   }
@@ -671,15 +666,15 @@ int simputspec_getpar(struct Parameters* const par)
   }
 
   status=ape_trad_query_string("ISISPrep", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the name of the ISIS prep file failed");
     return(status);
   }
   strcpy(par->ISISPrep, sbuffer);
   free(sbuffer);
 
-  status=ape_trad_query_string("ISISPostCmd", &sbuffer);
-    if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_string("ISISPostCmd", &sbuffer);
+    if (EXIT_SUCCESS != status) {
       SIMPUT_ERROR("reading the name of the ISIS post cmd file failed");
       return(status);
     }
@@ -688,8 +683,8 @@ int simputspec_getpar(struct Parameters* const par)
 
 
 
-  status=ape_trad_query_string("XSPECFile", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_string("XSPECFile", &sbuffer);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the name of the XSPEC spectrum file failed");
     return(status);
   }
@@ -702,16 +697,16 @@ int simputspec_getpar(struct Parameters* const par)
     strncat(par->TmpSpecFile, ".qdp", 4);
   }
 
-  status=ape_trad_query_string("XSPECPrep", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_string("XSPECPrep", &sbuffer);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the name of the XSPEC prep file failed");
     return(status);
   }
   strcpy(par->XSPECPrep, sbuffer);
   free(sbuffer);
 
-  status=ape_trad_query_string("XSPECPostCmd", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_string("XSPECPostCmd", &sbuffer);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the name of the XSPEC spectrum file failed");
     return(status);
   }
@@ -719,16 +714,16 @@ int simputspec_getpar(struct Parameters* const par)
   free(sbuffer);
 
 
-  status=ape_trad_query_string("ASCIIFile", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_string("ASCIIFile", &sbuffer);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the name of the ASCII spectrum file failed");
     return(status);
   }
   strcpy(par->ASCIIFile, sbuffer);
   free(sbuffer);
 
-  status=ape_trad_query_string("PHAFile", &sbuffer);
-  if (EXIT_SUCCESS!=status) {
+  status = ape_trad_query_string("PHAFile", &sbuffer);
+  if (EXIT_SUCCESS != status) {
     SIMPUT_ERROR("reading the name of the PHA file failed");
     return(status);
   }
