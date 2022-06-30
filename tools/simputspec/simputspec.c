@@ -23,6 +23,8 @@
 #include "simputspec.h"
 #include "math.h"
 
+// Function to find the upper bound for the respective energy
+// for interpolation from ASCII file
 int upper_bound(double* x_vals, long nlines, double xi){
   int low = 0;
     int high = nlines;
@@ -277,34 +279,43 @@ int simputspec_main()
         asciifile = NULL;
 
         if(par.logegrid){
-          for (ii = 0; ii <= par.nbins; ii++)
+          for (ii = 0; ii < par.nbins; ii++)
           {
             double steps = exp((log(par.Eup) - log(par.Elow)) / par.nbins);
-            double xi = par.Elow * pow(steps,ii);
-            if (xi < x_vals[0] || xi > x_vals[nlines-1]){
+            double midbin = par.Elow * (pow(steps, ii + 1) - pow(steps,ii)) / 2; //to use bin midpoints for the energy grid
+            double xi = midbin + par.Elow * pow(steps, ii);
+            if (xi < x_vals[0] || xi > x_vals[nlines - 1]){
               double yi_linear = 0;
               simputspec->energy[ii] = (float)xi;
               simputspec->fluxdensity[ii] = (float)yi_linear;
+              printf("%g %g\n", xi, yi_linear);
+
             } else{
               int upper = upper_bound(x_vals, nlines, xi);
               double yi_linear = y_vals[upper - 1] + (xi - x_vals[upper - 1])*(y_vals[upper] - y_vals[upper - 1])/(x_vals[upper] - x_vals[upper - 1]);
               simputspec->energy[ii] = (float)xi;
               simputspec->fluxdensity[ii] = (float)yi_linear;
+              printf("%g %g\n", xi, yi_linear);
+
             }
           }
         } else{
-          for (ii = 0; ii <= par.nbins; ii++)
+          for (ii = 0; ii < par.nbins; ii++)
           {
-            double xi = (1 - (float)(ii) / par.nbins) * par.Elow + ((float)(ii)  / par.nbins) * par.Eup;
-            if (xi < x_vals[0] || xi > x_vals[nlines-1]){
+            double midbin = (par.Eup - par.Elow) / (2 * par.nbins); //to use bin midpoints for the energy grid
+            double xi = midbin + (1 - (float)(ii) / par.nbins) * par.Elow + ((float)(ii)  / par.nbins) * par.Eup;
+            if (xi < x_vals[0] || xi > x_vals[nlines - 1]){
               double yi_linear = 0;
               simputspec->energy[ii] = (float)xi;
               simputspec->fluxdensity[ii] = (float)yi_linear;
+              printf("%g %g\n", xi, yi_linear);
             } else{
               int upper = upper_bound(x_vals, nlines, xi);
               double yi_linear = y_vals[upper - 1] + (xi - x_vals[upper - 1])*(y_vals[upper] - y_vals[upper - 1])/(x_vals[upper] - x_vals[upper - 1]);
               simputspec->energy[ii] = (float)xi;
               simputspec->fluxdensity[ii] = (float)yi_linear;
+              printf("%g %g\n", xi, yi_linear);
+
             }
           }
         }
