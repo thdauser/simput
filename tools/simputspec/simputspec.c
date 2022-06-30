@@ -21,9 +21,21 @@
 */
 
 #include "simputspec.h"
-#include "gsl/gsl_math.h"
-#include "gsl/gsl_spline.h"
 #include "math.h"
+
+int upper_bound(double* x_vals, long nlines, double xi){
+  int low = 0;
+    int high = nlines;
+    while (low < high) {
+        int mid =  low + (high - low) / 2;
+        if (xi <= x_vals[mid]) {
+            high = mid;
+        } else {
+            low = mid + 1;
+        }
+    }
+    return low;
+}
 
 
 int simputspec_main()
@@ -255,37 +267,47 @@ int simputspec_main()
   	           }
   	       }
         }
+        if (par.Elow < x_vals[0] || par.Eup > x_vals[nlines - 1]){
+          SIMPUT_WARNING(" ** energy range outside the ASCII spectrum ** \n    corresponding fluxdensity set to zero.");
+        }
         CHECK_STATUS_BREAK(status);
 
         // Close the file.
         fclose(asciifile);
         asciifile = NULL;
-        gsl_interp_accel *acc = gsl_interp_accel_alloc();
-        gsl_spline *spline_linear = gsl_spline_alloc(gsl_interp_linear, nlines);
-        gsl_spline_init(spline_linear, x_vals, y_vals, nlines);
+
         if(par.logegrid){
           for (ii = 0; ii <= par.nbins; ii++)
           {
-            double steps = exp((log(x_vals[nlines-1]) - log(x_vals[0])) / par.nbins);
-            double xi = x_vals[0] * pow(steps,ii);
-            double yi_linear = gsl_spline_eval(spline_linear, xi, acc);
-            simputspec->energy[ii] = (float)xi;
-            simputspec->fluxdensity[ii] = (float)yi_linear;
-            printf("%g %g\n", xi, yi_linear);
+            double steps = exp((log(par.Eup) - log(par.Elow)) / par.nbins);
+            double xi = par.Elow * pow(steps,ii);
+            if (xi < x_vals[0] || xi > x_vals[nlines-1]){
+              double yi_linear = 0;
+              simputspec->energy[ii] = (float)xi;
+              simputspec->fluxdensity[ii] = (float)yi_linear;
+            } else{
+              int upper = upper_bound(x_vals, nlines, xi);
+              double yi_linear = y_vals[upper - 1] + (xi - x_vals[upper - 1])*(y_vals[upper] - y_vals[upper - 1])/(x_vals[upper] - x_vals[upper - 1]);
+              simputspec->energy[ii] = (float)xi;
+              simputspec->fluxdensity[ii] = (float)yi_linear;
+            }
           }
         } else{
           for (ii = 0; ii <= par.nbins; ii++)
           {
-            double xi = (1 - (float)(ii) / par.nbins) * x_vals[0] + ((float)(ii)  / par.nbins) * x_vals[nlines-1];
-            double yi_linear = gsl_spline_eval(spline_linear, xi, acc);
-            simputspec->energy[ii] = (float)xi;
-            simputspec->fluxdensity[ii] = (float)yi_linear;
-            printf("%g %g\n", xi, yi_linear);
+            double xi = (1 - (float)(ii) / par.nbins) * par.Elow + ((float)(ii)  / par.nbins) * par.Eup;
+            if (xi < x_vals[0] || xi > x_vals[nlines-1]){
+              double yi_linear = 0;
+              simputspec->energy[ii] = (float)xi;
+              simputspec->fluxdensity[ii] = (float)yi_linear;
+            } else{
+              int upper = upper_bound(x_vals, nlines, xi);
+              double yi_linear = y_vals[upper - 1] + (xi - x_vals[upper - 1])*(y_vals[upper] - y_vals[upper - 1])/(x_vals[upper] - x_vals[upper - 1]);
+              simputspec->energy[ii] = (float)xi;
+              simputspec->fluxdensity[ii] = (float)yi_linear;
+            }
           }
-
         }
-        gsl_spline_free(spline_linear);
-        gsl_interp_accel_free(acc);
         free(x_vals);
         free(y_vals);
 
