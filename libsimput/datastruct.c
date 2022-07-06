@@ -396,6 +396,7 @@ SimputMIdpSpec* newSimputMIdpSpec(int* const status)
   spec->nentries   =0;
   spec->energy     =NULL;
   spec->fluxdensity=NULL;
+  spec->cumenflux  =NULL;
   spec->name       =NULL;
   spec->fileref    =NULL;
 
@@ -411,6 +412,9 @@ void freeSimputMIdpSpec(SimputMIdpSpec** spec)
     }
     if (NULL!=(*spec)->fluxdensity) {
       free((*spec)->fluxdensity);
+    }
+    if (NULL!=(*spec)->cumenflux) {
+      free((*spec)->cumenflux);
     }
     if (NULL!=(*spec)->name) {
       free((*spec)->name);

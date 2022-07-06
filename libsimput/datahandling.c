@@ -1295,28 +1295,74 @@ static SimputPhList* getSimputPhList(SimputCtlg* const cat,
   return(pb->phls[pb->nphls-1]);
 }
 
+int getSimputMIdpSpecBin(SimputMIdpSpec* const spec, const float energy) {
+
+  int lo=0;
+  int hi=spec->nentries-1;
+
+  // out of bounds checks
+  if (spec->energy[lo] >= energy) {return lo;}
+  if (spec->energy[hi] <= energy) {return hi;}
+
+  // try a binary search
+  while (lo <= hi) {
+    int mid = (lo+hi) / 2;
+    if (spec->energy[mid] < energy) {
+      lo = mid+1;
+    } else if (spec->energy[mid] > energy) {
+      hi = mid-1;
+    } else {
+      return mid;
+    }
+  }
+  // if we did not converge, check the lo and hi bins
+  float binmin, binmax;
+  getMIdpSpecEbounds(spec, lo, &binmin, &binmax);
+  if ((binmin <= energy) && (binmax >= energy)) {return lo;}
+
+  getMIdpSpecEbounds(spec, hi, &binmin, &binmax);
+  if ((binmin <= energy) && (binmax >= energy)) {return hi;}
+
+  printf("Error in getSimputMIdpSpecBin: Could not find bin for energy %f !\n", energy);
+  return lo;
+}
 
 float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
 				const float emin,
 				const float emax)
 {
-  // Return value.
-  float flux=0.;
+  // get the bins
+  int imin = getSimputMIdpSpecBin(spec, emin);
+  int imax = getSimputMIdpSpecBin(spec, emax);
 
-  long ii;
-  for (ii=0; ii<spec->nentries; ii++) {
-    float binmin, binmax;
-    getMIdpSpecEbounds(spec, ii, &binmin, &binmax);
-    if ((emin<binmax) && (emax>binmin)) {
-      float min=MAX(binmin, emin);
-      float max=MIN(binmax, emax);
-      if (binmin==binmax){
-    	  printf(" *** Warning: energy grid of spectrum not monotonically increasing (getSimputMIdpSpecBandFlux) \n");
-      }
-      assert(max>min);
-      flux+=(max-min)*spec->fluxdensity[ii]*spec->energy[ii];
-    }
+  float flux = spec->cumenflux[imax] - spec->cumenflux[imin];
+
+  // This is the flux from the end of the imin bin
+  // to the end of the imax bin.
+  // We may need to add part of the flux in the min bin
+  // and subtract part of the flux in the max bin
+  float binmin, binmax;
+
+  float minbin_corrwidth;
+  getMIdpSpecEbounds(spec, imin, &binmin, &binmax);
+  if (emin < spec->energy[0]) {
+    // restore previous behavior - integrate from the lowest energy value
+    minbin_corrwidth = binmax - binmin;
+  } else {
+    minbin_corrwidth = binmax - emin;
   }
+
+  float maxbin_corrwidth;
+  getMIdpSpecEbounds(spec, imax, &binmin, &binmax);
+  if (emax > spec->energy[spec->nentries-1]) {
+    // restore previous behavior - integrate up to the highest energy value
+    maxbin_corrwidth = 0.;
+  } else {
+  maxbin_corrwidth = binmax - emax;
+  }
+
+  flux += spec->fluxdensity[imin] * spec->energy[imin] * minbin_corrwidth;
+  flux -= spec->fluxdensity[imax] * spec->energy[imax] * maxbin_corrwidth;
 
   // Convert units of 'flux' from [keV/cm^2]->[erg/cm^2].
   flux*=keV2erg;

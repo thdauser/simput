@@ -954,6 +954,30 @@ uniqueSimputident* get_simput_ident(char* filename, int type, int *status){
 	return ident;
 }
 
+static void calcSimputMIdpSpecCumenflux(SimputMIdpSpec* spec) {
+	// build up the cumulative energy flux density for a mission
+	// independent spectrum
+	// Put this into a static func as we use it repeatedly
+	float cumflux = 0;
+
+  for (long ii=0; ii<spec->nentries; ii++) {
+    float binmin, binmax;
+  	// Determine the lower boundary.
+  	if (ii>0) {
+    	binmin=0.5*(spec->energy[ii]+spec->energy[ii-1]);
+  	} else {
+    	binmin=spec->energy[ii];
+  	}
+  	// Determine the upper boundary.
+  	if (ii<spec->nentries-1) {
+    	binmax=0.5*(spec->energy[ii+1]+spec->energy[ii]);
+  	} else {
+    	binmax=spec->energy[ii];
+  	}
+      cumflux+=(binmax-binmin)*spec->fluxdensity[ii]*spec->energy[ii];
+      spec->cumenflux[ii] = cumflux;
+  }
+}
 
 SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 				   int* const status)
@@ -1206,6 +1230,13 @@ SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
       spec->fluxdensity[ii]*=fflux;
     }
 
+    // build up the cumulative flux density
+    spec->cumenflux=(float*)malloc(spec->nentries*sizeof(float));
+    CHECK_NULL_BREAK(spec->cumenflux, *status,
+		     "memory allocation for cumulative flux density failed");
+
+		calcSimputMIdpSpecCumenflux(spec);
+
     // Copy the name (ID) of the spectrum from the string buffer
     // to the data structure.
     spec->name = (char*)malloc((strlen(name[0]))*sizeof(char)+1);
@@ -1444,6 +1475,13 @@ void loadCacheAllSimputMIdpSpec(SimputCtlg* const cat,
 	spec->energy[ii]*=fenergy;
 	spec->fluxdensity[ii]*=ffluxdensity;
       }
+
+      // build up the cumulative flux density
+      spec->cumenflux=(float*)malloc(spec->nentries*sizeof(float));
+      CHECK_NULL_BREAK(spec->cumenflux, *status,
+		       "memory allocation for cumulative flux density failed");
+
+			calcSimputMIdpSpecCumenflux(spec);
 
       // Copy the name (ID) of the spectrum from the string buffer
       // to the data structure.
@@ -4701,6 +4739,13 @@ SimputMIdpSpec *readCacheSpec(long ind, long row, char *fname, int *status)
   {
     spec->fluxdensity[ii] *= SpecCache->fflux[ind];
   }
+
+  // build up the cumulative flux density
+  spec->cumenflux=(float*)malloc(spec->nentries*sizeof(float));
+  CHECK_NULL_RET(spec->cumenflux, *status,
+		   "memory allocation for cumulative flux density failed", NULL);
+
+	calcSimputMIdpSpecCumenflux(spec);
 
   spec->fileref = (char *) malloc( (strlen(fname)+1) * sizeof(char));
   CHECK_NULL_RET(spec->fileref, *status, "Error allocating string buffer", NULL);

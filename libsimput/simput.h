@@ -186,6 +186,9 @@ typedef struct {
   /** Photon flux density [photons/cm**2/keV]. */
   float* fluxdensity;
 
+  /** Cumulative energy flux density [keV/s/cm**2] */
+  float* cumenflux;
+
   /** Unique case-sensitive designator for an individual spectrum. */
   char* name;
 
@@ -631,6 +634,13 @@ void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 			  float* const energy,
 			  float* const pflux,
 			  int* const status);
+
+/** For a given energy [keV], determine the spectral bin which contains
+ * this value.
+ * Returns the first and last bin respectively if the energy is outside
+ * of the spectrum's energy grid.*/
+int getSimputMIdpSpecBin(SimputMIdpSpec* const spec,
+		    const float energy);
 
 /** Determine the flux in the specified energy band in
     [erg/cm**2]. */
