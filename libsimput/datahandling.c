@@ -1305,25 +1305,23 @@ int getSimputMIdpSpecBin(SimputMIdpSpec* const spec, const float energy) {
   if (spec->energy[hi] <= energy) {return hi;}
 
   // try a binary search
-  while (lo <= hi) {
+  while (lo < hi) {
     int mid = (lo+hi) / 2;
-    if (spec->energy[mid] < energy) {
-      lo = mid+1;
-    } else if (spec->energy[mid] > energy) {
-      hi = mid-1;
-    } else {
+    if (spec->energy[mid] == energy) {
       return mid;
+    }else {
+      if (spec->energy[mid] < energy) {
+        lo = mid+1;
+      } else {
+        hi = mid-1;
+      }
     }
   }
-  // if we did not converge, check the lo and hi bins
+  // if we did not return, check the bin edges
   float binmin, binmax;
   getMIdpSpecEbounds(spec, lo, &binmin, &binmax);
-  if ((binmin <= energy) && (binmax >= energy)) {return lo;}
-
-  getMIdpSpecEbounds(spec, hi, &binmin, &binmax);
-  if ((binmin <= energy) && (binmax >= energy)) {return hi;}
-
-  printf("Error in getSimputMIdpSpecBin: Could not find bin for energy %f !\n", energy);
+  if (binmin > energy) {return lo-1;}
+  if (binmax < energy) {return lo+1;}
   return lo;
 }
 

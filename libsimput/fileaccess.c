@@ -962,20 +962,20 @@ static void calcSimputMIdpSpecCumenflux(SimputMIdpSpec* spec) {
 
   for (long ii=0; ii<spec->nentries; ii++) {
     float binmin, binmax;
-  	// Determine the lower boundary.
-  	if (ii>0) {
-    	binmin=0.5*(spec->energy[ii]+spec->energy[ii-1]);
-  	} else {
-    	binmin=spec->energy[ii];
-  	}
-  	// Determine the upper boundary.
-  	if (ii<spec->nentries-1) {
-    	binmax=0.5*(spec->energy[ii+1]+spec->energy[ii]);
-  	} else {
-    	binmax=spec->energy[ii];
-  	}
-      cumflux+=(binmax-binmin)*spec->fluxdensity[ii]*spec->energy[ii];
-      spec->cumenflux[ii] = cumflux;
+    // Determine the lower boundary.
+    if (ii>0) {
+      binmin=0.5*(spec->energy[ii]+spec->energy[ii-1]);
+    } else {
+      binmin=spec->energy[ii];
+    }
+    // Determine the upper boundary.
+    if (ii<spec->nentries-1) {
+      binmax=0.5*(spec->energy[ii+1]+spec->energy[ii]);
+    } else {
+      binmax=spec->energy[ii];
+    }
+    cumflux+=(binmax-binmin)*spec->fluxdensity[ii]*spec->energy[ii];
+    spec->cumenflux[ii] = cumflux;
   }
 }
 
