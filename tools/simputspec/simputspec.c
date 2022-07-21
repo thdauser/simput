@@ -23,7 +23,7 @@
 #include "simputspec.h"
 #include "math.h"
 
-// Function to find the upper bound for the respective energy
+// Find the upper bound for the respective energy
 // for interpolation from ASCII file
 int upper_bound(double* x_vals, long nlines, double xi){
   int low = 0;
@@ -38,6 +38,23 @@ int upper_bound(double* x_vals, long nlines, double xi){
     }
     return low;
 }
+
+// Set fluxdensity to zero for energy outside the input ASCII spectrum
+void set_zero_fluxdensity(double xi, int ii, SimputMIdpSpec* simputspec){
+  double yi_linear = 0;
+  simputspec->energy[ii] = (float)xi;
+  simputspec->fluxdensity[ii] = (float)yi_linear;
+}
+
+// Linear interpolation from the ASCII spectrum
+void linear_interpolation(double* x_vals, double* y_vals, long nlines,
+  double xi, int ii, SimputMIdpSpec* simputspec){
+    int upper = upper_bound(x_vals, nlines, xi);
+    double yi_linear = y_vals[upper - 1] + (xi - x_vals[upper - 1])*
+    (y_vals[upper] - y_vals[upper - 1])/(x_vals[upper] - x_vals[upper - 1]);
+    simputspec->energy[ii] = (float)xi;
+    simputspec->fluxdensity[ii] = (float)yi_linear;
+  }
 
 
 int simputspec_main()
@@ -226,102 +243,8 @@ int simputspec_main()
     } else if (strlen(par.ASCIIFile) > 0) {
         // The spectrum is contained in a ascii file,
         // and has to be loaded from there.
-
-        // Open the file.
-        asciifile = fopen(par.ASCIIFile, "r");
-        CHECK_NULL_BREAK(asciifile, status, "could not open ascii file");
-
-        // Determine the number of rows.
-        long nlines = 0;
-        char c = 0;
-        while(!feof(asciifile)) {
-          c = fgetc(asciifile);
-          if ('\n' == c) {
-            nlines++;
-          }
-        }
-        // Check if the last line has been empty.
-        if('\n' == c) {
-          nlines--;
-        }
-        printf("%ld\n", nlines);
-        // Allocate memory.
-        simputspec->nentries = par.nbins;
-        simputspec->energy = (float*)malloc(par.nbins*sizeof(float));
-        CHECK_NULL_BREAK(simputspec->energy, status, "memory allocation failed");
-        simputspec->fluxdensity = (float*)malloc(par.nbins*sizeof(float));
-        CHECK_NULL_BREAK(simputspec->fluxdensity, status, "memory allocation failed");
-        double* x_vals = (double*)malloc(nlines*sizeof(double));
-        double* y_vals = (double*)malloc(nlines*sizeof(double));
-
-        // Reset the file pointer, read the data, and store them in
-        // the SimputMIdpSpec data structure.
-        rewind(asciifile);
-        // Read the actual data.
-        long ii;
-        for (ii = 0; ii < nlines; ii++) {
-  	       char linebuffer[SIMPUT_MAXSTR];
-  	       if(fgets(linebuffer, SIMPUT_MAXSTR, asciifile) != NULL){
-  	           if(sscanf(linebuffer, "%lf %lf", &x_vals[ii], &y_vals[ii]) != 2) {
-  	              SIMPUT_ERROR("failed reading data from ASCII file");
-  	              status = EXIT_FAILURE;
-  	              break;
-  	           }
-  	       }
-        }
-        if (par.Elow < x_vals[0] || par.Eup > x_vals[nlines - 1]){
-          SIMPUT_WARNING(" ** energy range outside the ASCII spectrum ** \n    corresponding fluxdensity set to zero.");
-        }
-        CHECK_STATUS_BREAK(status);
-
-        // Close the file.
-        fclose(asciifile);
-        asciifile = NULL;
-
-        if(par.logegrid){
-          for (ii = 0; ii < par.nbins; ii++)
-          {
-            double steps = exp((log(par.Eup) - log(par.Elow)) / par.nbins);
-            double midbin = par.Elow * (pow(steps, ii + 1) - pow(steps,ii)) / 2; //to use bin midpoints for the energy grid
-            double xi = midbin + par.Elow * pow(steps, ii);
-            if (xi < x_vals[0] || xi > x_vals[nlines - 1]){
-              double yi_linear = 0;
-              simputspec->energy[ii] = (float)xi;
-              simputspec->fluxdensity[ii] = (float)yi_linear;
-              printf("%g %g\n", xi, yi_linear);
-
-            } else{
-              int upper = upper_bound(x_vals, nlines, xi);
-              double yi_linear = y_vals[upper - 1] + (xi - x_vals[upper - 1])*(y_vals[upper] - y_vals[upper - 1])/(x_vals[upper] - x_vals[upper - 1]);
-              simputspec->energy[ii] = (float)xi;
-              simputspec->fluxdensity[ii] = (float)yi_linear;
-              printf("%g %g\n", xi, yi_linear);
-
-            }
-          }
-        } else{
-          for (ii = 0; ii < par.nbins; ii++)
-          {
-            double midbin = (par.Eup - par.Elow) / (2 * par.nbins); //to use bin midpoints for the energy grid
-            double xi = midbin + (1 - (float)(ii) / par.nbins) * par.Elow + ((float)(ii)  / par.nbins) * par.Eup;
-            if (xi < x_vals[0] || xi > x_vals[nlines - 1]){
-              double yi_linear = 0;
-              simputspec->energy[ii] = (float)xi;
-              simputspec->fluxdensity[ii] = (float)yi_linear;
-              printf("%g %g\n", xi, yi_linear);
-            } else{
-              int upper = upper_bound(x_vals, nlines, xi);
-              double yi_linear = y_vals[upper - 1] + (xi - x_vals[upper - 1])*(y_vals[upper] - y_vals[upper - 1])/(x_vals[upper] - x_vals[upper - 1]);
-              simputspec->energy[ii] = (float)xi;
-              simputspec->fluxdensity[ii] = (float)yi_linear;
-              printf("%g %g\n", xi, yi_linear);
-
-            }
-          }
-        }
-        free(x_vals);
-        free(y_vals);
-
+        read_asciiSpec_file(par.ASCIIFile, simputspec, par.Elow, par.Eup,
+          par.nbins, par.logegrid, &status);
     } else {
       // The spectrum has to be obtained from a PHA file.
 
