@@ -3966,6 +3966,89 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 	xspecfile=NULL;
 }
 
+void read_asciiSpec_file(char* ASCIIFile, SimputMIdpSpec* simputspec,
+	double Elow, double Eup, int nbins, int logegrid, int* status){
+
+	FILE* asciifile = NULL;
+	// Open the file.
+	asciifile = fopen(ASCIIFile, "r");
+	CHECK_NULL_VOID(asciifile, *status, "could not open ascii file");
+
+	// Determine the number of rows.
+	long nlines = 0;
+	char c = 0;
+	while(!feof(asciifile)) {
+		c = fgetc(asciifile);
+		if ('\n' == c) {
+			nlines++;
+		}
+	}
+	// Check if the last line has been empty.
+	if('\n' == c) {
+		nlines--;
+	}
+	// Allocate memory.
+	simputspec->nentries = nbins;
+	simputspec->energy = (float*)malloc(nbins*sizeof(float));
+	CHECK_NULL_VOID(simputspec->energy, *status, "memory allocation failed");
+	simputspec->fluxdensity = (float*)malloc(nbins*sizeof(float));
+	CHECK_NULL_VOID(simputspec->fluxdensity, *status, "memory allocation failed");
+	double* x_vals = (double*)malloc(nlines*sizeof(double));
+	double* y_vals = (double*)malloc(nlines*sizeof(double));
+
+	// Reset the file pointer, read the data, and store them in
+	// the SimputMIdpSpec data structure.
+	rewind(asciifile);
+	// Read the actual data.
+	long ii;
+	for (ii = 0; ii < nlines; ii++) {
+		 char linebuffer[SIMPUT_MAXSTR];
+		 if(fgets(linebuffer, SIMPUT_MAXSTR, asciifile) != NULL){
+				 if(sscanf(linebuffer, "%lf %lf", &x_vals[ii], &y_vals[ii]) != 2) {
+						SIMPUT_ERROR("failed reading data from ASCII file");
+						*status = EXIT_FAILURE;
+						break;
+				 }
+		 }
+	}
+	if (Elow < x_vals[0] || Eup > x_vals[nlines - 1]){
+		SIMPUT_WARNING("  generated spectrum energy range outside the ASCII spectrum  \n    corresponding fluxdensity set to zero");
+		printf("energy range entered for the generated spectrum: %f-%f keV \n", Elow, Eup );
+		printf("ASCII file energy range: %lf-%lf keV\n", x_vals[0], x_vals[nlines - 1] );
+	}
+	CHECK_STATUS_VOID(*status);
+
+	// Close the file.
+	fclose(asciifile);
+	asciifile = NULL;
+
+	if(logegrid){
+		for (ii = 0; ii < nbins; ii++)
+		{
+			double stepsize = exp((log(Eup) - log(Elow)) / nbins);
+			double midbin = Elow * (pow(stepsize, ii + 1) - pow(stepsize,ii)) / 2; //to use bin midpoints for the energy grid
+			double xi = midbin + Elow * pow(stepsize, ii);
+			if (xi < x_vals[0] || xi > x_vals[nlines - 1])
+				set_zero_fluxdensity(xi, ii, simputspec);
+			else
+				linear_interpolation(x_vals, y_vals, nlines, xi, ii, simputspec);
+		}
+	} else{
+		for (ii = 0; ii < nbins; ii++)
+		{
+			double stepsize = (Eup - Elow) / (nbins);
+			double xi = Elow + ((float)(ii) + 0.5) * stepsize; // +0.5 to use bin midpoints
+			if (xi < x_vals[0] || xi > x_vals[nlines - 1])
+				set_zero_fluxdensity(xi, ii, simputspec);
+			else
+				linear_interpolation(x_vals, y_vals, nlines, xi, ii, simputspec);
+		}
+	}
+	free(x_vals);
+	free(y_vals);
+
+}
+
 void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 		char *ISISPostCmd, float Elow, float Eup, int nbins, int logegrid,
 		float plPhoIndex, float bbkT, float flSigma, float rflSpin, float NH,
