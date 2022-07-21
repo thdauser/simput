@@ -1,12 +1,16 @@
-# SIMPUT CI jobs
+# SIMPUT CI/CD configuration
 #
-# build, test, and deploy SIMPUT
+# Triggers and jobs that are then run:
+# * Changes pushed to any branch -> build, test1
+# * Changes pushed to master     -> build, test1, test2, deploy
+# * Tag pushed to any branch     -> build, update
 
-before_script:
-  - source /software/profile.in
-  - export SIMPUT=`pwd`
-  - export HEADASNOQUERY=
-  - export HEADASPROMPT=/dev/null
+default:
+  before_script:
+    - source /software/profile.in
+    - export SIMPUT=`pwd`
+    - export HEADASNOQUERY=
+    - export HEADASPROMPT=/dev/null
 
 stages:
   - build
@@ -21,25 +25,50 @@ build:
     - ./configure --prefix=$SIMPUT
     - make
     - make install
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "push"
   artifacts:
     expire_in: 30 min
     paths:
       - ./*
 
-test:
+test1:
   stage: test
   script:
+    - module load heasoft
+    - module load isis
+    - module load Localmodels/relxill
     - . $SIMPUT/simput-install.sh
-    - . $HEADAS/headas-init.sh
     - make test
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push"
+  artifacts:
+    expire_in: 30 min
+    paths:
+      - ./tests/*
 
-provide:
+test2:
+  stage: test
+  variables:
+    USE_SIMPUT_GITLAB_BUILD: "true"
+  trigger:
+    project: sixte/sixte
+    branch: master
+    strategy: depend # wait until triggered pipeline completes
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $CI_COMMIT_BRANCH == "master"
+
+deploy:
   stage: deploy
   dependencies: []
   script:
     - git push /data/git/simput.git HEAD:master
-  only:
-    - master
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
 
 update:
   stage: update
@@ -48,5 +77,5 @@ update:
   script:
     - make dist
     - rsync -vhu simput-?.?.?*.tar.gz /data/www/sixte_archive/simput/
-  only:
-    - tags
+  rules:
+    - if: $CI_COMMIT_TAG
