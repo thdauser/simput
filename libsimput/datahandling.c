@@ -1400,6 +1400,13 @@ float getSimputPhotonRate(SimputCtlg* const cat,
       float refband_flux=
 	getSimputMIdpSpecBandFlux(midpspec, src->e_min, src->e_max);
 
+	    if (refband_flux == 0) {
+	      printf("Error: Flux in the band specified by E_MIN and E_MAX is zero for the spectrum of source %s\n",
+	              src->src_name);
+	      *status = EXIT_FAILURE;
+	      return 0.;
+	    }
+
       SimputSpec* spec=getSimputSpec(cat, specref, status);
       CHECK_STATUS_RET(*status, 0.);
 
