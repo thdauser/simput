@@ -913,6 +913,12 @@ void read_isisSpec_fits_file(char *fname, SimputMIdpSpec* simputspec,
     routine write_isisSpec_file. Values are stored in "simputspec". */
 void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status);
 
+/** Read an ASCII-File of a spectrum, containing two columns for energy and
+    fluxdensity. The spectrum is interpolated onto an energy grid defined by
+    Elow, Eup, nbins, logegrid. Values are stored in "simputspec". */
+void read_asciiSpec_file(char* ASCIIFile, SimputMIdpSpec* simputspec,
+		double Elow, double Eup, int nbins, int logegrid, int* status);
+
 /** Writes and executes an isis script for calculating a spectrum from a
     given file or from the parameters given (if file==""). */
 void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,

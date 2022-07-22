@@ -3966,6 +3966,39 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 	xspecfile=NULL;
 }
 
+// Find the upper bound for the respective energy
+// for interpolation from ASCII file
+static int upper_bound(double* x_vals, long nlines, double xi){
+  int low = 0;
+  int high = nlines;
+  while (low < high) {
+    int mid =  low + (high - low) / 2;
+    if (xi <= x_vals[mid]) {
+      high = mid;
+    } else {
+      low = mid + 1;
+    }
+  }
+  return low;
+}
+
+// Set fluxdensity to zero for energy outside the input ASCII spectrum
+static void set_zero_fluxdensity(double xi, int ii, SimputMIdpSpec* simputspec){
+  double yi_linear = 0;
+  simputspec->energy[ii] = (float)xi;
+  simputspec->fluxdensity[ii] = (float)yi_linear;
+}
+
+// Linear interpolation from the ASCII spectrum
+static void linear_interpolation(double* x_vals, double* y_vals, long nlines,
+  double xi, int ii, SimputMIdpSpec* simputspec){
+  int upper = upper_bound(x_vals, nlines, xi);
+  double yi_linear = y_vals[upper - 1] + (xi - x_vals[upper - 1])*
+  (y_vals[upper] - y_vals[upper - 1])/(x_vals[upper] - x_vals[upper - 1]);
+  simputspec->energy[ii] = (float)xi;
+  simputspec->fluxdensity[ii] = (float)yi_linear;
+}
+
 void read_asciiSpec_file(char* ASCIIFile, SimputMIdpSpec* simputspec,
 	double Elow, double Eup, int nbins, int logegrid, int* status){
 
