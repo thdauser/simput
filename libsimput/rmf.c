@@ -201,7 +201,7 @@ void loadArfRmfFromRsp(char* const filename,
 static FILE* call_ftchkrmf(char* const infile, char* const outfile,
                            int* const status) {
   // Check for previous error
-  CHECK_STATUS_VOID(*status);
+  CHECK_STATUS_RET(*status, NULL);
 
   // Piece together the ftchkrmf call
   char cmd[SIMPUT_MAXSTR];
