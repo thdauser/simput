@@ -1,3 +1,15 @@
+version [2.5.1]
+  - simputmerge: Merge multiple SIMPUT files at once by providing them as
+    comma separated list (parameter 'Infiles').
+  - simputmulticell/simputmultispec: Improve parameter handling by making more
+    parameters mandatory.
+  - If a spectrum is given as an ASCII file, interpolate data onto the grid
+    desired for the SIMPUT file.
+  - Faster loading of SIMPUT files with very many sources.
+  - Check Elow < Eup and Emin < Emax in all tools using these parameters.
+  - Add error message when the flux in a reference energy band is zero.
+  - Several small bug fixes and optimizations.
+
 version [2.5.0]
   - Update testing framework
   - Fix bug with simputmerge only working on files in
@@ -7,7 +19,7 @@ version [2.5.0]
   - Fix RMF validity check writing temporary files, which caused
     issues in some batch processing
 
-sssssss [2.4.10]
+version [2.4.10]
   - fixes a bug in RMF handling
 
 version [2.4.9]
