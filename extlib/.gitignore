@@ -1,4 +1,6 @@
 cfitsio/cfitsio.pc
+cfitsio/config.guess
+cfitsio/config.sub
 cfitsio/libcfitsio.so*
 cfitsio/libcfitsio.2.3.37.dylib
 cfitsio/libcfitsio.2.dylib
@@ -19,6 +21,8 @@ fftw/ltmain.sh
 fftw/m4/libtool.m4
 fftw/m4/ltoptions.m4
 fftw/m4/ltversion.m4
+fftw/m4/ltsugar.m4
+fftw/m4/lt~obsolete.m4
 fftw/INSTALL
 fftw/compile
 fftw/config.guess
@@ -49,3 +53,6 @@ wcslib/pgsbox/libpgsbox.so*
 wcslib/wcsconfig_utils.h
 wcslib/C/libwcs.*.dylib
 wcslib/C/libwcs.dylib
+wcslib/config/config.guess
+wcslib/config/config.sub
+wcslib/config/install-sh
