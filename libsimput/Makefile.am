@@ -1,6 +1,6 @@
 if FORTRAN
   FSRC=fsimput.f95
-  FFLS=-Df2cFortran 
+  FFLS=-Df2cFortran
 else
   FSRC=
   FFLS=
@@ -23,7 +23,11 @@ lib_LTLIBRARIES=libsimput.la
 # Sources:
 libsimput_la_SOURCES=datastruct.c fileaccess.c datahandling.c vector.c	\
                     arf.c rmf.c parinput.c simput_tree.c multispec.c $(FSRC)
-libsimput_la_LIBADD=@top_builddir@/extlib/heasp/libhdsp.la
+libsimput_la_LIBADD =@top_builddir@/extlib/heasp/libhdsp.la
+libsimput_la_LIBADD+=@top_builddir@/extlib/heaio/libhdio.la
+libsimput_la_LIBADD+=@top_builddir@/extlib/heainit/libhdinit.la
+libsimput_la_LIBADD+=@top_builddir@/extlib/heautils/libhdutils.la
+libsimput_la_LIBADD+=@top_builddir@/extlib/ape/src/libape.la
 
 libsimput_la_LDFLAGS = -version-info 2:2:0
 
