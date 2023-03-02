@@ -1,3 +1,7 @@
+version [2.5.2]
+  - Fix error with clang compiler
+  - Add missing extlibs to libsimput library
+
 version [2.5.1]
   - simputmerge: Merge multiple SIMPUT files at once by providing them as
     comma separated list (parameter 'Infiles').
