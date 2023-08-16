@@ -954,31 +954,6 @@ uniqueSimputident* get_simput_ident(char* filename, int type, int *status){
 	return ident;
 }
 
-static void calcSimputMIdpSpecCumenflux(SimputMIdpSpec* spec) {
-	// build up the cumulative energy flux density for a mission
-	// independent spectrum
-	// Put this into a static func as we use it repeatedly
-	float cumflux = 0;
-
-  for (long ii=0; ii<spec->nentries; ii++) {
-    float binmin, binmax;
-    // Determine the lower boundary.
-    if (ii>0) {
-      binmin=0.5*(spec->energy[ii]+spec->energy[ii-1]);
-    } else {
-      binmin=spec->energy[ii];
-    }
-    // Determine the upper boundary.
-    if (ii<spec->nentries-1) {
-      binmax=0.5*(spec->energy[ii+1]+spec->energy[ii]);
-    } else {
-      binmax=spec->energy[ii];
-    }
-    cumflux+=(binmax-binmin)*spec->fluxdensity[ii]*spec->energy[ii];
-    spec->cumenflux[ii] = cumflux;
-  }
-}
-
 SimputMIdpSpec* loadSimputMIdpSpec(const char* const filename,
 				   int* const status)
 {
@@ -3799,6 +3774,9 @@ void read_isisSpec_fits_file(char *fname, SimputMIdpSpec* simputspec,
 			simputspec->fluxdensity=(float*)malloc(nrows*sizeof(float));
 			CHECK_NULL_VOID(simputspec->fluxdensity, *status,
 					"memory allocation failed");
+			simputspec->cumenflux=(float*)malloc(nrows*sizeof(float));
+			CHECK_NULL_VOID(simputspec->cumenflux, *status,
+					"memory allocation failed");
 			long jj;
 			for (jj=0; jj<nrows; jj++) {
 				simputspec->energy[jj]=0.;
@@ -3811,6 +3789,9 @@ void read_isisSpec_fits_file(char *fname, SimputMIdpSpec* simputspec,
 					"memory allocation failed");
 			simputspecbuffer->fluxdensity=(float*)malloc(nrows*sizeof(float));
 			CHECK_NULL_BREAK(simputspecbuffer->fluxdensity, *status,
+					"memory allocation failed");
+			simputspec->cumenflux=(float*)malloc(nrows*sizeof(float));
+			CHECK_NULL_VOID(simputspec->cumenflux, *status,
 					"memory allocation failed");
 			for (jj=0; jj<nrows; jj++) {
 				simputspecbuffer->energy[jj]=0.;
@@ -3842,6 +3823,9 @@ void read_isisSpec_fits_file(char *fname, SimputMIdpSpec* simputspec,
 		fits_read_col(fptr, TFLOAT, 2, 1, 1, nrows, 0,
 				simputspecbuffer->fluxdensity, &anynull, status);
 		CHECK_STATUS_VOID(*status);
+
+		// Prepare calculation of band flux
+		calcSimputMIdpSpecCumenflux(simputspecbuffer);
 
 		fits_close_file(fptr, status);
 		fptr=NULL;
@@ -3903,6 +3887,9 @@ void read_isisSpec_fits_file(char *fname, SimputMIdpSpec* simputspec,
 			break;
 		}
 	}
+	// lastly, calculate the cumulative energy flux
+	calcSimputMIdpSpecCumenflux(simputspec);
+
 	CHECK_STATUS_VOID(*status);
 	// END of loop over the different spectral components.
 }
@@ -3951,7 +3938,9 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 	simputspec->energy=(float*)malloc(nlines*sizeof(float));
 	CHECK_NULL_VOID(simputspec->energy, *status, "memory allocation failed");
 	simputspec->fluxdensity=(float*)malloc(nlines*sizeof(float));
-	CHECK_NULL_VOID(simputspec->energy, *status, "memory allocation failed");
+	CHECK_NULL_VOID(simputspec->fluxdensity, *status, "memory allocation failed");
+	simputspec->cumenflux=(float*)malloc(nlines*sizeof(float));
+	CHECK_NULL_VOID(simputspec->cumenflux, *status, "memory allocation failed");
 
 	// Reset the file pointer, read the data, and store them in
 	// the SimputMIdpSpec data structure.
@@ -3996,6 +3985,8 @@ void read_xspecSpec_file(char *fname, SimputMIdpSpec* simputspec, int *status){
 		}
 		linecont=check_xspec_linecont(linebuffer);
 	}
+
+	calcSimputMIdpSpecCumenflux(simputspec);
 
 	CHECK_STATUS_VOID(*status);
 
@@ -4064,6 +4055,8 @@ void read_asciiSpec_file(char* ASCIIFile, SimputMIdpSpec* simputspec,
 	CHECK_NULL_VOID(simputspec->energy, *status, "memory allocation failed");
 	simputspec->fluxdensity = (float*)malloc(nbins*sizeof(float));
 	CHECK_NULL_VOID(simputspec->fluxdensity, *status, "memory allocation failed");
+	simputspec->cumenflux = (float*)malloc(nbins*sizeof(float));
+	CHECK_NULL_VOID(simputspec->cumenflux, *status, "memory allocation failed");
 	double* x_vals = (double*)malloc(nlines*sizeof(double));
 	double* y_vals = (double*)malloc(nlines*sizeof(double));
 
@@ -4115,6 +4108,9 @@ void read_asciiSpec_file(char* ASCIIFile, SimputMIdpSpec* simputspec,
 				linear_interpolation(x_vals, y_vals, nlines, xi, ii, simputspec);
 		}
 	}
+
+  calcSimputMIdpSpecCumenflux(simputspec);
+
 	free(x_vals);
 	free(y_vals);
 

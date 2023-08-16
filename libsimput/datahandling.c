@@ -1325,6 +1325,30 @@ int getSimputMIdpSpecBin(SimputMIdpSpec* const spec, const float energy) {
   return lo;
 }
 
+void calcSimputMIdpSpecCumenflux(SimputMIdpSpec* spec) {
+	// build up the cumulative energy flux density for a mission
+	// independent spectrum
+	float cumflux = 0;
+
+  for (long ii=0; ii<spec->nentries; ii++) {
+    float binmin, binmax;
+    // Determine the lower boundary.
+    if (ii>0) {
+      binmin=0.5*(spec->energy[ii]+spec->energy[ii-1]);
+    } else {
+      binmin=spec->energy[ii];
+    }
+    // Determine the upper boundary.
+    if (ii<spec->nentries-1) {
+      binmax=0.5*(spec->energy[ii+1]+spec->energy[ii]);
+    } else {
+      binmax=spec->energy[ii];
+    }
+    cumflux+=(binmax-binmin)*spec->fluxdensity[ii]*spec->energy[ii];
+    spec->cumenflux[ii] = cumflux;
+  }
+}
+
 float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
 				const float emin,
 				const float emax)

@@ -329,6 +329,13 @@ int simputspec_main()
 
     }
 
+    if (simputspec->cumenflux == NULL) {
+      simputspec->cumenflux=(float*)malloc(simputspec->nentries*sizeof(float));
+      CHECK_NULL_BREAK(simputspec->cumenflux, status,
+		       "memory allocation for cumulative flux density failed");
+		  calcSimputMIdpSpecCumenflux(simputspec);
+    }
+
     long jj;
     for (jj = 0; jj < simputspec->nentries; jj++) {
       // Check if the flux has a physically reasonable value.

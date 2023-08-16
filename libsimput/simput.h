@@ -642,6 +642,9 @@ void getSimputMIdpSpecVal(const SimputMIdpSpec* const spec,
 int getSimputMIdpSpecBin(SimputMIdpSpec* const spec,
 		    const float energy);
 
+
+void calcSimputMIdpSpecCumenflux(SimputMIdpSpec* spec);
+
 /** Determine the flux in the specified energy band in
     [erg/cm**2]. */
 float getSimputMIdpSpecBandFlux(SimputMIdpSpec* const spec,
