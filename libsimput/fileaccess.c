@@ -4129,8 +4129,6 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 
 	// Write the header.
 	fprintf(cmdfile, "require(\"isisscripts\");\n");
-	fprintf(cmdfile, "()=xspec_abund(\"wilm\");\n");
-	fprintf(cmdfile, "use_localmodel(\"relxill\");\n");
 
 	// Define the energy grid.
 	fprintf(cmdfile, "variable lo, hi; \n");
@@ -4148,6 +4146,10 @@ void write_isisSpec_fits_file(char *fname, char *ISISFile, char *ISISPrep,
 	// Distinguish whether the individual spectral components or
 	// an ISIS spectral parameter file should be used.
 	if (strlen(ISISFile)==0) {
+
+		// assume wilm abundances and get relxill ready
+		fprintf(cmdfile, "()=xspec_abund(\"wilm\");\n");
+		fprintf(cmdfile, "use_localmodel(\"relxill\");\n");
 
 		// Loop over the different components of the spectral model.
 		int ii;
