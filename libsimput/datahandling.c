@@ -22,6 +22,7 @@
 
 #include <float.h>
 #include "common.h"
+#include "simput.h"
 
 
 /** Random number generator. */
@@ -2120,13 +2121,23 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
   // Spatially extended sources.
   else if (EXTTYPE_IMAGE==imagtype) {
     // Determine the photon direction from an image.
+    SimputImg* img = getSimputImg(cat, imagref, status);
+    CHECK_STATUS_VOID(*status);
+
+    getSimputImgPhotonCoord(img, src, ra, dec, status);
+    CHECK_STATUS_VOID(*status);
+  }
+  // END of determine the photon direction.
+  // ---
+
+  return;
+}
+
+void getSimputImgPhotonCoord(SimputImg *const img, SimputSrc *const src, double* const ra, double* const dec, int *const status) {
+
     struct wcsprm wcs={ .flag=-1 };
 
     do { // Error handling loop.
-
-      // Determine the image.
-      SimputImg* img=getSimputImg(cat, imagref, status);
-      CHECK_STATUS_BREAK(*status);
 
       double xd, yd;
       drawRndPosFromImg(img, &xd, &yd, status);
@@ -2134,7 +2145,7 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       // Create a temporary wcsprm data structure, which can be modified
       // to fit this particular source. The wcsprm data structure contained
       // in the image should not be modified, since it is used for all
-      // sources including the image.
+      // sources using the image.
       wcscopy(1, img->wcs, &wcs);
 
       // Set the position to the origin and assign the correct scaling.
@@ -2168,22 +2179,13 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
       CHECK_STATUS_BREAK(*status);
 
       // Determine the RA in the interval from [0:2pi).
-      while(*ra>=2.*M_PI) {
-	*ra-=2.*M_PI;
-      }
-      while(*ra<0.) {
-	*ra+=2.*M_PI;
-      }
+      while(*ra>=2.*M_PI) { *ra-=2.*M_PI; }
+      while(*ra<0.) { *ra+=2.*M_PI;}
 
     } while(0); // END of error handling loop.
 
     // Release memory.
     wcsfree(&wcs);
-  }
-  // END of determine the photon direction.
-  // ---
-
-  return;
 }
 
 
@@ -2250,6 +2252,218 @@ int getSimputPhoton(SimputCtlg* const cat,
   CHECK_STATUS_RET(*status, 0);
 
   return(0);
+}
+
+double* getSimputCtlgRelFluxes(SimputCtlg* const cat,
+    double e_min, double e_max,
+    double time, double mjdref,
+    int* const status) {
+
+  double* relfluxes = malloc(cat->nentries * sizeof(double));
+  CHECK_NULL_RET(relfluxes, *status,
+		 "memory allocation for fluxes failed", NULL);
+
+	if (cat->nentries == 1) {
+	  relfluxes[0] = 1.;
+	  return relfluxes;
+	}
+
+	double totflux = 0;
+
+  for (long i_src=1; i_src<(cat->nentries+1); i_src++) {
+    SimputSrc* src = getSimputSrc(cat, i_src, status);
+    CHECK_STATUS_RET(*status, relfluxes);
+
+    double srcflux = getSimputSrcBandFlux(cat, src, e_min, e_max, time, mjdref,status);
+    CHECK_STATUS_RET(*status, relfluxes);
+
+    totflux += srcflux;
+    relfluxes[i_src-1] = srcflux;
+  }
+
+  if (totflux != 0) {
+    for (long ii=0; ii<cat->nentries; ii++) {
+      relfluxes[ii] /= totflux;
+    }
+  }
+
+	return relfluxes;
+}
+
+double getSimputSrcBandFlux(SimputCtlg *const cat,
+                            SimputSrc *const src,
+                            double e_min,
+                            double e_max,
+                            double time,
+                            double mjdref,
+                            int *const status) {
+
+  double outflux = 0.;
+
+  // Obtain the spectrum.
+  char specref[SIMPUT_MAXSTR];
+  getSimputSrcSpecRef(cat, src, time, mjdref, specref, status);
+  CHECK_STATUS_RET(*status, 0.);
+
+  int spectype=getSimputExtType(cat, specref, status);
+  CHECK_STATUS_RET(*status, 0.);
+
+  if (EXTTYPE_MIDPSPEC==spectype) {
+    SimputMIdpSpec* midpspec=getSimputMIdpSpec(cat, specref, status);
+    CHECK_STATUS_RET(*status, 0.);
+
+    // Flux in the reference energy band.
+    float refband_flux= getSimputMIdpSpecBandFlux(midpspec, src->e_min, src->e_max);
+
+	  if (refband_flux == 0) {
+	    printf("Error: Flux in the band specified by E_MIN and E_MAX is zero for the spectrum of source %s\n",
+	            src->src_name);
+	    *status = EXIT_FAILURE;
+	    return 0.;
+	  }
+
+    float fluxcorr = src->eflux / refband_flux;
+
+    float band_flux= getSimputMIdpSpecBandFlux(midpspec, e_min, e_max);
+
+    outflux = band_flux * fluxcorr;
+
+  } else if (EXTTYPE_PHLIST==spectype) {
+
+    // Get the photon list.
+    SimputPhList* phl=getSimputPhList(cat, specref, status);
+    CHECK_STATUS_RET(*status, 0.);
+
+    // Determine the flux in the reference energy band
+    // and the reference number of photons after weighing
+    // with the instrument ARF.
+    double refband_flux=0.; // [erg]
+    double band_flux=0.; // [erg]
+    const long buffsize=10000;
+    long ii;
+    for (ii=0; ii*buffsize<phl->nphs; ii++) {
+      // Read a block of photons.
+      int anynul=0;
+      long nphs=MIN(buffsize, phl->nphs-(ii*buffsize));
+      float buffer[buffsize];
+      fits_read_col(phl->fptr, TFLOAT, phl->cenergy, ii*buffsize+1,
+		          1, nphs, NULL, buffer, &anynul, status);
+      if (EXIT_SUCCESS!=*status) {
+	      SIMPUT_ERROR("failed reading unit of energy column in photon list");
+	      return(0.);
+      }
+
+      // Determine the illuminated energy in the
+      // energy bands.
+      long jj;
+      for (jj=0; jj<nphs; jj++) {
+	      float energy=buffer[jj]*phl->fenergy;
+	      if ((energy>=src->e_min)&&(energy<=src->e_max)) {
+	        refband_flux+=energy*keV2erg;
+	      }
+        if ((energy>=e_min)&&(energy<=e_max)) {
+	        band_flux+=energy*keV2erg;
+	      }
+
+      }
+      // END of loop over all photons in the buffer.
+    }
+
+    outflux = src->eflux / refband_flux * band_flux;
+
+  } else {
+    SIMPUT_ERROR("could not find valid spectrum extension");
+    *status=EXIT_FAILURE;
+    return(0.);
+  }
+
+  return outflux;
+}
+
+void getSimputPhotonCoord(SimputCtlg *const cat,
+                          SimputSrc *const src,
+                          double time, double mjdref,
+                          double e_min, double e_max,
+                          double *const ra, double *const dec,
+                          int *const status) {
+
+  // Determine the reference to the image
+  char imagref[SIMPUT_MAXSTR];
+  getSrcImagRef(cat, src, time, mjdref, imagref, status);
+  CHECK_STATUS_VOID(*status);
+
+  // Determine the extension type of the image reference.
+  int imagtype=getSimputExtType(cat, imagref, status);
+  CHECK_STATUS_VOID(*status);
+
+  // If the image reference points to a photon list,
+  // determine the spatial information.
+  if (EXTTYPE_PHLIST==imagtype) {
+    SimputPhList* phl = getSimputPhList(cat, imagref, status);
+    CHECK_STATUS_VOID(*status);
+
+    float b_energy;
+    double b_ra, b_dec;
+    // draw photons until we have one in the energy band
+    // TODO this could go on indefinitely if there are no photons within
+    // the given band. We should verify that this is not the case.
+    do {
+      getSimputPhFromPhList(cat, phl, &b_energy, &b_ra, &b_dec, status);
+      CHECK_STATUS_VOID(*status);
+    } while (b_energy > e_max || b_energy < e_min);
+
+    // Shift the photon position according to the
+    // RA,Dec values defined for this source in the catalog.
+
+    // Apply IMGSCAL.
+    b_ra *=1./src->imgscal*cos(b_dec)/cos(b_dec/src->imgscal);
+    b_dec*=1./src->imgscal;
+
+    // Get a Carteesian coordinate vector for the photon location.
+    Vector p=unit_vector(b_ra, b_dec);
+
+    // Apply IMGROTA by rotation around the x-axis.
+    double cosimgrota=cos(src->imgrota);
+    double sinimgrota=sin(src->imgrota);
+    Vector r;
+    r.x= p.x;
+    r.y= cosimgrota*p.y + sinimgrota*p.z;
+    r.z=-sinimgrota*p.y + cosimgrota*p.z;
+
+    // Rotate the vector towards the source position.
+    double cosra=cos(src->ra);
+    double sinra=sin(src->ra);
+    double cosdec=cos(src->dec);
+    double sindec=sin(src->dec);
+    Vector f;
+    f.x=r.x*cosra*cosdec - r.y*sinra - r.z*cosra*sindec;
+    f.y=r.x*sinra*cosdec + r.y*cosra - r.z*sinra*sindec;
+    f.z=r.x      *sindec +     0.0   + r.z      *cosdec;
+
+    // Determine RA and Dec of the photon.
+    calculate_ra_dec(f, ra, dec);
+  }
+  // ---
+  // If the image does NOT refer to a photon list, determine the
+  // spatial information.
+
+  // Point-like sources.
+  if (EXTTYPE_NONE==imagtype) {
+    *ra =src->ra;
+    *dec=src->dec;
+  }
+
+  // Spatially extended sources.
+  else if (EXTTYPE_IMAGE==imagtype) {
+    // Determine the photon direction from an image.
+    SimputImg* img = getSimputImg(cat, imagref, status);
+    CHECK_STATUS_VOID(*status);
+
+    getSimputImgPhotonCoord(img, src, ra, dec, status);
+    CHECK_STATUS_VOID(*status);
+  }
+  // END of determine the photon direction.
+ 
 }
 
 int precompute_photon (SimputCtlg *cat, long sourcenumber,

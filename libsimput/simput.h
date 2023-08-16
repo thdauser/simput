@@ -825,6 +825,13 @@ void getSimputPhotonEnergyCoord(SimputCtlg* const cat,
 				double* const dec,
 				int* const status);
 
+void getSimputImgPhotonCoord(SimputImg* const img,
+    SimputSrc* const src,
+    double* const ra,
+    double* const dec,
+    int* const status
+    );
+
 /** Draw a random position from an image (the individual pixel values of the image
  *  are regarded as a probability density for the spatial distribution). */
 void drawRndPosFromImg(SimputImg* const img, double* xd, double* yd,
@@ -849,6 +856,28 @@ int getSimputPhoton(SimputCtlg* const cat,
 		    /** [rad]. */
 		    double* const dec,
 		    int* const status);
+
+/** Get the relative fluxes of all sources in a simput catalog
+ * within a given energy band */
+double* getSimputCtlgRelFluxes(SimputCtlg* const cat,
+    double e_min, double e_max,
+    double time, double mjdref,
+    int* const status);
+
+double getSimputSrcBandFlux(SimputCtlg* const cat,
+    SimputSrc* const src,
+    double e_min, double e_max,
+    double time, double mjdref,
+    int* const status);
+
+/** Draw a random photon position within a given energy band from
+ * a SIMPUT source*/
+void getSimputPhotonCoord(SimputCtlg *const cat,
+    SimputSrc *const src,
+    double time, double mjdref,
+    double e_min, double e_max,
+    double* const ra, double* const dec,
+    int* const status);
 
 /** Initialize an array and pre-compute photons for
     getSimputPhotonAnySource. */
