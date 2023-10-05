@@ -2276,6 +2276,7 @@ double* getSimputCtlgRelFluxes(SimputCtlg* const cat,
 
     double srcflux = getSimputSrcBandFlux(cat, src, e_min, e_max, time, mjdref,status);
     CHECK_STATUS_RET(*status, relfluxes);
+    if (srcflux < 0) {srcflux=0;}
 
     totflux += srcflux;
     relfluxes[i_src-1] = srcflux;
