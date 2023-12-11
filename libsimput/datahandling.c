@@ -1331,6 +1331,11 @@ void calcSimputMIdpSpecCumenflux(SimputMIdpSpec* spec) {
 	// independent spectrum
 	float cumflux = 0;
 
+  if (spec->cumenflux == NULL) {
+    spec->cumenflux=(float*)malloc(spec->nentries*sizeof(float));
+  }
+
+
   for (long ii=0; ii<spec->nentries; ii++) {
     float binmin, binmax;
     // Determine the lower boundary.
